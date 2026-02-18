@@ -1,0 +1,56 @@
+package tn.esprit.gateway;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.Ordered;
+import tn.esprit.gateway.filter.NotFoundJsonFilter;
+import tn.esprit.gateway.filter.WelcomeJsonFilter;
+
+
+@EnableDiscoveryClient
+@SpringBootApplication
+public class GatewayApplication {
+
+    @Value("${gateway.service.evaluation:EVALUATION}")
+    private String evaluationServiceId;
+
+    @Value("${gateway.service.formation:FORMATION}")
+    private String formationServiceId;
+
+    public static void main(String[] args) {
+        SpringApplication.run(GatewayApplication.class, args);
+    }
+
+    @Bean
+    public RouteLocator customRouting(RouteLocatorBuilder builder, NotFoundJsonFilter notFoundJsonFilter, WelcomeJsonFilter welcomeJsonFilter) {
+        return builder.routes()
+                // Examens et Certificats -> lb://EVALUATION (nom dans application.properties)
+                .route("evaluation-examens", r -> r.path("/api/examens", "/api/examens/**")
+                        .uri("lb://" + evaluationServiceId))
+                .route("evaluation-certificats", r -> r.path("/api/certificats", "/api/certificats/**")
+                        .uri("lb://" + evaluationServiceId))
+                // Formations / Inscriptions -> lb://FORMATION (nom dans application.properties)
+                .route("formation-api", r -> r.path("/api/formations", "/api/formations/**")
+                        .uri("lb://" + formationServiceId))
+                .route("formation-inscriptions", r -> r.path("/api/inscriptions", "/api/inscriptions/**")
+                        .uri("lb://" + formationServiceId))
+                // Racine : uniquement / et /api (pas /api/xxx) -> reponse JSON
+                .route("gateway-welcome", r -> r.path("/", "/api")
+                        .and().method(org.springframework.http.HttpMethod.GET)
+                        .filters(f -> f.filter(welcomeJsonFilter))
+                        .uri("http://localhost:8050"))
+
+                // Fallback : toute autre URL -> 404 en JSON (plus de Whitelabel)
+                .route("fallback-404", r -> r.order(Ordered.LOWEST_PRECEDENCE)
+                        .path("/**")
+                        .filters(f -> f.filter(notFoundJsonFilter))
+                        .uri("http://localhost:8050"))
+                .build();
+    }
+}
+
