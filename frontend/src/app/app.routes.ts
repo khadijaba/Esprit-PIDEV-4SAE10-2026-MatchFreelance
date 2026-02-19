@@ -1,0 +1,119 @@
+import { Routes } from '@angular/router';
+import { LayoutComponent } from './components/layout/layout.component';
+import { FrontLayoutComponent } from './components/front-layout/front-layout.component';
+
+export const routes: Routes = [
+  // Frontoffice (public)
+  {
+    path: '',
+    component: FrontLayoutComponent,
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./components/front-home/front-home.component').then((m) => m.FrontHomeComponent),
+      },
+      {
+        path: 'projects',
+        loadComponent: () =>
+          import('./components/front-project-list/front-project-list.component').then((m) => m.FrontProjectListComponent),
+      },
+      {
+        path: 'projects/:id',
+        loadComponent: () =>
+          import('./components/front-project-detail/front-project-detail.component').then((m) => m.FrontProjectDetailComponent),
+      },
+      {
+        path: 'formations',
+        loadComponent: () =>
+          import('./components/front-formation-list/front-formation-list.component').then((m) => m.FrontFormationListComponent),
+      },
+      {
+        path: 'formations/:id',
+        loadComponent: () =>
+          import('./components/front-formation-detail/front-formation-detail.component').then((m) => m.FrontFormationDetailComponent),
+      },
+      {
+        path: 'formations/:formationId/examen/:examenId',
+        loadComponent: () =>
+          import('./components/passer-examen/passer-examen.component').then((m) => m.PasserExamenComponent),
+      },
+      {
+        path: 'certificat/:id',
+        loadComponent: () =>
+          import('./components/certificat-view/certificat-view.component').then((m) => m.CertificatViewComponent),
+      },
+    ],
+  },
+
+  // Backoffice (admin)
+  {
+    path: 'admin',
+    component: LayoutComponent,
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./components/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+      },
+      {
+        path: 'projects',
+        loadComponent: () =>
+          import('./components/project-list/project-list.component').then((m) => m.ProjectListComponent),
+      },
+      {
+        path: 'projects/new',
+        loadComponent: () =>
+          import('./components/project-form/project-form.component').then((m) => m.ProjectFormComponent),
+      },
+      {
+        path: 'projects/:id/edit',
+        loadComponent: () =>
+          import('./components/project-form/project-form.component').then((m) => m.ProjectFormComponent),
+      },
+      {
+        path: 'projects/:id',
+        loadComponent: () =>
+          import('./components/project-details/project-details.component').then((m) => m.ProjectDetailsComponent),
+      },
+      {
+        path: 'formations',
+        loadComponent: () =>
+          import('./components/formation-list/formation-list.component').then((m) => m.FormationListComponent),
+      },
+      {
+        path: 'formations/new',
+        loadComponent: () =>
+          import('./components/formation-form/formation-form.component').then((m) => m.FormationFormComponent),
+      },
+      {
+        path: 'formations/:id/edit',
+        loadComponent: () =>
+          import('./components/formation-form/formation-form.component').then((m) => m.FormationFormComponent),
+      },
+      {
+        path: 'formations/:id',
+        loadComponent: () =>
+          import('./components/formation-details/formation-details.component').then((m) => m.FormationDetailsComponent),
+      },
+      {
+        path: 'examens',
+        loadComponent: () =>
+          import('./components/examen-list/examen-list.component').then((m) => m.ExamenListComponent),
+      },
+      {
+        path: 'examens/new',
+        loadComponent: () =>
+          import('./components/examen-form/examen-form.component').then((m) => m.ExamenFormComponent),
+      },
+      {
+        path: 'examens/:id',
+        loadComponent: () =>
+          import('./components/examen-details/examen-details.component').then((m) => m.ExamenDetailsComponent),
+      },
+    ],
+  },
+
+  { path: '**', redirectTo: '' },
+];
