@@ -1,0 +1,191 @@
+<div class="mx-auto max-w-5xl">
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-slate-900">My schedule</h1>
+    <p class="mt-1 text-sm text-slate-500">
+      Set your weekly availability (like store opening hours). Generate slots so project owners can book interviews.
+    </p>
+  </div>
+
+  <!-- Weekly schedule (store-hours style) -->
+  <div class="mb-10 rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="border-b border-slate-200 bg-slate-50 px-6 py-4">
+      <h2 class="text-lg font-semibold text-slate-900">Weekly availability</h2>
+      <p class="mt-0.5 text-sm text-slate-500">Set up to two time ranges per day (e.g. morning 09:00–12:00 and afternoon 14:00–17:00). Empty rows are skipped when generating slots.</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[32rem] text-sm">
+        <thead class="border-b border-slate-200 bg-slate-50/80">
+          <tr>
+            <th class="w-28 px-4 py-3 text-left font-medium text-slate-600">Day</th>
+            <th colspan="2" class="px-2 py-2 text-center font-medium text-slate-600">
+              <span class="block text-xs font-normal text-slate-500">Range 1 (e.g. morning)</span>
+              <span class="mt-1 flex gap-2 justify-center">
+                <span class="w-20 text-left text-xs text-slate-500">From</span>
+                <span class="w-20 text-left text-xs text-slate-500">To</span>
+              </span>
+            </th>
+            <th colspan="2" class="px-2 py-2 text-center font-medium text-slate-600">
+              <span class="block text-xs font-normal text-slate-500">Range 2 (e.g. afternoon)</span>
+              <span class="mt-1 flex gap-2 justify-center">
+                <span class="w-20 text-left text-xs text-slate-500">From</span>
+                <span class="w-20 text-left text-xs text-slate-500">To</span>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (day of weekSchedule; track day.name) {
+            <tr class="transition hover:bg-slate-50/50"
+                [class.bg-emerald-50/60]="dayHasRange(day)">
+              <td class="px-4 py-2.5 font-medium text-slate-800">{{ day.name }}</td>
+              <td class="px-2 py-2">
+                <input type="time" [(ngModel)]="day.from1" aria-label="{{ day.name }} range 1 from"
+                  class="w-full min-w-[5rem] rounded border border-slate-300 px-2 py-1.5 text-slate-800 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
+              </td>
+              <td class="px-2 py-2">
+                <input type="time" [(ngModel)]="day.to1" aria-label="{{ day.name }} range 1 to"
+                  class="w-full min-w-[5rem] rounded border border-slate-300 px-2 py-1.5 text-slate-800 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
+              </td>
+              <td class="px-2 py-2">
+                <input type="time" [(ngModel)]="day.from2" aria-label="{{ day.name }} range 2 from"
+                  class="w-full min-w-[5rem] rounded border border-slate-300 px-2 py-1.5 text-slate-800 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
+              </td>
+              <td class="px-2 py-2">
+                <input type="time" [(ngModel)]="day.to2" aria-label="{{ day.name }} range 2 to"
+                  class="w-full min-w-[5rem] rounded border border-slate-300 px-2 py-1.5 text-slate-800 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="flex flex-wrap items-center gap-4 border-t border-slate-200 px-6 py-4">
+      <button (click)="copyMondayToAll()" type="button"
+        class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+        Copy Monday to all days
+      </button>
+      <button (click)="clearWeeklySchedule()" type="button"
+        class="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition">
+        Clear schedule
+      </button>
+      <label class="flex items-center gap-2 ml-auto">
+        <span class="text-sm font-medium text-slate-600">Generate for the next</span>
+        <input type="number" [(ngModel)]="weeksAhead" min="1" max="12"
+          class="w-16 rounded border border-slate-300 px-2 py-1.5 text-center text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
+        <span class="text-sm font-medium text-slate-600">weeks</span>
+      </label>
+      @if (previewSlotCount > 0) {
+        <span class="text-sm text-slate-500">
+          About <strong class="text-slate-700">{{ previewSlotCount }}</strong> slot{{ previewSlotCount !== 1 ? 's' : '' }} will be created
+        </span>
+      }
+      <button (click)="generateFromWeeklySchedule()" [disabled]="generating"
+        class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-violet-700 disabled:opacity-50 transition">
+        {{ generating ? 'Generating…' : 'Generate slots' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Add single slot (collapsible) -->
+  <details class="mb-8 rounded-xl border border-slate-200 bg-white shadow-sm">
+    <summary class="cursor-pointer list-none px-6 py-4 font-medium text-slate-700 hover:bg-slate-50 transition select-none">
+      Add a one-off slot (date and time)
+    </summary>
+    <div class="border-t border-slate-200 px-6 py-4">
+      @if (!showSingleSlotForm) {
+        <button (click)="openSingleSlotForm()"
+          class="rounded-lg border border-violet-300 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100 transition">
+          Add single slot
+        </button>
+      } @else {
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-600">Start</label>
+            <input type="datetime-local" [(ngModel)]="formStart"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-600">End</label>
+            <input type="datetime-local" [(ngModel)]="formEnd"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
+          </div>
+        </div>
+        <div class="mt-4 flex gap-2">
+          <button (click)="addSingleSlot()" [disabled]="submitting"
+            class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50">
+            {{ submitting ? 'Adding…' : 'Add slot' }}
+          </button>
+          <button (click)="closeSingleSlotForm()" [disabled]="submitting"
+            class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            Cancel
+          </button>
+        </div>
+      }
+    </div>
+  </details>
+
+  <!-- List of generated slots -->
+  <div>
+    <h2 class="mb-4 text-lg font-semibold text-slate-900">Your slots</h2>
+    @if (loading) {
+      <div class="flex justify-center py-12">
+        <div class="h-8 w-8 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600"></div>
+      </div>
+    } @else if (slots.length === 0) {
+      <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
+        <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <h3 class="mt-4 font-medium text-slate-900">No slots yet</h3>
+        <p class="mt-2 text-sm text-slate-500">Use the weekly schedule above and click "Generate slots", or add a one-off slot.</p>
+      </div>
+    } @else {
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-slate-200 bg-slate-50">
+            <tr>
+              <th class="px-6 py-3 font-medium text-slate-500">Start</th>
+              <th class="px-6 py-3 font-medium text-slate-500">End</th>
+              <th class="px-6 py-3 font-medium text-slate-500">Status</th>
+              <th class="px-6 py-3 font-medium text-slate-500 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (s of slots; track s.id) {
+              <tr class="hover:bg-slate-50 transition">
+                <td class="px-6 py-4 text-slate-800">{{ s.startAt | date:'medium' }}</td>
+                <td class="px-6 py-4 text-slate-800">{{ s.endAt | date:'medium' }}</td>
+                <td class="px-6 py-4">
+                  @if (s.booked) {
+                    <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700">Booked</span>
+                  } @else {
+                    <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700">Free</span>
+                  }
+                </td>
+                <td class="px-6 py-4 text-right">
+                  @if (!s.booked) {
+                    <button (click)="deleteSlot(s)"
+                      class="rounded border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50">Remove</button>
+                  } @else {
+                    <span class="text-xs text-slate-400">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (page && page.totalPages > 1) {
+        <div class="mt-4 flex items-center justify-between">
+          <button (click)="prevPage()" [disabled]="pageIndex <= 0"
+            class="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50">Prev</button>
+          <span class="text-sm text-slate-500">Page {{ page.number + 1 }} / {{ page.totalPages }}</span>
+          <button (click)="nextPage()" [disabled]="pageIndex + 1 >= page.totalPages"
+            class="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50">Next</button>
+        </div>
+      }
+    }
+  </div>
+</div>

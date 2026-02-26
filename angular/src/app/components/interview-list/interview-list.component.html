@@ -1,0 +1,206 @@
+<div class="space-y-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <h2 class="text-2xl font-bold text-gray-800">{{ listTitle }}</h2>
+  </div>
+
+  <!-- Filters -->
+  <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-500">Status</label>
+        <select [(ngModel)]="statusFilter" (ngModelChange)="onFiltersChange()"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+          <option value="">All</option>
+          @for (s of statusOptions; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-500">Mode</label>
+        <select [(ngModel)]="modeFilter" (ngModelChange)="onFiltersChange()"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+          <option value="">All</option>
+          @for (m of modeOptions; track m) {
+            <option [value]="m">{{ modeLabel(m) }}</option>
+          }
+        </select>
+      </div>
+      @if (isAdmin) {
+        <div>
+          <label class="mb-1 block text-xs font-medium text-gray-500">Project ID</label>
+          <input type="number" [(ngModel)]="projectIdFilter" (ngModelChange)="onFiltersChange()" placeholder="Optional"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-gray-500">Freelancer ID</label>
+          <input type="number" [(ngModel)]="freelancerIdFilter" (ngModelChange)="onFiltersChange()" placeholder="Optional"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-gray-500">Owner ID</label>
+          <input type="number" [(ngModel)]="ownerIdFilter" (ngModelChange)="onFiltersChange()" placeholder="Optional"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+        </div>
+      }
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-500">From date</label>
+        <input type="datetime-local" [(ngModel)]="fromDate" (ngModelChange)="onFiltersChange()"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-500">To date</label>
+        <input type="datetime-local" [(ngModel)]="toDate" (ngModelChange)="onFiltersChange()"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+      </div>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="flex justify-center py-12">
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+    </div>
+  } @else if (interviews.length === 0) {
+    <div class="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-12 text-center">
+      <p class="text-gray-500">No interviews match your filters.</p>
+    </div>
+  } @else {
+    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-gray-200 bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 font-medium text-gray-500">Time</th>
+              @if (isAdmin) {
+                <th class="px-6 py-3 font-medium text-gray-500">Project</th>
+                <th class="px-6 py-3 font-medium text-gray-500">Freelancer</th>
+                <th class="px-6 py-3 font-medium text-gray-500">Owner</th>
+              }
+              <th class="px-6 py-3 font-medium text-gray-500">Mode</th>
+              <th class="px-6 py-3 font-medium text-gray-500">Status</th>
+              <th class="px-6 py-3 font-medium text-gray-500">Link / Place</th>
+              <th class="px-6 py-3 font-medium text-gray-500 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (i of interviews; track i.id) {
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4">
+                  <span class="font-medium text-gray-800">{{ i.startAt | date:'short' }}</span>
+                  <span class="text-gray-400">→</span>
+                  <span class="text-gray-600">{{ i.endAt | date:'short' }}</span>
+                </td>
+                @if (isAdmin) {
+                  <td class="px-6 py-4">
+                    @if (i.projectId) {
+                      <a [routerLink]="['/admin/projects', i.projectId]" class="text-indigo-600 hover:underline">#{{ i.projectId }}</a>
+                    } @else { — }
+                  </td>
+                  <td class="px-6 py-4 text-gray-600">#{{ i.freelancerId }}</td>
+                  <td class="px-6 py-4 text-gray-600">#{{ i.ownerId }}</td>
+                }
+                <td class="px-6 py-4">
+                  <span class="text-gray-600">{{ modeLabel(i.mode) }}</span>
+                </td>
+                <td class="px-6 py-4">
+                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="statusClass(i.status)">
+                    {{ i.status }}
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  @if (i.mode === 'ONLINE') {
+                    @if (role === 'client') {
+                      <a [routerLink]="['/client/interviews', i.id, 'visio']"
+                        class="text-indigo-600 hover:underline text-xs">
+                        Join online
+                      </a>
+                    } @else if (role === 'freelancer') {
+                      <a [routerLink]="['/freelancer/interviews', i.id, 'visio']"
+                        class="text-indigo-600 hover:underline text-xs">
+                        Join online
+                      </a>
+                    } @else if (i.meetingUrl) {
+                      <a [href]="i.meetingUrl" target="_blank" rel="noopener"
+                        class="text-indigo-600 hover:underline text-xs">
+                        Meeting link
+                      </a>
+                    } @else {
+                      <span class="text-gray-400">—</span>
+                    }
+                  } @else if (i.mode === 'FACE_TO_FACE' && mapUrl(i)) {
+                    <a [href]="mapUrl(i)!" target="_blank" rel="noopener" class="text-indigo-600 hover:underline text-xs">Map</a>
+                  } @else {
+                    <span class="text-gray-400">—</span>
+                  }
+                </td>
+                <td class="px-6 py-4 text-right">
+                  @if (i.status === 'PROPOSED') {
+                    @if (role === 'freelancer') {
+                      <button (click)="confirm(i)"
+                        class="rounded border border-sky-300 px-2 py-1 text-xs text-sky-700 hover:bg-sky-50 mr-1">
+                        Confirm
+                      </button>
+                    } @else if (role === 'client') {
+                      <button (click)="cancel(i)"
+                        class="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50">
+                        Cancel
+                      </button>
+                    } @else {
+                      <!-- admin: can do both -->
+                      <button (click)="confirm(i)"
+                        class="rounded border border-sky-300 px-2 py-1 text-xs text-sky-700 hover:bg-sky-50 mr-1">
+                        Confirm
+                      </button>
+                      <button (click)="cancel(i)"
+                        class="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50">
+                        Cancel
+                      </button>
+                    }
+                  } @else if (i.status === 'CONFIRMED') {
+                    @if (role === 'freelancer') {
+                      <button (click)="complete(i)"
+                        class="rounded border border-emerald-300 px-2 py-1 text-xs text-emerald-700 hover:bg-emerald-50 mr-1">
+                        Done
+                      </button>
+                    } @else if (role === 'client') {
+                      <button (click)="cancel(i)"
+                        class="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50">
+                        Cancel
+                      </button>
+                    } @else {
+                      <!-- admin -->
+                      <button (click)="complete(i)"
+                        class="rounded border border-emerald-300 px-2 py-1 text-xs text-emerald-700 hover:bg-emerald-50 mr-1">
+                        Done
+                      </button>
+                      <button (click)="cancel(i)"
+                        class="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50">
+                        Cancel
+                      </button>
+                    }
+                  } @else {
+                    <span class="text-gray-400 text-xs">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    @if (page && page.totalPages > 1) {
+      <div class="mt-4 flex items-center justify-between">
+        <button (click)="prevPage()" [disabled]="pageIndex <= 0"
+          class="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+          Prev
+        </button>
+        <span class="text-sm text-gray-500">Page {{ page.number + 1 }} / {{ page.totalPages }}</span>
+        <button (click)="nextPage()" [disabled]="pageIndex + 1 >= page.totalPages"
+          class="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+          Next
+        </button>
+      </div>
+    }
+  }
+</div>

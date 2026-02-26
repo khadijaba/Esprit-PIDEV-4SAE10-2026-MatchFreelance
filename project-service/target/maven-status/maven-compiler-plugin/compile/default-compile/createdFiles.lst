@@ -1,0 +1,16 @@
+com\freelancing\project\enums\ProjectStatus.class
+com\freelancing\project\ProjectServiceApplication.class
+com\freelancing\project\dto\ProjectResponseDTO.class
+com\freelancing\project\client\ContractClient$ContractResponse.class
+com\freelancing\project\exception\GlobalExceptionHandler$ErrorResponse.class
+com\freelancing\project\controller\ProjectController.class
+com\freelancing\project\config\DataLoader.class
+com\freelancing\project\repository\ProjectSpecifications.class
+com\freelancing\project\client\ContractClient$1.class
+com\freelancing\project\exception\GlobalExceptionHandler.class
+com\freelancing\project\dto\ProjectRequestDTO.class
+com\freelancing\project\dto\ContractSummaryDTO.class
+com\freelancing\project\repository\ProjectRepository.class
+com\freelancing\project\client\ContractClient.class
+com\freelancing\project\entity\Project.class
+com\freelancing\project\service\ProjectService.class

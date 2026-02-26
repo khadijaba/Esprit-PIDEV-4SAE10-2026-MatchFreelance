@@ -1,0 +1,85 @@
+@if (loading) {
+  <div class="flex justify-center py-20">
+    <div class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+  </div>
+}
+
+@if (contract) {
+  <div class="mx-auto max-w-3xl space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-3">
+        <a routerLink="/admin/contracts" class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </a>
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800">Contract #{{ contract.id }}</h2>
+          <p class="text-sm text-gray-500">Project #{{ contract.projectId }}</p>
+        </div>
+      </div>
+      <button (click)="onDelete()" class="inline-flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
+        Delete
+      </button>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div class="grid grid-cols-1 divide-y divide-gray-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+        <div class="p-6">
+          <p class="text-sm font-medium text-gray-500">Status</p>
+          <span class="mt-2 inline-flex items-center rounded-full px-3 py-1 text-sm font-medium" [class]="statusClass(contract.status)">
+            {{ formatStatus(contract.status) }}
+          </span>
+        </div>
+        <div class="p-6">
+          <p class="text-sm font-medium text-gray-500">Freelancer</p>
+          <p class="mt-2 text-lg font-semibold text-gray-800">#{{ contract.freelancerId }}</p>
+        </div>
+        @if (contract.proposedBudget != null) {
+        <div class="p-6">
+          <p class="text-sm font-medium text-gray-500">Proposed Budget</p>
+          <p class="mt-2 text-xl font-bold text-emerald-600">{{ contract.proposedBudget | number:'1.0-0' }}$</p>
+        </div>
+        }
+        <div class="p-6">
+          <p class="text-sm font-medium text-gray-500">Client</p>
+          <p class="mt-2 text-lg font-semibold text-gray-800">#{{ contract.clientId }}</p>
+        </div>
+        <div class="p-6">
+          <p class="text-sm font-medium text-gray-500">Created</p>
+          <p class="mt-2 text-gray-800">{{ contract.createdAt | date:'medium' }}</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 divide-y divide-gray-100 border-t border-gray-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+        <div class="p-6">
+          <p class="text-sm font-medium text-gray-500">Start Date</p>
+          <p class="mt-2 text-gray-800">{{ contract.startDate | date:'mediumDate' }}</p>
+        </div>
+        <div class="p-6">
+          <p class="text-sm font-medium text-gray-500">End Date</p>
+          <p class="mt-2 text-gray-800">{{ contract.endDate | date:'mediumDate' }}</p>
+        </div>
+      </div>
+    </div>
+
+    @if (contract.applicationMessage) {
+      <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h3 class="mb-3 text-sm font-medium text-gray-500">Application Message</h3>
+        <p class="whitespace-pre-wrap text-gray-700">{{ contract.applicationMessage }}</p>
+      </div>
+    }
+    @if (contract.terms) {
+      <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h3 class="mb-3 text-sm font-medium text-gray-500">Terms</h3>
+        <p class="whitespace-pre-wrap text-gray-700">{{ contract.terms }}</p>
+      </div>
+    }
+
+    <a [routerLink]="['/admin/projects', contract.projectId]" class="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800">
+      View project
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+      </svg>
+    </a>
+  </div>
+}

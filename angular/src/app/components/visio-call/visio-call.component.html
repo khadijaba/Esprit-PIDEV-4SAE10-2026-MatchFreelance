@@ -1,0 +1,23 @@
+<div class="mx-auto flex h-full max-w-5xl flex-col gap-4 p-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-lg font-semibold text-slate-900">Online interview</h1>
+    <a routerLink="../" class="text-xs font-medium text-slate-600 hover:text-slate-900">Back to interviews</a>
+  </div>
+
+  @if (loading) {
+    <div class="flex flex-1 items-center justify-center">
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-teal-200 border-t-teal-600"></div>
+    </div>
+  } @else if (!safeUrl) {
+    <p class="text-sm text-red-600">Could not open the online meeting.</p>
+  } @else {
+    <div class="flex-1 rounded-xl border border-slate-200 bg-black/90 shadow-lg">
+      <iframe
+        [src]="safeUrl"
+        class="h-[80vh] w-full rounded-xl border-0"
+        allow="camera; microphone; fullscreen; display-capture"
+      ></iframe>
+    </div>
+  }
+</div>
+

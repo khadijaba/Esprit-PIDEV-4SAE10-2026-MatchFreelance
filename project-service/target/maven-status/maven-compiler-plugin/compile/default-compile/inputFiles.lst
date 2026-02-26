@@ -1,0 +1,13 @@
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\repository\ProjectRepository.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\dto\ContractSummaryDTO.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\service\ProjectService.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\controller\ProjectController.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\dto\ProjectRequestDTO.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\entity\Project.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\exception\GlobalExceptionHandler.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\client\ContractClient.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\dto\ProjectResponseDTO.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\enums\ProjectStatus.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\repository\ProjectSpecifications.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\ProjectServiceApplication.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\project-service\src\main\java\com\freelancing\project\config\DataLoader.java

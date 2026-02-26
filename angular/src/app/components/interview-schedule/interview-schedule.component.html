@@ -1,0 +1,247 @@
+<div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
+  <div class="mb-3 flex items-center justify-between">
+    <h4 class="text-xs font-medium text-slate-600">Interviews</h4>
+    @if (!showForm) {
+      <button (click)="openForm()"
+        class="rounded-md bg-teal-600 px-2 py-1 text-xs font-medium text-white hover:bg-teal-700">
+        Schedule
+      </button>
+    }
+  </div>
+
+  @if (showForm) {
+    <div class="mb-3 space-y-3 rounded-md border border-slate-200 bg-white p-3">
+      <div class="space-y-2">
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600">Date</label>
+            <input type="date" [(ngModel)]="selectedDate" (ngModelChange)="loadSlots()"
+              class="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600">Start time</label>
+            <input type="time" [(ngModel)]="startTime"
+              class="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600">Duration</label>
+            <select [(ngModel)]="durationMinutes"
+              class="w-full rounded border border-slate-300 px-2 py-1.5 text-sm">
+              @for (d of durationOptions; track d) {
+                <option [ngValue]="d">{{ d }} min</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-600">Freelancer availability for this date</label>
+          @if (slotsLoading) {
+            <div class="flex items-center gap-2 text-xs text-slate-500">
+              <div class="h-3 w-3 animate-spin rounded-full border-2 border-teal-200 border-t-teal-600"></div>
+              Loading slots...
+            </div>
+          } @else if (daySlots.length === 0) {
+            <p class="text-xs text-slate-500">No available slots found for this freelancer on this date.</p>
+          } @else {
+            <ul class="flex flex-wrap gap-2 text-xs text-slate-600">
+              @for (s of daySlots; track s.id) {
+                <li class="rounded-full border border-teal-200 px-2 py-0.5 bg-teal-50">
+                  {{ s.startAt | date:'shortTime' }} → {{ s.endAt | date:'shortTime' }}
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <button type="button" (click)="toggleAllAvailability()"
+          class="mt-1 rounded border border-slate-300 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100">
+          {{ showAllAvailability ? 'Hide full availability' : 'Show full availability' }}
+        </button>
+
+        @if (showAllAvailability) {
+          <div class="mt-1 max-h-40 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600">
+            @if (allSlots.length === 0) {
+              <p>No free slots found for this freelancer.</p>
+            } @else {
+              <ul class="space-y-1">
+                @for (s of allSlots; track s.id) {
+                  <li>
+                    {{ s.startAt | date:'yyyy-MM-dd' }}:
+                    {{ s.startAt | date:'shortTime' }} → {{ s.endAt | date:'shortTime' }}
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-600">Meeting mode</label>
+          <select [(ngModel)]="formModel.mode" class="w-full rounded border border-slate-300 px-2 py-1.5 text-sm">
+            <option [ngValue]="'ONLINE'">Online</option>
+            <option [ngValue]="'FACE_TO_FACE'">Face to face</option>
+          </select>
+        </div>
+
+        @if (formModel.mode === 'ONLINE') {
+          <div class="space-y-1">
+            <label class="inline-flex items-center gap-2 text-xs text-slate-600">
+              <input type="checkbox" [(ngModel)]="useExternalMeeting" />
+              <span>Use external meeting link (e.g. Google Meet)</span>
+            </label>
+            @if (useExternalMeeting) {
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600">Meeting URL</label>
+                <input type="url" [(ngModel)]="formModel.meetingUrl" placeholder="https://meet…"
+                  class="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      @if (formModel.mode === 'FACE_TO_FACE') {
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600">State (Gouvernorat)</label>
+            <select [(ngModel)]="selectedState" (ngModelChange)="selectedDelegation = ''"
+              class="w-full rounded border border-slate-300 px-2 py-1.5 text-sm">
+              <option [ngValue]="''">Select a state…</option>
+              @for (s of tunisStates; track s.name) {
+                <option [ngValue]="s.name">{{ s.name }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600">Delegation</label>
+            <select [(ngModel)]="selectedDelegation"
+              class="w-full rounded border border-slate-300 px-2 py-1.5 text-sm">
+              <option [ngValue]="''">Select a delegation…</option>
+              @for (s of tunisStates; track s.name) {
+                @if (s.name === selectedState) {
+                  @for (d of s.delegations; track d) {
+                    <option [ngValue]="d">{{ d }}</option>
+                  }
+                }
+              }
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="mb-1 block text-xs font-medium text-slate-600">Street + number (optional)</label>
+            <input type="text" [(ngModel)]="streetLine" placeholder="Street + number"
+              class="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600">Lat (optional)</label>
+              <input type="number" [(ngModel)]="formModel.lat" class="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600">Lng (optional)</label>
+              <input type="number" [(ngModel)]="formModel.lng" class="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+            </div>
+          </div>
+        </div>
+      }
+
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-600">Notes (optional)</label>
+        <textarea [(ngModel)]="formModel.notes" placeholder="Notes…" rows="2"
+          class="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"></textarea>
+      </div>
+
+      <div class="flex gap-2">
+        <button (click)="scheduleInterview()"
+          class="rounded bg-teal-600 px-2 py-1 text-xs text-white hover:bg-teal-700">
+          Create
+        </button>
+        <button (click)="closeForm()"
+          class="rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100">
+          Cancel
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (loading) {
+    <div class="flex justify-center py-4">
+      <div class="h-4 w-4 animate-spin rounded-full border-2 border-teal-200 border-t-teal-600"></div>
+    </div>
+  } @else if (interviews.length === 0) {
+    <p class="text-xs text-slate-500">No interviews yet.</p>
+  } @else {
+    <div class="space-y-2">
+      @for (i of interviews; track i.id) {
+        <div class="rounded border border-slate-200 bg-white px-3 py-2">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-sm font-medium text-slate-800">
+                {{ i.startAt | date:'short' }} → {{ i.endAt | date:'short' }}
+              </p>
+              <div class="mt-1 flex flex-wrap items-center gap-2">
+                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium" [class]="statusClass(i.status)">
+                  {{ i.status.replace('_', ' ') }}
+                </span>
+                <span class="text-xs text-slate-500">{{ modeLabel(i.mode) }}</span>
+              </div>
+
+              @if (i.mode === 'ONLINE') {
+                <a [routerLink]="['/client/interviews', i.id, 'visio']"
+                  class="mt-1 block text-xs font-medium text-teal-700 hover:underline">
+                  Join online
+                </a>
+              }
+
+              @if (i.mode === 'FACE_TO_FACE') {
+                <p class="mt-1 text-xs text-slate-600">
+                  {{ i.addressLine }}@if (i.city) { , {{ i.city }} }
+                </p>
+                @if (mapUrl(i)) {
+                  <a [href]="mapUrl(i)!" target="_blank" rel="noopener"
+                    class="mt-1 block text-xs font-medium text-teal-700 hover:underline">
+                    Open in Maps
+                  </a>
+                }
+              }
+
+              @if (i.notes) {
+                <p class="mt-1 text-xs text-slate-500">{{ i.notes }}</p>
+              }
+            </div>
+
+            <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+              @if (i.status === 'PROPOSED' || i.status === 'CONFIRMED') {
+                <!-- From client project detail: owner can only cancel / remove -->
+                <button (click)="cancel(i)"
+                  class="rounded border border-red-300 px-1.5 py-0.5 text-xs text-red-600 hover:bg-red-50">
+                  Cancel
+                </button>
+              }
+              <button (click)="deleteInterview(i)"
+                class="rounded border border-slate-300 px-1.5 py-0.5 text-xs text-slate-600 hover:bg-slate-100">
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (interviewsPage && interviewsPage.totalPages > 1) {
+      <div class="mt-3 flex items-center justify-between">
+        <button (click)="interviewPage = interviewPage - 1; loadInterviews()" [disabled]="interviewPage <= 0"
+          class="rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 disabled:opacity-50">
+          Prev
+        </button>
+        <span class="text-xs text-slate-500">Page {{ (interviewsPage.number ?? 0) + 1 }} / {{ interviewsPage.totalPages }}</span>
+        <button (click)="interviewPage = interviewPage + 1; loadInterviews()" [disabled]="interviewPage + 1 >= interviewsPage.totalPages"
+          class="rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 disabled:opacity-50">
+          Next
+        </button>
+      </div>
+    }
+  }
+</div>

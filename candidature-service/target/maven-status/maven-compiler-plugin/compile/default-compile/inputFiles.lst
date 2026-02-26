@@ -1,0 +1,12 @@
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\candidature-service\src\main\java\com\freelancing\candidature\repository\CandidatureRepository.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\candidature-service\src\main\java\com\freelancing\candidature\exception\GlobalExceptionHandler.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\candidature-service\src\main\java\com\freelancing\candidature\service\CandidatureService.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\candidature-service\src\main\java\com\freelancing\candidature\entity\Candidature.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\candidature-service\src\main\java\com\freelancing\candidature\CandidatureServiceApplication.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\candidature-service\src\main\java\com\freelancing\candidature\dto\CandidatureRequestDTO.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\candidature-service\src\main\java\com\freelancing\candidature\dto\CandidatureResponseDTO.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\candidature-service\src\main\java\com\freelancing\candidature\client\ContractClient.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\candidature-service\src\main\java\com\freelancing\candidature\client\ProjectClient.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\candidature-service\src\main\java\com\freelancing\candidature\enums\CandidatureStatus.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\candidature-service\src\main\java\com\freelancing\candidature\repository\CandidatureSpecifications.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\candidature-service\src\main\java\com\freelancing\candidature\controller\CandidatureController.java

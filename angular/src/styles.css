@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+/* Swipe-out animations for candidature cards */
+@keyframes swipe-out-right {
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+@keyframes swipe-out-left {
+  to {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+}
+.swipe-out-accept {
+  animation: swipe-out-right 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.swipe-out-reject {
+  animation: swipe-out-left 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
