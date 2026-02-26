@@ -1,0 +1,130 @@
+<div class="mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8">
+  <a [routerLink]="['/formations', formationId]" class="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-teal-600">
+    ← Retour à la formation
+  </a>
+
+  @if (loading) {
+    <div class="flex justify-center py-20">
+      <div class="h-10 w-10 animate-spin rounded-full border-4 border-teal-200 border-t-teal-600"></div>
+    </div>
+  }
+
+  @if (!loading && examen && !resultat) {
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-xl overflow-hidden">
+      <div class="border-b border-slate-100 bg-teal-50/50 px-6 py-6">
+        <h1 class="text-2xl font-bold text-slate-900">{{ examen.titre }}</h1>
+        @if (examen.description) {
+          <p class="mt-2 text-sm text-slate-600">{{ examen.description }}</p>
+        }
+        <p class="mt-2 text-sm text-slate-500">Seuil pour réussir : {{ examen.seuilReussi }} %</p>
+      </div>
+
+      <div class="px-6 py-6">
+        @if (isFreelancerConnected) {
+          <p class="mb-4 rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-800">
+            Connecté en tant que Freelancer (ID : {{ connectedFreelancerId }})
+          </p>
+        }
+        <label class="mb-4 block text-sm font-medium text-slate-700">Votre ID Freelancer</label>
+        <input
+          type="number"
+          min="1"
+          [value]="freelancerIdInput"
+          (input)="freelancerIdInput = $any($event.target).value"
+          placeholder="Ex. 1"
+          class="mb-6 w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500" />
+      </div>
+
+      <form (ngSubmit)="submit()" class="border-t border-slate-100 px-6 py-6">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4">Questions</h2>
+        @for (q of examen.questions; track trackByIndex($index)) {
+          <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+            <p class="font-medium text-slate-800">{{ $index + 1 }}. {{ q.enonce }}</p>
+            <div class="mt-3 space-y-2">
+              @if (q.optionA) {
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" [name]="'q' + $index" value="A" [(ngModel)]="reponses[$index]" class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
+                  <span class="text-sm text-slate-700">A. {{ q.optionA }}</span>
+                </label>
+              }
+              @if (q.optionB) {
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" [name]="'q' + $index" value="B" [(ngModel)]="reponses[$index]" class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
+                  <span class="text-sm text-slate-700">B. {{ q.optionB }}</span>
+                </label>
+              }
+              @if (q.optionC) {
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" [name]="'q' + $index" value="C" [(ngModel)]="reponses[$index]" class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
+                  <span class="text-sm text-slate-700">C. {{ q.optionC }}</span>
+                </label>
+              }
+              @if (q.optionD) {
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" [name]="'q' + $index" value="D" [(ngModel)]="reponses[$index]" class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
+                  <span class="text-sm text-slate-700">D. {{ q.optionD }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        }
+        <div class="flex gap-3 pt-4">
+          <button
+            type="submit"
+            [disabled]="!canSubmit() || submitting"
+            class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            @if (submitting) {
+              <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+            } @else {
+              Envoyer mes réponses
+            }
+          </button>
+          <a [routerLink]="['/formations', formationId]" class="rounded-xl border border-slate-300 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            Annuler
+          </a>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (!loading && resultat) {
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-xl p-8 text-center">
+      <h2 class="text-2xl font-bold text-slate-900">Résultat de l'examen</h2>
+      <p class="mt-4 text-4xl font-bold" [class.text-emerald-600]="resultat.resultat === 'REUSSI'" [class.text-red-600]="resultat.resultat === 'ECHOUE'">
+        {{ resultat.resultat === 'REUSSI' ? 'Réussi' : 'Échoué' }}
+      </p>
+      <p class="mt-2 text-lg text-slate-600">Score : {{ resultat.score }} %</p>
+
+      @if (resultat.resultat === 'REUSSI') {
+        @if (certificatLoading) {
+          <p class="mt-6 text-sm text-slate-500">Génération du certificat…</p>
+        }
+        @if (certificat && !certificatLoading) {
+          <div class="mt-6 rounded-xl border-2 border-amber-200 bg-amber-50/80 p-6 text-left max-w-md mx-auto">
+            <p class="text-sm font-semibold text-amber-800">Certificat délivré</p>
+            <p class="mt-1 text-lg font-bold text-slate-900">{{ certificat.examenTitre }}</p>
+            <p class="mt-1 text-sm text-slate-600">N° {{ certificat.numeroCertificat }}</p>
+            <p class="mt-1 text-sm text-slate-500">Score : {{ certificat.score }} % — {{ certificat.dateDelivrance | date:'dd/MM/yyyy' }}</p>
+            <div class="mt-4 flex flex-wrap gap-3">
+              <button type="button" (click)="goToCertificatView()" class="inline-block rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">
+                Voir le certificat
+              </button>
+              <button type="button" (click)="openCertificatPdf()" class="inline-block rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+                Voir en PDF
+              </button>
+            </div>
+          </div>
+        }
+      }
+
+      <div class="mt-8 flex justify-center gap-4">
+        <a [routerLink]="['/formations', formationId]" class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white hover:bg-teal-700">
+          Retour à la formation
+        </a>
+        <a routerLink="/formations" class="rounded-xl border border-slate-300 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+          Liste des formations
+        </a>
+      </div>
+    </div>
+  }
+</div>

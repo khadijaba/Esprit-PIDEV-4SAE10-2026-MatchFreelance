@@ -1,0 +1,179 @@
+<div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+  <a routerLink="/formations" class="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-teal-600">
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    Retour aux formations
+  </a>
+
+  @if (loading) {
+    <div class="flex justify-center py-20">
+      <div class="h-10 w-10 animate-spin rounded-full border-4 border-teal-200 border-t-teal-600"></div>
+    </div>
+  }
+
+  @if (!loading && formation) {
+    <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+      <div class="border-b border-slate-100 bg-gradient-to-br from-amber-50/50 to-white px-6 py-8 sm:px-8">
+        @if (formation.typeFormation) {
+          <p class="text-sm font-medium text-teal-600">{{ typeFormationLabel(formation.typeFormation) }}</p>
+        }
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <h1 class="text-2xl font-bold text-slate-900 sm:text-3xl">{{ formation.titre }}</h1>
+          <div class="flex flex-wrap items-center gap-2">
+            @if (examens.length > 0) {
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-sm font-semibold text-amber-800" title="Formation avec examen et certificat">
+                <span aria-hidden="true">🏆</span> Certifiante
+              </span>
+            }
+            <span
+              class="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold"
+              [class]="statutClass(formation.statut)">
+              {{ formation.statut }}
+            </span>
+          </div>
+        </div>
+      </div>
+      @if (formation.description) {
+        <div class="border-b border-slate-100 px-6 py-8 sm:px-8">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400">Contenu</h2>
+          <div class="mt-3 whitespace-pre-wrap leading-relaxed text-slate-700">{{ formation.description }}</div>
+        </div>
+      }
+      <dl class="grid grid-cols-1 gap-6 px-6 py-8 sm:grid-cols-2 sm:px-8">
+        <div class="rounded-xl bg-slate-50 p-4">
+          <dt class="text-sm font-medium text-slate-500">Durée</dt>
+          <dd class="mt-1 text-lg font-bold text-slate-900">{{ formation.dureeHeures }} heures</dd>
+        </div>
+        <div class="rounded-xl bg-slate-50 p-4">
+          <dt class="text-sm font-medium text-slate-500">Dates</dt>
+          <dd class="mt-1 text-lg font-bold text-slate-900">{{ formation.dateDebut }} → {{ formation.dateFin }}</dd>
+        </div>
+        @if (formation.capaciteMax != null) {
+          <div class="rounded-xl bg-slate-50 p-4 sm:col-span-2">
+            <dt class="text-sm font-medium text-slate-500">Places disponibles</dt>
+            <dd class="mt-1 text-lg font-bold text-slate-900">{{ formation.capaciteMax }}</dd>
+          </div>
+        }
+      </dl>
+
+      <!-- Inscription freelancer - explication claire -->
+      <div class="border-t border-slate-200 bg-teal-50/30 px-6 py-6 sm:px-8">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500">S'inscrire en tant que freelancer</h3>
+
+        @if (formation.examenRequisId != null) {
+          <p class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+            Accès réservé aux personnes ayant le certificat : {{ examenRequisTitre ?? ('examen #' + formation.examenRequisId) }}.
+          </p>
+        }
+
+        <div class="mt-3 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-700">
+          <p class="font-medium text-slate-800">Comment ça marche ?</p>
+          <ul class="mt-2 list-inside list-disc space-y-1 text-slate-600">
+            <li><strong>Étape 1 :</strong> Entrez votre numéro de freelancer (ID). En démo, utilisez par exemple <strong>1</strong>.</li>
+            <li><strong>Étape 2 :</strong> Cliquez sur « S'inscrire à cette formation ».</li>
+            <li>Votre inscription sera en <strong>En attente</strong> jusqu’à validation par l’admin (dashboard).</li>
+            <li>« Enregistrer mon profil » mémorise votre ID dans le navigateur pour les prochaines visites (optionnel).</li>
+          </ul>
+        </div>
+        @if (authServiceForTemplate.getStoredUser()?.role === 'FREELANCER') {
+          <p class="mt-3 rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-800">
+            Connecté en tant que Freelancer (ID : {{ authServiceForTemplate.getStoredUser()?.userId }})
+          </p>
+        }
+
+        @if (formation.statut !== 'OUVERTE') {
+          <p class="mt-4 text-sm text-amber-700">Les inscriptions sont closes pour cette formation (statut : {{ formation.statut }}).</p>
+        } @else {
+          <div class="mt-4 flex flex-wrap items-end gap-3">
+            <div>
+              <label for="freelancerId" class="mb-1 block text-sm font-medium text-slate-700">Votre ID Freelancer</label>
+              <input
+                id="freelancerId"
+                type="number"
+                min="1"
+                [value]="freelancerIdInput"
+                (input)="freelancerIdInput = $any($event.target).value"
+                placeholder="Ex. 1"
+                class="rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              />
+            </div>
+            <button
+              type="button"
+              (click)="saveFreelancerId()"
+              class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+            >
+              Enregistrer mon profil (optionnel)
+            </button>
+          </div>
+
+          @if (myInscription) {
+            <div class="mt-4 flex flex-wrap items-center gap-3">
+              <span
+                class="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold"
+                [class]="statutInscriptionClass(myInscription.statut)">
+                Votre inscription : {{ myInscription.statut }}
+              </span>
+              @if (myInscription.statut === 'EN_ATTENTE' || myInscription.statut === 'VALIDEE') {
+                <button
+                  type="button"
+                  (click)="annulerInscription()"
+                  class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                >
+                  Annuler mon inscription
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="mt-4">
+              <button
+                type="button"
+                (click)="inscrire()"
+                [disabled]="inscriptionSaving || !currentFreelancerId"
+                class="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-600/25 transition hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                @if (inscriptionSaving) {
+                  <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                }
+                S'inscrire à cette formation
+              </button>
+              @if (!currentFreelancerId) {
+                <p class="mt-2 text-xs text-slate-500">Entrez d’abord votre ID Freelancer ci-dessus.</p>
+              }
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Examen (évaluation) - toujours visible pour voir l'entité -->
+      <div class="border-t border-slate-200 bg-amber-50/30 px-6 py-6 sm:px-8">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500">Examen (évaluation)</h3>
+        <p class="mt-1 text-sm text-slate-600">Passez l'examen pour valider cette formation et obtenir un résultat (réussi / échoué).</p>
+        @if (examensLoading) {
+          <p class="mt-4 text-sm text-slate-500">Chargement des examens...</p>
+        } @else if (examens.length > 0) {
+          <div class="mt-4 flex flex-wrap gap-3">
+            @for (e of examens; track e.id) {
+              <a [routerLink]="['/formations', formation.id, 'examen', e.id]"
+                class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition hover:bg-amber-600">
+                Passer l'examen : {{ e.titre }}
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+              </a>
+            }
+          </div>
+        } @else {
+          <p class="mt-4 rounded-lg border border-amber-200 bg-white p-4 text-sm text-slate-600">
+            <strong>Aucun examen</strong> pour cette formation pour le moment. Les examens sont créés dans l'espace admin (Dashboard → Examens → Nouvel examen).
+          </p>
+        }
+      </div>
+
+      <div class="border-t border-slate-100 bg-slate-50/50 px-6 py-6 sm:px-8">
+        <a routerLink="/formations" class="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-600/25 transition hover:bg-teal-700">
+          Voir les autres formations
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+        </a>
+      </div>
+    </article>
+  }
+</div>

@@ -1,0 +1,13 @@
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\SkillApplication.java
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\Repositories\SkillRepository.java
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\Service\ParcoursIntelligentService.java
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\Contollers\SkillController.java
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\dto\ParcoursIntelligentResponse.java
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\entities\SkillCategory.java
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\Service\SkillService.java
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\config\RestTemplateConfig.java
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\Contollers\ParcoursIntelligentController.java
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\entities\Skill.java
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\Service\SkillServiceImpl.java
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\exception\GlobalExceptionHandler.java
+C:\Users\benay\Downloads\validation\backend\microservices\Skill\src\main\java\esprit\skill\dto\FormationDto.java
