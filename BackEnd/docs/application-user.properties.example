@@ -1,0 +1,12 @@
+# Exemple pour le microservice User (copier dans Microservices/User/src/main/resources/application.properties)
+# Même Eureka que toute l'équipe
+spring.application.name=USER
+server.port=8085
+
+eureka.client.service-url.defaultZone=${EUREKA_URL:http://localhost:8761/eureka/}
+eureka.instance.prefer-ip-address=true
+
+# DB, etc.
+# spring.datasource.url=...
+# spring.datasource.username=...
+# spring.datasource.password=...

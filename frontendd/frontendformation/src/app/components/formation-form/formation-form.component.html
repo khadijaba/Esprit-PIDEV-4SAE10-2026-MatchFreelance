@@ -1,0 +1,151 @@
+<div class="mx-auto max-w-2xl space-y-6">
+  <div class="flex items-center gap-3">
+    <a routerLink="/admin/formations" class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    </a>
+    <h2 class="text-2xl font-bold text-gray-800">{{ isEdit ? 'Modifier la formation' : 'Nouvelle formation' }}</h2>
+  </div>
+
+  @if (error) {
+    <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ error }}</div>
+  }
+
+  <form (ngSubmit)="onSubmit()" #f="ngForm" class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-5">
+    <div>
+      <label for="titre" class="mb-1.5 block text-sm font-medium text-gray-700">Titre *</label>
+      <input
+        id="titre"
+        type="text"
+        [(ngModel)]="form.titre"
+        name="titre"
+        required
+        minlength="2"
+        maxlength="255"
+        #titreInput="ngModel"
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        placeholder="ex. Spring Boot avancé" />
+      @if (titreInput.invalid && titreInput.touched) {
+        <p class="mt-1 text-xs text-red-500">Titre requis (2–255 caractères)</p>
+      }
+    </div>
+
+    <div>
+      <label for="typeFormation" class="mb-1.5 block text-sm font-medium text-gray-700">Domaine / Type *</label>
+      <select
+        id="typeFormation"
+        [(ngModel)]="form.typeFormation"
+        name="typeFormation"
+        required
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        @for (t of typeFormations; track t.value) {
+          <option [value]="t.value">{{ t.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label for="description" class="mb-1.5 block text-sm font-medium text-gray-700">Description</label>
+      <textarea
+        id="description"
+        [(ngModel)]="form.description"
+        name="description"
+        maxlength="2000"
+        rows="4"
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        placeholder="Contenu, objectifs..."></textarea>
+    </div>
+
+    <div>
+      <label for="dureeHeures" class="mb-1.5 block text-sm font-medium text-gray-700">Durée (heures) *</label>
+      <input
+        id="dureeHeures"
+        type="number"
+        [(ngModel)]="form.dureeHeures"
+        name="dureeHeures"
+        required
+        min="1"
+        #dureeInput="ngModel"
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        placeholder="16" />
+      @if (dureeInput.invalid && dureeInput.touched) {
+        <p class="mt-1 text-xs text-red-500">Durée positive requise</p>
+      }
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div>
+        <label for="dateDebut" class="mb-1.5 block text-sm font-medium text-gray-700">Date début *</label>
+        <input
+          id="dateDebut"
+          type="date"
+          [(ngModel)]="form.dateDebut"
+          name="dateDebut"
+          required
+          #dateDebutInput="ngModel"
+          class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+        @if (dateDebutInput.invalid && dateDebutInput.touched) {
+          <p class="mt-1 text-xs text-red-500">Date requise</p>
+        }
+      </div>
+      <div>
+        <label for="dateFin" class="mb-1.5 block text-sm font-medium text-gray-700">Date fin *</label>
+        <input
+          id="dateFin"
+          type="date"
+          [(ngModel)]="form.dateFin"
+          name="dateFin"
+          required
+          #dateFinInput="ngModel"
+          class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+        @if (dateFinInput.invalid && dateFinInput.touched) {
+          <p class="mt-1 text-xs text-red-500">Date requise</p>
+        }
+      </div>
+    </div>
+
+    <div>
+      <label for="capaciteMax" class="mb-1.5 block text-sm font-medium text-gray-700">Capacité max</label>
+      <input
+        id="capaciteMax"
+        type="number"
+        [(ngModel)]="form.capaciteMax"
+        name="capaciteMax"
+        min="1"
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        placeholder="20" />
+    </div>
+
+    <div>
+      <label for="statut" class="mb-1.5 block text-sm font-medium text-gray-700">Statut</label>
+      <select
+        id="statut"
+        [(ngModel)]="form.statut"
+        name="statut"
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        @for (s of statuts; track s.value) {
+          <option [value]="s.value">{{ s.label }}</option>
+        }
+      </select>
+      <p class="mt-1 text-xs text-gray-500">Statut « Ouverte » = visible sur la page Formations du site public.</p>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 border-t border-gray-100 pt-5">
+      <a
+        routerLink="/admin/formations"
+        class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+        Annuler
+      </a>
+      <button
+        type="submit"
+        [disabled]="f.invalid || saving"
+        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700 disabled:opacity-50 transition">
+        @if (saving) {
+          <div class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
+        }
+        {{ isEdit ? 'Enregistrer' : 'Créer la formation' }}
+      </button>
+    </div>
+  </form>
+</div>

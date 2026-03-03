@@ -1,0 +1,69 @@
+package tn.esprit.formation.entity;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.*;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Entité Formation - Session de formation pour les freelancers (Project Matching Platform).
+ */
+@Entity
+@Table(name = "formation")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Formation {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank(message = "Le titre est obligatoire")
+    @Column(nullable = false)
+    private String titre;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_formation")
+    @Builder.Default
+    private TypeFormation typeFormation = TypeFormation.WEB_DEVELOPMENT;
+
+    @Column(length = 2000)
+    private String description;
+
+    @NotNull
+    @Positive
+    private Integer dureeHeures;
+
+    @NotNull
+    private LocalDate dateDebut;
+
+    @NotNull
+    private LocalDate dateFin;
+
+    @Positive
+    private Integer capaciteMax;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private StatutFormation statut = StatutFormation.OUVERTE;
+
+    @OneToMany(mappedBy = "formation", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Inscription> inscriptions = new ArrayList<>();
+
+    public enum StatutFormation {
+        OUVERTE,
+        EN_COURS,
+        TERMINEE,
+        ANNULEE
+    }
+}
