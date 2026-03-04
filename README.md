@@ -23,7 +23,7 @@ Full-stack web application with REST API architecture connecting Angular fronten
 
 ## Contributors
 - EmnaDorai
-- Hhadija Ben Ayed
+- Khadija Ben Ayed
 - Ahmed Bel Haj Dahmen
 - Aziz Ben Fedhila
 - Med Amine Bejaoui
