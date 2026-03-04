@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* Swipe-out animations for candidature cards */
+@keyframes swipe-out-right {
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+@keyframes swipe-out-left {
+  to {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+}
+.swipe-out-accept {
+  animation: swipe-out-right 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.swipe-out-reject {
+  animation: swipe-out-left 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Swipe stack for Tinder-like candidature review */
+.swipe-stack-container {
+  position: relative;
+  min-height: 380px;
+}
+
+.swipe-stack {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  min-height: 380px;
+}
+
+.swipe-stack-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
+.swipe-stack-card-back {
+  transform: scale(0.95) translateY(8px);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.swipe-stack-card-top {
+  transform: none;
+}

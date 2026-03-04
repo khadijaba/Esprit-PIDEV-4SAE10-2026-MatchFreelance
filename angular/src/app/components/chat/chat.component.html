@@ -1,0 +1,58 @@
+<div class="chat-container">
+  <div class="chat-header">
+    <span class="chat-header-title">Chat with {{ otherPartyLabel }}</span>
+  </div>
+
+  @if (loading) {
+    <div class="chat-loading">
+      <div class="h-6 w-6 animate-spin rounded-full border-2 border-teal-200 border-t-teal-600"></div>
+      <span class="text-sm text-slate-500">Loading messages...</span>
+    </div>
+  } @else {
+    <div class="chat-messages" #messagesContainer>
+      @if (messages.length === 0) {
+        <div class="chat-empty">
+          <p class="text-sm text-slate-500">No messages yet. Start the conversation!</p>
+        </div>
+      } @else {
+        @for (msg of messages; track msg.id) {
+          <div
+            class="chat-message"
+            [class.chat-message-me]="isFromMe(msg)"
+            [class.chat-message-other]="!isFromMe(msg)"
+          >
+            <div class="chat-message-bubble">
+              <p class="chat-message-content">{{ msg.content }}</p>
+              <span class="chat-message-time">{{ msg.createdAt | date:'short' }}</span>
+            </div>
+          </div>
+        }
+      }
+    </div>
+
+    <div class="chat-input-area">
+      <input
+        type="text"
+        [(ngModel)]="newMessage"
+        (keydown.enter)="send()"
+        placeholder="Type a message..."
+        class="chat-input"
+        [disabled]="sending"
+      />
+      <button
+        type="button"
+        (click)="send()"
+        [disabled]="!newMessage.trim() || sending"
+        class="chat-send-btn"
+      >
+        @if (sending) {
+          <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+        } @else {
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        }
+      </button>
+    </div>
+  }
+</div>

@@ -1,0 +1,89 @@
+<div class="flex h-screen bg-gray-50">
+  <!-- Mobile overlay -->
+  @if (sidebarOpen) {
+    <div
+      (click)="toggleSidebar()"
+      class="fixed inset-0 z-20 bg-black/50 lg:hidden"
+      aria-hidden="true"
+    ></div>
+  }
+  <!-- Sidebar -->
+  <aside
+    class="fixed inset-y-0 left-0 z-30 flex w-64 flex-col bg-slate-900 text-white shadow-xl transition-transform duration-300 lg:shadow-none"
+    [class.-translate-x-full]="!sidebarOpen"
+  >
+    <!-- Logo -->
+    <div class="flex h-16 items-center gap-2 border-b border-slate-700 px-6">
+      <svg class="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+      </svg>
+      <span class="text-lg font-bold tracking-tight">FreelanceHub</span>
+    </div>
+
+    <!-- Nav (admin area under /admin) -->
+    <nav class="mt-6 flex-1 space-y-1 px-3">
+      <a routerLink="dashboard" routerLinkActive="bg-indigo-600/30 text-indigo-300"
+        class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" />
+        </svg>
+        Dashboard
+      </a>
+      <a routerLink="projects" routerLinkActive="bg-indigo-600/30 text-indigo-300"
+        class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        Projects
+      </a>
+      <a routerLink="projects/new" routerLinkActive="bg-indigo-600/30 text-indigo-300" [routerLinkActiveOptions]="{exact:true}"
+        class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        New Project
+      </a>
+      <a routerLink="candidatures" routerLinkActive="bg-indigo-600/30 text-indigo-300"
+        class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Candidatures
+      </a>
+      <a routerLink="contracts" routerLinkActive="bg-indigo-600/30 text-indigo-300"
+        class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Contracts & Chat
+      </a>
+    </nav>
+
+    <!-- Footer -->
+    <div class="border-t border-slate-700 px-6 py-4">
+      <p class="text-xs text-slate-400">Freelancing Backoffice v1.0</p>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="flex min-w-0 flex-1 flex-col transition-all duration-300" [class.lg:ml-64]="sidebarOpen">
+    <!-- Top bar -->
+    <header class="flex h-16 items-center gap-4 border-b border-gray-200 bg-white px-6 shadow-sm">
+      <button (click)="toggleSidebar()" class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+      <h1 class="text-lg font-semibold text-gray-800">Freelancing Platform — Back Office</h1>
+    </header>
+
+    <!-- Page content -->
+    <main class="flex-1 overflow-y-auto p-6">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
