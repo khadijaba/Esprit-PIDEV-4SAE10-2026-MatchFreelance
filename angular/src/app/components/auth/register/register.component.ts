@@ -31,17 +31,18 @@ export class RegisterComponent implements OnInit {
         private toastService: ToastService
     ) { }
 
-    ngOnInit() {
-        this.registerForm = this.fb.group({
-            firstName: ['', [Validators.required, Validators.minLength(2)]],
-            lastName: ['', [Validators.required, Validators.minLength(2)]],
-            address: ['', [Validators.required]],
-            email: ['', [Validators.required, Validators.email]],
-            password: ['', [Validators.required, Validators.minLength(6)]],
-            birthDate: ['', [Validators.required]],
-            role: [Role.FREELANCER, [Validators.required]]
-        });
-    }
+  ngOnInit() {
+    this.registerForm = this.fb.group({
+      firstName: ['', [Validators.required, Validators.minLength(2)]],
+      lastName: ['', [Validators.required, Validators.minLength(2)]],
+      address: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]],  // ✅ Add this
+      birthDate: ['', [Validators.required]],
+      role: [Role.FREELANCER, [Validators.required]]
+    });
+  }
 
     onSubmit() {
         if (this.registerForm.invalid) {
