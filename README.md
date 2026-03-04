@@ -1,75 +1,114 @@
-# MatchFreelance
+📖 Overview
 
-## Overview
-This project was developed as part of the PIDEV – 4th Year Engineering Program at **Esprit School of Engineering** (Academic Year 2025–2026).
+This project was developed as part of the PIDEV – 4th Year Engineering Program at Esprit School of Engineering (Academic Year 2025–2026).
 
-It consists of a full-stack web application that connects freelancers with clients, allowing them to post missions, apply for projects, and collaborate efficiently.
+MatchFreelance is a full-stack web application that connects freelancers with clients, allowing them to:
 
-## Features
-- Freelancer profile management
-- Mission posting and applications
-- Client and freelancer matching system
-- Project tracking and collaboration
+Post missions
 
-## Tech Stack
-### Frontend
-- Angular
+Apply for projects
 
-### Backend
-- Spring Boot
-- MySQL
-- REST APIs
-- JWT Authentication
+Manage collaborations
 
-## Architecture
-The system follows a Microservices Architecture using Spring Cloud components:
+Track project progress
 
-*Infrastructure Components
--API Gateway
--Eureka Service Registry
+✨ Features
 
-*Business Microservices
--User Microservice
--Project Microservice
--Skills Microservice
--Microformation Microservice
--Evaluation Microservice
--Candidature Microservice
--Contrat Microservice
--Interview Microservice
--Forum Microservice
+Freelancer profile management
 
-## Contributors
-- EmnaDorai
-- Khadija Ben Ayed
-- Ahmed Bel Haj Dahmen
-- Aziz Ben Fedhila
-- Med Amine Bejaoui
-  
+Mission posting and applications
 
-## Academic Context
-Developed at **Esprit School of Engineering – Tunisia**
+Client & freelancer intelligent matching
+
+Project tracking and collaboration
+
+Contract & interview management
+
+Community forum integration
+
+🛠️ Tech Stack
+🎨 Frontend
+
+Angular
+
+TypeScript
+
+Bootstrap
+
+⚙️ Backend
+
+Spring Boot
+
+MySQL
+
+REST APIs
+
+JWT Authentication
+
+Spring Cloud
+
+🏗️ Architecture
+
+The system follows a Microservices Architecture using Spring Cloud components.
+
+🔹 Infrastructure Components
+
+API Gateway
+
+Eureka Service Registry
+
+🔹 Business Microservices
+
+User Microservice
+
+Project Microservice
+
+Skills Microservice
+
+Microformation Microservice
+
+Evaluation Microservice
+
+Candidature Microservice
+
+Contrat Microservice
+
+Interview Microservice
+
+Forum Microservice
+
+All services communicate via REST APIs and are registered dynamically using Eureka.
+
+👨‍💻 Contributors
+
+Emna Dorai
+
+Khadija Ben Ayed
+
+Ahmed Bel Haj Dahmen
+
+Aziz Ben Fedhila
+
+Med Amine Bejaoui
+
+🎓 Academic Context
+
+Developed at Esprit School of Engineering – Tunisia
 PIDEV – 4SAE10 | 2025–2026
 
-## Getting Started
-```bash
-git clone https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance
-```
+This academic project demonstrates the implementation of a scalable microservices-based freelance management platform.
 
-### Backend
-```bash
+🚀 Getting Started
+1️⃣ Clone the Repository
+git clone https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance
+2️⃣ Backend Setup
 cd BackEnd
 ./mvnw spring-boot:run
-```
-
-### Frontend
-```bash
+3️⃣ Frontend Setup
 cd FrontEnd
 npm install
 ng serve
-```
 
-## Acknowledgments
-Thanks to Esprit School of Engineering supervisors and teaching staff.
+🙏 Acknowledgments
 
-esprit-school-of-engineering  academic-project  esprit-pidev  2025-2026  angular  spring-boot  mysql
+Special thanks to the supervisors and teaching staff of Esprit School of Engineering for their continuous guidance and support.
