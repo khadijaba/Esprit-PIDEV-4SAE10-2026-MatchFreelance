@@ -17,9 +17,27 @@ It consists of a full-stack web application that connects freelancers with clien
 
 ### Backend
 - Spring Boot
+- MySQL
+- REST APIs
+- JWT Authentication
 
 ## Architecture
-Full-stack web application with REST API architecture connecting Angular frontend to Spring Boot backend with MySQL database.
+The system follows a Microservices Architecture using Spring Cloud components:
+
+*Infrastructure Components
+-API Gateway
+-Eureka Service Registry
+
+*Business Microservices
+-User Microservice
+-Project Microservice
+-Skills Microservice
+-Microformation Microservice
+-Evaluation Microservice
+-Candidature Microservice
+-Contrat Microservice
+-Interview Microservice
+-Forum Microservice
 
 ## Contributors
 - EmnaDorai
