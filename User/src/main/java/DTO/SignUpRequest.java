@@ -2,38 +2,40 @@ package DTO;
 
 
 import Entity.Role;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.time.LocalDate;
 
 public class SignUpRequest {
 
-    @NotBlank(message = "Le prénom est obligatoire")
+    @NotBlank
     private String firstName;
 
-    @NotBlank(message = "Le nom est obligatoire")
+    @NotBlank
     private String lastName;
 
-    @NotBlank(message = "L'adresse est obligatoire")
+    @NotBlank
     private String address;
 
-    @Email(message = "Email invalide")
-    @NotBlank(message = "L'email est obligatoire")
+    @Email
+    @NotBlank
     private String email;
 
-    @NotBlank(message = "Le mot de passe est obligatoire")
-    @Size(min = 6, message = "Le mot de passe doit avoir au moins 6 caractères")
+    @NotBlank
+    @Size(min = 6)
     private String password;
 
-    @NotBlank(message = "La confirmation du mot de passe est obligatoire")
-    private String confirmPassword;
+    // ✅ Either remove this entirely, or make it optional
+    private String confirmPassword;  // ← remove @NotBlank
 
-    @NotNull(message = "La date de naissance est obligatoire")
-    @Past(message = "La date de naissance doit être dans le passé")
+    @NotNull
+    @Past
+    @JsonFormat(pattern = "yyyy-MM-dd")  // ✅ Add this to parse Angular's date string
     private LocalDate birthDate;
 
-    @NotNull(message = "Le rôle est obligatoire")
-    private Role role; // FREELANCER ou PROJECT_OWNER uniquement
+    @NotNull
+    private Role role;
 
     // Getters and setters
     public String getFirstName() { return firstName; }

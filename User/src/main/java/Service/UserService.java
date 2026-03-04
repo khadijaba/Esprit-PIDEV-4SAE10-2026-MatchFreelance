@@ -68,14 +68,16 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
 
-        // Generate email verification token
-        String verificationToken = UUID.randomUUID().toString();
-        emailVerificationTokens.put(verificationToken, savedUser.getEmail());
-        emailTokenExpirations.put(verificationToken, LocalDateTime.now().plusHours(24));
+        try {
+            String verificationToken = UUID.randomUUID().toString();
+            emailVerificationTokens.put(verificationToken, savedUser.getEmail());
+            emailTokenExpirations.put(verificationToken, LocalDateTime.now().plusHours(24));
 
-        // Send welcome and verification emails
-        emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstName(), savedUser.getLastName());
-        emailService.sendEmailVerification(savedUser.getEmail(), savedUser.getFirstName(), verificationToken);
+            emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstName(), savedUser.getLastName());
+            emailService.sendEmailVerification(savedUser.getEmail(), savedUser.getFirstName(), verificationToken);
+        } catch (Exception e) {
+            System.err.println("Email sending failed: " + e.getMessage());
+        }
 
         return savedUser;
     }
