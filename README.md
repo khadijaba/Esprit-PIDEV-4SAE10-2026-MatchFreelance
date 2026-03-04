@@ -53,12 +53,5 @@ ng serve
 
 ## Acknowledgments
 Thanks to Esprit School of Engineering supervisors and teaching staff.
-```
 
-**4️ Descends tout en bas → clique sur le bouton vert "Commit new file"** 
-
----
-
-Ensuite n'oublie pas d'ajouter les **topics** dans la section About  :
-```
 esprit-school-of-engineering  academic-project  esprit-pidev  2025-2026  angular  spring-boot  mysql
