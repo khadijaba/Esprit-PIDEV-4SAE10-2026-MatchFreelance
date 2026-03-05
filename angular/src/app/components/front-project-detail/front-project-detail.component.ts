@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 import { ProjectService } from '../../services/project.service';
 import { CandidatureService } from '../../services/candidature.service';
 import { ToastService } from '../../services/toast.service';
@@ -18,11 +19,14 @@ export class FrontProjectDetailComponent implements OnInit {
   loading = true;
   applyMessage = '';
   proposedBudget = 0;
-  freelancerId = 1;
+  get freelancerId(): number {
+    return this.auth.currentUser()?.id ?? 0;
+  }
   applying = false;
   hasApplied = false;
 
   constructor(
+    private auth: AuthService,
     private projectService: ProjectService,
     private candidatureService: CandidatureService,
     private toast: ToastService,
@@ -50,7 +54,7 @@ export class FrontProjectDetailComponent implements OnInit {
             });
           }
         },
-        error: () => this.router.navigate(['/projects']),
+        error: () => this.router.navigate(['..'], { relativeTo: this.route }),
       });
     });
   }

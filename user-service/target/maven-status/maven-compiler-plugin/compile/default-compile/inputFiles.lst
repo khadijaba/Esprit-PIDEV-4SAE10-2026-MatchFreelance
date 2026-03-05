@@ -1,0 +1,9 @@
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\user-service\src\main\java\com\freelancing\user\repository\UserRepository.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\user-service\src\main\java\com\freelancing\user\entity\User.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\user-service\src\main\java\com\freelancing\user\config\UserDataInitializer.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\user-service\src\main\java\com\freelancing\user\dto\UserResponseDTO.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\user-service\src\main\java\com\freelancing\user\UserServiceApplication.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\user-service\src\main\java\com\freelancing\user\enums\UserRole.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\user-service\src\main\java\com\freelancing\user\dto\UserLoginRequestDTO.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\user-service\src\main\java\com\freelancing\user\service\UserService.java
+D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\user-service\src\main\java\com\freelancing\user\controller\UserController.java

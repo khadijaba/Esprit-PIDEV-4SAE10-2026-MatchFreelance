@@ -1,0 +1,101 @@
+<div class="min-h-[calc(100vh-8rem)] flex">
+  <!-- Left: value proposition (Fiverr-style) -->
+  <div class="hidden lg:flex lg:w-1/2 flex-col justify-center px-12 xl:px-20 bg-[var(--fiverr-gray-light)] border-r border-gray-200">
+    <div class="max-w-md">
+      <h2 class="text-3xl font-bold text-[var(--fiverr-dark)] leading-tight">
+        Trouvez des projets. Travaillez en freelance. Grandissez.
+      </h2>
+      <p class="mt-4 text-lg text-[var(--fiverr-gray)]">
+        Connectez-vous pour accéder à votre espace et gérer vos projets en toute simplicité.
+      </p>
+      <ul class="mt-8 space-y-3 text-[var(--fiverr-gray)]">
+        <li class="flex items-center gap-3">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--fiverr-green-light)] text-[var(--fiverr-green)]">
+            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+          </span>
+          Accès à tous les projets ouverts
+        </li>
+        <li class="flex items-center gap-3">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--fiverr-green-light)] text-[var(--fiverr-green)]">
+            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+          </span>
+          Profil et parcours carrière
+        </li>
+        <li class="flex items-center gap-3">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--fiverr-green-light)] text-[var(--fiverr-green)]">
+            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+          </span>
+          Notifications et opportunités
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Right: form -->
+  <div class="w-full lg:w-1/2 flex items-center justify-center px-4 py-12 bg-white">
+    <div class="w-full max-w-[400px]">
+      <a routerLink="/" class="inline-block mb-8">
+        <img src="/logo.png" alt="MatchFreelance" class="h-10 object-contain object-left" />
+      </a>
+      <h1 class="text-2xl font-bold text-[var(--fiverr-dark)]">Connexion</h1>
+      <p class="mt-1 text-[var(--fiverr-gray)]">Accédez à votre espace Freelancer ou Project Owner</p>
+
+      <form (ngSubmit)="onSubmit()" class="mt-8 space-y-5">
+        <div>
+          <label for="email" class="block text-sm font-medium text-[var(--fiverr-dark)]">Email</label>
+          <input
+            id="email"
+            type="email"
+            [(ngModel)]="credentials.email"
+            name="email"
+            autocomplete="email"
+            required
+            class="mt-1.5 block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-[var(--fiverr-dark)] placeholder-gray-400 focus:border-[var(--fiverr-green)] focus:ring-1 focus:ring-[var(--fiverr-green)] focus:outline-none transition"
+            placeholder="vous&#64;exemple.com"
+          />
+        </div>
+        <div>
+          <label for="password" class="block text-sm font-medium text-[var(--fiverr-dark)]">Mot de passe</label>
+          <input
+            id="password"
+            type="password"
+            [(ngModel)]="credentials.password"
+            name="password"
+            autocomplete="current-password"
+            required
+            class="mt-1.5 block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-[var(--fiverr-dark)] placeholder-gray-400 focus:border-[var(--fiverr-green)] focus:ring-1 focus:ring-[var(--fiverr-green)] focus:outline-none transition"
+            placeholder="••••••••"
+          />
+        </div>
+        <button
+          type="submit"
+          [disabled]="loading"
+          class="w-full rounded-md bg-[var(--fiverr-green)] py-3.5 text-base font-semibold text-white transition hover:bg-[var(--fiverr-green-hover)] focus:ring-2 focus:ring-[var(--fiverr-green)] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          @if (loading) {
+            <span class="inline-flex items-center gap-2">
+              <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Connexion...
+            </span>
+          } @else {
+            Se connecter
+          }
+        </button>
+      </form>
+
+      <p class="mt-6 text-center text-sm text-[var(--fiverr-gray)]">
+        Pas encore de compte ?
+        <a routerLink="/register" class="font-semibold text-[var(--fiverr-green)] hover:underline">
+          S'inscrire
+        </a>
+      </p>
+
+      <p class="mt-8 text-center text-xs text-gray-400">
+        En vous connectant, vous acceptez nos conditions d'utilisation.
+      </p>
+    </div>
+  </div>
+</div>

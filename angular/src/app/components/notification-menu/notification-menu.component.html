@@ -1,0 +1,73 @@
+<div class="relative">
+  <button
+    type="button"
+    (click)="toggle()"
+    class="relative inline-flex items-center justify-center rounded-full p-2 text-[var(--fiverr-dark)] transition hover:bg-[var(--fiverr-gray-light)] hover:text-[var(--fiverr-green)] focus:outline-none focus:ring-2 focus:ring-[var(--fiverr-green)]/30 focus:ring-offset-2"
+  >
+    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.8"
+        d="M14.857 17.657A2 2 0 0113 19H11a2 2 0 01-1.857-1.343M18 8a6 6 0 10-12 0c0 1.91-.45 3.007-.88 3.664A1 1 0 006.003 13h11.994a1 1 0 00.883-1.336C18.45 11.007 18 9.91 18 8z"
+      />
+    </svg>
+    @if (unreadCount > 0) {
+      <span
+        class="absolute -right-0.5 -top-0.5 inline-flex min-h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[0.65rem] font-semibold text-white"
+      >
+        {{ unreadCount }}
+      </span>
+    }
+  </button>
+
+  @if (open) {
+    <div
+      class="absolute right-0 z-50 mt-2 w-80 origin-top-right rounded-xl border border-gray-200 bg-white shadow-lg ring-1 ring-black/5"
+    >
+      <div class="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+        <span class="text-xs font-semibold uppercase tracking-wide text-[var(--fiverr-gray)]">Notifications</span>
+        <button
+          type="button"
+          class="text-xs font-medium text-[var(--fiverr-green)] hover:underline disabled:opacity-40"
+          (click)="markAllAsRead()"
+          [disabled]="unreadCount === 0"
+        >
+          Mark all as read
+        </button>
+      </div>
+
+      <div class="max-h-80 overflow-y-auto">
+        @if (loading) {
+          <div class="flex items-center justify-center py-6">
+            <div class="h-5 w-5 animate-spin rounded-full border-2 border-[var(--fiverr-green-light)] border-t-[var(--fiverr-green)]"></div>
+          </div>
+        } @else if (notifications.length === 0) {
+          <div class="px-4 py-6 text-center text-xs text-[var(--fiverr-gray)]">
+            Aucune notification.
+          </div>
+        } @else {
+          <ul class="divide-y divide-gray-100 text-sm">
+            @for (n of notifications; track n.id) {
+              <li
+                class="flex cursor-pointer items-start gap-2 px-4 py-3 transition hover:bg-[var(--fiverr-gray-light)]"
+                (click)="markAsRead(n)"
+              >
+                <div class="mt-0.5 h-2 w-2 shrink-0 rounded-full" [class.bg-[var(--fiverr-green)]]="!n.readAt" [class.bg-gray-300]="n.readAt"></div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs text-[var(--fiverr-dark)]">
+                    {{ n.message }}
+                  </p>
+                  <p class="mt-1 text-[0.7rem] text-[var(--fiverr-gray)]">
+                    {{ n.createdAt | date: 'short' }}
+                  </p>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  }
+</div>
+

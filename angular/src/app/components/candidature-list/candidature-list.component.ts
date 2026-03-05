@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CandidatureService } from '../../services/candidature.service';
+import { UserService } from '../../services/user.service';
 import { ToastService } from '../../services/toast.service';
 import { Candidature, CandidatureStatus } from '../../models/candidature.model';
 import { PageResponse } from '../../models/page.model';
@@ -16,6 +17,7 @@ import { PageResponse } from '../../models/page.model';
 export class CandidatureListComponent implements OnInit {
   page?: PageResponse<Candidature>;
   candidatures: Candidature[] = [];
+  freelancerNames: Record<number, string> = {};
   loading = true;
   statusFilter: CandidatureStatus | '' = '';
   projectIdFilter: number | null = null;
@@ -25,6 +27,7 @@ export class CandidatureListComponent implements OnInit {
 
   constructor(
     private candidatureService: CandidatureService,
+    private userService: UserService,
     private toast: ToastService
   ) {}
 
@@ -48,6 +51,10 @@ export class CandidatureListComponent implements OnInit {
         this.page = page;
         this.candidatures = page.content;
         this.loading = false;
+        const ids = page.content.map((c) => c.freelancerId);
+        this.userService.getDisplayNamesMap(ids).subscribe({
+          next: (map: Record<number, string>) => (this.freelancerNames = { ...this.freelancerNames, ...map }),
+        });
       },
       error: () => {
         this.loading = false;

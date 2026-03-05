@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 import { ProjectService } from '../../services/project.service';
 import { ToastService } from '../../services/toast.service';
 import { ProjectRequest } from '../../models/project.model';
@@ -15,7 +16,9 @@ import { ProjectRequest } from '../../models/project.model';
 export class ClientProjectFormComponent {
   saving = false;
   error = '';
-  clientId = 1;
+  get clientId(): number {
+    return this.auth.currentUser()?.id ?? 0;
+  }
 
   form: ProjectRequest = {
     title: '',
@@ -24,10 +27,11 @@ export class ClientProjectFormComponent {
     maxBudget: 5000,
     duration: 1,
     status: 'OPEN',
-    clientId: 1,
+    clientId: 0,
   };
 
   constructor(
+    private auth: AuthService,
     private projectService: ProjectService,
     private toast: ToastService,
     private router: Router

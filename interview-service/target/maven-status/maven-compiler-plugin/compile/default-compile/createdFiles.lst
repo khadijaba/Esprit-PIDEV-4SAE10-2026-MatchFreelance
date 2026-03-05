@@ -17,6 +17,7 @@ com\freelancing\interview\controller\InterviewController.class
 com\freelancing\interview\controller\ReviewController.class
 com\freelancing\interview\repository\ReviewRepository.class
 com\freelancing\interview\dto\InterviewResponseDTO.class
+com\freelancing\interview\dto\AlternativeSlotSuggestionDTO.class
 com\freelancing\interview\repository\NotificationRepository.class
 com\freelancing\interview\dto\ReviewResponseDTO.class
 com\freelancing\interview\entity\Interview.class
@@ -27,13 +28,16 @@ com\freelancing\interview\controller\NotificationController.class
 com\freelancing\interview\dto\AvailabilitySlotBatchCreateRequestDTO.class
 com\freelancing\interview\dto\InterviewCreateRequestDTO.class
 com\freelancing\interview\dto\InterviewUpdateRequestDTO.class
+com\freelancing\interview\dto\TopFreelancerInInterviewsDTO.class
 com\freelancing\interview\entity\Notification.class
 com\freelancing\interview\validation\ValidInterviewCreateRequest.class
 com\freelancing\interview\validation\SlotTimeRangeValidator.class
+com\freelancing\interview\dto\WorkloadSummaryDTO.class
 com\freelancing\interview\enums\InterviewStatus.class
 com\freelancing\interview\repository\AvailabilitySlotRepository.class
 com\freelancing\interview\entity\AvailabilitySlot.class
 com\freelancing\interview\entity\Review.class
+com\freelancing\interview\dto\ReliabilityResponseDTO.class
 com\freelancing\interview\config\InterviewDataInitializer.class
 com\freelancing\interview\dto\AvailabilitySlotResponseDTO.class
 com\freelancing\interview\repository\InterviewRepository.class

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContractService } from '../../services/contract.service';
+import { UserService } from '../../services/user.service';
 import { ToastService } from '../../services/toast.service';
 import { Contract, ContractStatus } from '../../models/contract.model';
 
@@ -13,10 +14,12 @@ import { Contract, ContractStatus } from '../../models/contract.model';
 })
 export class ContractDetailsComponent implements OnInit {
   contract?: Contract;
+  freelancerName = '';
   loading = true;
 
   constructor(
     private contractService: ContractService,
+    private userService: UserService,
     private toast: ToastService,
     private route: ActivatedRoute,
     private router: Router
@@ -28,8 +31,12 @@ export class ContractDetailsComponent implements OnInit {
       next: (c) => {
         this.contract = c;
         this.loading = false;
+        this.userService.getDisplayName(c.freelancerId).subscribe({
+          next: (name: string) => (this.freelancerName = name),
+        });
       },
       error: () => {
+        this.loading = false;
         this.toast.error('Contract not found');
         this.router.navigate(['/admin/contracts']);
       },

@@ -1,0 +1,128 @@
+@if (loading) {
+  <div class="flex justify-center py-20">
+    <div class="h-10 w-10 animate-spin rounded-full border-4 border-[var(--fiverr-green-light)] border-t-[var(--fiverr-green)]"></div>
+  </div>
+}
+
+@if (interview && !loading) {
+  <div class="mx-auto max-w-3xl space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-3">
+        <a [routerLink]="listRoute" class="rounded-lg p-2 text-[var(--fiverr-gray)] hover:bg-[var(--fiverr-gray-light)]/50 hover:text-[var(--fiverr-dark)]">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </a>
+        <div>
+          <h1 class="text-2xl font-bold text-[var(--fiverr-dark)]">{{ projectName || ('Entretien #' + interview.id) }}</h1>
+          <p class="text-sm text-[var(--fiverr-gray)]">{{ interview.startAt | date:'medium' }} – {{ interview.endAt | date:'shortTime' }}</p>
+        </div>
+      </div>
+      <button (click)="downloadIcs()" [disabled]="downloadingIcs"
+        class="inline-flex items-center gap-2 rounded-lg bg-[var(--fiverr-green)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--fiverr-green-hover)] disabled:opacity-50">
+        @if (downloadingIcs) {
+          <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+        } @else {
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        }
+        Ajouter au calendrier
+      </button>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div class="grid grid-cols-1 divide-y divide-gray-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+        <div class="p-5">
+          <p class="text-xs font-medium uppercase tracking-wide text-[var(--fiverr-gray)]">Statut</p>
+          <span class="mt-2 inline-flex rounded-full px-2.5 py-0.5 text-sm font-medium" [class]="statusClass(interview.status)">
+            {{ interview.status }}
+          </span>
+        </div>
+        <div class="p-5">
+          <p class="text-xs font-medium uppercase tracking-wide text-[var(--fiverr-gray)]">Mode</p>
+          <p class="mt-2 font-medium text-[var(--fiverr-dark)]">{{ modeLabel(interview.mode) }}</p>
+        </div>
+        <div class="p-5">
+          <p class="text-xs font-medium uppercase tracking-wide text-[var(--fiverr-gray)]">{{ role === 'client' ? 'Freelancer' : 'Client' }}</p>
+          <p class="mt-2 font-medium text-[var(--fiverr-dark)]">{{ otherPartyLabel || '—' }}</p>
+        </div>
+        @if (interview.meetingUrl) {
+          <div class="p-5">
+            <p class="text-xs font-medium uppercase tracking-wide text-[var(--fiverr-gray)]">Lien</p>
+            <a [href]="interview.meetingUrl" target="_blank" rel="noopener" class="mt-2 block font-medium text-[var(--fiverr-green)] hover:underline">{{ interview.meetingUrl }}</a>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Reviews -->
+    <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <h2 class="mb-4 text-lg font-semibold text-[var(--fiverr-dark)]">Avis</h2>
+
+      @if (canSubmitReview()) {
+        <div class="mb-6 rounded-lg border border-gray-200 bg-gray-50/50 p-4">
+          <h3 class="mb-3 text-sm font-medium text-[var(--fiverr-dark)]">Noter {{ otherPartyLabel || 'l\'autre participant' }}</h3>
+          <form (ngSubmit)="submitReview()" class="space-y-3">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-[var(--fiverr-gray)]">Note (1–5)</label>
+              <select [(ngModel)]="reviewScore" name="score"
+                class="w-full max-w-[8rem] rounded-lg border border-gray-300 px-3 py-2 text-sm text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-2 focus:ring-[var(--fiverr-green)]/20">
+                @for (s of [1,2,3,4,5]; track s) {
+                  <option [value]="s">{{ s }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-[var(--fiverr-gray)]">Commentaire (optionnel)</label>
+              <textarea [(ngModel)]="reviewComment" name="comment" rows="3" maxlength="2000"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-2 focus:ring-[var(--fiverr-green)]/20"
+                placeholder="Votre avis..."></textarea>
+            </div>
+            <button type="submit" [disabled]="submittingReview"
+              class="rounded-lg bg-[var(--fiverr-green)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--fiverr-green-hover)] disabled:opacity-50">
+              {{ submittingReview ? 'Envoi…' : 'Envoyer l\'avis' }}
+            </button>
+          </form>
+        </div>
+      }
+
+      @if (reviewsLoading) {
+        <div class="flex justify-center py-8">
+          <div class="h-8 w-8 animate-spin rounded-full border-4 border-[var(--fiverr-green-light)] border-t-[var(--fiverr-green)]"></div>
+        </div>
+      } @else if (reviewsPage && reviewsPage.content.length > 0) {
+        <ul class="divide-y divide-gray-100">
+          @for (r of reviewsPage.content; track r.id) {
+            <li class="py-4">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <span class="font-medium text-[var(--fiverr-dark)]">Note {{ r.score }}/5</span>
+                  <span class="ml-2 text-xs text-[var(--fiverr-gray)]">par #{{ r.reviewerId }} · {{ r.createdAt | date:'short' }}</span>
+                </div>
+              </div>
+              @if (r.comment) {
+                <p class="mt-1 text-sm text-[var(--fiverr-gray)]">{{ r.comment }}</p>
+              }
+            </li>
+          }
+        </ul>
+        @if (reviewsPage.totalPages > 1) {
+          <div class="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
+            <button (click)="prevReviewPage()" [disabled]="reviewPageIndex <= 0"
+              class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-[var(--fiverr-dark)] hover:bg-[var(--fiverr-gray-light)] disabled:opacity-50">
+              Précédent
+            </button>
+            <span class="text-sm text-[var(--fiverr-gray)]">Page {{ reviewPageIndex + 1 }} / {{ reviewsPage.totalPages }}</span>
+            <button (click)="nextReviewPage()" [disabled]="reviewPageIndex + 1 >= reviewsPage.totalPages"
+              class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-[var(--fiverr-dark)] hover:bg-[var(--fiverr-gray-light)] disabled:opacity-50">
+              Suivant
+            </button>
+          </div>
+        }
+      } @else if (reviewsPage) {
+        <p class="py-4 text-sm text-[var(--fiverr-gray)]">Aucun avis pour cet entretien.</p>
+      }
+    </div>
+  </div>
+}

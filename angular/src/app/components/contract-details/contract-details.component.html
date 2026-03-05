@@ -33,7 +33,7 @@
         </div>
         <div class="p-6">
           <p class="text-sm font-medium text-gray-500">Freelancer</p>
-          <p class="mt-2 text-lg font-semibold text-gray-800">#{{ contract.freelancerId }}</p>
+          <p class="mt-2 text-lg font-semibold text-gray-800">{{ freelancerName || ('#' + contract.freelancerId) }}</p>
         </div>
         @if (contract.proposedBudget != null) {
         <div class="p-6">

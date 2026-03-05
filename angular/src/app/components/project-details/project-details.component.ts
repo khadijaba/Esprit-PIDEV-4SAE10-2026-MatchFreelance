@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProjectService } from '../../services/project.service';
 import { CandidatureService } from '../../services/candidature.service';
+import { UserService } from '../../services/user.service';
 import { ToastService } from '../../services/toast.service';
 import { Project, ProjectStatus } from '../../models/project.model';
 import { Candidature, CandidatureStatus } from '../../models/candidature.model';
@@ -17,11 +18,13 @@ import { InterviewScheduleComponent } from '../interview-schedule/interview-sche
 export class ProjectDetailsComponent implements OnInit {
   project?: Project;
   candidatures: Candidature[] = [];
+  freelancerNames: Record<number, string> = {};
   loading = true;
 
   constructor(
     private projectService: ProjectService,
     private candidatureService: CandidatureService,
+    private userService: UserService,
     private toast: ToastService,
     private route: ActivatedRoute,
     private router: Router
@@ -33,6 +36,12 @@ export class ProjectDetailsComponent implements OnInit {
       next: (p) => {
         this.project = p;
         this.loadCandidatures(id);
+        if (p.contracts?.length) {
+          const ids = p.contracts.map((c) => c.freelancerId);
+          this.userService.getDisplayNamesMap(ids).subscribe({
+            next: (map) => (this.freelancerNames = { ...this.freelancerNames, ...map }),
+          });
+        }
         this.loading = false;
       },
       error: () => {
@@ -44,7 +53,13 @@ export class ProjectDetailsComponent implements OnInit {
 
   loadCandidatures(projectId: number) {
     this.candidatureService.getByProjectId(projectId).subscribe({
-      next: (data) => (this.candidatures = data),
+      next: (data) => {
+        this.candidatures = data;
+        const ids = data.map((c) => c.freelancerId);
+        this.userService.getDisplayNamesMap(ids).subscribe({
+          next: (map) => (this.freelancerNames = { ...this.freelancerNames, ...map }),
+        });
+      },
     });
   }
 

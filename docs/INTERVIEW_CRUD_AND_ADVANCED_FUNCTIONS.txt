@@ -1,0 +1,437 @@
+================================================================================
+INTERVIEW MICROSERVICE - ALL CRUD AND ADVANCED FUNCTIONS
+Code placement and UI testing (no markdown)
+================================================================================
+
+Backend base path: interview-service
+Controller: interview-service/src/main/java/com/freelancing/interview/controller/InterviewController.java
+Service: interview-service/src/main/java/com/freelancing/interview/service/InterviewService.java
+
+Frontend base path: angular
+Service: angular/src/app/services/interview.service.ts
+API prefix used in Angular: /api/interviews (via gateway)
+
+--------------------------------------------------------------------------------
+PART 1 - CRUD FUNCTIONS
+--------------------------------------------------------------------------------
+
+1. CREATE INTERVIEW
+   Backend:
+     InterviewController.java: @PostMapping, method create (around line 36)
+     InterviewService.java: method create (around line 55)
+   Frontend:
+     interview.service.ts: createInterview (calls POST /api/interviews)
+     interview-schedule.component.ts: scheduleInterview calls createInterview (around line 309)
+   UI test:
+     Log in as client (e.g. client@example.com / client123).
+     Go to Mes projets, open a project that has candidatures.
+     In the interview section choose a freelancer, date, time, duration and mode (online or face-to-face).
+     Click Create. You should see the new interview in the list.
+     If the chosen time conflicts or is invalid, the error handler may show alternative slot suggestions (see advanced).
+
+2. READ - SEARCH / LIST INTERVIEWS (PAGINATED)
+   Backend:
+     InterviewController.java: @GetMapping, method search (around line 71)
+     InterviewService.java: method search (around line 208)
+   Frontend:
+     interview.service.ts: searchInterviews (calls GET /api/interviews with query params)
+     interview-list.component.ts: load calls searchInterviews (around line 90)
+   UI test:
+     As client: header Mes entretiens opens client/interviews. As freelancer: Mes entretiens opens freelancer/interviews. As admin: sidebar Entretiens opens admin/interviews.
+     List shows with filters (Status, Mode, From date, To date; admin also has Project ID, Freelancer ID, Owner ID). Change filters and see list update. Admin view has pagination (page numbers, 5 per page).
+
+3. READ - GET INTERVIEW BY ID
+   Backend:
+     InterviewController.java: @GetMapping("/{interviewId}"), method getById (around line 88)
+     InterviewService.java: method getById (around line 371)
+   Frontend:
+     interview.service.ts: getById (calls GET /api/interviews/{id})
+     visio-call.component.ts: loads interview via getById before checking time window and calling getVisioRoom (around line 40)
+   UI test:
+     Opening the visio (Rejoindre) for an interview triggers getById to check dates; the same data is used when the list loads each row (list comes from search, not getById per row).
+
+4. UPDATE INTERVIEW
+   Backend:
+     InterviewController.java: @PutMapping("/{interviewId}"), method update (around line 93)
+     InterviewService.java: method update (around line 232)
+   Frontend:
+     interview.service.ts: updateInterview (calls PUT /api/interviews/{id})
+     No UI button found that calls updateInterview in the current codebase. Update can be tested via API (e.g. Postman) or you can add a button in interview-schedule or interview-list that opens a small form and calls updateInterview.
+
+5. DELETE INTERVIEW
+   Backend:
+     InterviewController.java: @DeleteMapping("/{interviewId}"), method delete (around line 140)
+     InterviewService.java: method delete (around line 598)
+   Frontend:
+     interview.service.ts: deleteInterview (calls DELETE /api/interviews/{id})
+     interview-schedule.component.ts: deleteInterview (around line 380); template has a button (around line 240) "Delete" or similar for an interview in the list on the project detail.
+   UI test:
+     As client, open a project that has interviews. In the interviews list for that project, use the delete/cancel button next to an interview. Confirm. The interview should disappear from the list.
+     In admin/interviews or client/interviews list there is no delete button in the current interview-list template; delete is only on the project-level interview list in interview-schedule.
+
+--------------------------------------------------------------------------------
+PART 2 - LIFECYCLE ACTIONS (CONFIRM, REJECT, CANCEL, COMPLETE, NO-SHOW)
+--------------------------------------------------------------------------------
+
+6. CONFIRM INTERVIEW
+   Backend:
+     InterviewController.java: @PostMapping("/{interviewId}/confirm"), method confirm (around line 101)
+     InterviewService.java: method confirm (around line 274)
+   Frontend:
+     interview.service.ts: confirmInterview (POST /api/interviews/{id}/confirm)
+     interview-list.component.ts: confirm method (around line 152)
+     interview-schedule.component.ts: confirm method (around line 351)
+   UI test:
+     As freelancer go to Mes entretiens. Find a row with status PROPOSED. Click Accepter. Status should become CONFIRMED and the button disappear.
+
+7. REJECT INTERVIEW
+   Backend:
+     InterviewController.java: @PostMapping("/{interviewId}/reject"), method reject (around line 111)
+     InterviewService.java: method reject (around line 319)
+   Frontend:
+     interview.service.ts: rejectInterview (POST /api/interviews/{id}/reject)
+     interview-list.component.ts: reject method (around line 162)
+   UI test:
+     As freelancer go to Mes entretiens. Find a PROPOSED interview. Click Refuser. Interview status becomes CANCELLED and slot is released if it was linked.
+
+8. CANCEL INTERVIEW
+   Backend:
+     InterviewController.java: @PostMapping("/{interviewId}/cancel"), method cancel (around line 106)
+     InterviewService.java: method cancel (around line 287). Rule: cancellation allowed only if more than 24 hours before start (configurable).
+   Frontend:
+     interview.service.ts: cancelInterview (POST /api/interviews/{id}/cancel)
+     interview-list.component.ts: cancel (around line 172)
+     interview-schedule.component.ts: cancel (around line 361)
+   UI test:
+     As client or freelancer go to Mes entretiens. For a CONFIRMED interview that is more than 24h in the future, click Annuler. Interview becomes CANCELLED. For one that is in less than 24h you should see an error message (use the seeded interview in 12 hours to test).
+
+9. COMPLETE INTERVIEW
+   Backend:
+     InterviewController.java: @PostMapping("/{interviewId}/complete"), method complete (around line 121)
+     InterviewService.java: method complete (around line 378)
+   Frontend:
+     interview.service.ts: completeInterview (POST /api/interviews/{id}/complete)
+     interview-list.component.ts: complete (around line 182)
+     interview-schedule.component.ts: complete (around line 371)
+   UI test:
+     As freelancer go to Mes entretiens. Find a CONFIRMED interview. Click Terminé. Status becomes COMPLETED.
+
+10. NO-SHOW INTERVIEW
+    Backend:
+      InterviewController.java: @PostMapping("/{interviewId}/no-show"), method noShow (around line 116)
+      InterviewService.java: method noShow (around line 347). Rule: allowed only after the interview end time (now >= endAt).
+    Frontend:
+      interview.service.ts: noShowInterview (POST /api/interviews/{id}/no-show)
+      interview-list.component.ts: noShow (around line 192). Button shown only when canMarkNoShow(i) is true (status CONFIRMED and current time >= endAt).
+    UI test:
+      Use a CONFIRMED interview whose end time is already in the past (or wait until after the seeded 2h interview ends). As client or freelancer in Mes entretiens the No show button appears. Click it. Status becomes NO_SHOW.
+
+--------------------------------------------------------------------------------
+PART 3 - ADVANCED FUNCTIONS
+--------------------------------------------------------------------------------
+
+11. ALTERNATIVE SLOT SUGGESTIONS (when requested time is unavailable or conflicts)
+    Backend:
+      InterviewController.java: @PostMapping("/suggestions"), method suggestAlternatives (around line 41)
+      InterviewService.java: method suggestAlternatives (around line 152), and private computeSuggestionScore (around line 647)
+    Frontend:
+      interview.service.ts: suggestAlternatives (POST /api/interviews/suggestions)
+      interview-schedule.component.ts: loadSuggestions (around line 322), called when create fails in scheduleInterview error handler; useSuggestion (around line 335) fills the form from a suggested slot.
+    UI test:
+      As client open a project and go to schedule interview. Pick a freelancer and a date/time that causes a conflict or is outside availability (e.g. no slot). Click Create. After error, suggested alternatives appear as buttons. Click one to fill date/time, then click Create again to create the interview.
+
+12. RELIABILITY INDEX (freelancer and owner)
+    Backend:
+      InterviewController.java: @GetMapping("/reliability"), method reliability (around line 48). Query params: freelancerId OR ownerId, optional from, to.
+      InterviewService.java: computeReliabilityForFreelancer (around line 488), computeReliabilityForOwner (around line 501), private computeReliability (around line 513)
+    Frontend:
+      interview.service.ts: getReliabilityForFreelancer, getReliabilityForOwner (GET /api/interviews/reliability?freelancerId=... or ownerId=...)
+      interview-list.component.ts: loadReliability (around line 108); for client role calls getReliabilityForFreelancer, for freelancer role calls getReliabilityForOwner and getWorkloadForFreelancer.
+    UI test:
+      As client go to Mes entretiens. Above the table you see "Fiabilité freelancer: X%". As freelancer go to Mes entretiens. You see "Fiabilité client: X%" and "Charge: ...". Data comes from past interviews (completed, no-show, cancelled).
+
+13. WORKLOAD CLASSIFICATION (freelancer)
+    Backend:
+      InterviewController.java: @GetMapping("/workload"), method workload (around line 64). Query param: freelancerId.
+      InterviewService.java: method computeWorkloadForFreelancer (around line 418). Returns level: LIGHT, NORMAL, BUSY, OVERLOADED.
+    Frontend:
+      interview.service.ts: getWorkloadForFreelancer (GET /api/interviews/workload?freelancerId=...)
+      interview-list.component.ts: loadReliability loads workload when role is freelancer (around line 124); workloadLabel is displayed above the table.
+    UI test:
+      Log in as freelancer. Go to Mes entretiens. Above the list you see "Charge: light" or "normal" or "busy" or "overloaded" (and possibly interview counts). Depends on how many CONFIRMED interviews you have in the next 7 days.
+
+14. VISIO ROOM (in-app online meeting)
+    Backend:
+      InterviewController.java: @GetMapping("/{interviewId}/visio-room"), method getOrCreateVisioRoom (around line 126)
+      InterviewService.java: getOrCreateVisioRoom (around line 389), private assertWithinAccessWindow (around line 407). Access only when now is between startAt and endAt.
+    Frontend:
+      interview.service.ts: getById, getVisioRoom (GET /api/interviews/{id}/visio-room)
+      visio-call.component.ts: loads interview with getById, checks time window, then getVisioRoom; embeds Jitsi via joinUrl (around line 40 and 59)
+      Routes: client/interviews/:id/visio and freelancer/interviews/:id/visio
+    UI test:
+      As client or freelancer go to Mes entretiens. For an ONLINE CONFIRMED interview whose start time is now (or between start and end), the "Rejoindre" link is active. Click it. You are on the visio page with the in-app Jitsi iframe. For a meeting outside the time window, Rejoindre is disabled or shows "Indisponible" and opening the visio URL shows an error message.
+
+15. ICS EXPORT (download calendar file)
+    Backend:
+      InterviewController.java: @GetMapping("/{interviewId}/ics"), method downloadIcs (around line 131)
+      InterviewService.java: method generateIcs (around line 553)
+    Frontend:
+      interview.service.ts: no method in current code. Can be called manually: GET /api/interviews/{id}/ics (browser or Postman) to download the .ics file.
+    UI test:
+      There is no button in the current UI for ICS. To test: open in browser or Postman GET http://localhost:4200/api/interviews/1/ics (or your gateway URL and an existing interview id). You should get a calendar file download. To test from UI you would need to add a "Download .ics" link that points to this URL.
+
+--------------------------------------------------------------------------------
+PART 4 - RELATED (AVAILABILITY SLOTS - USED BY INTERVIEWS)
+--------------------------------------------------------------------------------
+
+16. CREATE AVAILABILITY SLOT (single and batch)
+    Backend:
+      AvailabilityController.java: @PostMapping("/freelancers/{freelancerId}/slots") and .../slots/batch (around lines 31 and 39)
+      AvailabilityService.java: createSlot, createSlotsBatch
+    Frontend:
+      interview.service.ts: createAvailabilitySlot, createAvailabilitySlotsBatch
+      freelancer-availability.component.ts: calls createAvailabilitySlotsBatch (around line 150)
+    UI test:
+      As freelancer go to Mes disponibilités. Add a date range and optional time range, click to create slots. Slots appear in the calendar/list. These slots are used when creating interviews (client picks slot or time within a slot).
+
+17. LIST AND DELETE AVAILABILITY SLOTS
+    Backend:
+      AvailabilityController.java: @GetMapping("/freelancers/{freelancerId}/slots"), @DeleteMapping("/slots/{slotId}")
+    Frontend:
+      freelancer-availability.component.ts: loads slots, deleteAvailabilitySlot (around line 240)
+    UI test:
+      As freelancer in Mes disponibilités you see your slots. Delete a slot that is not booked; if it is booked you get an error.
+
+--------------------------------------------------------------------------------
+PART 5 - ROUTES AND PAGES SUMMARY
+--------------------------------------------------------------------------------
+
+Client (after login as client):
+  Mes entretiens: client/interviews (interview-list with role client)
+  Visio: client/interviews/:id/visio (visio-call)
+  Schedule interview: inside client project detail (interview-schedule); Create, Confirm, Cancel, Complete, Delete buttons there and in list.
+
+Freelancer (after login as freelancer):
+  Mes entretiens: freelancer/interviews (interview-list with role freelancer)
+  Mes disponibilités: freelancer/availability (freelancer-availability)
+  Visio: freelancer/interviews/:id/visio
+
+Admin (after login as admin):
+  Entretiens: admin/interviews (interview-list with role admin, pagination 5 per page, filters including project/freelancer/owner IDs).
+
+--------------------------------------------------------------------------------
+PART 6 - DEMO SCENARIO (INTERVIEW MICROSERVICE)
+--------------------------------------------------------------------------------
+Fluid, clear and structured scenario to guide the demonstration and highlight advanced features.
+
+----------------------------------------------------------------
+0. PRE-REQUISITES
+----------------------------------------------------------------
+0.1 Backend and frontend are running, seed data loaded (projects, candidatures, interviews, availability slots, notifications).
+0.2 You know the test accounts you will use, for example:
+    - Client user (project owner)
+    - Freelancer A
+    - Freelancer B
+    - Admin (back-office)
+
+Try to always keep the same three personas during the demo:
+    - "Client Claire" (owner of one or more projects)
+    - "Freelancer Farid"
+    - "Admin Alice"
+
+----------------------------------------------------------------
+1. ACT 1 - FREELANCER SETS AVAILABILITY (FEEDS ADVANCED FEATURES)
+----------------------------------------------------------------
+Goal: Show how availability slots feed interview creation, workload, and suggestions.
+
+1.1 Log in as Freelancer Farid.
+1.2 Navigate to "Mes disponibilités" (freelancer availability page).
+1.3 Show existing seeded slots on the calendar/list (if any).
+1.4 Create a batch of new slots:
+    - Select date range: next 7-14 days
+    - Time window: for example 09:00-12:00
+    - Slot duration: e.g. 30 minutes
+    - Click "Générer / Enregistrer"
+1.5 Explain:
+    - These slots will be used by clients as preferred times.
+    - The system uses them for:
+        - Alternative slot suggestions (when conflicts happen)
+        - Workload computation (busy vs light)
+
+Do not go deep into interviews yet; just plant the idea that availability is the base.
+
+----------------------------------------------------------------
+2. ACT 2 - CLIENT CREATES INTERVIEW AND TRIGGERS SLOT SUGGESTIONS
+----------------------------------------------------------------
+Goal: Show full "create" flow and the advanced alternative suggestions.
+
+2.1 Log in as Client Claire.
+2.2 Go to "Mes projets", open a project that already has candidatures (seeded).
+2.3 Open the "Entretiens" / interview tab for that project.
+
+Scenario A - Happy path:
+2.4 Pick Freelancer Farid from the candidate list.
+2.5 Choose a date/time that matches one of Farid's availability slots (e.g. tomorrow at 10:00, 30 min).
+2.6 Choose mode ONLINE or FACE_TO_FACE.
+2.7 Click "Créer l'entretien".
+2.8 Show result:
+    - New interview row appears in the project's interview list.
+    - Status = PROPOSED.
+    - For ONLINE: there is a future visio slot (but not yet joinable).
+
+Scenario B - Trigger alternative suggestions:
+2.9 Try to schedule another interview for the same freelancer, but this time:
+    - Use a time that conflicts with an existing confirmed interview, or
+    - Use a time outside the freelancer's availability window.
+2.10 Click "Créer l'entretien".
+2.11 Show:
+    - Error message explaining the conflict.
+    - The "suggestions" area listing alternative slots (from Farid's availability and conflict resolution algorithm).
+2.12 Click one suggestion:
+    - The form is auto-filled with suggested date/time and mode.
+    - Click "Créer l'entretien" again.
+2.13 Highlight:
+    - The system automatically searches the next 14 days, filters by availability and existing interviews, and proposes the best alternatives.
+    - Great for UX: Client is guided instead of manually trying random times.
+
+----------------------------------------------------------------
+3. ACT 3 - PER-ROW RELIABILITY (FIABILITÉ) IN THE CLIENT VIEW
+----------------------------------------------------------------
+Goal: Show that each freelancer has his own reliability visible per interview row.
+
+3.1 Still as Client Claire, go to the global "Mes entretiens" page (client role).
+3.2 Explain the columns:
+    - Date / time
+    - Time left
+    - "Fiabilité freelancer" column (new per-row column)
+    - Mode, Status, Actions
+
+3.3 Point to two or three rows with different freelancers:
+    - For each row, the "Fiabilité freelancer" shows that specific freelancer's reliability score.
+    - This is not one global score; it is per freelancer based on his history (COMPLETED, NO_SHOW, CANCELLED).
+3.4 Explain quickly how it is computed:
+    - Completed interviews increase score.
+    - No-shows and cancellations lower it.
+    - Time window of past interviews is taken into account.
+
+----------------------------------------------------------------
+4. ACT 4 - FREELANCER VIEW: WORKLOAD AND CLIENT RELIABILITY
+----------------------------------------------------------------
+Goal: Each client has his own reliability score from the freelancer's point of view, and workload is shown.
+
+4.1 Log in as Freelancer Farid again.
+4.2 Go to "Mes entretiens" (freelancer view).
+4.3 Show the stats strip:
+    - "Charge : …" (workload label)
+        - Example: "normal (3 interviews, 2.0h next 7 days)"
+    - Explain: this classifies workload based on total minutes and number of interviews in the next 7 days.
+
+4.4 Show table columns:
+    - "Fiabilité client" column (per row)
+4.5 Highlight:
+    - For each interview row, the fiabilité shows the reliability of that specific client (ownerId) towards freelancers.
+    - This helps freelancers evaluate if a client tends to cancel late or not show up.
+
+4.6 If possible, show different scores for different clients (use seeded data or pre-run some no-show/cancel scenarios beforehand).
+
+----------------------------------------------------------------
+5. ACT 5 - LIFECYCLE: CONFIRM, CANCEL (WITH RULE), COMPLETE, NO-SHOW
+----------------------------------------------------------------
+Goal: Show the advanced business rules on top of basic CRUD.
+
+5.1 Use an interview in the future that is currently PROPOSED (created in Act 2 or from seed).
+5.2 As Freelancer Farid in "Mes entretiens":
+    - Click "Accepter" on a PROPOSED interview.
+    - Status becomes CONFIRMED; PROPOSED actions disappear.
+
+5.3 Show cancellation rule:
+    - As Client Claire, go to "Mes entretiens".
+    - Find the CONFIRMED interview with start time less than 24 hours away (seeded or you wait).
+    - Try to "Annuler".
+    - System should refuse cancellation if under configured threshold (e.g. 24h) and suggest marking NO_SHOW later.
+    - Show the error message.
+
+5.4 Show valid cancellation:
+    - Use another CONFIRMED interview that is more than 24h in the future.
+    - As Client or Admin, click "Annuler".
+    - Status becomes CANCELLED.
+    - Explain that availability slot is released so someone else can be scheduled.
+
+5.5 Show completion:
+    - Use a CONFIRMED interview that is in the near past or you simulate "after the meeting".
+    - As Freelancer, click "Terminé".
+    - Status becomes COMPLETED.
+    - Mention that only COMPLETED interviews are eligible for reviews and impact reliability.
+
+5.6 Show no-show:
+    - Use a CONFIRMED interview whose end time is already in the past (seeded).
+    - As Client or Freelancer, the "No show" button appears in the actions.
+    - Click "No show".
+    - Status becomes NO_SHOW.
+    - Explain how this penalizes reliability of the user who did not show up.
+
+----------------------------------------------------------------
+6. ACT 6 - VISIO ROOM WITH ACCESS WINDOW
+----------------------------------------------------------------
+Goal: Show the in-app visio integration with strict time window.
+
+6.1 Use an ONLINE, CONFIRMED interview starting "now" (one of the seeded ones or scheduled earlier).
+6.2 As Client Claire:
+    - In "Mes entretiens", find that row.
+    - The "Rejoindre" link should be active only between startAt and endAt.
+6.3 Click "Rejoindre".
+    - You are taken to /client/interviews/{id}/visio.
+    - The page fetches interview details, validates time window, requests or creates a visio room, and embeds it (e.g. Jitsi).
+6.4 Show that if you open the same URL before or after the allowed window:
+    - The link is disabled or
+    - The page shows an error / "Indisponible".
+
+6.5 Optionally, repeat as Freelancer Farid:
+    - Show the symmetric route /freelancer/interviews/{id}/visio.
+
+----------------------------------------------------------------
+7. ACT 7 - ADMIN BACK-OFFICE: GLOBAL VIEW AND FILTERING
+----------------------------------------------------------------
+Goal: Show that the microservice supports back-office needs: global search, filters, pagination.
+
+7.1 Log in as Admin Alice.
+7.2 Go to "Entretiens" in the admin sidebar (global list).
+7.3 Show:
+    - Filters: status, mode, projectId, freelancerId, ownerId, from, to.
+    - Pagination controls, 5 rows per page.
+7.4 Demo a few use cases:
+    - Filter all CONFIRMED ONLINE interviews this week.
+    - Filter by a specific freelancerId to see their schedule and reliability context.
+    - Filter by projectId to see all interviews attached to a specific mission.
+7.5 Explain:
+    - This is all served by the same Interview microservice search endpoint with pagination and sorting.
+
+----------------------------------------------------------------
+8. OPTIONAL - ICS EXPORT AND REVIEWS (IF YOU WANT TO MENTION)
+----------------------------------------------------------------
+If you want to highlight completeness of the solution without implementing extra buttons in UI:
+
+8.1 Mention that each interview can be exported as an .ics calendar file (GET /api/interviews/{id}/ics).
+8.2 Mention that completed interviews enable review creation, which also feeds into reliability scores over time.
+
+----------------------------------------------------------------
+9. CLOSING SUMMARY
+----------------------------------------------------------------
+End the demo by summarizing what the microservice covers, all visible only via UI:
+
+    - CRUD on interviews with strong business rules (one interview per pair, cancellation windows, etc.)
+    - Advanced features:
+        - Availability management and batch slot creation
+        - Smart alternative suggestions for time conflicts
+        - Per-person reliability:
+            - Client sees each freelancer's reliability per row
+            - Freelancer sees each client's reliability per row
+        - Workload classification for freelancers
+        - Time-window-controlled visio rooms
+        - Back-office search with filtering and pagination
+
+This scenario should flow naturally from availability to scheduling to lifecycle to visio to analytics (reliability and workload) to admin control, while visually surfacing all advanced features.
+
+--------------------------------------------------------------------------------
+END OF DOCUMENT
+================================================================================

@@ -188,6 +188,198 @@ You can also hit `POST /api/interviews` directly: create one interview, then POS
 
 ---
 
+## 11. Smart alternative slot suggestions (advanced)
+
+**What it does:** when an interview cannot be created at the requested time (no availability or schedule conflict), the backend computes **better alternative times** for the same freelancer and owner instead of just returning an error.
+
+- **Core logic (backend):**
+  - `AvailabilitySlotRepository.findAllByFreelancerIdAndBookedFalseAndStartAtGreaterThanEqualAndEndAtLessThanEqual(...)`
+  - `InterviewService.suggestAlternatives(InterviewCreateRequestDTO req)`:
+    - Uses desired `[startAt, endAt]` to derive a desired duration.
+    - Looks at free availability slots for that freelancer over the next 14 days.
+    - For each slot that can contain that duration, picks a candidate start time as close as possible to the requested time but clamped into the slot.
+    - Skips candidates that would conflict with existing PROPOSED/CONFIRMED/COMPLETED interviews for the **freelancer or owner** (reuses the overlap queries).
+    - Computes a **score** per candidate:
+      - Base = absolute difference in minutes between preferred and candidate start.
+      - Extra penalty for very early/late local hours.
+    - Sorts by score and returns the best 3–5 candidates as `AlternativeSlotSuggestionDTO { startAt, endAt, slotId, score }`.
+  - Endpoint: `POST /api/interviews/suggestions` with the same body as create.
+
+- **How to test (UI – recommended):**
+  1. Go to **Client → project detail** for a candidature where you can schedule.
+  2. In the **Interviews** card, click **Schedule**.
+  3. Pick a date/time + duration that you know is **invalid**, for example:
+     - Outside any availability slot for the freelancer, or
+     - Overlapping another interview for the same freelancer/owner (triggering conflict).
+  4. Click **Create**:
+     - You should get an error toast (“Freelancer isn’t available…” or conflict message).
+     - Below the form, a **“Suggested alternative times”** section appears with small buttons like:  
+       `2026-04-01 11:00 → 11:30`, `2026-04-01 14:00 → 14:30`, …
+  5. Click one of the suggestions:
+     - The date, time and duration fields are pre-filled with that suggestion.
+     - Toast: “Using suggested time. Click Create to confirm.”
+  6. Click **Create** again:
+     - The interview is successfully scheduled at the suggested time.
+
+- **How to test (API-only):**
+  1. Build a request body that you know will fail for `/api/interviews` (e.g. overlaps a known interview).
+  2. POST it to `/api/interviews/suggestions` directly:
+     - `curl -X POST http://localhost:8081/api/interviews/suggestions -H "Content-Type: application/json" -d '{...}'`
+  3. Verify the JSON response contains a non-empty array of `{ startAt, endAt, slotId, score }` with times inside available slots that do **not** overlap.
+
+---
+
+## 12. Reliability index (advanced)
+
+**What it does:** computes a **reliability score** for each freelancer and project owner based on their past interviews. Reliability reflects how often interviews are completed vs. cancelled or no-show.
+
+- **Core logic (backend):**
+  - Repository helpers:
+    - `findByFreelancerIdAndStartAtBetween(freelancerId, from, to)`
+    - `findByOwnerIdAndStartAtBetween(ownerId, from, to)`
+  - Service methods:
+    - `computeReliabilityForFreelancer(Long freelancerId, Instant from, Instant to)`
+    - `computeReliabilityForOwner(Long ownerId, Instant from, Instant to)`
+  - For a given user (freelancer or owner), in a window (default last **180 days**):
+    - Let:
+      - `c` = # COMPLETED interviews
+      - `n` = # NO_SHOW interviews
+      - `x` = # CANCELLED interviews (we treat late cancellations as less bad than no-shows)
+      - `T = c + n + x`
+    - If `T == 0` → neutral reliability = **0.5**.
+    - Else:
+      1. Raw score:
+         \[
+         R_0 = \frac{c - n - 0.5 x}{T}
+         \]
+         Clipped to \([0,1]\).
+      2. Smoothed score (Laplace-style, with prior 0.7 and weight 3):
+         \[
+         \text{score} = \frac{R_0 \cdot T + 0.7 \cdot 3}{T + 3}
+         \]
+    - Returned as `ReliabilityResponseDTO { userId, role, score, completedCount, noShowCount, cancelledCount, from, to }`.
+  - Endpoint:
+    - `GET /api/interviews/reliability?freelancerId=...`
+    - `GET /api/interviews/reliability?ownerId=...`
+
+- **How to test (API-only):**
+  1. Make sure you have a mix of interviews for a user:
+     - Some COMPLETED, some NO_SHOW, some CANCELLED.
+  2. Call, for example:  
+     `curl "http://localhost:8081/api/interviews/reliability?freelancerId=1"`
+  3. Check the response:
+     - `score` is between 0 and 1.
+     - `completedCount / noShowCount / cancelledCount` match your test data.
+
+- **How to test (UI – client view):**
+  1. Start the platform and log in as **Client** (demo assumes client id 1, freelancer id 1).
+  2. Go to **Client → Interviews**.
+  3. At the top of the table, you should see something like:  
+     `Freelancer reliability: 86%`
+  4. Manipulate test data:
+     - Mark more interviews as NO_SHOW for that freelancer → score should decrease.
+     - Mark more as COMPLETED → score should increase.
+
+- **How to test (UI – freelancer view):**
+  1. Log in as **Freelancer**.
+  2. Go to **Freelancer → Interviews**.
+  3. At the top, you should see:  
+     `Owner reliability: 90%`  
+     (for the owner associated with most of the listed interviews).
+
+---
+
+## 13. Workload classification & time-window access control (advanced)
+
+**What it does:**
+
+1. Computes a **workload summary** for each freelancer over the next 7 days, and classifies them as **LIGHT / NORMAL / BUSY / OVERLOADED**.
+2. Enforces a strict **time window** for joining ONLINE interviews, both in backend and UI.
+
+### 13.1 Workload classification
+
+- **Core logic (backend):**
+  - `InterviewService.computeWorkloadForFreelancer(Long freelancerId)`:
+    - Window: `[now, now + 7 days]`.
+    - Considers only **CONFIRMED** interviews.
+    - For each such interview:
+      - `minutes = (endAt - startAt)` in minutes; ignore non-positive.
+      - Add to `totalMinutes7`.
+      - If `startAt ≤ now + 24h`:
+        - Add to `totalMinutes1`.
+        - Increment `interviewsNext24h`.
+      - If `startAt ≤ now + 3d`: increment `interviewsNext3d`.
+      - Always increments `interviewsNext7d`.
+      - Track per-day totals via local date to compute `maxDailyMinutes`.
+    - Classification thresholds:
+      - **OVERLOADED** if:
+        - `totalMinutes7 ≥ 600` (≥10 hours in next week) **or**
+        - `maxDailyMinutes ≥ 240` (≥4 hours of interviews on one day).
+      - **BUSY** if:
+        - `totalMinutes7 ≥ 360` (≥6 hours) **or**
+        - `interviewsNext24h ≥ 3`.
+      - **NORMAL** if:
+        - `totalMinutes7 ≥ 120` (≥2 hours), but not BUSY/OVERLOADED.
+      - **LIGHT** otherwise.
+    - Returns `WorkloadSummaryDTO { freelancerId, from, to, totalMinutes7, totalMinutes1, interviewsNext24h, interviewsNext3d, interviewsNext7d, maxDailyMinutes, level }`.
+  - Endpoint:  
+    `GET /api/interviews/workload?freelancerId=1`
+
+- **How to test (API-only):**
+  1. Create several CONFIRMED interviews for freelancer `1` over the next 7 days with different durations and dates.
+  2. Call:  
+     `curl "http://localhost:8081/api/interviews/workload?freelancerId=1"`
+  3. Check that:
+     - `totalMinutes7` is roughly the sum of durations.
+     - `totalMinutes1`, `interviewsNext24h`, `interviewsNext3d`, `interviewsNext7d` match your data.
+     - `level` changes appropriately when you cross thresholds (add/remove interviews).
+
+- **How to test (UI – freelancer view):**
+  1. Log in as **Freelancer**.
+  2. Go to **Freelancer → Interviews**.
+  3. At the top of the list, you should see:  
+     `My workload: busy (3 interviews, 7.5h next 7 days)`  
+     (values vary depending on seeded/test data).
+  4. Add or remove CONFIRMED interviews and reload; the text should update.
+
+### 13.2 Time-window aware access control
+
+This refines and formalizes the join rules for ONLINE interviews:
+
+- **Backend (InterviewService):**
+  - `getOrCreateVisioRoom(Long interviewId)` calls:
+    - `assertWithinAccessWindow(Interview interview)`:
+      - If `now < startAt`: throws  
+        `"Online meeting is not available yet (before the scheduled start time)"`.
+      - If `now > endAt`: throws  
+        `"Online meeting is no longer available (after the scheduled end time)"`.
+  - This ensures the visio room is **only usable between** `startAt` and `endAt`.
+
+- **Frontend (Angular):**
+  - `InterviewListComponent`:
+    - `canJoinOnline(i: Interview)` mirrors the same window check (`startAt ≤ now ≤ endAt`).
+    - The “**Join online**” link in the Link/Place column is shown only when `canJoinOnline(i)` is true; otherwise it shows “Not available”.
+    - `timeLeftLabel(i)` shows:
+      - `Starts in X` (before)
+      - `In progress (X left)` (during)
+      - `Ended` (after)
+  - `VisioCallComponent`:
+    - Before calling `getVisioRoom`, it fetches the interview via `GET /api/interviews/{id}` and performs the same time check on the client.
+    - If too early/late, it shows a clear message and does **not** open the iframe.
+
+- **How to test (UI):**
+  1. Create an ONLINE CONFIRMED interview that starts a few minutes in the future.
+  2. As client or freelancer, go to the relevant **Interviews** list:
+     - Before start: “Join online” should be disabled / show “Not available”.
+  3. When the clock reaches the start time (within the scheduled window):
+     - “Join online” appears and routes to `/client/interviews/{id}/visio` or `/freelancer/interviews/{id}/visio`.
+     - The meeting loads inside the in-app iframe (Jitsi room).
+  4. After `endAt`:
+     - “Join online” disappears / shows “Not available”.
+     - Hitting the visio route directly will now show an error message from backend/frontend.
+
+---
+
 ## Quick checklist (Interview microservice only)
 
 - [ ] **Availability:** Create slot (single + batch), list, delete free slot.  
@@ -198,5 +390,8 @@ You can also hit `POST /api/interviews` directly: create one interview, then POS
 - [ ] **Visio:** GET visio-room for an ONLINE interview, use joinUrl.  
 - [ ] **Reviews:** Complete interview → create review → list by interview / by reviewee → aggregate.  
 - [ ] **Validation:** Trigger 400 for invalid create/update and path params.
+- [ ] **Advanced – Suggestions:** Force a failed schedule → see smart alternative slot suggestions and use one to create.  
+- [ ] **Advanced – Reliability:** Check freelancer/owner reliability API + badges in interview lists.  
+- [ ] **Advanced – Workload & access:** Check freelancer workload label and verify join availability window for ONLINE interviews.
 
 All microservices above have been started in the background. Use **http://localhost:8081** for API calls via the gateway and **http://localhost:4200** for the Angular UI (after running `ng serve --open` in the `angular` folder).

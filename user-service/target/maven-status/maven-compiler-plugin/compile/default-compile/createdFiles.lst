@@ -1,0 +1,9 @@
+com\freelancing\user\repository\UserRepository.class
+com\freelancing\user\entity\User.class
+com\freelancing\user\controller\UserController.class
+com\freelancing\user\service\UserService.class
+com\freelancing\user\dto\UserLoginRequestDTO.class
+com\freelancing\user\enums\UserRole.class
+com\freelancing\user\dto\UserResponseDTO.class
+com\freelancing\user\UserServiceApplication.class
+com\freelancing\user\config\UserDataInitializer.class

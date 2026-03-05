@@ -48,7 +48,7 @@
                     Project #{{ c.projectId }}
                   </a>
                 </td>
-                <td class="px-6 py-4 text-gray-600">Freelancer #{{ c.freelancerId }}</td>
+                <td class="px-6 py-4 text-gray-600">{{ freelancerNames[c.freelancerId] || ('Freelancer #' + c.freelancerId) }}</td>
                 <td class="px-6 py-4 text-gray-600">
                   @if (c.proposedBudget != null) { {{ c.proposedBudget | number:'1.0-0' }}$ }
                   @else { - }

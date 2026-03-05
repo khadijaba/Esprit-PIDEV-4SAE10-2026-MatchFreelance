@@ -1,12 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
 import { InterviewService } from '../../services/interview.service';
 import { ToastService } from '../../services/toast.service';
 import { AvailabilitySlot, PageResponse } from '../../models/interview.model';
-
-/** Current freelancer ID – replace with auth when user service is integrated */
-const FREELANCER_ID = 1;
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -61,6 +59,7 @@ export class FreelancerAvailabilityComponent implements OnInit {
   submitting = false;
 
   constructor(
+    private auth: AuthService,
     private interviewService: InterviewService,
     private toast: ToastService
   ) {}
@@ -70,7 +69,7 @@ export class FreelancerAvailabilityComponent implements OnInit {
   }
 
   get freelancerId(): number {
-    return FREELANCER_ID;
+    return this.auth.currentUser()?.id ?? 0;
   }
 
   loadSlots() {

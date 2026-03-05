@@ -6,6 +6,7 @@ import com.freelancing.interview.enums.MeetingMode;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.Instant;
+import java.util.List;
 
 public final class InterviewSpecifications {
     private InterviewSpecifications() {}
@@ -40,6 +41,10 @@ public final class InterviewSpecifications {
 
     public static Specification<Interview> startAtLte(Instant to) {
         return (root, query, cb) -> to == null ? null : cb.lessThanOrEqualTo(root.get("startAt"), to);
+    }
+
+    public static Specification<Interview> statusIn(List<InterviewStatus> statuses) {
+        return (root, query, cb) -> statuses == null || statuses.isEmpty() ? null : root.get("status").in(statuses);
     }
 }
 

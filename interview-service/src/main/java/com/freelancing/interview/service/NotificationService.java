@@ -45,6 +45,13 @@ public class NotificationService {
         emit(interview.getOwnerId(), interview.getId(), type, msg);
     }
 
+    /** Emit notification only to the freelancer (e.g. INTERVIEW_PROPOSED: owner created it, only freelancer is notified). */
+    @Transactional
+    public void emitToFreelancerOnly(Interview interview, NotificationType type) {
+        String msg = defaultMessage(type, interview);
+        emit(interview.getFreelancerId(), interview.getId(), type, msg);
+    }
+
     @Transactional(readOnly = true)
     public Page<NotificationResponseDTO> listByUser(Long userId, Pageable pageable) {
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)

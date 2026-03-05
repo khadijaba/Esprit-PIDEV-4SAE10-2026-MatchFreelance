@@ -3,8 +3,15 @@ import { LayoutComponent } from './components/layout/layout.component';
 import { FrontLayoutComponent } from './components/front-layout/front-layout.component';
 import { ClientLayoutComponent } from './components/client-layout/client-layout.component';
 import { FreelancerLayoutComponent } from './components/freelancer-layout/freelancer-layout.component';
+import { adminGuard, clientGuard, freelancerGuard } from './guards/role.guard';
 
 export const routes: Routes = [
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./components/login/login.component').then((m) => m.LoginComponent),
+  },
+
   // Frontoffice (public)
   {
     path: '',
@@ -32,6 +39,7 @@ export const routes: Routes = [
   {
     path: 'admin',
     component: LayoutComponent,
+    canActivate: [adminGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
@@ -87,6 +95,7 @@ export const routes: Routes = [
   {
     path: 'client',
     component: ClientLayoutComponent,
+    canActivate: [clientGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
@@ -111,6 +120,12 @@ export const routes: Routes = [
         data: { role: 'client' },
       },
       {
+        path: 'interviews/:id',
+        loadComponent: () =>
+          import('./components/interview-detail/interview-detail.component').then((m) => m.InterviewDetailComponent),
+        data: { role: 'client' },
+      },
+      {
         path: 'interviews/:id/visio',
         loadComponent: () =>
           import('./components/visio-call/visio-call.component').then((m) => m.VisioCallComponent),
@@ -122,8 +137,23 @@ export const routes: Routes = [
   {
     path: 'freelancer',
     component: FreelancerLayoutComponent,
+    canActivate: [freelancerGuard],
     children: [
-      { path: '', redirectTo: 'availability', pathMatch: 'full' },
+      { path: '', redirectTo: 'projects', pathMatch: 'full' },
+      {
+        path: 'projects',
+        loadComponent: () =>
+          import('./components/front-project-list/front-project-list.component').then(
+            (m) => m.FrontProjectListComponent,
+          ),
+      },
+      {
+        path: 'projects/:id',
+        loadComponent: () =>
+          import('./components/front-project-detail/front-project-detail.component').then(
+            (m) => m.FrontProjectDetailComponent,
+          ),
+      },
       {
         path: 'availability',
         loadComponent: () =>
@@ -133,6 +163,12 @@ export const routes: Routes = [
         path: 'interviews',
         loadComponent: () =>
           import('./components/interview-list/interview-list.component').then((m) => m.InterviewListComponent),
+        data: { role: 'freelancer' },
+      },
+      {
+        path: 'interviews/:id',
+        loadComponent: () =>
+          import('./components/interview-detail/interview-detail.component').then((m) => m.InterviewDetailComponent),
         data: { role: 'freelancer' },
       },
       {

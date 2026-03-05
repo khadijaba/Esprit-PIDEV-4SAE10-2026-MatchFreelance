@@ -14,4 +14,5 @@ com\freelancing\candidature\service\CandidatureService.class
 com\freelancing\candidature\client\ProjectClient.class
 com\freelancing\candidature\CandidatureServiceApplication.class
 com\freelancing\candidature\client\ContractClient.class
+com\freelancing\candidature\config\CandidatureDataInitializer.class
 com\freelancing\candidature\repository\CandidatureRepository.class

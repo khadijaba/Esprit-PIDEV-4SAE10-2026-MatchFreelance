@@ -1,12 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 import { ProjectService } from '../../services/project.service';
 import { CandidatureService } from '../../services/candidature.service';
 import { ContractService } from '../../services/contract.service';
+import { UserService } from '../../services/user.service';
 import { ToastService } from '../../services/toast.service';
+import { InterviewService } from '../../services/interview.service';
 import { Project, ProjectStatus, ContractSummary } from '../../models/project.model';
 import { Candidature, CandidatureStatus } from '../../models/candidature.model';
+import { TopFreelancerInInterviews } from '../../models/interview.model';
 import { InterviewScheduleComponent } from '../interview-schedule/interview-schedule.component';
 
 @Component({
@@ -18,17 +22,24 @@ import { InterviewScheduleComponent } from '../interview-schedule/interview-sche
 export class ClientProjectDetailComponent implements OnInit {
   project?: Project;
   candidatures: Candidature[] = [];
+  freelancerNames: Record<number, string> = {};
+  topFreelancers: TopFreelancerInInterviews[] = [];
   loading = true;
-  clientId = 1;
+  get clientId(): number {
+    return this.auth.currentUser()?.id ?? 0;
+  }
   animatingId: number | null = null;
   animatingDirection: 'accept' | 'reject' | null = null;
   contractActionLoading = false;
 
   constructor(
+    private auth: AuthService,
     private projectService: ProjectService,
     private candidatureService: CandidatureService,
     private contractService: ContractService,
+    private userService: UserService,
     private toast: ToastService,
+    private interviewService: InterviewService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -45,6 +56,7 @@ export class ClientProjectDetailComponent implements OnInit {
         }
         this.loadCandidatures(id);
         this.loadContractsIfNeeded(id);
+        this.loadTopFreelancers();
         this.loading = false;
       },
       error: () => {
@@ -74,6 +86,7 @@ export class ClientProjectDetailComponent implements OnInit {
             endDate: c.endDate,
             createdAt: c.createdAt,
           }));
+          this.loadFreelancerNames();
         }
       },
     });
@@ -81,7 +94,32 @@ export class ClientProjectDetailComponent implements OnInit {
 
   loadCandidatures(projectId: number) {
     this.candidatureService.getByProjectId(projectId).subscribe({
-      next: (data) => (this.candidatures = data),
+      next: (data) => {
+        this.candidatures = data;
+        this.loadFreelancerNames();
+      },
+    });
+  }
+
+  private loadFreelancerNames() {
+    const ids: number[] = this.candidatures.map((c) => c.freelancerId);
+    if (this.project?.contracts) {
+      this.project.contracts.forEach((c) => ids.push(c.freelancerId));
+    }
+    this.topFreelancers.forEach((t) => ids.push(t.freelancerId));
+    this.userService.getDisplayNamesMap(ids).subscribe({
+      next: (map) => (this.freelancerNames = { ...this.freelancerNames, ...map }),
+    });
+  }
+
+  private loadTopFreelancers() {
+    const ownerId = this.clientId;
+    if (!ownerId) return;
+    this.interviewService.getTopFreelancers({ ownerId, limit: 5 }).subscribe({
+      next: (list) => {
+        this.topFreelancers = list;
+        this.loadFreelancerNames();
+      },
     });
   }
 

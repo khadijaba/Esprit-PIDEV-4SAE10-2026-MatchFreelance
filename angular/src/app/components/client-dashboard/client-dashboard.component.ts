@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
 import { ProjectService } from '../../services/project.service';
 import { CandidatureService } from '../../services/candidature.service';
 import { ContractService } from '../../services/contract.service';
@@ -20,9 +21,12 @@ export class ClientDashboardComponent implements OnInit {
   candidatureCounts: Record<number, number> = {};
   pendingCounts: Record<number, number> = {};
   loading = true;
-  clientId = 1;
+  get clientId(): number {
+    return this.auth.currentUser()?.id ?? 0;
+  }
 
   constructor(
+    private auth: AuthService,
     private projectService: ProjectService,
     private candidatureService: CandidatureService,
     private contractService: ContractService,

@@ -125,6 +125,9 @@ export class InterviewScheduleComponent implements OnInit {
   /** Whether the owner wants to use an external meeting URL instead of pure in-app visio. */
   useExternalMeeting = false;
 
+  suggestions: { startAt: string; endAt: string; slotId: number | null; score: number }[] = [];
+  suggestionsLoading = false;
+
   constructor(
     private interviewService: InterviewService,
     private toast: ToastService
@@ -158,6 +161,29 @@ export class InterviewScheduleComponent implements OnInit {
   }
 
   openForm() {
+    this.interviewService
+      .searchInterviews({
+        candidatureId: this.candidatureId,
+        page: 0,
+        size: 1,
+        sort: 'startAt,desc',
+      })
+      .subscribe({
+        next: (page) => {
+          const hasExisting = page.totalElements > 0 && page.content.some((i) => i.status !== 'CANCELLED');
+          if (hasExisting) {
+            this.toast.error('An interview already exists for this application.');
+            return;
+          }
+          this.doOpenForm();
+        },
+        error: () => {
+          this.toast.error('Could not check existing interviews.');
+        },
+      });
+  }
+
+  private doOpenForm() {
     this.showForm = true;
     this.formModel = {
       candidatureId: this.candidatureId,
@@ -302,14 +328,46 @@ export class InterviewScheduleComponent implements OnInit {
     this.formModel.slotId = undefined;
     this.formModel.durationMinutes = this.durationMinutes;
 
+    this.suggestions = [];
     this.interviewService.createInterview(this.formModel).subscribe({
       next: () => {
         this.toast.success('Interview scheduled');
         this.loadInterviews();
         this.closeForm();
       },
-      error: (err) => this.toast.error(err?.error?.message || 'Failed to schedule interview'),
+      error: (err) => {
+        this.toast.error(err?.error?.message || 'Failed to schedule interview');
+        this.loadSuggestions();
+      },
     });
+  }
+
+  private loadSuggestions() {
+    this.suggestionsLoading = true;
+    this.interviewService.suggestAlternatives(this.formModel).subscribe({
+      next: (items) => {
+        this.suggestions = items;
+        this.suggestionsLoading = false;
+      },
+      error: () => {
+        this.suggestionsLoading = false;
+      },
+    });
+  }
+
+  useSuggestion(s: { startAt: string; endAt: string }) {
+    const start = new Date(s.startAt);
+    const end = new Date(s.endAt);
+    const durMinutes = Math.max(1, Math.round((end.getTime() - start.getTime()) / 60000));
+
+    this.selectedDate = start.toISOString().slice(0, 10);
+    this.startTime = start.toISOString().slice(11, 16);
+    this.durationMinutes = durMinutes;
+
+    this.formModel.startAt = s.startAt;
+    this.formModel.endAt = s.endAt;
+
+    this.toast.info('Using suggested time. Click Create to confirm.');
   }
 
   confirm(interview: Interview) {

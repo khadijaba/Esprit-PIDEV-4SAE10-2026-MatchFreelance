@@ -81,7 +81,7 @@
           <div class="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-4">
             <div>
               <p class="font-medium text-gray-800">Contract #{{ contract.id }}</p>
-              <p class="mt-1 text-sm text-gray-600">Freelancer #{{ contract.freelancerId }}</p>
+              <p class="mt-1 text-sm text-gray-600">{{ freelancerNames[contract.freelancerId] || ('Freelancer #' + contract.freelancerId) }}</p>
               @if (contract.proposedBudget != null) {
                 <p class="mt-1 font-semibold text-emerald-600">{{ contract.proposedBudget | number:'1.0-0' }}$</p>
               }
@@ -110,7 +110,7 @@
           @for (c of candidatures; track c.id) {
             <div class="flex flex-col gap-4 rounded-lg border border-gray-100 bg-gray-50 p-4 sm:flex-row sm:items-start sm:justify-between">
               <div class="flex-1">
-                <p class="font-medium text-gray-800">Freelancer #{{ c.freelancerId }}</p>
+                <p class="font-medium text-gray-800">{{ freelancerNames[c.freelancerId] || ('Freelancer #' + c.freelancerId) }}</p>
                 @if (c.proposedBudget) {
                   <p class="mt-1 text-sm font-medium text-emerald-600">Proposed: {{ c.proposedBudget | number:'1.0-0' }}$</p>
                 }

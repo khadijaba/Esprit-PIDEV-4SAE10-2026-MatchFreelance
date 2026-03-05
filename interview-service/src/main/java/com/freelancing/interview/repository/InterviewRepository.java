@@ -26,6 +26,22 @@ public interface InterviewRepository extends JpaRepository<Interview, Long>, Jpa
 
     Page<Interview> findByStartAtBetween(Instant from, Instant to, Pageable pageable);
 
+    boolean existsByCandidatureId(Long candidatureId);
+
+    boolean existsByProjectIdAndFreelancerId(Long projectId, Long freelancerId);
+
+    List<Interview> findByFreelancerIdAndStartAtBetween(Long freelancerId, Instant from, Instant to);
+
+    List<Interview> findByOwnerIdAndStartAtBetween(Long ownerId, Instant from, Instant to);
+
+    @Query("SELECT DISTINCT i.freelancerId FROM Interview i WHERE i.startAt >= :since")
+    List<Long> findDistinctFreelancerIdsWithInterviewsSince(@Param("since") Instant since);
+
+    @Query("SELECT DISTINCT i.freelancerId FROM Interview i WHERE i.startAt >= :since AND i.ownerId = :ownerId")
+    List<Long> findDistinctFreelancerIdsWithInterviewsSinceAndOwnerId(
+            @Param("since") Instant since,
+            @Param("ownerId") Long ownerId);
+
     @Query("""
             select (count(i) > 0) from Interview i
             where i.freelancerId = :freelancerId

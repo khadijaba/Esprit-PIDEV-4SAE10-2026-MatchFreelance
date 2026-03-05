@@ -1,198 +1,106 @@
-# Freelancing Platform - BackOffice
+# MatchFreelance – Plateforme Freelancing
 
-Spring Boot REST API for managing projects in a freelancing platform.
+## Overview
 
-## Project Structure
+This project was developed as part of the **PIDEV – 4th Year Engineering Program** at **Esprit School of Engineering** (Academic Year 2025–2026).
 
-```
-spring/
-├── src/
-│   └── main/
-│       ├── java/com/freelancing/backoffice/
-│       │   ├── BackofficeApplication.java       # Main application class
-│       │   ├── controller/
-│       │   │   └── ProjectController.java       # REST API endpoints
-│       │   ├── service/
-│       │   │   └── ProjectService.java          # Business logic
-│       │   ├── repository/
-│       │   │   └── ProjectRepository.java       # Data access layer
-│       │   ├── entity/
-│       │   │   └── Project.java                 # JPA entity
-│       │   ├── dto/
-│       │   │   ├── ProjectRequestDTO.java       # Request DTO
-│       │   │   └── ProjectResponseDTO.java      # Response DTO
-│       │   └── enums/
-│       │       └── ProjectStatus.java           # Project status enum
-│       └── resources/
-│           └── application.properties           # Configuration
-└── pom.xml                                      # Maven dependencies
-```
+It is a full-stack freelancing platform that connects freelancers with clients: projects, candidatures (postuler), contracts, and **interviews** (scheduling, availability, in-app visio, reviews). The architecture is **microservices** (Spring Boot, Eureka, API Gateway) with an **Angular** front-end. Roles: **Admin**, **Client** (project owner), **Freelancer**.
 
 ## Features
 
-- ✅ Full CRUD operations for Projects
-- ✅ Search projects by title
-- ✅ Filter projects by status
-- ✅ Input validation
-- ✅ RESTful API design
-- ✅ H2 in-memory database (development)
-- ✅ MySQL support (production)
+- **Projects:** CRUD, search, filter (project microservice).
+- **Candidatures:** Apply to projects (postuler), list by project (candidature microservice).
+- **Contracts:** Contract lifecycle (contract microservice).
+- **Interviews (Interview microservice):**
+  - **Availability:** Freelancers define time slots; batch and weekly generation.
+  - **Interviews:** Full CRUD, search with filters and pagination, lifecycle (propose → confirm / reject → complete / cancel / no-show).
+  - **Notifications:** In-app list, mark as read, automatic reminders (24h, 1h).
+  - **Cancellation policy:** Cancel allowed only if more than 24h before start.
+  - **Visio:** In-app meeting (Jitsi) or external link; access only within interview time window.
+  - **Reviews:** Create after COMPLETED (score 1–5, comment); list by interview or by reviewee; aggregate.
+  - **iCalendar:** Download .ics from list or interview detail.
+  - **Advanced:** Alternative slot suggestions, reliability index (freelancer/owner), workload classification, top N freelancers (reliability + review score).
+- **Users:** Login, roles (user microservice).
 
-## API Endpoints
+## Tech Stack
 
-### Get All Projects
-```
-GET /api/projects
-```
+### Frontend
 
-### Get Project by ID
-```
-GET /api/projects/{id}
-```
+- Angular 18+
+- TypeScript
+- Standalone components
+- Proxy `/api` to API Gateway
 
-### Get Projects by Status
-```
-GET /api/projects/status/{status}
-```
-Status values: `OPEN`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`
+### Backend
 
-### Search Projects by Title
-```
-GET /api/projects/search?title={title}
-```
+- Java 17+
+- Spring Boot 3
+- Spring Cloud (Eureka Server, API Gateway)
+- Spring Data JPA
+- MySQL (e.g. XAMPP)
 
-### Create Project
-```
-POST /api/projects
-Content-Type: application/json
+## Architecture
 
-{
-  "title": "Mobile App Development",
-  "description": "Need a React Native developer",
-  "budget": 5000.0,
-  "duration": 30
-}
-```
+- **Eureka Server** (port 8761): service discovery; all microservices register here.
+- **API Gateway** (port 8081): single entry point; routes `/api/*` to the appropriate microservice.
+- **Microservices:**  
+  project-service (8082), candidature-service (8083), contract-service (8084), **interview-service** (8085), user-service (8086).  
+  Each can use its own database (e.g. `freelancing_interview` for interview-service).
+- **Angular** (port 4200): SPA; consumes APIs via the gateway.
 
-### Update Project
-```
-PUT /api/projects/{id}
-Content-Type: application/json
+Detailed run order and ports: see **Getting Started** and `docs/RUN_PLATFORM_FOR_INTERVIEW_TEST.md`.
 
-{
-  "title": "Mobile App Development",
-  "description": "Updated description",
-  "budget": 6000.0,
-  "duration": 45,
-  "status": "IN_PROGRESS"
-}
-```
+## Contributors
 
-### Delete Project
-```
-DELETE /api/projects/{id}
-```
+- [Add team member names and roles]
 
-## Running the Application
+## Academic Context
 
-### Prerequisites
-- Java 17 or higher
-- Maven 3.6+
+Developed at **Esprit School of Engineering – Tunisia**.  
+**PIDEV – 4SAE | 2025–2026**
 
-### Steps
+## Getting Started
 
-1. **Navigate to project directory**
-```bash
-cd c:\Users\azizb\Desktop\spring
-```
+**Prerequisites:** Java 17+, Maven, Node.js/npm, MySQL (e.g. XAMPP).
 
-2. **Build the project**
-```bash
-mvn clean install
-```
+Start services **in this order** (each in its own terminal, from project root):
 
-3. **Run the application**
-```bash
-mvn spring-boot:run
-```
+1. **Eureka Server** (8761)  
+   `cd eureka-server && mvn -q -DskipTests spring-boot:run`
 
-The application will start on `http://localhost:8080`
+2. **API Gateway** (8081)  
+   `cd api-gateway && mvn -q -DskipTests spring-boot:run`
 
-### Access H2 Console
-Visit `http://localhost:8080/h2-console`
-- JDBC URL: `jdbc:h2:mem:freelancing`
-- Username: `sa`
-- Password: (leave blank)
+3. **Project service** (8082)  
+   `cd project-service && mvn -q -DskipTests spring-boot:run`
 
-## Testing with cURL
+4. **Candidature service** (8083)  
+   `cd candidature-service && mvn -q -DskipTests spring-boot:run`
 
-### Create a project
-```bash
-curl -X POST http://localhost:8080/api/projects \
-  -H "Content-Type: application/json" \
-  -d "{\"title\":\"Website Development\",\"description\":\"Build a corporate website\",\"budget\":3000.0,\"duration\":20}"
-```
+5. **Interview service** (8085)  
+   `cd interview-service && mvn -q -DskipTests spring-boot:run`
 
-### Get all projects
-```bash
-curl http://localhost:8080/api/projects
-```
+6. **User service** (8086, if used)  
+   `cd user-service && mvn -q -DskipTests spring-boot:run`
 
-### Get project by ID
-```bash
-curl http://localhost:8080/api/projects/1
-```
+7. **Angular** (4200)  
+   `cd angular && npx ng serve --open`
 
-### Update a project
-```bash
-curl -X PUT http://localhost:8080/api/projects/1 \
-  -H "Content-Type: application/json" \
-  -d "{\"title\":\"Website Development Updated\",\"description\":\"Updated description\",\"budget\":3500.0,\"duration\":25,\"status\":\"IN_PROGRESS\"}"
-```
+Then open **http://localhost:4200**. Use **http://localhost:8081** for direct API calls (gateway).
 
-### Delete a project
-```bash
-curl -X DELETE http://localhost:8080/api/projects/1
-```
+**Documentation:**
 
-## Database Configuration
+- `docs/INTERVIEW_MICROSERVICE_FEATURES_AND_TESTING.md` – Interview & availability features and how to test.
+- `docs/INTERVIEW_CRUD_AND_ADVANCED_FUNCTIONS.txt` – CRUD and advanced functions, code locations, UI test steps.
+- `docs/RUN_PLATFORM_FOR_INTERVIEW_TEST.md` – Short run guide and UI entry points.
+- `docs/GRILLE_EVALUATION.md` – Evaluation grid (SAE Sprint 1).
 
-### Development (H2)
-The application uses H2 in-memory database by default. Data is not persisted between restarts.
+## Acknowledgments
 
-### Production (MySQL)
-To use MySQL, uncomment the MySQL configuration in `application.properties` and comment out the H2 configuration:
+Thanks to **Esprit School of Engineering** supervisors and teaching staff.
 
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/freelancing
-spring.datasource.username=root
-spring.datasource.password=yourpassword
-spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
-```
+---
 
-## Technologies Used
-
-- **Spring Boot 3.2.2** - Application framework
-- **Spring Data JPA** - Data persistence
-- **Spring Web** - REST API
-- **H2 Database** - In-memory database (dev)
-- **MySQL** - Relational database (prod)
-- **Lombok** - Boilerplate code reduction
-- **Jakarta Validation** - Input validation
-- **Maven** - Build tool
-
-## Project Entity Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | Long | Primary key (auto-generated) |
-| title | String | Project title (required, 3-255 chars) |
-| description | String | Project description (required, max 2000 chars) |
-| budget | Double | Project budget (required, positive) |
-| duration | Integer | Project duration in days (required, positive) |
-| createdAt | Date | Creation timestamp (auto-generated) |
-| status | ProjectStatus | Project status (default: OPEN) |
-
-## License
-
-MIT
+**Repository naming (Esprit):** `Esprit-PIDEV-4SAE10-2026-MatchFreelance` (adapt class/year as needed).  
+**Description (GitHub):** Include *Developed at Esprit School of Engineering – Tunisia*, academic year, and main technologies.  
+**Topics (minimum):** `esprit-school-of-engineering`, `academic-project`, `esprit-pidev`, `2025-2026`, `angular`, `spring-boot`, `microservices`.

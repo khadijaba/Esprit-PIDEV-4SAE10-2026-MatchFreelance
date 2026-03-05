@@ -65,10 +65,74 @@ export interface AvailabilitySlotCreateRequest {
   endAt: string;
 }
 
+export interface InterviewAlternativeSuggestion {
+  startAt: string;
+  endAt: string;
+  slotId: number | null;
+  score: number;
+}
+
 export interface PageResponse<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
   number: number;
   size: number;
+}
+
+export interface ReliabilitySummary {
+  userId: number;
+  role: 'FREELANCER' | 'OWNER';
+  score: number;
+  completedCount: number;
+  noShowCount: number;
+  cancelledCount: number;
+  from: string;
+  to: string;
+}
+
+export interface WorkloadSummary {
+  freelancerId: number;
+  from: string;
+  to: string;
+  totalMinutes7: number;
+  totalMinutes1: number;
+  interviewsNext24h: number;
+  interviewsNext3d: number;
+  interviewsNext7d: number;
+  maxDailyMinutes: number;
+  level: 'LIGHT' | 'NORMAL' | 'BUSY' | 'OVERLOADED';
+}
+
+export interface TopFreelancerInInterviews {
+  freelancerId: number;
+  combinedScore: number;
+  reliabilityScore: number;
+  averageReviewScore: number | null;
+  reviewCount: number;
+  completedCount: number;
+  noShowCount: number;
+  cancelledCount: number;
+}
+
+export interface ReviewCreateRequest {
+  revieweeId: number;
+  score: number;
+  comment?: string;
+}
+
+export interface ReviewResponse {
+  id: number;
+  interviewId: number;
+  reviewerId: number;
+  revieweeId: number;
+  score: number;
+  comment: string | null;
+  createdAt: string;
+}
+
+export interface ReviewAggregate {
+  revieweeId: number;
+  averageScore: number | null;
+  reviewCount: number;
 }

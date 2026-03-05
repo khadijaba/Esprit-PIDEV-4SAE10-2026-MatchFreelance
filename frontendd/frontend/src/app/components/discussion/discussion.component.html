@@ -1,0 +1,106 @@
+<!-- Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="close()">
+  <!-- Petite fenêtre modale (clic à l'intérieur ne ferme pas) -->
+  <div class="flex max-h-[85vh] w-full max-w-md flex-col rounded-2xl border border-gray-200 bg-white shadow-xl"
+    (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="flex items-center gap-3 border-b border-gray-100 p-4">
+      <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--fiverr-green-light)] text-lg font-bold text-[var(--fiverr-green)]">
+        {{ otherUserName.charAt(0).toUpperCase() }}
+      </div>
+      <div class="min-w-0 flex-1">
+        <h2 class="truncate text-lg font-semibold text-[var(--fiverr-dark)]">Message {{ otherUserName }}</h2>
+        <p class="text-xs text-[var(--fiverr-gray)]">Réponse généralement sous 24 h</p>
+      </div>
+      <button type="button" (click)="close()" class="shrink-0 rounded-full p-2 text-[var(--fiverr-gray)] transition hover:bg-gray-100 hover:text-[var(--fiverr-dark)]"
+        aria-label="Fermer">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    @if (loading) {
+      <div class="flex flex-1 items-center justify-center py-12">
+        <div class="h-8 w-8 animate-spin rounded-full border-4 border-[var(--fiverr-green-light)] border-t-[var(--fiverr-green)]"></div>
+      </div>
+    } @else {
+      <!-- Zone messages -->
+      <div class="min-h-[200px] max-h-[320px] flex-1 overflow-y-auto p-4 space-y-3">
+        @if (messages().length === 0) {
+          <p class="rounded-lg bg-gray-50 px-4 py-3 text-sm text-[var(--fiverr-gray)]">
+            Posez une question à {{ otherUserName }} ou partagez les détails de votre projet (besoins, délais, budget, etc.).
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" (click)="setSuggestionGreeting()"
+              class="rounded-full border border-gray-200 bg-white px-4 py-2 text-left text-sm text-[var(--fiverr-dark)] transition hover:border-[var(--fiverr-green)] hover:bg-[var(--fiverr-green-light)]/30">
+              👋 Bonjour {{ otherUserName }}, pouvez-vous m'aider avec...
+            </button>
+            <button type="button" (click)="setSuggestion('Serait-il possible d\'obtenir une offre personnalisée pour...')"
+              class="rounded-full border border-gray-200 bg-white px-4 py-2 text-left text-sm text-[var(--fiverr-dark)] transition hover:border-[var(--fiverr-green)] hover:bg-[var(--fiverr-green-light)]/30">
+              Serait-il possible d'obtenir une offre personnalisée pour...
+            </button>
+            <button type="button" (click)="setSuggestion('Pensez-vous pouvoir livrer une commande avant le...')"
+              class="rounded-full border border-gray-200 bg-white px-4 py-2 text-left text-sm text-[var(--fiverr-dark)] transition hover:border-[var(--fiverr-green)] hover:bg-[var(--fiverr-green-light)]/30">
+              Pensez-vous pouvoir livrer une commande avant le...
+            </button>
+          </div>
+        } @else {
+          @for (msg of messages(); track msg.id) {
+            <div class="flex" [class.justify-end]="isFromMe(msg)" [class.justify-start]="!isFromMe(msg)">
+              <div
+                class="max-w-[85%] rounded-lg px-3 py-2"
+                [class.ml-auto]="isFromMe(msg)"
+                [class.bg-[var(--fiverr-green)]]="isFromMe(msg)"
+                [class.text-white]="isFromMe(msg)"
+                [class.bg-[var(--fiverr-gray-light)]]="!isFromMe(msg)"
+                [class.text-[var(--fiverr-dark)]]="!isFromMe(msg)">
+                <p class="whitespace-pre-wrap break-words text-sm">{{ msg.text }}</p>
+                <p class="mt-0.5 text-right text-xs opacity-80" [class.text-white]="isFromMe(msg)" [class.text-[var(--fiverr-gray)]]="!isFromMe(msg)">
+                  {{ formatTime(msg.createdAt) }}
+                </p>
+              </div>
+            </div>
+          }
+        }
+        <div #messagesEnd></div>
+      </div>
+
+      <!-- Saisie + compteur + envoyer -->
+      <div class="border-t border-gray-100 p-4">
+        <form (ngSubmit)="send()" class="space-y-2">
+          <div class="relative flex items-end gap-2">
+            <span class="rounded-lg border border-gray-200 p-2 text-[var(--fiverr-gray)] transition hover:bg-gray-50" title="Emoji">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z" />
+              </svg>
+            </span>
+            <span class="rounded-lg border border-gray-200 p-2 text-[var(--fiverr-gray)] transition hover:bg-gray-50" title="Pièce jointe">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.43-5.44l-1.06-1.061M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </span>
+            <textarea
+              [(ngModel)]="newText"
+              name="newText"
+              rows="2"
+              maxlength="2500"
+              placeholder="Écrivez votre message..."
+              class="min-h-[52px] flex-1 resize-none rounded-lg border border-gray-300 px-4 py-2.5 pr-14 text-sm text-[var(--fiverr-dark)] placeholder-[var(--fiverr-gray)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-1 focus:ring-[var(--fiverr-green)]"
+            ></textarea>
+            <button
+              type="submit"
+              [disabled]="!newText.trim()"
+              class="flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--fiverr-green)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--fiverr-green-hover)] disabled:cursor-not-allowed disabled:opacity-50">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+              </svg>
+              Envoyer
+            </button>
+          </div>
+          <p class="text-right text-xs text-[var(--fiverr-gray)]">{{ newText.length }}/2500</p>
+        </form>
+      </div>
+    }
+  </div>
+</div>
