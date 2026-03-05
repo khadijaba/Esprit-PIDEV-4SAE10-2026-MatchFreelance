@@ -1,198 +1,109 @@
-# Freelancing Platform - BackOffice
+# MatchFreelance
 
-Spring Boot REST API for managing projects in a freelancing platform.
+## Overview
 
-## Project Structure
+This project was developed as part of the PIDEV – 4th Year Engineering Program at Esprit School of Engineering (Academic Year 2025–2026). It consists of a full-stack web application that connects freelancers with clients, allowing them to post missions, apply for projects, and collaborate efficiently.
 
-```
-spring/
-├── src/
-│   └── main/
-│       ├── java/com/freelancing/backoffice/
-│       │   ├── BackofficeApplication.java       # Main application class
-│       │   ├── controller/
-│       │   │   └── ProjectController.java       # REST API endpoints
-│       │   ├── service/
-│       │   │   └── ProjectService.java          # Business logic
-│       │   ├── repository/
-│       │   │   └── ProjectRepository.java       # Data access layer
-│       │   ├── entity/
-│       │   │   └── Project.java                 # JPA entity
-│       │   ├── dto/
-│       │   │   ├── ProjectRequestDTO.java       # Request DTO
-│       │   │   └── ProjectResponseDTO.java      # Response DTO
-│       │   └── enums/
-│       │       └── ProjectStatus.java           # Project status enum
-│       └── resources/
-│           └── application.properties           # Configuration
-└── pom.xml                                      # Maven dependencies
-```
+This repository (branch **candidat**) focuses on the **Candidature** and **Contract** microservices: applications, ranking, interviews, and contract lifecycle (chat, progress, payments).
 
 ## Features
 
-- ✅ Full CRUD operations for Projects
-- ✅ Search projects by title
-- ✅ Filter projects by status
-- ✅ Input validation
-- ✅ RESTful API design
-- ✅ H2 in-memory database (development)
-- ✅ MySQL support (production)
+- Freelancer profile management
+- Mission posting and applications
+- Client and freelancer matching system
+- **Candidature**: apply for projects, pitch analysis, ranking, interviews
+- **Contract**: contract creation, chat, progress tracking, payments and milestones
+- Project tracking and collaboration
 
-## API Endpoints
+## Tech Stack
 
-### Get All Projects
-```
-GET /api/projects
-```
+### Frontend
 
-### Get Project by ID
-```
-GET /api/projects/{id}
-```
+- Angular
 
-### Get Projects by Status
-```
-GET /api/projects/status/{status}
-```
-Status values: `OPEN`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`
+### Backend
 
-### Search Projects by Title
-```
-GET /api/projects/search?title={title}
-```
+- Spring Boot
+- MySQL
+- REST APIs
+- JWT Authentication
 
-### Create Project
-```
-POST /api/projects
-Content-Type: application/json
+## Architecture
 
-{
-  "title": "Mobile App Development",
-  "description": "Need a React Native developer",
-  "budget": 5000.0,
-  "duration": 30
-}
-```
+The system follows a **Microservices Architecture** using Spring Cloud components:
 
-### Update Project
-```
-PUT /api/projects/{id}
-Content-Type: application/json
+### Infrastructure Components
 
-{
-  "title": "Mobile App Development",
-  "description": "Updated description",
-  "budget": 6000.0,
-  "duration": 45,
-  "status": "IN_PROGRESS"
-}
-```
+- **API Gateway**
+- **Eureka Service Registry**
 
-### Delete Project
-```
-DELETE /api/projects/{id}
-```
+### Business Microservices
 
-## Running the Application
+- User Microservice
+- Project Microservice
+- Skills Microservice
+- Microformation Microservice
+- Evaluation Microservice
+- Application Microservice
+- **Contrat Microservice**
+- **Interview Microservice**
+- Forum Microservice
 
-### Prerequisites
-- Java 17 or higher
-- Maven 3.6+
+## Contributors
 
-### Steps
+- Emna Dorai
+- Khadija Ben Ayed
+- Ahmed Bel Haj Dahmen
+- Aziz Ben Fedhila
+- Med Amine Bejaoui
 
-1. **Navigate to project directory**
+## Academic Context
+
+Developed at **Esprit School of Engineering – Tunisia**  
+PIDEV – 4SAE10 | 2025–2026
+
+## Getting Started
+
 ```bash
-cd c:\Users\azizb\Desktop\spring
+git clone https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance
+cd Esprit-PIDEV-4SAE10-2026-MatchFreelance
+git checkout candidat
 ```
 
-2. **Build the project**
+### Backend
+
+Start infrastructure and microservices (order matters). From the project root:
+
 ```bash
-mvn clean install
+# 1. Eureka Server
+cd eureka-server
+./mvnw spring-boot:run
+
+# 2. API Gateway (in another terminal)
+cd api-gateway
+./mvnw spring-boot:run
+
+# 3. User, Project, Candidature, Contract services (each in its folder)
+cd user-service && ./mvnw spring-boot:run
+cd project-service && ./mvnw spring-boot:run
+cd candidature-service && ./mvnw spring-boot:run
+cd contract-service && ./mvnw spring-boot:run
 ```
 
-3. **Run the application**
+See `SETUP_GUIDE.md` and `MICROSERVICES.md` for detailed setup and MySQL configuration.
+
+### Frontend
+
 ```bash
-mvn spring-boot:run
+cd angular
+npm install
+ng serve
 ```
 
-The application will start on `http://localhost:8080`
+## Acknowledgments
 
-### Access H2 Console
-Visit `http://localhost:8080/h2-console`
-- JDBC URL: `jdbc:h2:mem:freelancing`
-- Username: `sa`
-- Password: (leave blank)
+Thanks to Esprit School of Engineering supervisors and teaching staff.
 
-## Testing with cURL
+---
 
-### Create a project
-```bash
-curl -X POST http://localhost:8080/api/projects \
-  -H "Content-Type: application/json" \
-  -d "{\"title\":\"Website Development\",\"description\":\"Build a corporate website\",\"budget\":3000.0,\"duration\":20}"
-```
-
-### Get all projects
-```bash
-curl http://localhost:8080/api/projects
-```
-
-### Get project by ID
-```bash
-curl http://localhost:8080/api/projects/1
-```
-
-### Update a project
-```bash
-curl -X PUT http://localhost:8080/api/projects/1 \
-  -H "Content-Type: application/json" \
-  -d "{\"title\":\"Website Development Updated\",\"description\":\"Updated description\",\"budget\":3500.0,\"duration\":25,\"status\":\"IN_PROGRESS\"}"
-```
-
-### Delete a project
-```bash
-curl -X DELETE http://localhost:8080/api/projects/1
-```
-
-## Database Configuration
-
-### Development (H2)
-The application uses H2 in-memory database by default. Data is not persisted between restarts.
-
-### Production (MySQL)
-To use MySQL, uncomment the MySQL configuration in `application.properties` and comment out the H2 configuration:
-
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/freelancing
-spring.datasource.username=root
-spring.datasource.password=yourpassword
-spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
-```
-
-## Technologies Used
-
-- **Spring Boot 3.2.2** - Application framework
-- **Spring Data JPA** - Data persistence
-- **Spring Web** - REST API
-- **H2 Database** - In-memory database (dev)
-- **MySQL** - Relational database (prod)
-- **Lombok** - Boilerplate code reduction
-- **Jakarta Validation** - Input validation
-- **Maven** - Build tool
-
-## Project Entity Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | Long | Primary key (auto-generated) |
-| title | String | Project title (required, 3-255 chars) |
-| description | String | Project description (required, max 2000 chars) |
-| budget | Double | Project budget (required, positive) |
-| duration | Integer | Project duration in days (required, positive) |
-| createdAt | Date | Creation timestamp (auto-generated) |
-| status | ProjectStatus | Project status (default: OPEN) |
-
-## License
-
-MIT
+*esprit-school-of-engineering · academic-project · esprit-pidev · 2025-2026 · angular · spring-boot · mysql*
