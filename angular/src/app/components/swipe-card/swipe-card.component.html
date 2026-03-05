@@ -1,0 +1,72 @@
+<div
+  class="swipe-card"
+  [style.transform]="cardStyle().transform"
+  [style.opacity]="cardStyle().opacity"
+  [style.transition]="cardStyle().transition"
+  (mousedown)="onMouseDown($event)"
+  (touchstart)="onTouchStart($event)"
+>
+  <!-- Overlay badges -->
+  <div
+    class="swipe-overlay swipe-overlay-like"
+    [style.opacity]="likeOpacity()"
+  >
+    LIKE
+  </div>
+  <div
+    class="swipe-overlay swipe-overlay-nope"
+    [style.opacity]="nopeOpacity()"
+  >
+    NOPE
+  </div>
+
+  <!-- Card content -->
+  <div class="swipe-card-content">
+    <div class="swipe-card-header">
+      <span class="font-semibold text-slate-900">{{ candidature.freelancerName || ('Freelancer #' + candidature.freelancerId) }}</span>
+      @if (projectTitle) {
+        <span class="text-xs text-slate-500">{{ projectTitle }}</span>
+      }
+    </div>
+    @if (candidature.message) {
+      <p class="swipe-card-message">{{ candidature.message }}</p>
+    }
+    <p class="swipe-card-budget">
+      @if (candidature.proposedBudget != null && candidature.proposedBudget !== undefined) {
+        {{ (candidature.proposedBudget || 0) + (candidature.extraTasksBudget || 0) | number:'1.0-0' }} TND total
+        @if (candidature.extraTasksBudget && candidature.extraTasksBudget > 0) {
+          <span class="text-slate-500">({{ candidature.proposedBudget | number:'1.0-0' }} + {{ candidature.extraTasksBudget | number:'1.0-0' }} TND extra)</span>
+        }
+      } @else {
+        —
+      }
+    </p>
+    <p class="swipe-card-date">Applied {{ candidature.createdAt | date:'medium' }}</p>
+  </div>
+</div>
+
+<!-- Action buttons -->
+<div class="swipe-actions">
+  <button
+    type="button"
+    (click)="onRejectClick()"
+    [disabled]="isFlyingOff()"
+    class="swipe-btn swipe-btn-reject"
+  >
+    <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+    </svg>
+    <span>Reject</span>
+  </button>
+  <button
+    type="button"
+    (click)="onAcceptClick()"
+    [disabled]="isFlyingOff()"
+    class="swipe-btn swipe-btn-accept"
+  >
+    <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+    </svg>
+    <span>Accept</span>
+  </button>
+</div>

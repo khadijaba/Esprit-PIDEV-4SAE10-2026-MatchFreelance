@@ -1,0 +1,175 @@
+@if (loading) {
+  <div class="flex justify-center py-20">
+    <div class="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+  </div>
+}
+
+@if (contract && !loading) {
+  <div class="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+    <a routerLink="/contracts" class="mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      Back to my contracts
+    </a>
+
+    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium" [class]="statusClass(contract.status)">
+            {{ formatStatus(contract.status) }}
+          </span>
+          <h1 class="mt-3 text-2xl font-bold text-slate-900">Contract #{{ contract.id }}</h1>
+          <p class="mt-2 text-slate-600">{{ projectTitle || ('Project #' + contract.projectId) }} · {{ contract.clientName || ('Client #' + contract.clientId) }}</p>
+          @if (contract.proposedBudget != null) {
+            <p class="mt-2 text-lg font-semibold text-teal-600">
+              {{ (contract.proposedBudget || 0) + (contract.extraTasksBudget || 0) | number:'1.0-0' }} TND total
+              @if (contract.extraTasksBudget && contract.extraTasksBudget > 0) {
+                <span class="block text-sm font-normal text-slate-500">({{ contract.proposedBudget | number:'1.0-0' }} + {{ contract.extraTasksBudget | number:'1.0-0' }} TND extra tasks)</span>
+              }
+            </p>
+          }
+          @if (contract.startDate || contract.endDate) {
+            <p class="mt-2 text-xs text-slate-500">
+              {{ contract.startDate | date:'shortDate' }} — {{ contract.endDate | date:'shortDate' }}
+            </p>
+          }
+          <p class="mt-2 text-sm font-medium text-slate-700">Progress: {{ contract.progressPercent ?? 0 }}%</p>
+        </div>
+        <div class="flex flex-col items-end gap-2">
+          <button
+            type="button"
+            (click)="downloadPdf()"
+            class="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+            </svg>
+            Download PDF
+          </button>
+          <div class="flex gap-1">
+            <button type="button" (click)="loadFinancialSummary()"
+              class="rounded-lg border border-indigo-200 px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50">
+              {{ showFinancial ? 'Hide' : 'Finance' }}
+            </button>
+            <button type="button" (click)="loadContractHealth()"
+              class="rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50">
+              {{ showHealth ? 'Hide' : 'Health' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      @if (showFinancial) {
+        @if (loadingFinancial) {
+          <p class="mt-4 text-sm text-slate-500">Loading financial summary…</p>
+        } @else if (financialSummary) {
+          <div class="mt-4 rounded-lg border border-indigo-100 bg-indigo-50/50 p-4">
+            <h4 class="text-sm font-semibold text-indigo-900">Financial summary</h4>
+            <div class="mt-2 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+              <div><span class="text-slate-500">Total value</span><p class="font-semibold">{{ financialSummary.totalContractValue | number:'1.0-0' }} TND</p></div>
+              <div><span class="text-slate-500">Platform fee ({{ financialSummary.platformFeePercent }}%)</span><p class="font-semibold">{{ financialSummary.platformFeeAmount | number:'1.0-0' }} TND</p></div>
+              <div><span class="text-slate-500">Your net</span><p class="font-semibold">{{ financialSummary.freelancerNetAmount | number:'1.0-0' }} TND</p></div>
+              <div><span class="text-slate-500">Releasable by progress</span><p class="font-semibold">{{ financialSummary.amountReleasableByProgress | number:'1.0-0' }} TND</p></div>
+            </div>
+          </div>
+        }
+      }
+      @if (showHealth) {
+        @if (loadingHealth) {
+          <p class="mt-4 text-sm text-slate-500">Loading health…</p>
+        } @else if (contractHealth) {
+          <div class="mt-4 rounded-lg border border-emerald-100 bg-emerald-50/50 p-4">
+            <h4 class="text-sm font-semibold text-emerald-900">Contract health</h4>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <span class="rounded-full px-2.5 py-0.5 text-sm font-medium"
+                [class.bg-emerald-200]="contractHealth.healthLevel === 'HEALTHY'"
+                [class.bg-amber-200]="contractHealth.healthLevel === 'MODERATE'"
+                [class.bg-orange-200]="contractHealth.healthLevel === 'AT_RISK'"
+                [class.bg-red-200]="contractHealth.healthLevel === 'CRITICAL'">
+                {{ contractHealth.healthScore }}/100 {{ contractHealth.healthLevel }}
+              </span>
+              <span class="text-sm text-slate-600">{{ contractHealth.timelineStatus }}</span>
+            </div>
+            @if (contractHealth.flags && contractHealth.flags.length > 0) {
+              <p class="mt-2 text-xs text-slate-600">{{ contractHealth.flags.join(' · ') }}</p>
+            }
+          </div>
+        }
+      }
+      @if (isActive(contract)) {
+        <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+          <h3 class="text-base font-semibold text-slate-900">Update progress</h3>
+          <p class="mt-1 text-sm text-slate-600">The client will see this. Set how much of the work is done (0–100%).</p>
+          <div class="mt-4 flex flex-wrap items-center gap-4">
+            <div class="flex min-w-[200px] flex-1 items-center gap-3">
+              <input type="range" min="0" max="100" step="1" [(ngModel)]="progressPercentEdit"
+                class="h-2 w-full flex-1 cursor-pointer appearance-none rounded-lg bg-slate-200 accent-indigo-600" />
+              <span class="w-10 text-sm font-medium text-slate-700">{{ progressPercentEdit }}%</span>
+            </div>
+            <button type="button" (click)="saveProgress()" [disabled]="savingProgress"
+              class="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+              @if (savingProgress) { Saving... } @else { Save }
+            </button>
+          </div>
+        </div>
+      }
+      @if (contract.terms) {
+        <details class="mt-4">
+          <summary class="cursor-pointer text-sm font-medium text-teal-600 hover:text-teal-700">View terms</summary>
+          <p class="mt-2 whitespace-pre-wrap text-sm text-slate-600">{{ contract.terms }}</p>
+        </details>
+      }
+      @if (isActive(contract)) {
+        <div class="mt-6 rounded-xl border border-indigo-200 bg-indigo-50/50 p-4">
+          <h3 class="text-base font-semibold text-slate-900">Propose extra budget</h3>
+          <p class="mt-1 text-sm text-slate-600">Need to add budget for something extra? Propose an amount and reason; the client can accept or reject.</p>
+          @if (contract.pendingExtraAmount != null && contract.pendingExtraAmount > 0) {
+            <div class="mt-4 rounded-lg bg-amber-50 p-4">
+              <p class="text-sm font-medium text-amber-800">Pending proposal: {{ contract.pendingExtraAmount | number:'1.0-0' }} TND</p>
+              @if (contract.pendingExtraReason) {
+                <p class="mt-1 text-sm text-amber-700">{{ contract.pendingExtraReason }}</p>
+              }
+              <p class="mt-2 text-xs text-amber-600">Waiting for client to respond.</p>
+            </div>
+          } @else {
+            <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div class="flex-1">
+                <label for="extraAmount" class="mb-1 block text-sm font-medium text-slate-700">Amount (TND)</label>
+                <input id="extraAmount" type="number" min="1" step="1" [(ngModel)]="extraBudgetAmount"
+                  placeholder="e.g. 200"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+              </div>
+              <div class="flex-[2]">
+                <label for="extraReason" class="mb-1 block text-sm font-medium text-slate-700">Reason (optional)</label>
+                <input id="extraReason" type="text" [(ngModel)]="extraBudgetReason"
+                  placeholder="e.g. Additional scope, extra revisions"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+              </div>
+              <button type="button" (click)="proposeExtraBudget()" [disabled]="proposing || !extraBudgetAmount || extraBudgetAmount <= 0"
+                class="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                @if (proposing) { Sending... } @else { Propose }
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    @if (isActive(contract) || contract.status === 'COMPLETED') {
+      <div class="mt-8 rounded-xl border-2 border-teal-200 bg-teal-50/30 p-6">
+        <h2 class="mb-4 text-lg font-semibold text-slate-900">Chat with {{ contract.clientName || ('Client #' + contract.clientId) }}</h2>
+        <app-chat
+          [contractId]="contract.id"
+          [currentUserId]="contract.freelancerId"
+          [otherPartyLabel]="contract.clientName || ('Client #' + contract.clientId)"
+          (messageSent)="onChatMessageSent($event ?? undefined)"
+        />
+      </div>
+    } @else {
+      <div class="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-6">
+        <p class="text-sm text-slate-600">Chat is available when the contract is ACTIVE or COMPLETED. Current status: {{ contract.status }}</p>
+      </div>
+    }
+  </div>
+}

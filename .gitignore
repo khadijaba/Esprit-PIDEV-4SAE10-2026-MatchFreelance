@@ -1,0 +1,17 @@
+target/
+**/target/
+*.log
+
+node_modules/
+dist/
+angular/.angular/
+
+.idea/
+.vscode/
+*.iml
+
+.DS_Store
+Thumbs.db
+
+.cursor/
+
