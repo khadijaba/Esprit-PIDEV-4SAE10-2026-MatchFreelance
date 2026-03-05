@@ -60,6 +60,13 @@
         </svg>
         Contracts & Chat
       </a>
+      <a routerLink="user-management" routerLinkActive="bg-indigo-600/30 text-indigo-300"
+        class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        User Management
+      </a>
     </nav>
 
     <!-- Footer -->
@@ -71,13 +78,28 @@
   <!-- Main content -->
   <div class="flex min-w-0 flex-1 flex-col transition-all duration-300" [class.lg:ml-64]="sidebarOpen">
     <!-- Top bar -->
-    <header class="flex h-16 items-center gap-4 border-b border-gray-200 bg-white px-6 shadow-sm">
-      <button (click)="toggleSidebar()" class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-      <h1 class="text-lg font-semibold text-gray-800">Freelancing Platform — Back Office</h1>
+    <header class="flex h-16 items-center justify-between gap-4 border-b border-gray-200 bg-white px-6 shadow-sm">
+      <div class="flex items-center gap-4">
+        <button (click)="toggleSidebar()" class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <h1 class="text-lg font-semibold text-gray-800">Freelancing Platform — Back Office</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <button (click)="goToPasswordChange()" 
+          class="rounded-lg px-3 py-2 text-sm font-medium text-indigo-600 transition hover:bg-indigo-50 hover:text-indigo-800">
+          <svg class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          </svg>
+          Change Password
+        </button>
+        <button (click)="logout()" 
+          class="rounded-lg px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 hover:text-red-800">
+          Logout
+        </button>
+      </div>
     </header>
 
     <!-- Page content -->

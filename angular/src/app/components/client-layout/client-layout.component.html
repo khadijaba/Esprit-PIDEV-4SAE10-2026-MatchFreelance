@@ -22,6 +22,14 @@
         <a routerLink="/" class="text-sm font-medium text-slate-600 transition hover:text-slate-900">
           Back to site
         </a>
+        <button (click)="goToPasswordChange()" 
+          class="text-sm font-medium text-indigo-600 transition hover:text-indigo-800 cursor-pointer">
+          Change Password
+        </button>
+        <button (click)="logout()" 
+          class="text-sm font-medium text-red-600 transition hover:text-red-800 cursor-pointer">
+          Logout
+        </button>
       </nav>
     </div>
   </header>

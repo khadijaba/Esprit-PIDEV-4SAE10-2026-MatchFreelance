@@ -7,6 +7,12 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 /**
+ * DEPRECATED: Use SendGridEmailService instead
+ * 
+ * This class is kept for reference only and is NOT registered as a service.
+ * All email functionality has been migrated to SendGridEmailService which uses
+ * the SendGrid Java SDK for better error handling and reliability.
+ * 
  * Email Service for sending password reset emails
  * 
  * SETUP INSTRUCTIONS:
@@ -15,10 +21,10 @@ import org.springframework.stereotype.Service;
  * 3. Replace YOUR_SENDGRID_API_KEY_HERE in application.properties
  * 4. Verify sender email in SendGrid dashboard
  */
-@Service
+// @Service - DISABLED: Use SendGridEmailService instead
 public class EmailService {
 
-    @Autowired
+    // @Autowired - DISABLED: SendGrid SDK no longer requires JavaMailSender
     private JavaMailSender mailSender;
 
     @Value("${spring.mail.username}")

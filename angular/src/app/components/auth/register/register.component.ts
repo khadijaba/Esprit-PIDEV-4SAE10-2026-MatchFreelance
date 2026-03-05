@@ -67,8 +67,8 @@ export class RegisterComponent implements OnInit {
         this.authService.register(request).subscribe({
             next: (res) => {
                 this.isLoading = false;
-                this.toastService.success('Registration successful');
-                this.router.navigate(['/login']);
+                this.toastService.success('Registration successful! Please check your email for verification.');
+                this.router.navigate(['/verify-email']);
             },
             error: (err) => {
                 this.isLoading = false;

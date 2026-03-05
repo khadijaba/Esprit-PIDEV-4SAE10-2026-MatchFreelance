@@ -9,13 +9,13 @@ public class EmailVerificationRequest {
     @NotBlank(message = "L'email est obligatoire")
     private String email;
 
-    @NotBlank(message = "Le token de vérification est obligatoire")
-    private String verificationToken;
+    @NotBlank(message = "Le code de vérification est obligatoire")
+    private String verificationCode;
 
     // Getters and setters
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     
-    public String getVerificationToken() { return verificationToken; }
-    public void setVerificationToken(String verificationToken) { this.verificationToken = verificationToken; }
+    public String getVerificationCode() { return verificationCode; }
+    public void setVerificationCode(String verificationCode) { this.verificationCode = verificationCode; }
 }

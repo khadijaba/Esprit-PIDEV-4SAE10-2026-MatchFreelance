@@ -33,4 +33,14 @@ export class UserService {
         const params = new HttpParams().set('term', term);
         return this.http.get<User[]>(`${this.apiUrl}/search/simple`, { params });
     }
+
+    // Get all users
+    getAllUsers(): Observable<User[]> {
+        return this.http.get<User[]>(`${this.legacyUrl}/users`);
+    }
+
+    // Update user status (enable/disable)
+    updateUserStatus(userId: number, enabled: boolean): Observable<any> {
+        return this.http.patch(`${this.legacyUrl}/users/${userId}/status`, { enabled }, { responseType: 'text' });
+    }
 }

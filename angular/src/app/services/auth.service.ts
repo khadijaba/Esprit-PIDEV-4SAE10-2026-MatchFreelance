@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../environments/environment';
-import { JwtResponse, SignInRequest, SignUpRequest } from '../models/auth.model';
+import { JwtResponse, SignInRequest, SignUpRequest, EmailVerificationRequest, ResendVerificationRequest } from '../models/auth.model';
 import { Role } from '../models/user.model';
 import { Router } from '@angular/router';
 
@@ -45,7 +45,17 @@ export class AuthService {
     }
 
     isLoggedIn(): boolean {
-        return !!this.getToken();
+        const token = this.getToken();
+        if (!token) return false;
+        
+        // Check if token is expired
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const now = Date.now() / 1000;
+            return payload.exp > now;
+        } catch (e) {
+            return false;
+        }
     }
 
     getToken(): string | null {
@@ -58,5 +68,21 @@ export class AuthService {
 
     getUserEmail(): string | null {
         return localStorage.getItem(this.USER_EMAIL_KEY);
+    }
+
+    verifyEmail(request: EmailVerificationRequest): Observable<string> {
+        return this.http.post(`${this.apiUrl}/verify-email`, request, { responseType: 'text' });
+    }
+
+    resendVerification(request: ResendVerificationRequest): Observable<string> {
+        return this.http.post(`${this.apiUrl}/resend-verification`, request, { responseType: 'text' });
+    }
+
+    requestPasswordReset(request: { email: string }): Observable<string> {
+        return this.http.post(`${this.apiUrl}/reset-password/request`, request, { responseType: 'text' });
+    }
+
+    changePasswordWithCode(request: { email: string; oldPassword: string; newPassword: string; verificationCode: string }): Observable<string> {
+        return this.http.post(`${this.apiUrl}/change-password-with-code`, request, { responseType: 'text' });
     }
 }

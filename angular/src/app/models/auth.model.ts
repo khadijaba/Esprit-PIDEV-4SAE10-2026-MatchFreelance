@@ -21,3 +21,12 @@ export interface SignUpRequest {
     birthDate: string; // YYYY-MM-DD
     role: Role;
 }
+
+export interface EmailVerificationRequest {
+    email: string;
+    verificationCode: string;
+}
+
+export interface ResendVerificationRequest {
+    email: string;
+}

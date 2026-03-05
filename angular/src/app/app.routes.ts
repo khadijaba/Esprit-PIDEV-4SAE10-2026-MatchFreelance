@@ -14,6 +14,14 @@ export const routes: Routes = [
     path: 'register',
     loadComponent: () => import('./components/auth/register/register.component').then(m => m.RegisterComponent),
   },
+  {
+    path: 'verify-email',
+    loadComponent: () => import('./components/auth/email-verification/email-verification.component').then(m => m.EmailVerificationComponent),
+  },
+  {
+    path: 'change-password',
+    loadComponent: () => import('./components/auth/password-change/password-change.component').then(m => m.PasswordChangeComponent),
+  },
   // Frontoffice (public)
   {
     path: '',
@@ -89,6 +97,11 @@ export const routes: Routes = [
         path: 'users',
         loadComponent: () =>
           import('./components/admin-users/admin-users.component').then((m) => m.AdminUsersComponent),
+      },
+      {
+        path: 'user-management',
+        loadComponent: () =>
+          import('./components/admin/admin-user-management/admin-user-management.component').then((m) => m.AdminUserManagementComponent),
       },
       {
         path: 'candidatures',

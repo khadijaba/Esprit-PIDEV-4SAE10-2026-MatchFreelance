@@ -24,10 +24,19 @@
           class="text-sm font-medium text-slate-600 transition hover:text-slate-900">
           My Contracts
         </a>
-        <a routerLink="/client" routerLinkActive="text-indigo-600"
-          class="text-sm font-medium text-slate-600 transition hover:text-slate-900">
+        <a (click)="handleClientClick()" class="text-sm font-medium text-slate-600 transition hover:text-slate-900 cursor-pointer">
           Client
         </a>
+        @if (isLoggedIn()) {
+          <button (click)="goToPasswordChange()" 
+            class="text-sm font-medium text-indigo-600 transition hover:text-indigo-800 cursor-pointer">
+            Change Password
+          </button>
+          <button (click)="logout()" 
+            class="text-sm font-medium text-red-600 transition hover:text-red-800 cursor-pointer">
+            Logout
+          </button>
+        }
       </nav>
     </div>
   </header>

@@ -63,6 +63,8 @@ public class AuthController {
 
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(401).body("Email ou mot de passe incorrect");
+        } catch (DisabledException e) {
+            return ResponseEntity.status(403).body("Ce compte est désactivé. Veuillez vérifier votre email pour activer votre compte.");
         }
     }
 
@@ -122,6 +124,17 @@ public class AuthController {
     public ResponseEntity<?> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
         try {
             String result = userService.resendVerificationEmail(request);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ─── PASSWORD CHANGE WITH VERIFICATION CODE ────────────────────────────────────────────────
+    @PostMapping("/change-password-with-code")
+    public ResponseEntity<?> changePasswordWithCode(@Valid @RequestBody PasswordChangeRequest request) {
+        try {
+            String result = userService.changePasswordWithCode(request);
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
