@@ -29,4 +29,7 @@ build/
 ### VS Code ###
 .vscode/
 
+### Configuration files with secrets ###
+src/main/resources/application.properties
+
 
