@@ -30,7 +30,7 @@ public class ExamenService {
 
     @Transactional(readOnly = true)
     public List<ExamenDto> findByFormationId(Long formationId) {
-        return examenRepository.findByFormationIdOrderByIdAsc(formationId).stream()
+        return examenRepository.findByFormationIdWithQuestions(formationId).stream()
                 .map(ExamenDto::fromEntity)
                 .collect(Collectors.toList());
     }

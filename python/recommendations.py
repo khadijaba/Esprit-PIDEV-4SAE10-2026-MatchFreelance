@@ -3,13 +3,19 @@ Scoring & Recommandations :
 - Score de complétion 0–100 % par freelancer
 - Recommandation de formations selon compétences et certificats
 - Parcours avec prérequis en chaîne (formation C → cert B → formation B → cert A…)
+Les résultats sont sauvegardés en JSON pour affichage sur la plateforme (frontend/public/reports/recommendations.json).
 """
+import json
 import sys
+from pathlib import Path
 from typing import Any
 
 import requests
 
 from config import API_BASE_URL, API_TOKEN
+
+REPORTS_DIR = Path(__file__).resolve().parent / "reports"
+FRONTEND_REPORTS_DIR = Path(__file__).resolve().parent.parent / "frontend" / "public" / "reports"
 
 
 def api_get(path: str) -> list[Any] | dict[str, Any] | None:
@@ -52,10 +58,11 @@ def score_completion_freelancer(
     """
     Score de complétion 0–100 % :
     - 40 % nombre de certificats (max 5 = 100 % de cette part)
-    - 30 % formations validées suivies (max 3 = 100 %)
+    - 30 % inscriptions au statut VALIDEE (max 3 = 100 %) = inscriptions acceptées par l'admin
     - 30 % score moyen aux examens (normalisé 0–100)
     """
     nb_cert = len(certificats)
+    # Formations validées = inscriptions dont l'admin a passé le statut à VALIDEE (acceptation)
     nb_formations_validees = len([i for i in inscriptions if i.get("statut") == "VALIDEE"])
     score_examens = 0.0
     if resultats:
@@ -133,23 +140,28 @@ def parcours_prerequis_chaine(formations_all: list[dict]) -> dict[int, list[dict
     """
     Pour chaque formation ayant un examenRequisId, retourne la chaîne des prérequis
     (formations à valider avant : cert A → formation B → cert B → formation C).
+    Enrichit chaque étape avec formation_titre et examen_titre pour l'affichage.
     """
-    # formation_id -> examen_requis_id (côté Formation)
+    formations_all = formations_all or []
+    formation_titres = {f.get("id"): (f.get("titre") or "").strip() or None for f in formations_all if f.get("id")}
     formation_to_examen_requis = {}
-    # examen_id -> formation_id (un examen appartient à une formation)
     examen_to_formation = {}
-    for f in formations_all or []:
+    examen_titres = {}
+    for f in formations_all:
         fid = f.get("id")
         ex_requis = f.get("examenRequisId")
         if ex_requis:
             formation_to_examen_requis[fid] = ex_requis
-    for f in formations_all or []:
+    for f in formations_all:
         fid = f.get("id")
-        examens = fetch_examens_formation(fid) if fid else []
+        if not fid:
+            continue
+        examens = fetch_examens_formation(fid) or []
         for e in examens:
             eid = e.get("id")
             if eid:
                 examen_to_formation[eid] = fid
+                examen_titres[eid] = (e.get("titre") or "").strip() or None
 
     def chain(formation_id: int) -> list[dict]:
         seen = set()
@@ -164,9 +176,19 @@ def parcours_prerequis_chaine(formations_all: list[dict]) -> dict[int, list[dict
                 break
             formation_prereq = examen_to_formation.get(ex_requis)
             if not formation_prereq:
-                path.append({"type": "examen_requis", "examen_id": ex_requis})
+                path.append({
+                    "type": "examen_requis",
+                    "examen_id": ex_requis,
+                    "examen_titre": examen_titres.get(ex_requis),
+                })
                 break
-            path.append({"type": "formation", "formation_id": formation_prereq, "examen_requis_id": ex_requis})
+            path.append({
+                "type": "formation",
+                "formation_id": formation_prereq,
+                "examen_requis_id": ex_requis,
+                "formation_titre": formation_titres.get(formation_prereq),
+                "examen_requis_titre": examen_titres.get(ex_requis),
+            })
             current_fid = formation_prereq
         return path
 
@@ -208,9 +230,24 @@ def run_recommendations() -> dict:
     }
 
 
+def save_recommendations_to_frontend(result: dict) -> None:
+    """Sauvegarde le résultat en JSON dans reports/ et copie vers frontend pour affichage sur la plateforme."""
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    path_local = REPORTS_DIR / "recommendations.json"
+    with open(path_local, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+    if FRONTEND_REPORTS_DIR.parent.exists():
+        FRONTEND_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+        path_front = FRONTEND_REPORTS_DIR / "recommendations.json"
+        with open(path_front, "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+        print(f"[Recommendations] Données copiées vers la plateforme : {path_front}")
+
+
 if __name__ == "__main__":
     print("[Recommendations] Chargement…")
     result = run_recommendations()
+    save_recommendations_to_frontend(result)
     print("[Recommendations] Scores (top 5):", result["scores_completion"][:5])
     print("[Recommendations] Parcours prérequis (formation_id → chaîne):", list(result["parcours_prerequis"].items())[:3])
     if result["recommendations_by_freelancer"]:

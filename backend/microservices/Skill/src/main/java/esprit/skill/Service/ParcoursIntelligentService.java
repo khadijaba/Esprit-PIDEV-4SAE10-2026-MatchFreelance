@@ -2,6 +2,7 @@ package esprit.skill.Service;
 
 import esprit.skill.dto.FormationDto;
 import esprit.skill.dto.ParcoursIntelligentResponse;
+import esprit.skill.dto.SkillDto;
 import esprit.skill.entities.Skill;
 import esprit.skill.entities.SkillCategory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -42,9 +43,15 @@ public class ParcoursIntelligentService {
      * - Formations proposées (ouvertes) ciblant les gaps
      */
     public ParcoursIntelligentResponse calculerParcours(Long freelancerId) {
+        if (freelancerId == null) {
+            throw new IllegalArgumentException("freelancerId est requis");
+        }
         List<Skill> competences = skillService.getSkillsByFreelancer(freelancerId);
+        if (competences == null) competences = Collections.emptyList();
         Set<String> categoriesActuelles = competences.stream()
-                .map(s -> s.getCategory().name())
+                .map(Skill::getCategory)
+                .filter(Objects::nonNull)
+                .map(Enum::name)
                 .collect(Collectors.toSet());
 
         List<String> gaps = TOUS_DOMAINES.stream()
@@ -56,9 +63,11 @@ public class ParcoursIntelligentService {
                 .filter(f -> f.getTypeFormation() != null && gaps.contains(f.getTypeFormation()))
                 .collect(Collectors.toList());
 
+        List<SkillDto> competencesDto = competences.stream().map(this::toSkillDto).collect(Collectors.toList());
+
         return ParcoursIntelligentResponse.builder()
                 .freelancerId(freelancerId)
-                .competencesActuelles(competences)
+                .competencesActuelles(competencesDto)
                 .categoriesActuelles(new ArrayList<>(categoriesActuelles))
                 .gapsDetectes(gaps)
                 .formationsProposees(formationsProposees)
@@ -80,6 +89,18 @@ public class ParcoursIntelligentService {
         } catch (Exception e) {
             return Collections.emptyList();
         }
+    }
+
+    private SkillDto toSkillDto(Skill s) {
+        return SkillDto.builder()
+                .id(s.getId())
+                .name(s.getName())
+                .category(s.getCategory())
+                .freelancerId(s.getFreelancerId())
+                .level(s.getLevel())
+                .yearsOfExperience(s.getYearsOfExperience())
+                .createdAt(s.getCreatedAt())
+                .build();
     }
 
     private FormationDto mapToFormationDto(Map<String, Object> m) {

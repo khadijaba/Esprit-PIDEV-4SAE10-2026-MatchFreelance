@@ -4,7 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormationService } from '../../services/formation.service';
 import { ToastService } from '../../services/toast.service';
-import { FormationRequest, StatutFormation, TypeFormation, TYPE_FORMATION_LABELS } from '../../models/formation.model';
+import {
+  FormationRequest,
+  NiveauFormation,
+  NIVEAU_FORMATION_LABELS,
+  StatutFormation,
+  TypeFormation,
+  TYPE_FORMATION_LABELS,
+} from '../../models/formation.model';
 
 @Component({
   selector: 'app-formation-form',
@@ -26,8 +33,8 @@ export class FormationFormComponent implements OnInit {
     dateDebut: '',
     dateFin: '',
     capaciteMax: 20,
-    statut: 'OUVERTE', // Par défaut : visible sur le front public
-    examenRequisId: null,
+    statut: 'OUVERTE',
+    niveau: 'DEBUTANT',
   };
 
   typeFormations: { value: TypeFormation; label: string }[] = Object.entries(TYPE_FORMATION_LABELS).map(
@@ -40,6 +47,37 @@ export class FormationFormComponent implements OnInit {
     { value: 'TERMINEE', label: 'Terminée' },
     { value: 'ANNULEE', label: 'Annulée' },
   ];
+
+  niveaux: { value: NiveauFormation; label: string }[] = Object.entries(NIVEAU_FORMATION_LABELS).map(
+    ([value, label]) => ({ value: value as NiveauFormation, label })
+  );
+
+  /** Date minimale pour les champs date (aujourd'hui) — en création, on n'autorise pas les dates passées */
+  get minDate(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  /** En édition, ne pas imposer de date min pour ne pas invalider les formations déjà passées */
+  get useMinDate(): boolean {
+    return !this.isEdit;
+  }
+
+  /** La date de fin doit être >= date de début */
+  get datesOrderInvalid(): boolean {
+    const d = this.form.dateDebut;
+    const f = this.form.dateFin;
+    if (!d || !f) return false;
+    return f < d;
+  }
+
+  /** Date min pour le champ date fin : au moins date de début, et en création au moins aujourd'hui */
+  get minDateFin(): string | null {
+    const today = this.minDate;
+    const d = this.form.dateDebut;
+    if (!d) return this.useMinDate ? today : null;
+    if (this.useMinDate && d < today) return today;
+    return d;
+  }
 
   constructor(
     private formationService: FormationService,
@@ -64,7 +102,7 @@ export class FormationFormComponent implements OnInit {
             dateFin: f.dateFin,
             capaciteMax: f.capaciteMax ?? 20,
             statut: f.statut,
-            examenRequisId: f.examenRequisId ?? null,
+            niveau: f.niveau ?? 'DEBUTANT',
           };
         },
         error: () => this.router.navigate(['/admin/formations']),

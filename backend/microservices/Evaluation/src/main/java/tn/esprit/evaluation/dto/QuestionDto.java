@@ -21,9 +21,14 @@ public class QuestionDto {
     private String bonneReponse; // A, B, C ou D (défaut A côté service)
 
     public static QuestionDto fromEntity(Question q) {
+        return fromEntity(q, q.getExamen() != null ? q.getExamen().getId() : null);
+    }
+
+    /** Utiliser cet overload pour éviter d’accéder à la relation LAZY examen (évite LazyInitializationException). */
+    public static QuestionDto fromEntity(Question q, Long examenId) {
         return QuestionDto.builder()
                 .id(q.getId())
-                .examenId(q.getExamen().getId())
+                .examenId(examenId)
                 .ordre(q.getOrdre())
                 .enonce(q.getEnonce())
                 .optionA(q.getOptionA())

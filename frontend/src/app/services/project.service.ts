@@ -22,6 +22,10 @@ export class ProjectService {
     return this.http.get<Project[]>(`${this.api}/status/${status}`);
   }
 
+  getByOwner(projectOwnerId: number): Observable<Project[]> {
+    return this.http.get<Project[]>(`${this.api}/owner/${projectOwnerId}`);
+  }
+
   search(title: string): Observable<Project[]> {
     const params = new HttpParams().set('title', title);
     return this.http.get<Project[]>(`${this.api}/search`, { params });

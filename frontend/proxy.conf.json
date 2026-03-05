@@ -1,7 +1,16 @@
 {
+  "/api/modules": {
+    "target": "http://localhost:8081",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "ws": false
+  },
   "/api": {
     "target": "http://localhost:8050",
     "secure": false,
-    "changeOrigin": true
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "ws": false
   }
 }

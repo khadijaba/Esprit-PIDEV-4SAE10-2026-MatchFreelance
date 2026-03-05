@@ -17,13 +17,13 @@ public class GlobalExceptionHandler {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .collect(Collectors.joining("; "));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", message));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", message, "message", message));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleAny(Exception ex) {
         ex.printStackTrace();
         String msg = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", msg));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", msg, "message", msg));
     }
 }

@@ -61,6 +61,14 @@
       </div>
     </div>
 
+    <!-- Compétences requises (optionnel) -->
+    <div>
+      <label for="requiredSkills" class="mb-1.5 block text-sm font-medium text-gray-700">Compétences requises</label>
+      <input id="requiredSkills" type="text" [(ngModel)]="form.requiredSkillsStr" name="requiredSkillsStr"
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        placeholder="ex: Java, Spring Boot, Angular (séparées par des virgules)" />
+    </div>
+
     <!-- Status -->
     <div>
       <label for="status" class="mb-1.5 block text-sm font-medium text-gray-700">Status</label>

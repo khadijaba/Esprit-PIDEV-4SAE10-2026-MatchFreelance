@@ -4,10 +4,14 @@ détecte formations ouvertes, examens à passer, nouveaux certificats,
 formation se termine dans X jours, examen non passé après X jours ;
 envoie emails (SMTP) ou webhook (Slack/Teams).
 À lancer en cron (ex. toutes les heures) ou à la main.
+Avec --export : écrit rappels.json dans frontend/public/reports/ pour affichage sur la plateforme.
+Avec --auto : export + envoi des emails en une commande (pour tâche planifiée / rappel automatique).
 """
+import json
 import smtplib
 import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Any
@@ -30,6 +34,9 @@ from config import (
     WEBHOOK_SLACK,
     WEBHOOK_URL,
 )
+
+# Dossier frontend pour afficher les rappels sur la plateforme (Admin → Rappels)
+FRONTEND_REPORTS_DIR = Path(__file__).resolve().parent.parent / "frontend" / "public" / "reports"
 
 
 def api_get(path: str) -> list[Any] | dict[str, Any] | None:
@@ -457,10 +464,81 @@ def run_rappels(dry_run: bool = False) -> dict:
     }
 
 
+def build_rappels_export() -> dict:
+    """
+    Construit la structure JSON des rappels pour tous les freelancers (sans envoi).
+    Retourne { "generatedAt", "summary", "rappels": [ { "freelancer_id", "email", "fullName", "rappels": [...] } ] }.
+    """
+    freelancers = fetch_freelancers()
+    formations_ouvertes = fetch_formations_ouvertes()
+    rappels_list = []
+    rappels_total = 0
+    for f in freelancers or []:
+        fid = f.get("id") or f.get("userId")
+        if not fid:
+            continue
+        inscriptions = fetch_inscriptions_freelancer(fid)
+        resultats = fetch_resultats_freelancer(fid)
+        certificats = fetch_certificats_freelancer(fid)
+        rappels = build_rappels_for_freelancer(
+            f, formations_ouvertes, inscriptions, resultats, certificats
+        )
+        rappels_total += len(rappels)
+        rappels_list.append({
+            "freelancer_id": fid,
+            "email": f.get("email") or "",
+            "fullName": f.get("fullName") or "",
+            "rappels": rappels,
+        })
+    return {
+        "generatedAt": datetime.now().isoformat(),
+        "summary": {
+            "freelancers": len(rappels_list),
+            "rappels_total": rappels_total,
+        },
+        "rappels": rappels_list,
+    }
+
+
+def export_rappels_to_frontend() -> str | None:
+    """
+    Génère les rappels et écrit rappels.json dans frontend/public/reports/.
+    Retourne le chemin du fichier écrit ou None en cas d'erreur.
+    """
+    try:
+        FRONTEND_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+        data = build_rappels_export()
+        path = FRONTEND_REPORTS_DIR / "rappels.json"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"[Rappels] Export écrit : {path}")
+        return str(path)
+    except Exception as e:
+        print(f"[Rappels] Erreur export : {e}", file=sys.stderr)
+        return None
+
+
 if __name__ == "__main__":
     dry = "--dry-run" in sys.argv
-    print(f"[Rappels] SMTP utilisé: {SMTP_HOST or '(aucun)'} — Envoi depuis: {SMTP_USER or '(non configuré)'}")
-    if SMTP_HOST and "outlook" in SMTP_HOST.lower() and SMTP_USER and "gmail" in SMTP_USER.lower():
-        print("[Rappels] ATTENTION: SMTP_HOST est Outlook mais SMTP_USER est Gmail. Pour Gmail, mets SMTP_HOST=smtp.gmail.com dans .env", file=sys.stderr)
-    summary = run_rappels(dry_run=dry)
-    print(f"[Rappels] Terminé: {summary}")
+    do_export = "--export" in sys.argv
+    do_auto = "--auto" in sys.argv  # export + envoi en une commande (pour tâche planifiée)
+    if do_auto:
+        export_rappels_to_frontend()
+        print("[Rappels] Export terminé. Envoi des rappels…")
+        if SMTP_HOST and SMTP_USER:
+            summary = run_rappels(dry_run=dry)
+            print(f"[Rappels] Terminé: {summary}")
+        else:
+            print("[Rappels] SMTP non configuré (.env). Seul l'export a été fait.", file=sys.stderr)
+    elif do_export:
+        export_rappels_to_frontend()
+        print("[Rappels] Export terminé. Consultez Admin → Rappels sur la plateforme.")
+        if dry:
+            summary = run_rappels(dry_run=True)
+            print(f"[Rappels] Dry-run: {summary}")
+    else:
+        print(f"[Rappels] SMTP utilisé: {SMTP_HOST or '(aucun)'} — Envoi depuis: {SMTP_USER or '(non configuré)'}")
+        if SMTP_HOST and "outlook" in SMTP_HOST.lower() and SMTP_USER and "gmail" in SMTP_USER.lower():
+            print("[Rappels] ATTENTION: SMTP_HOST est Outlook mais SMTP_USER est Gmail. Pour Gmail, mets SMTP_HOST=smtp.gmail.com dans .env", file=sys.stderr)
+        summary = run_rappels(dry_run=dry)
+        print(f"[Rappels] Terminé: {summary}")

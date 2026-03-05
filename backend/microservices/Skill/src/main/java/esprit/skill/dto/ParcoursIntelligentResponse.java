@@ -1,6 +1,5 @@
 package esprit.skill.dto;
 
-import esprit.skill.entities.Skill;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,8 +16,8 @@ public class ParcoursIntelligentResponse {
 
     private Long freelancerId;
 
-    /** Compétences actuelles du freelancer. */
-    private List<Skill> competencesActuelles;
+    /** Compétences actuelles du freelancer (DTO pour sérialisation JSON fiable). */
+    private List<SkillDto> competencesActuelles;
 
     /** Catégories / domaines où le freelancer a des compétences. */
     private List<String> categoriesActuelles;

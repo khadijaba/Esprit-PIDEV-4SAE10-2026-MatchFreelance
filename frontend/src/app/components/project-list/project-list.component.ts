@@ -15,9 +15,13 @@ import { Project, ProjectStatus } from '../../models/project.model';
 export class ProjectListComponent implements OnInit {
   projects: Project[] = [];
   filteredProjects: Project[] = [];
+  paginatedProjects: Project[] = [];
   searchTerm = '';
   statusFilter: ProjectStatus | '' = '';
   loading = true;
+  readonly pageSize = 5;
+  currentPage = 1;
+  totalPages = 1;
 
   constructor(
     private projectService: ProjectService,
@@ -33,6 +37,7 @@ export class ProjectListComponent implements OnInit {
     this.projectService.getAll().subscribe({
       next: (data) => {
         this.projects = data;
+        this.currentPage = 1;
         this.applyFilters();
         this.loading = false;
       },
@@ -53,6 +58,19 @@ export class ProjectListComponent implements OnInit {
       result = result.filter((p) => p.title.toLowerCase().includes(q));
     }
     this.filteredProjects = result;
+    this.totalPages = Math.max(1, Math.ceil(this.filteredProjects.length / this.pageSize));
+    this.currentPage = Math.min(this.currentPage, this.totalPages);
+    this.updatePaginatedSlice();
+  }
+
+  private updatePaginatedSlice() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    this.paginatedProjects = this.filteredProjects.slice(start, start + this.pageSize);
+  }
+
+  goToPage(page: number) {
+    this.currentPage = Math.max(1, Math.min(page, this.totalPages));
+    this.updatePaginatedSlice();
   }
 
   onDelete(id: number) {

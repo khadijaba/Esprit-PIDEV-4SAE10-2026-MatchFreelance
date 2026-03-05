@@ -34,6 +34,12 @@
             <dd class="font-medium text-gray-800">{{ typeFormationLabel(formation.typeFormation) }}</dd>
           </div>
         }
+        @if (formation.niveau) {
+          <div>
+            <dt class="text-gray-500">Niveau</dt>
+            <dd class="font-medium text-gray-800">{{ niveauLabel(formation.niveau) }}</dd>
+          </div>
+        }
         <div>
           <dt class="text-gray-500">Durée</dt>
           <dd class="font-medium text-gray-800">{{ formation.dureeHeures }} h</dd>
@@ -47,6 +53,69 @@
           <dd class="font-medium text-gray-800">{{ formation.capaciteMax ?? '—' }}</dd>
         </div>
       </dl>
+      <!-- Modules courts -->
+    <div class="pt-4 border-t border-gray-100">
+      <h4 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+        <svg class="h-4 w-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5s-3.332.477-4.5 1.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        Modules de la formation
+      </h4>
+      @if (modulesLoading) {
+        <p class="text-sm text-gray-500">Chargement des modules…</p>
+      } @else {
+        @if (modules.length > 0) {
+          <ul class="space-y-2 mb-4">
+            @for (m of modules; track m.id) {
+              <li class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50/50 px-4 py-2.5">
+                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">{{ m.ordre + 1 }}</span>
+                <div class="min-w-0 flex-1">
+                  <span class="font-medium text-gray-800">{{ m.titre }}</span>
+                  <span class="ml-2 text-xs text-gray-500">— {{ m.dureeMinutes }} min</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+        <div class="rounded-lg border border-teal-100 bg-teal-50/30 p-4">
+          <p class="text-sm font-medium text-gray-700 mb-3">Ajouter un module court</p>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-gray-600">Titre du module *</label>
+              <input type="text" [(ngModel)]="newModule.titre" name="moduleTitre" placeholder="Ex. Introduction à Spring"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-gray-600">Durée (minutes)</label>
+              <input type="number" [(ngModel)]="newModule.dureeMinutes" name="moduleDuree" min="1" placeholder="15"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="mb-1 block text-xs font-medium text-gray-600">Description (optionnel)</label>
+            <textarea [(ngModel)]="newModule.description" name="moduleDescription" placeholder="Contenu ou objectifs du module..." rows="2"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"></textarea>
+          </div>
+          <div class="mt-3 flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-medium text-gray-600">Ordre d'affichage</label>
+              <input type="number" [(ngModel)]="newModule.ordre" name="moduleOrdre" min="0" class="w-16 rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+            </div>
+            <button type="button" (click)="addModule()" [disabled]="moduleSaving || !newModule.titre.trim()"
+              class="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              @if (moduleSaving) {
+                <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                Enregistrement…
+              } @else {
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                Ajouter le module
+              }
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
       <!-- Examens de cette formation -->
     @if (examensLoading) {
       <p class="text-sm text-gray-500 pt-4 border-t border-gray-100">Chargement des examens...</p>

@@ -21,7 +21,7 @@ public class Skill {
     private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private SkillCategory category;
 
     @Column(nullable = false)

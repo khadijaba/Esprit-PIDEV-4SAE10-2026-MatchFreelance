@@ -39,21 +39,21 @@ public class CertificatService {
 
     @Transactional(readOnly = true)
     public List<CertificatDto> findByFreelancer(Long freelancerId) {
-        return certificatRepository.findByPassageExamen_FreelancerIdOrderByDateDelivranceDesc(freelancerId).stream()
+        return certificatRepository.findByFreelancerIdWithPassageAndExamen(freelancerId).stream()
                 .map(CertificatDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public CertificatDto findById(Long id) {
-        return certificatRepository.findById(id)
+        return certificatRepository.findByIdWithPassageAndExamen(id)
                 .map(CertificatDto::fromEntity)
                 .orElseThrow(() -> new RuntimeException("Certificat non trouvé: " + id));
     }
 
     @Transactional(readOnly = true)
     public CertificatDto findByPassageExamen(Long passageExamenId) {
-        return certificatRepository.findByPassageExamenId(passageExamenId)
+        return certificatRepository.findByPassageExamenIdWithPassageAndExamen(passageExamenId)
                 .map(CertificatDto::fromEntity)
                 .orElseThrow(() -> new RuntimeException("Aucun certificat pour ce passage: " + passageExamenId));
     }

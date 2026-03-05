@@ -31,6 +31,12 @@ public class FormationController {
         return ResponseEntity.ok(formationService.findOuvertes());
     }
 
+    /** Métier avancé : formations recommandées pour un freelancer (selon ses gaps de compétences). */
+    @GetMapping("/recommandations/freelancer/{freelancerId}")
+    public ResponseEntity<List<FormationDto>> getRecommandationsForFreelancer(@PathVariable Long freelancerId) {
+        return ResponseEntity.ok(formationService.getRecommandationsForFreelancer(freelancerId));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<FormationDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(formationService.findById(id));

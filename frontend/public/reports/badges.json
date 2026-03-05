@@ -1,0 +1,92 @@
+{
+  "by_freelancer": {
+    "5": {
+      "level": "Intermédiaire",
+      "score_completion_pct": 38.0,
+      "badges": [
+        "first_formation",
+        "parcours_starter"
+      ],
+      "badge_labels": {
+        "first_formation": "Première formation",
+        "parcours_starter": "Parcours démarré"
+      }
+    },
+    "6": {
+      "level": "Expert",
+      "score_completion_pct": 73.5,
+      "badges": [
+        "first_formation",
+        "parcours_starter",
+        "expert"
+      ],
+      "badge_labels": {
+        "first_formation": "Première formation",
+        "parcours_starter": "Parcours démarré",
+        "expert": "Expert"
+      }
+    },
+    "8": {
+      "level": "Avancé",
+      "score_completion_pct": 56.3,
+      "badges": [
+        "first_formation",
+        "parcours_starter",
+        "avance"
+      ],
+      "badge_labels": {
+        "first_formation": "Première formation",
+        "parcours_starter": "Parcours démarré",
+        "avance": "Avancé"
+      }
+    }
+  },
+  "levels": [
+    {
+      "min": 0,
+      "max": 20,
+      "label": "Débutant"
+    },
+    {
+      "min": 20,
+      "max": 40,
+      "label": "Intermédiaire"
+    },
+    {
+      "min": 40,
+      "max": 70,
+      "label": "Avancé"
+    },
+    {
+      "min": 70,
+      "max": 101,
+      "label": "Expert"
+    }
+  ],
+  "badge_definitions": [
+    {
+      "key": "first_formation",
+      "label": "Première formation"
+    },
+    {
+      "key": "parcours_starter",
+      "label": "Parcours démarré"
+    },
+    {
+      "key": "certificats_3",
+      "label": "3 certificats"
+    },
+    {
+      "key": "certificats_5",
+      "label": "5 certificats"
+    },
+    {
+      "key": "expert",
+      "label": "Expert"
+    },
+    {
+      "key": "avance",
+      "label": "Avancé"
+    }
+  ]
+}

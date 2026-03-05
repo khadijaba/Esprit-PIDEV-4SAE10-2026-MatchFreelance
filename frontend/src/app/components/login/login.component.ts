@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
@@ -20,6 +20,7 @@ export class LoginComponent {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
     private toast: ToastService
   ) {
     this.form = this.fb.group({
@@ -38,12 +39,26 @@ export class LoginComponent {
     this.auth.login(this.form.getRawValue()).subscribe({
       next: () => {
         this.toast.success('Connexion réussie');
-        const returnUrl = history.state?.['returnUrl'] ?? '/admin';
-        this.router.navigateByUrl(returnUrl);
+        const returnUrl = this.route.snapshot.queryParams['returnUrl'] ?? history.state?.['returnUrl'];
+        if (returnUrl) {
+          this.router.navigateByUrl(returnUrl);
+          return;
+        }
+        const role = this.auth.getStoredUser()?.role;
+        if (role === 'ADMIN') this.router.navigateByUrl('/admin');
+        else if (role === 'CLIENT') this.router.navigateByUrl('/dashboard-client');
+        else if (role === 'FREELANCER') this.router.navigateByUrl('/dashboard-freelancer');
+        else this.router.navigateByUrl('/');
       },
       error: (err) => {
         this.loading = false;
-        const msg = err?.error?.error ?? err?.message ?? 'Email ou mot de passe incorrect.';
+        const body = err?.error;
+        let msg =
+          (typeof body === 'object' && body != null && (body.error ?? body.message)) ||
+          (typeof body === 'string' ? body : null) ||
+          err?.message ||
+          'Email ou mot de passe incorrect.';
+        if (typeof msg !== 'string') msg = 'Erreur de connexion.';
         this.errorMessage = msg;
       },
     });

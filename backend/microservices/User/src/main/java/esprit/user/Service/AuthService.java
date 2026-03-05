@@ -44,17 +44,21 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail().trim().toLowerCase())
+        String email = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("Invalid email or password");
+        }
+        if (user.getRole() == null) {
+            throw new IllegalArgumentException("User account not properly configured");
         }
         String token = jwtUtil.generateToken(user);
         return AuthResponse.builder()
                 .token(token)
                 .userId(user.getId())
                 .email(user.getEmail())
-                .fullName(user.getFullName())
+                .fullName(user.getFullName() != null ? user.getFullName() : "")
                 .role(user.getRole())
                 .build();
     }

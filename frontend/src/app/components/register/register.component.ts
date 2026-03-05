@@ -46,7 +46,11 @@ export class RegisterComponent {
     this.auth.register(this.form.getRawValue()).subscribe({
       next: () => {
         this.toast.success('Inscription réussie');
-        this.router.navigate(['/admin']);
+        const role = this.auth.getStoredUser()?.role;
+        if (role === 'ADMIN') this.router.navigateByUrl('/admin');
+        else if (role === 'CLIENT') this.router.navigateByUrl('/dashboard-client');
+        else if (role === 'FREELANCER') this.router.navigateByUrl('/dashboard-freelancer');
+        else this.router.navigateByUrl('/');
       },
       error: (err) => {
         this.loading = false;

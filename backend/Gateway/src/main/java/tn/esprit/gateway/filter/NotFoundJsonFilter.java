@@ -20,7 +20,7 @@ public class NotFoundJsonFilter implements org.springframework.cloud.gateway.fil
     public Mono<Void> filter(ServerWebExchange exchange, org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
         String path = exchange.getRequest().getPath().value();
         String body = String.format(
-                "{\"timestamp\":\"%s\",\"status\":404,\"error\":\"Not Found\",\"path\":\"%s\",\"message\":\"Utilisez /api/users (auth), /api/formations, /api/inscriptions, /api/examens, /api/certificats ou / (page d'accueil)\"}",
+                "{\"timestamp\":\"%s\",\"status\":404,\"error\":\"Not Found\",\"path\":\"%s\",\"message\":\"Utilisez /api/users (auth), /api/projects, /api/formations, /api/inscriptions, /api/examens, /api/certificats ou / (page d'accueil)\"}",
                 java.time.Instant.now(),
                 path.replace("\"", "\\\"")
         );

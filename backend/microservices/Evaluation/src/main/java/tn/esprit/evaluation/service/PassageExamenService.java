@@ -73,21 +73,21 @@ public class PassageExamenService {
 
     @Transactional(readOnly = true)
     public List<PassageExamenDto> findByFreelancer(Long freelancerId) {
-        return passageExamenRepository.findByFreelancerIdOrderByDatePassageDesc(freelancerId).stream()
+        return passageExamenRepository.findByFreelancerIdWithExamen(freelancerId).stream()
                 .map(PassageExamenDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<PassageExamenDto> findByExamen(Long examenId) {
-        return passageExamenRepository.findByExamenIdOrderByDatePassageDesc(examenId).stream()
+        return passageExamenRepository.findByExamenIdWithExamen(examenId).stream()
                 .map(PassageExamenDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public PassageExamenDto getPassageByFreelancerAndExamen(Long examenId, Long freelancerId) {
-        return passageExamenRepository.findByExamenIdAndFreelancerId(examenId, freelancerId)
+        return passageExamenRepository.findByExamenIdAndFreelancerIdWithExamen(examenId, freelancerId)
                 .map(PassageExamenDto::fromEntity)
                 .orElseThrow(() -> new RuntimeException("Aucun passage trouvé pour cet examen et ce freelancer."));
     }

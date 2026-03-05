@@ -37,7 +37,7 @@
         @if (profile) {
           <dl class="mt-4 space-y-2 text-sm">
             <div><dt class="text-slate-500">Email</dt><dd class="font-medium text-slate-900">{{ profile.email }}</dd></div>
-            <div><dt class="text-slate-500">Nom</dt><dd class="font-medium text-slate-900">{{ profile.fullName ?? '—' }}</dd></div>
+            <div><dt class="text-slate-500">Nom</dt><dd class="font-medium text-slate-900">{{ profile.fullName || '—' }}</dd></div>
             <div><dt class="text-slate-500">Rôle</dt><dd><span class="rounded-full bg-teal-100 px-2 py-0.5 text-teal-800">Freelancer</span></dd></div>
           </dl>
           <a routerLink="/profile" class="mt-4 inline-block text-sm font-medium text-teal-600 hover:underline">Voir mon profil</a>

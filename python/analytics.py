@@ -2,17 +2,21 @@
 ETL & Analytics : indicateurs par formation et par freelancer,
 export CSV et graphiques (matplotlib).
 À lancer après etl.py (python etl.py puis python analytics.py).
-Les rapports sont écrits dans le dossier reports/ (CSV + PNG).
+Les rapports sont écrits dans le dossier reports/ (CSV + PNG),
+puis copiés dans frontend/public/reports/ pour affichage sur la plateforme.
 """
 import csv
+import shutil
 import sqlite3
 import sys
-from datetime import datetime
 from pathlib import Path
 
 from config import ETL_DB_PATH
 
 REPORTS_DIR = Path(__file__).resolve().parent / "reports"
+
+# Dossier côté frontend pour afficher les graphiques sur la plateforme (Angular)
+FRONTEND_REPORTS_DIR = Path(__file__).resolve().parent.parent / "frontend" / "public" / "reports"
 
 
 def ensure_reports_dir() -> None:
@@ -176,6 +180,23 @@ def graphiques(conn: sqlite3.Connection) -> None:
         print(f"[Analytics] Graphique écrit : {REPORTS_DIR / 'graph_certificats_par_mois.png'}")
 
 
+def copy_reports_to_frontend() -> None:
+    """Copie les PNG et CSV vers frontend/public/reports/ pour affichage sur la plateforme."""
+    if not FRONTEND_REPORTS_DIR.parent.exists():
+        return
+    FRONTEND_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    for name in [
+        "graph_inscriptions_par_formation.png",
+        "graph_certificats_par_mois.png",
+        "indicateurs_formations.csv",
+        "indicateurs_freelancers.csv",
+    ]:
+        src = REPORTS_DIR / name
+        if src.exists():
+            shutil.copy2(src, FRONTEND_REPORTS_DIR / name)
+    print(f"[Analytics] Rapports copiés vers la plateforme : {FRONTEND_REPORTS_DIR}")
+
+
 def run_analytics() -> dict:
     """Lance le calcul des indicateurs, export CSV et graphiques."""
     ensure_reports_dir()
@@ -188,6 +209,7 @@ def run_analytics() -> dict:
         export_csv_indicateurs_formations(ind_form, REPORTS_DIR / "indicateurs_formations.csv")
         export_csv_indicateurs_freelancers(ind_free, REPORTS_DIR / "indicateurs_freelancers.csv")
         graphiques(conn)
+        copy_reports_to_frontend()
         return {
             "indicateurs_formations": len(ind_form),
             "indicateurs_freelancers": len(ind_free),

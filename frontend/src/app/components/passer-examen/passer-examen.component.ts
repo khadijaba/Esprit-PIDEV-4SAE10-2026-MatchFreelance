@@ -51,11 +51,26 @@ export class PasserExamenComponent implements OnInit {
       if (stored) this.freelancerIdInput = stored;
     }
 
-    this.examenService.getPourPassage(+eid).subscribe({
+    const examenId = +eid;
+    this.examenService.getPourPassage(examenId).subscribe({
       next: (e) => {
         this.examen = e;
         this.reponses = (e.questions ?? []).map(() => '');
         this.loading = false;
+        const fid = this.currentFreelancerId;
+        if (fid != null) {
+          this.examenService.getPassage(examenId, fid).subscribe({
+            next: (passage) => {
+              this.resultat = passage;
+              if (passage.resultat === 'REUSSI' && passage.certificat) {
+                this.certificat = passage.certificat;
+              } else if (passage.resultat === 'REUSSI') {
+                this.loadCertificat(passage.id);
+              }
+            },
+            error: () => {},
+          });
+        }
       },
       error: () => {
         this.loading = false;

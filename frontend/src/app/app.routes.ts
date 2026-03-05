@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { LayoutComponent } from './components/layout/layout.component';
 import { FrontLayoutComponent } from './components/front-layout/front-layout.component';
+import { adminGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   // Frontoffice (public)
@@ -86,10 +87,11 @@ export const routes: Routes = [
     ],
   },
 
-  // Backoffice (admin)
+  // Backoffice (admin) — réservé aux utilisateurs connectés avec rôle ADMIN
   {
     path: 'admin',
     component: LayoutComponent,
+    canActivate: [adminGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
@@ -171,6 +173,26 @@ export const routes: Routes = [
         path: 'skills/:id/edit',
         loadComponent: () =>
           import('./components/skill-form/skill-form.component').then((m) => m.SkillFormComponent),
+      },
+      {
+        path: 'rapports',
+        loadComponent: () =>
+          import('./components/rapports/rapports.component').then((m) => m.RapportsComponent),
+      },
+      {
+        path: 'recommandations',
+        loadComponent: () =>
+          import('./components/recommandations/recommandations.component').then((m) => m.RecommandationsComponent),
+      },
+      {
+        path: 'rappels',
+        loadComponent: () =>
+          import('./components/rappels/rappels.component').then((m) => m.RappelsComponent),
+      },
+      {
+        path: 'previsionnel',
+        loadComponent: () =>
+          import('./components/previsionnel/previsionnel.component').then((m) => m.PrevisionnelComponent),
       },
     ],
   },

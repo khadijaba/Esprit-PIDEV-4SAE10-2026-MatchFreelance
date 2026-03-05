@@ -23,6 +23,8 @@ export class ParcoursIntelligentComponent {
   loading = false;
   error: string | null = null;
   inscribingId: number | null = null;
+  /** IDs des formations où le freelancer est déjà inscrit (bouton grisé "Inscrit"). */
+  inscritFormationIds = new Set<number>();
 
   constructor(
     private parcoursService: ParcoursService,
@@ -37,21 +39,31 @@ export class ParcoursIntelligentComponent {
     }
   }
 
+  /** ID utilisé pour le parcours : utilisateur connecté (front) ou champ si présent (admin/démo). */
+  get effectiveFreelancerId(): number | null {
+    const user = this.auth.getStoredUser();
+    if (user?.role === 'FREELANCER' && user.userId) return user.userId;
+    const parsed = parseInt(this.freelancerIdInput, 10);
+    return Number.isNaN(parsed) || parsed < 1 ? null : parsed;
+  }
+
   loadParcours() {
-    const id = parseInt(this.freelancerIdInput, 10);
-    if (Number.isNaN(id) || id < 1) {
-      this.error = 'Entrez un ID freelancer valide.';
+    const id = this.effectiveFreelancerId;
+    if (id == null) {
+      this.error = 'Connectez-vous en tant que freelancer pour analyser votre parcours.';
       return;
     }
     this.error = null;
     this.data = null;
     this.formationsAllerPlusLoin = [];
+    this.inscritFormationIds = new Set();
     this.loading = true;
     this.parcoursService.getParcoursIntelligent(id).subscribe({
       next: (res) => {
         this.data = res;
         this.loading = false;
         this.loadFormationsAllerPlusLoin(res.categoriesActuelles);
+        this.loadInscriptions(id);
       },
       error: (err) => {
         this.loading = false;
@@ -81,16 +93,30 @@ export class ParcoursIntelligentComponent {
     });
   }
 
+  private loadInscriptions(freelancerId: number) {
+    this.inscriptionService.getByFreelancer(freelancerId).subscribe({
+      next: (list) => {
+        list.forEach((i) => this.inscritFormationIds.add(i.formationId));
+      },
+      error: () => {},
+    });
+  }
+
+  isInscrit(formationId: number): boolean {
+    return this.inscritFormationIds.has(formationId);
+  }
+
   inscrire(formationId: number) {
-    const fid = this.data?.freelancerId ?? parseInt(this.freelancerIdInput, 10);
-    if (Number.isNaN(fid) || fid < 1) {
-      this.toast.error('ID freelancer invalide.');
+    const fid = this.data?.freelancerId ?? this.effectiveFreelancerId;
+    if (fid == null || fid < 1) {
+      this.toast.error('Connectez-vous pour vous inscrire à une formation.');
       return;
     }
     this.inscribingId = formationId;
     this.inscriptionService.inscrire(formationId, fid).subscribe({
       next: () => {
         this.inscribingId = null;
+        this.inscritFormationIds.add(formationId);
         this.toast.success('Inscription envoyée. En attente de validation.');
       },
       error: (err) => {

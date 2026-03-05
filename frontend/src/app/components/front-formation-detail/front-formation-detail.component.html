@@ -41,6 +41,12 @@
         </div>
       }
       <dl class="grid grid-cols-1 gap-6 px-6 py-8 sm:grid-cols-2 sm:px-8">
+        @if (formation.niveau) {
+          <div class="rounded-xl bg-slate-50 p-4">
+            <dt class="text-sm font-medium text-slate-500">Niveau</dt>
+            <dd class="mt-1 text-lg font-bold text-slate-900">{{ niveauLabel(formation.niveau) }}</dd>
+          </div>
+        }
         <div class="rounded-xl bg-slate-50 p-4">
           <dt class="text-sm font-medium text-slate-500">Durée</dt>
           <dd class="mt-1 text-lg font-bold text-slate-900">{{ formation.dureeHeures }} heures</dd>
@@ -145,6 +151,34 @@
         }
       </div>
 
+      <!-- Modules courts de la formation -->
+      <div class="border-t border-slate-200 bg-slate-50/50 px-6 py-6 sm:px-8">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500">Modules de la formation</h3>
+        <p class="mt-1 text-sm text-slate-600">Contenu découpé en modules courts pour une progression claire.</p>
+        @if (modulesLoading) {
+          <p class="mt-4 text-sm text-slate-500">Chargement des modules...</p>
+        } @else if (modules.length > 0) {
+          <ul class="mt-4 space-y-3">
+            @for (m of modules; track m.id) {
+              <li class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-100 text-sm font-bold text-teal-700">{{ m.ordre }}</span>
+                <div>
+                  <p class="font-semibold text-slate-900">{{ m.titre }}</p>
+                  @if (m.description) {
+                    <p class="mt-1 text-sm text-slate-600">{{ m.description }}</p>
+                  }
+                  <p class="mt-1 text-xs text-slate-500">Durée : {{ m.dureeMinutes }} min</p>
+                </div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mt-4 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
+            Aucun module pour cette formation. Les modules sont ajoutés dans l'espace admin (Formations → détail → Modules).
+          </p>
+        }
+      </div>
+
       <!-- Examen (évaluation) - toujours visible pour voir l'entité -->
       <div class="border-t border-slate-200 bg-amber-50/30 px-6 py-6 sm:px-8">
         <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500">Examen (évaluation)</h3>
@@ -154,11 +188,18 @@
         } @else if (examens.length > 0) {
           <div class="mt-4 flex flex-wrap gap-3">
             @for (e of examens; track e.id) {
-              <a [routerLink]="['/formations', formation.id, 'examen', e.id]"
-                class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition hover:bg-amber-600">
-                Passer l'examen : {{ e.titre }}
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-              </a>
+              @if (isExamenDejaPasse(e.id)) {
+                <span
+                  class="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-600 cursor-not-allowed">
+                  {{ e.titre }} — Déjà passé
+                </span>
+              } @else {
+                <a [routerLink]="['/formations', formation.id, 'examen', e.id]"
+                  class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition hover:bg-amber-600">
+                  Passer l'examen : {{ e.titre }}
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </a>
+              }
             }
           </div>
         } @else {

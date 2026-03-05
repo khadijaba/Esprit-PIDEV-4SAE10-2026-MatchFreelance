@@ -11,17 +11,33 @@
     <p class="mx-auto mt-6 max-w-2xl text-lg text-slate-300">
       Projets, formations et évaluation pour connecter freelancers et opportunités.
     </p>
-    <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+    <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
       <a routerLink="/projects"
         class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-500 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-teal-500/30 transition hover:bg-teal-400 sm:w-auto">
         Parcourir les projets
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
       </a>
       <a routerLink="/formations"
         class="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-500 bg-transparent px-8 py-4 text-base font-semibold text-white transition hover:border-teal-400 hover:bg-white/5 sm:w-auto">
         Voir les formations
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5s-3.332.477-4.5 1.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5s-3.332.477-4.5 1.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
       </a>
+      <a routerLink="/parcours-intelligent"
+        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-amber-400/80 bg-amber-500/20 px-8 py-4 text-base font-semibold text-amber-100 transition hover:border-amber-300 hover:bg-amber-500/30 sm:w-auto">
+        Parcours Intelligent
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Bandeau valeur -->
+<section class="border-b border-slate-200/50 bg-slate-800/50 py-6">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-wrap items-center justify-center gap-8 text-center text-sm text-slate-300">
+      <span class="inline-flex items-center gap-2"><span class="text-teal-400">●</span> Projets ouverts</span>
+      <span class="inline-flex items-center gap-2"><span class="text-amber-400">●</span> Formations certifiantes</span>
+      <span class="inline-flex items-center gap-2"><span class="text-blue-400">●</span> Parcours personnalisé</span>
     </div>
   </div>
 </section>
@@ -63,7 +79,12 @@
 
   @if (!loading && openProjects.length === 0) {
     <div class="mt-12 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-12 text-center">
-      <p class="text-slate-500">Aucun projet ouvert pour le moment. Revenez bientôt.</p>
+      <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>
+      <p class="mt-4 text-slate-600">Aucun projet ouvert pour le moment.</p>
+      <p class="mt-1 text-sm text-slate-500">Revenez plus tard ou renforcez votre profil avec le Parcours Intelligent.</p>
+      <a routerLink="/parcours-intelligent" class="mt-4 inline-block text-sm font-semibold text-teal-600 hover:text-teal-700">Découvrir le Parcours Intelligent</a>
     </div>
   }
 </section>
@@ -108,8 +129,12 @@
 
     @if (!formationsLoading && openFormations.length === 0) {
       <div class="mt-12 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-12 text-center">
-        <p class="text-slate-500">Aucune formation ouverte pour le moment.</p>
-        <a routerLink="/formations" class="mt-4 inline-block text-sm font-semibold text-teal-600 hover:text-teal-700">Voir les formations</a>
+        <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5s-3.332.477-4.5 1.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        <p class="mt-4 text-slate-600">Aucune formation ouverte pour le moment.</p>
+        <p class="mt-1 text-sm text-slate-500">Les formations apparaîtront ici dès qu'elles seront publiées.</p>
+        <a routerLink="/formations" class="mt-4 inline-block text-sm font-semibold text-teal-600 hover:text-teal-700">Voir la liste des formations</a>
       </div>
     }
   </div>

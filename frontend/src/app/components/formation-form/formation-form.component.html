@@ -83,10 +83,11 @@
           [(ngModel)]="form.dateDebut"
           name="dateDebut"
           required
+          [attr.min]="useMinDate ? minDate : null"
           #dateDebutInput="ngModel"
           class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
         @if (dateDebutInput.invalid && dateDebutInput.touched) {
-          <p class="mt-1 text-xs text-red-500">Date requise</p>
+          <p class="mt-1 text-xs text-red-500">{{ useMinDate ? 'Date requise (aujourd\'hui ou ultérieur)' : 'Date requise' }}</p>
         }
       </div>
       <div>
@@ -97,10 +98,14 @@
           [(ngModel)]="form.dateFin"
           name="dateFin"
           required
+          [attr.min]="minDateFin"
           #dateFinInput="ngModel"
           class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
         @if (dateFinInput.invalid && dateFinInput.touched) {
           <p class="mt-1 text-xs text-red-500">Date requise</p>
+        }
+        @if (datesOrderInvalid) {
+          <p class="mt-1 text-xs text-red-500">La date de fin doit être postérieure ou égale à la date de début.</p>
         }
       </div>
     </div>
@@ -118,6 +123,20 @@
     </div>
 
     <div>
+      <label for="niveau" class="mb-1.5 block text-sm font-medium text-gray-700">Niveau</label>
+      <select
+        id="niveau"
+        [(ngModel)]="form.niveau"
+        name="niveau"
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        @for (n of niveaux; track n.value) {
+          <option [value]="n.value">{{ n.label }}</option>
+        }
+      </select>
+      <p class="mt-1 text-xs text-gray-500">Niveau de la formation (Débutant, Intermédiaire, Avancé).</p>
+    </div>
+
+    <div>
       <label for="statut" class="mb-1.5 block text-sm font-medium text-gray-700">Statut</label>
       <select
         id="statut"
@@ -131,19 +150,6 @@
       <p class="mt-1 text-xs text-gray-500">Statut « Ouverte » = visible sur la page Formations du site public.</p>
     </div>
 
-    <div>
-      <label for="examenRequisId" class="mb-1.5 block text-sm font-medium text-gray-700">Certificat requis (ID examen)</label>
-      <input
-        id="examenRequisId"
-        type="number"
-        [(ngModel)]="form.examenRequisId"
-        name="examenRequisId"
-        min="0"
-        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        placeholder="Vide = pas de prérequis" />
-      <p class="mt-1 text-xs text-gray-500">Si renseigné : seuls les freelancers ayant le certificat de cet examen peuvent s'inscrire.</p>
-    </div>
-
     <div class="flex items-center justify-end gap-3 border-t border-gray-100 pt-5">
       <a
         routerLink="/admin/formations"
@@ -152,7 +158,7 @@
       </a>
       <button
         type="submit"
-        [disabled]="f.invalid || saving"
+        [disabled]="f.invalid || saving || datesOrderInvalid"
         class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700 disabled:opacity-50 transition">
         @if (saving) {
           <div class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>

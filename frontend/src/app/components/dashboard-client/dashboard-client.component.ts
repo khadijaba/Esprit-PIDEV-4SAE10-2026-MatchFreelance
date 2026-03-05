@@ -60,13 +60,15 @@ export class DashboardClientComponent implements OnInit {
   }
 
   loadProjects() {
-    this.projectService.getAll().subscribe({
+    const userId = this.auth.getStoredUser()?.userId;
+    const obs = userId ? this.projectService.getByOwner(userId) : this.projectService.getAll();
+    obs.subscribe({
       next: (data) => {
-        this.projects = data;
-        this.stats.total = data.length;
-        this.stats.open = data.filter((p) => p.status === 'OPEN').length;
-        this.stats.inProgress = data.filter((p) => p.status === 'IN_PROGRESS').length;
-        this.stats.completed = data.filter((p) => p.status === 'COMPLETED').length;
+        this.projects = data ?? [];
+        this.stats.total = this.projects.length;
+        this.stats.open = this.projects.filter((p) => p.status === 'OPEN').length;
+        this.stats.inProgress = this.projects.filter((p) => p.status === 'IN_PROGRESS').length;
+        this.stats.completed = this.projects.filter((p) => p.status === 'COMPLETED').length;
       },
       error: () => {},
     });

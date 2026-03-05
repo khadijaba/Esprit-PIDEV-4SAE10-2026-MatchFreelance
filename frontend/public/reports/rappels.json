@@ -1,0 +1,82 @@
+{
+  "generatedAt": "2026-03-05T15:21:39.068647",
+  "summary": {
+    "freelancers": 3,
+    "rappels_total": 8
+  },
+  "rappels": [
+    {
+      "freelancer_id": 1,
+      "email": "benayedkhadija5@gmail.com",
+      "fullName": "khadija",
+      "rappels": [
+        {
+          "type": "formation_ouverte",
+          "message": "Vous avez des formations ouvertes disponibles.",
+          "detail": "Machine Learning; Cloud Computing; Cybersécurité & Protection des données; MLOps; Feature Engineering"
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cybersécurité & Protection des données",
+          "detail": "Examen : Cybersécurité",
+          "examenTitre": "Cybersécurité",
+          "formationId": 5,
+          "examenId": 13
+        },
+        {
+          "type": "certificat",
+          "message": "Nouveau certificat disponible.",
+          "detail": "QCM"
+        }
+      ]
+    },
+    {
+      "freelancer_id": 3,
+      "email": "benayedmustapha24@gmail.com",
+      "fullName": "khadija",
+      "rappels": [
+        {
+          "type": "formation_ouverte",
+          "message": "Vous avez des formations ouvertes disponibles.",
+          "detail": "Machine Learning; Cloud Computing; Cybersécurité & Protection des données; MLOps; Feature Engineering"
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Machine Learning",
+          "detail": "Examen : QCM",
+          "examenTitre": "QCM",
+          "formationId": 3,
+          "examenId": 11
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Cloud Computing",
+          "examenTitre": "Cloud Computing",
+          "formationId": 4,
+          "examenId": 12
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cybersécurité & Protection des données",
+          "detail": "Examen : Cybersécurité",
+          "examenTitre": "Cybersécurité",
+          "formationId": 5,
+          "examenId": 13
+        }
+      ]
+    },
+    {
+      "freelancer_id": 4,
+      "email": "khadija.benayed@esprit.tn",
+      "fullName": "khadija",
+      "rappels": [
+        {
+          "type": "formation_ouverte",
+          "message": "Vous avez des formations ouvertes disponibles.",
+          "detail": "Machine Learning; Cloud Computing; Cybersécurité & Protection des données; MLOps; Feature Engineering"
+        }
+      ]
+    }
+  ]
+}

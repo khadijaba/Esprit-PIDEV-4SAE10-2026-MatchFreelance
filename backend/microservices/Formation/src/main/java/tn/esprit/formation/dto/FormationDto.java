@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 import tn.esprit.formation.entity.Formation;
+import tn.esprit.formation.entity.NiveauFormation;
 import tn.esprit.formation.entity.TypeFormation;
 
 import java.time.LocalDate;
@@ -32,6 +33,9 @@ public class FormationDto {
     private Integer capaciteMax;
     private Formation.StatutFormation statut;
 
+    /** Niveau de la formation (Débutant, Intermédiaire, Avancé). */
+    private NiveauFormation niveau;
+
     /** Id de l'examen dont le certificat est requis pour s'inscrire (null = pas de prérequis). */
     private Long examenRequisId;
 
@@ -46,6 +50,7 @@ public class FormationDto {
                 .dateFin(f.getDateFin())
                 .capaciteMax(f.getCapaciteMax())
                 .statut(f.getStatut())
+                .niveau(f.getNiveau())
                 .examenRequisId(f.getExamenRequisId())
                 .build();
     }
@@ -61,6 +66,7 @@ public class FormationDto {
                 .dateFin(dateFin)
                 .capaciteMax(capaciteMax)
                 .statut(statut != null ? statut : Formation.StatutFormation.OUVERTE)
+                .niveau(niveau)
                 .examenRequisId(examenRequisId)
                 .build();
     }

@@ -28,6 +28,9 @@ public class GatewayApplication {
     @Value("${gateway.service.skill:SKILL}")
     private String skillServiceId;
 
+    @Value("${gateway.service.project:PROJECT}")
+    private String projectServiceId;
+
     public static void main(String[] args) {
         SpringApplication.run(GatewayApplication.class, args);
     }
@@ -43,14 +46,20 @@ public class GatewayApplication {
                         .uri("lb://" + evaluationServiceId))
                 .route("evaluation-certificats", r -> r.path("/api/certificats", "/api/certificats/**")
                         .uri("lb://" + evaluationServiceId))
-                // Formations / Inscriptions -> lb://FORMATION (nom dans application.properties)
+                // Formations / Inscriptions / Modules -> lb://FORMATION
                 .route("formation-api", r -> r.path("/api/formations", "/api/formations/**")
+                        .uri("lb://" + formationServiceId))
+                .route("formation-modules", r -> r.path("/api/modules", "/api/modules/**")
                         .uri("lb://" + formationServiceId))
                 .route("formation-inscriptions", r -> r.path("/api/inscriptions", "/api/inscriptions/**")
                         .uri("lb://" + formationServiceId))
                 // Skills / Parcours Intelligent -> lb://SKILL
                 .route("skill-api", r -> r.path("/api/skills", "/api/skills/**")
                         .uri("lb://" + skillServiceId))
+                // Projets (microservice Project) : /api/projects -> /projects côté service
+                .route("project-api", r -> r.path("/api/projects", "/api/projects/**")
+                        .filters(f -> f.rewritePath("/api/projects(?<segment>/?.*)", "/projects${segment}"))
+                        .uri("lb://" + projectServiceId))
                 // Racine : uniquement / et /api (pas /api/xxx) -> reponse JSON
                 .route("gateway-welcome", r -> r.path("/", "/api")
                         .and().method(org.springframework.http.HttpMethod.GET)

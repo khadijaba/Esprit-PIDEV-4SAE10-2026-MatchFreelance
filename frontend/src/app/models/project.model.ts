@@ -6,8 +6,11 @@ export interface Project {
   description: string;
   budget: number;
   duration: number;
-  createdAt: string;
   status: ProjectStatus;
+  projectOwnerId?: number;
+  requiredSkills?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProjectRequest {
@@ -16,5 +19,7 @@ export interface ProjectRequest {
   budget: number;
   duration: number;
   status?: ProjectStatus;
+  projectOwnerId?: number;
+  requiredSkills?: string[];
 }
 

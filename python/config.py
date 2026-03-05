@@ -38,3 +38,6 @@ RAPPEL_FORMATION_JOURS_AVANT_FIN = int(os.getenv("RAPPEL_FORMATION_JOURS_AVANT_F
 RAPPEL_EXAMEN_JOURS_RETARD = int(os.getenv("RAPPEL_EXAMEN_JOURS_RETARD", "14"))
 # Webhook au format Slack / Teams (envoi du message formaté pour Slack)
 WEBHOOK_SLACK = os.getenv("WEBHOOK_SLACK", "").strip().lower() in ("1", "true", "yes")
+
+# Prévisionnel ML : jours sans passage d'examen après inscription validée → décrochage (0 = test immédiat)
+JOURS_DECROCHAGE = int(os.getenv("JOURS_DECROCHAGE", "14"))

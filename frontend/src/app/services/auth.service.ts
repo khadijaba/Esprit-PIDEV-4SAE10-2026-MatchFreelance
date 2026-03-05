@@ -61,9 +61,14 @@ export class AuthService {
     return !!this.getToken();
   }
 
-  logout(): void {
+  /** Vide la session sans rediriger (utile pour l'intercepteur 401). */
+  clearSession(): void {
     sessionStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(USER_KEY);
+  }
+
+  logout(): void {
+    this.clearSession();
     this.router.navigate(['/login']);
   }
 

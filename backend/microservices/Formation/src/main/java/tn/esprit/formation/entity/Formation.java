@@ -56,6 +56,11 @@ public class Formation {
     @Builder.Default
     private StatutFormation statut = StatutFormation.OUVERTE;
 
+    /** Niveau de la formation (Débutant, Intermédiaire, Avancé). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "niveau", length = 20)
+    private NiveauFormation niveau;
+
     /** Si non null : accès réservé aux freelancers ayant le certificat de cet examen (examenId côté Evaluation). */
     @Column(name = "examen_requis_id")
     private Long examenRequisId;
@@ -63,6 +68,11 @@ public class Formation {
     @OneToMany(mappedBy = "formation", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Inscription> inscriptions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "formation", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("ordre ASC")
+    @Builder.Default
+    private List<Module> modules = new ArrayList<>();
 
     public enum StatutFormation {
         OUVERTE,

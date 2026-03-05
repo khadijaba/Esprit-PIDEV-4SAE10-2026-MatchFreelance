@@ -1,5 +1,7 @@
 export type StatutFormation = 'OUVERTE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE';
 
+export type NiveauFormation = 'DEBUTANT' | 'INTERMEDIAIRE' | 'AVANCE';
+
 export type TypeFormation =
   | 'WEB_DEVELOPMENT'
   | 'DEVOPS'
@@ -19,7 +21,7 @@ export interface Formation {
   dateFin: string;
   capaciteMax: number | null;
   statut: StatutFormation;
-  /** Id de l'examen dont le certificat est requis pour s'inscrire (null = pas de prérequis). */
+  niveau?: NiveauFormation | null;
   examenRequisId?: number | null;
 }
 
@@ -32,9 +34,15 @@ export interface FormationRequest {
   dateFin: string;
   capaciteMax: number;
   statut?: StatutFormation;
-  /** Id de l'examen dont le certificat est requis pour s'inscrire (vide = pas de prérequis). */
+  niveau?: NiveauFormation | null;
   examenRequisId?: number | null;
 }
+
+export const NIVEAU_FORMATION_LABELS: Record<NiveauFormation, string> = {
+  DEBUTANT: 'Débutant',
+  INTERMEDIAIRE: 'Intermédiaire',
+  AVANCE: 'Avancé',
+};
 
 export const TYPE_FORMATION_LABELS: Record<TypeFormation, string> = {
   WEB_DEVELOPMENT: 'Développement Web',

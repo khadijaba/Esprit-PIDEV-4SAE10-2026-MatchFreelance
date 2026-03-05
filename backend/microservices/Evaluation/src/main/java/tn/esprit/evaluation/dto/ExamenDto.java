@@ -39,7 +39,7 @@ public class ExamenDto {
                 .description(e.getDescription())
                 .seuilReussi(e.getSeuilReussi())
                 .questions(e.getQuestions() != null
-                        ? e.getQuestions().stream().map(QuestionDto::fromEntity).collect(Collectors.toList())
+                        ? e.getQuestions().stream().map(q -> QuestionDto.fromEntity(q, e.getId())).collect(Collectors.toList())
                         : new ArrayList<>())
                 .build();
     }

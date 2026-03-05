@@ -4,7 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FormationService } from '../../services/formation.service';
 import { ToastService } from '../../services/toast.service';
-import { Formation, StatutFormation, TypeFormation, TYPE_FORMATION_LABELS } from '../../models/formation.model';
+import {
+  Formation,
+  NiveauFormation,
+  NIVEAU_FORMATION_LABELS,
+  StatutFormation,
+  TypeFormation,
+  TYPE_FORMATION_LABELS,
+} from '../../models/formation.model';
 
 @Component({
   selector: 'app-formation-list',
@@ -15,9 +22,13 @@ import { Formation, StatutFormation, TypeFormation, TYPE_FORMATION_LABELS } from
 export class FormationListComponent implements OnInit {
   formations: Formation[] = [];
   filtered: Formation[] = [];
+  paginatedFormations: Formation[] = [];
   searchTerm = '';
   statutFilter: StatutFormation | '' = '';
   loading = true;
+  readonly pageSize = 5;
+  currentPage = 1;
+  totalPages = 1;
 
   constructor(
     private formationService: FormationService,
@@ -33,6 +44,7 @@ export class FormationListComponent implements OnInit {
     this.formationService.getAll().subscribe({
       next: (data) => {
         this.formations = data;
+        this.currentPage = 1;
         this.applyFilters();
         this.loading = false;
       },
@@ -57,6 +69,19 @@ export class FormationListComponent implements OnInit {
       );
     }
     this.filtered = result;
+    this.totalPages = Math.max(1, Math.ceil(this.filtered.length / this.pageSize));
+    this.currentPage = Math.min(this.currentPage, this.totalPages);
+    this.updatePaginatedSlice();
+  }
+
+  private updatePaginatedSlice() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    this.paginatedFormations = this.filtered.slice(start, start + this.pageSize);
+  }
+
+  goToPage(page: number) {
+    this.currentPage = Math.max(1, Math.min(page, this.totalPages));
+    this.updatePaginatedSlice();
   }
 
   onDelete(id: number) {
@@ -72,6 +97,10 @@ export class FormationListComponent implements OnInit {
 
   typeFormationLabel(t?: TypeFormation): string {
     return t ? (TYPE_FORMATION_LABELS[t] ?? t) : '—';
+  }
+
+  niveauLabel(n?: NiveauFormation | null): string {
+    return n ? (NIVEAU_FORMATION_LABELS[n] ?? n) : '—';
   }
 
   statutClass(s: StatutFormation): string {

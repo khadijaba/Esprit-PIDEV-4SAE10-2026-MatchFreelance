@@ -4,9 +4,17 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormationService } from '../../services/formation.service';
 import { InscriptionService } from '../../services/inscription.service';
 import { ExamenService } from '../../services/examen.service';
+import { ModuleService } from '../../services/module.service';
 import { ToastService } from '../../services/toast.service';
 import { AuthService } from '../../services/auth.service';
-import { Formation, StatutFormation, TypeFormation, TYPE_FORMATION_LABELS } from '../../models/formation.model';
+import {
+  Formation,
+  NiveauFormation,
+  NIVEAU_FORMATION_LABELS,
+  StatutFormation,
+  TypeFormation,
+  TYPE_FORMATION_LABELS,
+} from '../../models/formation.model';
 import { Inscription, StatutInscription } from '../../models/inscription.model';
 
 const FREELANCER_ID_KEY = 'freelancerId';
@@ -26,6 +34,11 @@ export class FrontFormationDetailComponent implements OnInit {
   freelancerIdInput = '';
   examens: { id: number; titre: string }[] = [];
   examensLoading = false;
+  /** IDs des examens déjà passés par le freelancer connecté (bouton « Passer l'examen » désactivé). */
+  examensDejaPassesIds = new Set<number>();
+  resultatsLoading = false;
+  modules: { id: number; titre: string; description: string | null; dureeMinutes: number; ordre: number }[] = [];
+  modulesLoading = false;
   /** Titre de l'examen requis (certificat) pour afficher la condition d'accès. */
   examenRequisTitre: string | null = null;
 
@@ -38,6 +51,7 @@ export class FrontFormationDetailComponent implements OnInit {
     private formationService: FormationService,
     private inscriptionService: InscriptionService,
     private examenService: ExamenService,
+    private moduleService: ModuleService,
     private toast: ToastService,
     private auth: AuthService,
     private route: ActivatedRoute,
@@ -66,6 +80,8 @@ export class FrontFormationDetailComponent implements OnInit {
         this.loading = false;
         this.loadInscriptions(formationId);
         this.loadExamens(formationId);
+        this.loadModules(formationId);
+        this.loadResultatsFreelancer();
         if (f.examenRequisId != null) {
           this.examenService.getById(f.examenRequisId).subscribe({
             next: (ex) => (this.examenRequisTitre = ex.titre),
@@ -104,6 +120,46 @@ export class FrontFormationDetailComponent implements OnInit {
     });
   }
 
+  private loadModules(formationId: number) {
+    this.modulesLoading = true;
+    this.moduleService.getByFormation(formationId).subscribe({
+      next: (list) => {
+        this.modules = list.map((m) => ({
+          id: m.id,
+          titre: m.titre,
+          description: m.description,
+          dureeMinutes: m.dureeMinutes,
+          ordre: m.ordre,
+        }));
+        this.modulesLoading = false;
+      },
+      error: () => (this.modulesLoading = false),
+    });
+  }
+
+  private loadResultatsFreelancer() {
+    const fid = this.currentFreelancerId;
+    if (fid == null) {
+      this.examensDejaPassesIds = new Set();
+      return;
+    }
+    this.resultatsLoading = true;
+    this.examenService.getResultatsByFreelancer(fid).subscribe({
+      next: (list) => {
+        this.examensDejaPassesIds = new Set(list.map((r) => r.examenId));
+        this.resultatsLoading = false;
+      },
+      error: () => {
+        this.examensDejaPassesIds = new Set();
+        this.resultatsLoading = false;
+      },
+    });
+  }
+
+  isExamenDejaPasse(examenId: number): boolean {
+    return this.examensDejaPassesIds.has(examenId);
+  }
+
   get currentFreelancerId(): number | null {
     const n = parseInt(this.freelancerIdInput, 10);
     return Number.isNaN(n) ? null : n;
@@ -123,6 +179,7 @@ export class FrontFormationDetailComponent implements OnInit {
     }
     localStorage.setItem(FREELANCER_ID_KEY, String(n));
     this.toast.success("Profil freelancer enregistré.");
+    this.loadResultatsFreelancer();
   }
 
   inscrire() {
@@ -161,6 +218,10 @@ export class FrontFormationDetailComponent implements OnInit {
 
   typeFormationLabel(t?: TypeFormation): string {
     return t ? (TYPE_FORMATION_LABELS[t] ?? t) : '';
+  }
+
+  niveauLabel(n?: NiveauFormation | null): string {
+    return n ? (NIVEAU_FORMATION_LABELS[n] ?? n) : '';
   }
 
   statutClass(s: StatutFormation): string {

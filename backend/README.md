@@ -35,6 +35,18 @@ backend/
 
 Le front appelle `/api/*` ; le proxy Angular redirige vers la Gateway (8050), qui route vers les microservices.
 
+### Démarrer pour Formations + Modules (Eureka + Gateway + Formation)
+
+Pour pouvoir **ajouter des modules** depuis l’admin (et éviter « Connexion impossible ») :
+
+Depuis le dossier **`backend`**, exécuter :
+
+```powershell
+.\demarrer-gateway-formation.ps1
+```
+
+Cela ouvre 3 fenêtres : **Eureka** (8761), **Gateway** (8050), **Formation** (8081). Attendre que chaque service affiche `Started ...`, puis lancer le frontend (`ng serve`) et aller sur **Admin → Formations → détail d’une formation → Ajouter un module**.
+
 ### Démarrer uniquement le Parcours Intelligent (Eureka + Gateway + Skill)
 
 Depuis `backend`, exécuter le script PowerShell :
@@ -68,6 +80,7 @@ cd backend\microservices\Skill
 |---------|---------|----------|
 | `/api/users` | USER | `POST /api/users/auth/register`, `POST /api/users/auth/login`, `GET /api/users/me` |
 | `/api/formations` | FORMATION | `GET/POST/PUT/DELETE /api/formations`, `/api/formations/{id}` |
+| `/api/modules` | FORMATION | `GET /api/modules/formation/{id}`, `POST /api/modules` (modules courts) |
 | `/api/inscriptions` | FORMATION | `/api/inscriptions/...` |
 | `/api/examens` | EVALUATION | `/api/examens`, `/api/examens/**` |
 | `/api/certificats` | EVALUATION | `/api/certificats`, `/api/certificats/**` |

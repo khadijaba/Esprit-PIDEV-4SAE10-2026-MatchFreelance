@@ -26,6 +26,9 @@ public class JwtUtil {
     }
 
     public String generateToken(User user) {
+        if (user == null || user.getEmail() == null || user.getRole() == null) {
+            throw new IllegalArgumentException("User must have email and role");
+        }
         return Jwts.builder()
                 .subject(user.getEmail())
                 .claim("userId", user.getId())
