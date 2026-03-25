@@ -30,7 +30,8 @@ jobs:
           --health-retries=15
 
     env:
-      MYSQL_HOST: mysql
+      # 127.0.0.1 : le port 3306 du service mysql est mappé sur l'hôte (DNS "mysql" souvent absent)
+      MYSQL_HOST: 127.0.0.1
       MYSQL_ROOT_PASSWORD: root
 
     steps:
@@ -38,7 +39,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Ensure scripts executable
-        run: chmod +x ./scripts/ci/start-stack.sh ./scripts/ci/stop-stack.sh ./backend/microservices/Formation/mvnw ./backend/EurekaServer/EurekaServer/mvnw
+        run: chmod +x ./scripts/ci/wait-for-mysql.sh ./scripts/ci/start-stack.sh ./scripts/ci/stop-stack.sh ./backend/microservices/Formation/mvnw ./backend/EurekaServer/EurekaServer/mvnw
+
+      - name: Wait for MySQL (healthcheck service + ping explicite)
+        env:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_ROOT_PASSWORD: root
+        run: bash ./scripts/ci/wait-for-mysql.sh
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -47,12 +54,12 @@ jobs:
           java-version: "17"
           cache: maven
 
-      - name: Start MySQL + Eureka + Config Server
+      - name: Start Eureka + Config Server
         run: bash ./scripts/ci/start-stack.sh
 
       - name: Build + tests + JaCoCo (Formation) with MySQL + Eureka + Config
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/FormationDB?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/FormationDB?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
           SPRING_DATASOURCE_USERNAME: root
           SPRING_DATASOURCE_PASSWORD: root
           EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://localhost:8761/eureka

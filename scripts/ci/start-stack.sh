@@ -1,26 +1,50 @@
 #!/usr/bin/env bash
-# Démarre MySQL (déjà fourni comme service GitHub Actions) + Eureka + Config Server.
-# Usage : depuis la racine du dépôt, MYSQL_HOST=mysql (hostname du service Docker).
+# Démarre MySQL (service GitHub Actions) + Eureka + Config Server.
+# Sur GitHub Actions, le hostname "mysql" ne résout pas toujours depuis le runner : on utilise
+# 127.0.0.1:3306 (port publié par le service). Surcharge MYSQL_HOST si besoin.
 set -euo pipefail
 
-MYSQL_HOST="${MYSQL_HOST:-mysql}"
+# Si le workflow passe encore MYSQL_HOST=mysql, le DNS échoue souvent sur le runner :
+# on remappe vers l'hôte (port 3306 publié).
+MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
+if [ "$MYSQL_HOST" = "mysql" ]; then
+  MYSQL_HOST=127.0.0.1
+fi
 MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-root}"
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 
-echo "[CI] Attente MySQL (${MYSQL_HOST})..."
+echo "[CI] Vérification connexion MySQL (${MYSQL_HOST}:3306)..."
 sudo apt-get update -qq
 sudo apt-get install -y -qq mysql-client
 
-for _ in $(seq 1 40); do
-  if mysql -h "$MYSQL_HOST" -P 3306 -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1" 2>/dev/null; then
+CONNECTED=0
+for _ in $(seq 1 60); do
+  if mysqladmin ping -h "$MYSQL_HOST" -P 3306 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent 2>/dev/null \
+     || mysql -h "$MYSQL_HOST" -P 3306 -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1" 2>/dev/null; then
+    CONNECTED=1
     break
   fi
   sleep 2
 done
+if [ "$CONNECTED" != "1" ]; then
+  echo "[CI] ERREUR: MySQL injoignable sur ${MYSQL_HOST}:3306 (vérifie le service + ports)."
+  exit 1
+fi
 
 echo "[CI] Création des bases FormationDB / EvaluationDB..."
-mysql -h "$MYSQL_HOST" -P 3306 -uroot -p"$MYSQL_ROOT_PASSWORD" -e \
-  "CREATE DATABASE IF NOT EXISTS FormationDB; CREATE DATABASE IF NOT EXISTS EvaluationDB;"
+for attempt in $(seq 1 5); do
+  if mysql -h "$MYSQL_HOST" -P 3306 -uroot -p"$MYSQL_ROOT_PASSWORD" -e \
+    "CREATE DATABASE IF NOT EXISTS FormationDB; CREATE DATABASE IF NOT EXISTS EvaluationDB;"; then
+    echo "[CI] Bases créées (tentative ${attempt}/5)."
+    break
+  fi
+  echo "[CI] Échec création bases, nouvel essai dans 2s... (${attempt}/5)"
+  if [ "$attempt" -eq 5 ]; then
+    echo "[CI] ERREUR: impossible de créer les bases."
+    exit 1
+  fi
+  sleep 2
+done
 
 echo "[CI] Build + démarrage Eureka (8761)..."
 cd "$ROOT_DIR/backend/EurekaServer/EurekaServer"

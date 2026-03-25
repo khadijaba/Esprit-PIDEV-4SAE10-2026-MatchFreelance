@@ -16,7 +16,8 @@
 
 ## Infra utilisée dans la CI (comme en dev)
 
-- **MySQL 8** : utilisateur `root` / mot de passe `root` (uniquement dans GitHub Actions)  
+- **MySQL 8** : utilisateur `root` / mot de passe `root` (uniquement dans GitHub Actions). Connexion depuis le runner via **`127.0.0.1:3306`** (port publié), pas le hostname Docker `mysql` (souvent non résolu en DNS).  
+- **Attente explicite** : étape `Wait for MySQL` (`scripts/ci/wait-for-mysql.sh`, `mysqladmin ping`) avant Eureka/Config, en complément du healthcheck du service Docker.  
 - **Eureka** : JAR `backend/EurekaServer/EurekaServer/target/eurekaServer-0.0.1-SNAPSHOT.jar` (port **8761**)  
 - **Config Server** : JAR `backend/ConfigServer/target/config-server-0.0.1-SNAPSHOT.jar` (port **8888**)  
 - Les tests `@SpringBootTest` voient donc une vraie stack (pas de H2 imposé par le dépôt).
