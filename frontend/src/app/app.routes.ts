@@ -45,6 +45,11 @@ export const routes: Routes = [
           import('./components/certificat-view/certificat-view.component').then((m) => m.CertificatViewComponent),
       },
       {
+        path: 'verify-certificat/:numero',
+        loadComponent: () =>
+          import('./components/verify-certificat/verify-certificat.component').then((m) => m.VerifyCertificatComponent),
+      },
+      {
         path: 'login',
         loadComponent: () =>
           import('./components/login/login.component').then((m) => m.LoginComponent),

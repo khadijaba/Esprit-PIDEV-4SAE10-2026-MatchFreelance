@@ -52,8 +52,30 @@ export interface Certificat {
   passageExamenId: number;
   freelancerId: number;
   examenId: number;
+  formationId?: number;
   examenTitre: string;
   score: number;
+  /** Seuil de l'examen (aligné PDF / affichage web). */
+  seuilReussi?: number;
   datePassage: string;
   dateDelivrance: string;
+}
+
+/** Réponse GET /api/certificats/verify/{numero} (scan QR). */
+export interface CertificatVerifyResponse {
+  valid: boolean;
+  numeroCertificat?: string;
+  message?: string;
+  freelancerId?: number;
+  examenId?: number;
+  formationId?: number;
+  examenTitre?: string;
+  score?: number;
+  dateDelivrance?: string;
+  formationsRecommandees?: Array<{
+    id?: number;
+    titre?: string;
+    typeFormation?: string;
+    niveau?: string;
+  }>;
 }

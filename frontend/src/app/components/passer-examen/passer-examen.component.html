@@ -100,17 +100,15 @@
           <p class="mt-6 text-sm text-slate-500">Génération du certificat…</p>
         }
         @if (certificat && !certificatLoading) {
-          <div class="mt-6 rounded-xl border-2 border-amber-200 bg-amber-50/80 p-6 text-left max-w-md mx-auto">
-            <p class="text-sm font-semibold text-amber-800">Certificat délivré</p>
-            <p class="mt-1 text-lg font-bold text-slate-900">{{ certificat.examenTitre }}</p>
-            <p class="mt-1 text-sm text-slate-600">N° {{ certificat.numeroCertificat }}</p>
-            <p class="mt-1 text-sm text-slate-500">Score : {{ certificat.score }} % — {{ certificat.dateDelivrance | date:'dd/MM/yyyy' }}</p>
-            <div class="mt-4 flex flex-wrap gap-3">
+          <div class="mt-8 text-left max-w-2xl mx-auto w-full">
+            <p class="mb-4 text-center text-sm font-semibold text-amber-800">Certificat délivré — aperçu (identique au PDF)</p>
+            <app-certificat-display [certificat]="certificat" [showVerify]="true" />
+            <div class="mt-6 flex flex-wrap justify-center gap-3">
               <button type="button" (click)="goToCertificatView()" class="inline-block rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">
-                Voir le certificat
+                Page dédiée certificat
               </button>
               <button type="button" (click)="openCertificatPdf()" class="inline-block rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
-                Voir en PDF
+                Télécharger le PDF
               </button>
             </div>
           </div>

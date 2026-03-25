@@ -1,0 +1,75 @@
+name: Quality SonarQube
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "master", "main" ]
+    paths:
+      - "backend/microservices/Formation/**"
+      - "backend/microservices/Evaluation/**"
+      - ".github/workflows/quality-sonarqube.yml"
+
+jobs:
+  sonar-formation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure Maven wrapper executable
+        run: chmod +x ./backend/microservices/Formation/mvnw
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: SonarQube scan (Formation)
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          ./backend/microservices/Formation/mvnw -B
+          -f backend/microservices/Formation/pom.xml
+          clean verify sonar:sonar
+          -Dsonar.host.url=${SONAR_HOST_URL}
+          -Dsonar.login=${SONAR_TOKEN}
+          -Dsonar.projectKey=formation-service
+          -Dsonar.projectName=formation-service
+          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+
+  sonar-evaluation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure Maven wrapper executable
+        run: chmod +x ./backend/microservices/Formation/mvnw
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: SonarQube scan (Evaluation)
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          ./backend/microservices/Formation/mvnw -B
+          -f backend/microservices/Evaluation/pom.xml
+          clean verify sonar:sonar
+          -Dsonar.host.url=${SONAR_HOST_URL}
+          -Dsonar.login=${SONAR_TOKEN}
+          -Dsonar.projectKey=evaluation-service
+          -Dsonar.projectName=evaluation-service
+          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml

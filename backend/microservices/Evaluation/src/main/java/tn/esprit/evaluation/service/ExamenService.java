@@ -7,6 +7,7 @@ import tn.esprit.evaluation.dto.ExamenDto;
 import tn.esprit.evaluation.dto.QuestionDto;
 import tn.esprit.evaluation.entity.Examen;
 import tn.esprit.evaluation.entity.Question;
+import tn.esprit.evaluation.exception.ResourceNotFoundException;
 import tn.esprit.evaluation.repository.ExamenRepository;
 import tn.esprit.evaluation.repository.QuestionRepository;
 
@@ -37,18 +38,21 @@ public class ExamenService {
 
     @Transactional(readOnly = true)
     public ExamenDto findById(Long id) {
-        Examen e = examenRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Examen non trouvé: " + id));
+        Examen e = examenRepository.findByIdWithQuestions(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Examen", id));
         return ExamenDto.fromEntity(e);
     }
 
-    /** Retourne l'examen avec les questions (sans la bonne réponse pour le passage) */
+    /** Retourne l'examen avec les questions pour le passage. */
     @Transactional(readOnly = true)
     public ExamenDto getExamenPourPassage(Long id) {
-        Examen e = examenRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Examen non trouvé: " + id));
+        Examen e = examenRepository.findByIdWithQuestions(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Examen", id));
         ExamenDto dto = ExamenDto.fromEntity(e);
-        // On peut masquer bonneReponse côté client si besoin; ici on garde pour correction
+        // Sécurité / mode certifiant : on ne renvoie pas la bonne réponse au client.
+        if (dto.getQuestions() != null) {
+            dto.getQuestions().forEach(q -> q.setBonneReponse(null));
+        }
         return dto;
     }
 
@@ -82,13 +86,14 @@ public class ExamenService {
                 questionRepository.save(q);
             }
         }
-        return ExamenDto.fromEntity(examenRepository.findById(e.getId()).orElseThrow());
+        Examen finalE = e;
+        return ExamenDto.fromEntity(examenRepository.findByIdWithQuestions(e.getId()).orElseThrow(() -> new ResourceNotFoundException("Examen", finalE.getId())));
     }
 
     @Transactional
     public ExamenDto update(Long id, ExamenDto dto) {
         Examen e = examenRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Examen non trouvé: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Examen", id));
         e.setTitre(dto.getTitre());
         e.setDescription(dto.getDescription());
         e.setSeuilReussi(dto.getSeuilReussi() != null ? dto.getSeuilReussi() : e.getSeuilReussi());
@@ -99,7 +104,7 @@ public class ExamenService {
     @Transactional
     public void deleteById(Long id) {
         if (!examenRepository.existsById(id))
-            throw new RuntimeException("Examen non trouvé: " + id);
+            throw new ResourceNotFoundException("Examen", id);
         examenRepository.deleteById(id);
     }
 }

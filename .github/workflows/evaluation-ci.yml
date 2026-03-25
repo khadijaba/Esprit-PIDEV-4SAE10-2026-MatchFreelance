@@ -1,0 +1,40 @@
+name: Evaluation CI
+
+on:
+  push:
+    paths:
+      - "backend/microservices/Evaluation/**"
+      - ".github/workflows/evaluation-ci.yml"
+  pull_request:
+    paths:
+      - "backend/microservices/Evaluation/**"
+      - ".github/workflows/evaluation-ci.yml"
+
+jobs:
+  build-test-evaluation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure Maven wrapper executable
+        run: chmod +x ./backend/microservices/Formation/mvnw
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Build + unit tests + JaCoCo (Evaluation)
+        run: ./backend/microservices/Formation/mvnw -B -f backend/microservices/Evaluation/pom.xml clean verify
+
+      - name: Upload test and coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-test-reports
+          path: |
+            backend/microservices/Evaluation/target/surefire-reports/**
+            backend/microservices/Evaluation/target/site/jacoco/**

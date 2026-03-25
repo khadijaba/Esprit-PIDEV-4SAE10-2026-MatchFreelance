@@ -6,13 +6,14 @@ import { ExamenService } from '../../services/examen.service';
 import { ToastService } from '../../services/toast.service';
 import { AuthService } from '../../services/auth.service';
 import { Certificat, Examen, PassageExamen } from '../../models/examen.model';
+import { CertificatDisplayComponent } from '../certificat-display/certificat-display.component';
 
 const FREELANCER_ID_KEY = 'freelancerId';
 
 @Component({
   selector: 'app-passer-examen',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, CertificatDisplayComponent],
   templateUrl: './passer-examen.component.html',
 })
 export class PasserExamenComponent implements OnInit {

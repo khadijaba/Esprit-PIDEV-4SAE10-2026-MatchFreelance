@@ -1,5 +1,6 @@
 package tn.esprit.evaluation.dto;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -7,7 +8,7 @@ import java.util.List;
 
 /**
  * Réponses soumises par le freelancer pour un examen.
- * questionId -> choix (A, B, C ou D)
+ * Index = ordre de la question, value = A, B, C ou D.
  */
 @Getter
 @Setter
@@ -16,10 +17,20 @@ import java.util.List;
 @Builder
 public class ReponseExamenRequest {
 
-    @NotNull
+    @NotNull(message = "freelancerId est requis")
     private Long freelancerId;
 
-    /** Liste des réponses: index = ordre question, value = A/B/C/D */
-    @NotNull
-    private List<String> reponses; // ex: ["A", "C", "B", "D", "A"]
+    /** Liste des réponses (ordre = ordre des questions), chaque élément A, B, C ou D. */
+    @NotNull(message = "Les réponses sont requises")
+    @NotEmpty(message = "Au moins une réponse est requise")
+    private List<String> reponses;
+
+    /** Mode de passage : ENTRAINEMENT (avec correction) ou CERTIFIANT (sans correction, certificat possible). */
+    @Builder.Default
+    private ModePassage mode = ModePassage.CERTIFIANT;
+
+    public enum ModePassage {
+        ENTRAINEMENT,
+        CERTIFIANT
+    }
 }

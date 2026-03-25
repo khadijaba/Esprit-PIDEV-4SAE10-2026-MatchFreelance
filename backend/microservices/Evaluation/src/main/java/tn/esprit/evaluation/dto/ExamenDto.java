@@ -1,5 +1,6 @@
 package tn.esprit.evaluation.dto;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -18,13 +19,16 @@ import java.util.stream.Collectors;
 public class ExamenDto {
 
     private Long id;
-    @NotNull
+    @NotNull(message = "formationId est requis")
     private Long formationId;
-    @NotBlank
+    @NotBlank(message = "Le titre est requis")
+    @jakarta.validation.constraints.Size(min = 1, max = 255)
     private String titre;
+    @jakarta.validation.constraints.Size(max = 1000)
     private String description;
     @NotNull
     @PositiveOrZero
+    @Max(100)
     @Builder.Default
     private Integer seuilReussi = 60;
 
@@ -32,6 +36,7 @@ public class ExamenDto {
     private List<QuestionDto> questions = new ArrayList<>();
 
     public static ExamenDto fromEntity(Examen e) {
+        final Long examenId = e != null ? e.getId() : null;
         return ExamenDto.builder()
                 .id(e.getId())
                 .formationId(e.getFormationId())
@@ -39,7 +44,7 @@ public class ExamenDto {
                 .description(e.getDescription())
                 .seuilReussi(e.getSeuilReussi())
                 .questions(e.getQuestions() != null
-                        ? e.getQuestions().stream().map(q -> QuestionDto.fromEntity(q, e.getId())).collect(Collectors.toList())
+                        ? e.getQuestions().stream().map(q -> QuestionDto.fromEntity(q, examenId)).collect(Collectors.toList())
                         : new ArrayList<>())
                 .build();
     }

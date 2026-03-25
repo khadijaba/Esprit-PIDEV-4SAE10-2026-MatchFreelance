@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.evaluation.dto.CertificatDto;
 import tn.esprit.evaluation.entity.Certificat;
 import tn.esprit.evaluation.entity.PassageExamen;
+import tn.esprit.evaluation.exception.ResourceNotFoundException;
 import tn.esprit.evaluation.repository.CertificatRepository;
 
 import java.util.List;
@@ -48,13 +49,23 @@ public class CertificatService {
     public CertificatDto findById(Long id) {
         return certificatRepository.findByIdWithPassageAndExamen(id)
                 .map(CertificatDto::fromEntity)
-                .orElseThrow(() -> new RuntimeException("Certificat non trouvé: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Certificat", id));
     }
 
     @Transactional(readOnly = true)
     public CertificatDto findByPassageExamen(Long passageExamenId) {
         return certificatRepository.findByPassageExamenIdWithPassageAndExamen(passageExamenId)
                 .map(CertificatDto::fromEntity)
-                .orElseThrow(() -> new RuntimeException("Aucun certificat pour ce passage: " + passageExamenId));
+                .orElseThrow(() -> new ResourceNotFoundException("Aucun certificat pour ce passage: " + passageExamenId));
+    }
+
+    @Transactional(readOnly = true)
+    public CertificatDto findByNumero(String numero) {
+        if (numero == null || numero.isBlank()) {
+            throw new IllegalArgumentException("numeroCertificat est requis");
+        }
+        return certificatRepository.findByNumeroCertificatWithPassageAndExamen(numero.trim())
+                .map(CertificatDto::fromEntity)
+                .orElseThrow(() -> new ResourceNotFoundException("Certificat introuvable pour le numéro: " + numero));
     }
 }

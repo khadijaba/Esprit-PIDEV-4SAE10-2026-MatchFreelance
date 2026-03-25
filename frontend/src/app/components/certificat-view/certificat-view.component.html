@@ -23,21 +23,7 @@
   }
 
   @if (certificat && !loading) {
-    <article class="certificat rounded-2xl border-2 border-amber-300 bg-gradient-to-b from-amber-50/90 to-white shadow-xl p-8 md:p-12 print:shadow-none print:border-2">
-      <div class="text-center border-b border-amber-200 pb-6">
-        <p class="text-sm font-semibold uppercase tracking-wider text-amber-700">Certificat de réussite</p>
-        <h1 class="mt-4 text-2xl md:text-3xl font-bold text-slate-900">{{ certificat.examenTitre }}</h1>
-        <p class="mt-2 text-slate-600">N° {{ certificat.numeroCertificat }}</p>
-      </div>
-      <div class="mt-8 space-y-2 text-slate-700">
-        <p>Ce certificat atteste que le participant (Freelancer #{{ certificat.freelancerId }}) a réussi l'examen avec un score de <strong>{{ certificat.score }} %</strong>.</p>
-        <p class="text-sm text-slate-500">Date de passage : {{ certificat.datePassage | date:'longDate' }}</p>
-        <p class="text-sm text-slate-500">Date de délivrance : {{ certificat.dateDelivrance | date:'longDate' }}</p>
-      </div>
-      <div class="mt-10 pt-6 border-t border-amber-200 text-center text-xs text-slate-500">
-        MatchFreelance — Plateforme de formation et d'évaluation
-      </div>
-    </article>
+    <app-certificat-display [certificat]="certificat" [showVerify]="true" />
 
     <div class="mt-6 flex flex-wrap justify-center gap-3 no-print">
       <button type="button" (click)="openPdf()" class="rounded-xl bg-amber-600 px-6 py-3 text-sm font-semibold text-white hover:bg-amber-700">
@@ -56,6 +42,5 @@
 <style>
   @media print {
     .no-print { display: none !important; }
-    .certificat { box-shadow: none; }
   }
 </style>

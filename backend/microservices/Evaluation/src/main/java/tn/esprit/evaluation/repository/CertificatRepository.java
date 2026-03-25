@@ -24,5 +24,10 @@ public interface CertificatRepository extends JpaRepository<Certificat, Long> {
     @Query("SELECT c FROM Certificat c JOIN FETCH c.passageExamen p JOIN FETCH p.examen WHERE c.id = :id")
     Optional<Certificat> findByIdWithPassageAndExamen(@Param("id") Long id);
 
+    Optional<Certificat> findByNumeroCertificat(String numeroCertificat);
+
+    @Query("SELECT c FROM Certificat c JOIN FETCH c.passageExamen p JOIN FETCH p.examen WHERE c.numeroCertificat = :numero")
+    Optional<Certificat> findByNumeroCertificatWithPassageAndExamen(@Param("numero") String numero);
+
     boolean existsByPassageExamenId(Long passageExamenId);
 }

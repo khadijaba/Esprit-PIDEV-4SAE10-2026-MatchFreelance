@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ExamenService } from '../../services/examen.service';
 import { Certificat } from '../../models/examen.model';
+import { CertificatDisplayComponent } from '../certificat-display/certificat-display.component';
 
 @Component({
   selector: 'app-certificat-view',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, CertificatDisplayComponent],
   templateUrl: './certificat-view.component.html',
 })
 export class CertificatViewComponent implements OnInit {
