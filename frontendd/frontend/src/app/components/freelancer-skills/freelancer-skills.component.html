@@ -1,0 +1,287 @@
+<div class="mx-auto max-w-4xl space-y-8 px-4 py-8">
+  <!-- Header Fiverr-style -->
+  <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-[var(--fiverr-dark)]">Espace Freelancer</h1>
+      <p class="mt-1 text-sm text-[var(--fiverr-gray)]">Gérez votre profil, CV, portfolios et compétences.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <a routerLink="/freelancer/skill-evolution"
+        class="inline-flex items-center gap-2 rounded-md border border-[var(--fiverr-green)] px-4 py-2.5 text-sm font-medium text-[var(--fiverr-green)] transition hover:bg-[var(--fiverr-green)] hover:text-white">
+        <span>📈</span> Évolution des compétences
+      </a>
+      <a routerLink="/freelancer/career-path"
+        class="inline-flex items-center gap-2 rounded-md bg-[var(--fiverr-green)] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--fiverr-green-hover)]">
+        <span>🎯</span> Parcours carrière (recommandations)
+      </a>
+    </div>
+  </div>
+
+  <!-- Carte profil type Fiverr : bannière + photo + Contactez-moi -->
+  <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+    <div class="h-24 bg-gradient-to-r from-[var(--fiverr-green)] to-[var(--fiverr-green-hover)] sm:h-28"></div>
+    <div class="relative px-6 pb-8 sm:px-8">
+      <div class="-mt-12 sm:-mt-14 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:gap-6">
+        <div class="relative flex flex-col items-center gap-3">
+          <div class="relative group">
+            <div class="flex h-24 w-24 shrink-0 overflow-hidden rounded-full border-4 border-white bg-[var(--fiverr-gray-light)] shadow-lg sm:h-28 sm:w-28">
+              @if (avatarDataUrl) {
+                <img [src]="avatarDataUrl" alt="Photo de profil" class="h-full w-full object-cover" />
+              } @else {
+                <div class="flex h-full w-full items-center justify-center text-3xl font-bold text-[var(--fiverr-green)] sm:text-4xl">
+                  {{ (fullName || 'F').charAt(0).toUpperCase() }}
+                </div>
+              }
+            </div>
+            <label class="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-[var(--fiverr-green)] text-white shadow transition hover:bg-[var(--fiverr-green-hover)]">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 13v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7" />
+              </svg>
+              <input type="file" accept="image/*" class="hidden" (change)="onAvatarSelected($event)" />
+            </label>
+            @if (avatarDataUrl) {
+              <button type="button" (click)="removeAvatar()" class="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white transition hover:bg-red-600">
+                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            }
+          </div>
+          <!-- Voir mes discussions (chat avec les clients qui m'ont contacté) -->
+          <a routerLink="/discussions"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[var(--fiverr-green)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--fiverr-green-hover)]">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            Voir mes discussions
+          </a>
+        </div>
+        <div class="min-w-0 flex-1 pt-2 sm:pt-0">
+          @if (editingName) {
+            <div class="flex flex-wrap items-center gap-2">
+              <input type="text" [(ngModel)]="fullName"
+                class="rounded-md border-2 border-[var(--fiverr-green-light)] px-4 py-2.5 text-lg font-bold text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-1 focus:ring-[var(--fiverr-green)]"
+                placeholder="Votre nom complet" />
+              <button type="button" (click)="saveFullName()" [disabled]="saving || !fullName.trim()"
+                class="rounded-md bg-[var(--fiverr-green)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--fiverr-green-hover)] disabled:opacity-50 transition">
+                Enregistrer
+              </button>
+              <button type="button" (click)="editingName = false" class="rounded-md border border-gray-300 px-4 py-2.5 text-sm font-medium text-[var(--fiverr-gray)] hover:bg-gray-50 transition">
+                Annuler
+              </button>
+            </div>
+          } @else {
+            <h2 class="text-xl font-bold text-[var(--fiverr-dark)] sm:text-2xl">
+              {{ fullName || 'Nom complet' }}
+            </h2>
+            <button type="button" (click)="toggleEditName()" class="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--fiverr-green)] hover:underline">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+              </svg>
+              Modifier le nom
+            </button>
+          }
+          @if (currentUser?.email) {
+            <p class="mt-2 flex items-center gap-2 text-sm text-[var(--fiverr-gray)]">
+              <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L5.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              </svg>
+              {{ currentUser?.email }}
+            </p>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sections : Bio, CV, Portfolios, Skills (Fiverr style) -->
+  <div class="space-y-6">
+    <h2 class="text-lg font-semibold text-[var(--fiverr-dark)]">Mon profil</h2>
+
+    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <h3 class="mb-4 text-base font-semibold text-[var(--fiverr-dark)]">Résumé professionnel (Bio)</h3>
+      <p class="mb-3 text-sm text-[var(--fiverr-gray)]">Présentez-vous aux clients. Vous pouvez aussi ajouter un CV ci-dessous.</p>
+      <textarea [(ngModel)]="bio" rows="4" placeholder="Décrivez votre expérience, points forts et ce que vous proposez..."
+        class="w-full rounded-md border border-gray-300 px-4 py-2 text-sm text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-1 focus:ring-[var(--fiverr-green)]"></textarea>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button (click)="saveBio()" [disabled]="saving"
+          class="rounded-md bg-[var(--fiverr-green)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--fiverr-green-hover)] disabled:opacity-50 transition">
+          Enregistrer le résumé
+        </button>
+        <button (click)="clearBio()" [disabled]="saving" type="button"
+          class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-[var(--fiverr-gray)] hover:bg-gray-50 transition">
+          Vider
+        </button>
+        <button (click)="deleteBio()" [disabled]="saving" type="button"
+          class="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition">
+          Supprimer la bio
+        </button>
+      </div>
+    </div>
+
+    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <h3 class="mb-4 text-base font-semibold text-[var(--fiverr-dark)]">CV</h3>
+      @if (cv?.fileName) {
+        <div class="mb-4 flex items-center justify-between rounded-md border border-gray-200 bg-[var(--fiverr-gray-light)] p-4">
+          <div>
+            <p class="font-medium text-[var(--fiverr-dark)]">{{ cv.fileName }}</p>
+            <p class="text-sm text-[var(--fiverr-gray)]">CV enregistré</p>
+          </div>
+          <button (click)="deleteCV()" class="rounded px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition">Supprimer le CV</button>
+        </div>
+        <p class="mb-2 text-sm text-[var(--fiverr-gray)]">Remplacer par un autre fichier :</p>
+      }
+      <input type="file" accept=".pdf,.doc,.docx" (change)="onFileSelected($event)"
+        class="w-full rounded-md border border-gray-300 px-4 py-2 text-sm text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-1 focus:ring-[var(--fiverr-green)]" />
+    </div>
+
+    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-base font-semibold text-[var(--fiverr-dark)]">Portfolios</h3>
+        <button (click)="showPortfolioForm ? cancelPortfolioForm() : openAddPortfolioForm()"
+          class="rounded-md bg-[var(--fiverr-green)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--fiverr-green-hover)] transition">
+          {{ showPortfolioForm ? 'Annuler' : 'Ajouter un portfolio' }}
+        </button>
+      </div>
+      @if (showPortfolioForm) {
+        <div class="mb-4 rounded-md border border-gray-200 bg-[var(--fiverr-gray-light)] p-4 space-y-4">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-[var(--fiverr-dark)]">URL du portfolio *</label>
+            <input type="url" [(ngModel)]="portfolioForm.portfolioUrl"
+              class="w-full rounded-md border border-gray-300 px-4 py-2 text-sm text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-1 focus:ring-[var(--fiverr-green)]"
+              placeholder="https://votre-portfolio.com" />
+            <p class="mt-1 text-xs text-[var(--fiverr-gray)]">Seuls les liens (URL) sont acceptés, par ex. https://mon-site.com</p>
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-[var(--fiverr-dark)]">Description</label>
+            <textarea [(ngModel)]="portfolioForm.portfolioDescription" rows="2"
+              class="w-full rounded-md border border-gray-300 px-4 py-2 text-sm text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-1 focus:ring-[var(--fiverr-green)]"
+              placeholder="Courte description..."></textarea>
+          </div>
+          <div class="flex gap-2">
+            <button (click)="savePortfolio()" [disabled]="saving || !portfolioForm.portfolioUrl?.trim()"
+              class="rounded-md bg-[var(--fiverr-green)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--fiverr-green-hover)] disabled:opacity-50 transition">
+              {{ editingPortfolioId != null ? 'Mettre à jour' : 'Ajouter' }}
+            </button>
+            <button (click)="cancelPortfolioForm()" type="button"
+              class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-[var(--fiverr-gray)] hover:bg-gray-50 transition">
+              Annuler
+            </button>
+          </div>
+        </div>
+      }
+      @if (portfolios.length === 0 && !showPortfolioForm) {
+        <p class="py-4 text-center text-[var(--fiverr-gray)]">Aucun portfolio. Ajoutez des liens vers vos réalisations.</p>
+      } @else {
+        <ul class="space-y-3">
+          @for (p of portfolios; track p.id) {
+            <li class="flex items-start justify-between gap-4 rounded-md border border-gray-200 p-4">
+              <div class="min-w-0 flex-1">
+                <a [href]="p.portfolioUrl" target="_blank" rel="noopener noreferrer"
+                  class="font-medium text-[var(--fiverr-green)] hover:underline truncate block">{{ p.portfolioUrl }}</a>
+                @if (p.portfolioDescription) {
+                  <p class="mt-1 text-sm text-[var(--fiverr-gray)] line-clamp-2">{{ p.portfolioDescription }}</p>
+                }
+              </div>
+              <div class="flex shrink-0 gap-2">
+                <button (click)="openEditPortfolioForm(p)" type="button"
+                  class="rounded px-2 py-1 text-sm font-medium text-amber-600 hover:bg-amber-50 transition">Modifier</button>
+                <button (click)="deletePortfolioItem(p.id)" type="button"
+                  class="rounded px-2 py-1 text-sm font-medium text-red-600 hover:bg-red-50 transition">Supprimer</button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="text-base font-semibold text-[var(--fiverr-dark)]">Compétences (Skills)</h3>
+        <button (click)="showSkillForm ? cancelSkillForm() : openAddSkillForm()"
+          class="rounded-md bg-[var(--fiverr-green)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--fiverr-green-hover)] transition">
+          {{ showSkillForm ? 'Annuler' : 'Ajouter une compétence' }}
+        </button>
+      </div>
+
+      @if (showSkillForm) {
+        <div class="mb-4 rounded-md border border-gray-200 bg-[var(--fiverr-gray-light)] p-4 space-y-4">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-[var(--fiverr-dark)]">Nom de la compétence *</label>
+            <input type="text" [(ngModel)]="skillForm.name"
+              class="w-full rounded-md border border-gray-300 px-4 py-2 text-sm text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-1 focus:ring-[var(--fiverr-green)]"
+              placeholder="ex. Java, React, Angular" />
+          </div>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-sm font-medium text-[var(--fiverr-dark)]">Catégorie *</label>
+              <select [(ngModel)]="skillForm.category"
+                class="w-full rounded-md border border-gray-300 px-4 py-2 text-sm text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-1 focus:ring-[var(--fiverr-green)]">
+                @for (cat of categories; track cat) {
+                  <option [value]="cat">{{ categoryLabels[cat] }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="mb-1 block text-sm font-medium text-[var(--fiverr-dark)]">Niveau</label>
+              <select [(ngModel)]="skillForm.level"
+                class="w-full rounded-md border border-gray-300 px-4 py-2 text-sm text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-1 focus:ring-[var(--fiverr-green)]">
+                <option value="">Choisir</option>
+                @for (level of proficiencyLevels; track level) {
+                  <option [value]="level">{{ level }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-[var(--fiverr-dark)]">Années d'expérience</label>
+            <input type="number" [(ngModel)]="skillForm.yearsOfExperience" min="0"
+              class="w-full rounded-md border border-gray-300 px-4 py-2 text-sm text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-1 focus:ring-[var(--fiverr-green)]"
+              placeholder="ex. 3" />
+          </div>
+          <div class="flex gap-2">
+            <button (click)="addSkill()" [disabled]="!skillForm.name || saving"
+              class="flex-1 rounded-md bg-[var(--fiverr-green)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--fiverr-green-hover)] disabled:opacity-50 transition">
+              {{ editingSkillId != null ? 'Mettre à jour' : 'Ajouter' }}
+            </button>
+            @if (editingSkillId != null) {
+              <button (click)="cancelSkillForm()" type="button"
+                class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-[var(--fiverr-gray)] hover:bg-gray-50 transition">
+                Annuler
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      @if (loading) {
+        <div class="flex items-center justify-center py-8">
+          <div class="h-6 w-6 animate-spin rounded-full border-4 border-[var(--fiverr-green-light)] border-t-[var(--fiverr-green)]"></div>
+        </div>
+      } @else if (skills.length === 0) {
+        <p class="py-8 text-center text-[var(--fiverr-gray)]">Aucune compétence ajoutée.</p>
+      } @else {
+        <div class="space-y-2">
+          @for (skill of skills; track skill.id) {
+            <div class="flex items-center justify-between rounded-md border border-gray-200 p-4">
+              <div>
+                <h4 class="font-medium text-[var(--fiverr-dark)]">{{ skill.name }}</h4>
+                <p class="text-sm text-[var(--fiverr-gray)]">
+                  {{ categoryLabels[skill.category] }}
+                  @if (skill.level) { · {{ skill.level }} }
+                  @if (skill.yearsOfExperience) { · {{ skill.yearsOfExperience }} an(s) }
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button (click)="openEditSkillForm(skill)" type="button"
+                  class="rounded px-2 py-1 text-sm font-medium text-amber-600 hover:bg-amber-50 transition">Modifier</button>
+                <button (click)="deleteSkill(skill.id)" type="button"
+                  class="rounded px-2 py-1 text-sm font-medium text-red-600 hover:bg-red-50 transition">Supprimer</button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>
