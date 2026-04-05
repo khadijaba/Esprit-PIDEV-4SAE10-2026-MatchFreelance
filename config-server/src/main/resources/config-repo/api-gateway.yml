@@ -1,0 +1,3 @@
+# API Gateway — route definitions remain in local application.properties; Eureka defaults from application.yml
+matchfreelance:
+  gateway-config-marker: true

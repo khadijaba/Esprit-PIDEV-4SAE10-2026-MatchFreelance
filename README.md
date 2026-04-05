@@ -24,7 +24,8 @@ This repository (branch **candidat**) focuses on the **Candidature** and **Contr
 ### Backend
 
 - Spring Boot
-- MySQL
+- MySQL (user, project, candidature, contract services)
+- PostgreSQL + **WebFlux + R2DBC** (`analytics-service` — advanced stack)
 - REST APIs
 - JWT Authentication
 
@@ -34,8 +35,11 @@ The system follows a **Microservices Architecture** using Spring Cloud component
 
 ### Infrastructure Components
 
+- **Spring Cloud Config Server** (port 8888, central YAML in `config-server`)
 - **API Gateway**
 - **Eureka Service Registry**
+
+**Eureka documentation:** [docs/EUREKA.md](docs/EUREKA.md) — registry URLs, `spring.application.name` ↔ Gateway `lb://` routes, Docker env, troubleshooting.
 
 ### Business Microservices
 
@@ -67,7 +71,8 @@ PIDEV – 4SAE10 | 2025–2026
 ```bash
 git clone https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance
 cd Esprit-PIDEV-4SAE10-2026-MatchFreelance
-git checkout candidat
+git checkout EU
+# or: git checkout candidat
 ```
 
 ### Backend
@@ -75,22 +80,30 @@ git checkout candidat
 Start infrastructure and microservices (order matters). From the project root:
 
 ```bash
+# 0. Config Server (optional; services fall back to local properties if down)
+cd config-server
+mvn spring-boot:run
+
 # 1. Eureka Server
 cd eureka-server
-./mvnw spring-boot:run
+mvn spring-boot:run
 
-# 2. API Gateway (in another terminal)
-cd api-gateway
-./mvnw spring-boot:run
+# 2. User, Project, Candidature, Contract (each in its own terminal)
+cd user-service && mvn spring-boot:run
+cd project-service && mvn spring-boot:run
+cd candidature-service && mvn spring-boot:run
+cd contract-service && mvn spring-boot:run
 
-# 3. User, Project, Candidature, Contract services (each in its folder)
-cd user-service && ./mvnw spring-boot:run
-cd project-service && ./mvnw spring-boot:run
-cd candidature-service && ./mvnw spring-boot:run
-cd contract-service && ./mvnw spring-boot:run
+# 3. Analytics (PostgreSQL: run scripts/init-postgres-analytics.sql first)
+cd analytics-service && mvn spring-boot:run
+
+# 4. API Gateway
+cd api-gateway && mvn spring-boot:run
 ```
 
-See `SETUP_GUIDE.md` and `MICROSERVICES.md` for detailed setup and MySQL configuration.
+See `MICROSERVICES.md` for ports, Config/Eureka/Gateway details, MySQL and PostgreSQL setup.
+
+**Docker:** with Docker Desktop, from the repo root run `docker compose up --build` — UI at http://localhost:4200 (details in `MICROSERVICES.md`).
 
 ### Frontend
 

@@ -1,0 +1,11 @@
+# Shared defaults for all microservices (loaded via Spring Cloud Config)
+matchfreelance:
+  config-source: config-server
+
+eureka:
+  client:
+    service-url:
+      # Resolved on the client from env (Docker Compose sets EUREKA_CLIENT_SERVICEURL_DEFAULTZONE)
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true

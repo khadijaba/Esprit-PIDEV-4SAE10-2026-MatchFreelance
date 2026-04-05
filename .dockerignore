@@ -1,0 +1,10 @@
+**/target
+**/node_modules
+.git
+.idea
+*.iml
+**/.angular
+angular/node_modules
+angular/dist
+Atelier*.pdf
+**/*.log

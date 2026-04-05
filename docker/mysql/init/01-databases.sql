@@ -1,0 +1,8 @@
+CREATE DATABASE IF NOT EXISTS freelancing_users;
+CREATE DATABASE IF NOT EXISTS freelancing_projects;
+CREATE DATABASE IF NOT EXISTS freelancing_candidatures;
+CREATE DATABASE IF NOT EXISTS freelancing_contracts;
+CREATE DATABASE IF NOT EXISTS freelancing_interviews;
+CREATE DATABASE IF NOT EXISTS EvaluationDB;
+CREATE DATABASE IF NOT EXISTS FormationDB;
+CREATE DATABASE IF NOT EXISTS freelancing_skills;
