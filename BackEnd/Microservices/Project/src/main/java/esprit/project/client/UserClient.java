@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
  * Client OpenFeign pour appeler le microservice USER (via Eureka).
  * name = nom du service dans Eureka, path = base path des endpoints.
  */
-@FeignClient(name = "USER", path = "/users")
+@FeignClient(name = "USER", contextId = "projectUserApi", path = "/users")
 public interface UserClient {
 
     @GetMapping("/{id}")

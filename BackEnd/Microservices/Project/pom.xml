@@ -22,6 +22,7 @@
     <properties>
         <java.version>17</java.version>
         <spring-cloud.version>2025.1.0</spring-cloud.version>
+        <springdoc.version>3.0.2</springdoc.version>
     </properties>
 
     <dependencyManagement>
@@ -37,10 +38,10 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- Web -->
+        <!-- Web (Spring Boot 4: prefer webmvc starter — inclut spring-boot-starter pour l'auto-config) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
 
         <!-- JPA / Hibernate -->
@@ -101,6 +102,12 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
 
         <!-- Test -->

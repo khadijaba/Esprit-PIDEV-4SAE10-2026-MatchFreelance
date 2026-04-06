@@ -1,23 +1,25 @@
 package esprit.user.Controllers;
 
-import esprit.user.dto.AuthResponse;
-import esprit.user.dto.LoginRequest;
-import esprit.user.dto.RegisterRequest;
+import esprit.user.dto.InitialRoleRequest;
 import esprit.user.dto.UpdateUserRequest;
 import esprit.user.entities.User;
 import esprit.user.entities.UserRole;
 import esprit.user.Service.AuthService;
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Sécurité Keycloak : validation du JWT (issuer + signature), sans introspection.
+ */
 @RestController
 @RequestMapping("/users")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -29,37 +31,62 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/auth/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-        try {
-            AuthResponse response = authService.register(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+    @PostMapping("/profile/sync")
+    public ResponseEntity<User> syncProfile(@AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+        User user = authService.syncProfileFromKeycloak(jwt);
+        user.setPassword(null);
+        return ResponseEntity.ok(user);
     }
 
-    @PostMapping("/auth/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+    @PostMapping("/profile/initial-role")
+    public ResponseEntity<User> initialRole(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody InitialRoleRequest body) {
+        if (jwt == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        if (body == null || body.role() == null) {
+            return ResponseEntity.badRequest().build();
+        }
         try {
-            AuthResponse response = authService.login(request);
-            return ResponseEntity.ok(response);
+            User user = authService.applyInitialRole(jwt, body.role());
+            user.setPassword(null);
+            return ResponseEntity.ok(user);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> me(@AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
+    public ResponseEntity<Map<String, Object>> me(@AuthenticationPrincipal JwtAuthenticationToken token) {
+        if (token == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(Map.of(
-                "email", userDetails.getUsername(),
-                "authorities", userDetails.getAuthorities().stream()
-                        .map(a -> a.getAuthority())
-                        .collect(Collectors.toList())
-        ));
+        Jwt jwt = token.getToken();
+        String email = jwt.getClaimAsString("email");
+        if (email == null || email.isBlank()) {
+            email = jwt.getClaimAsString("preferred_username");
+        }
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("subject", jwt.getSubject());
+        body.put("preferred_username", jwt.getClaimAsString("preferred_username"));
+        body.put("email", jwt.getClaimAsString("email"));
+        body.put("name", jwt.getClaimAsString("name"));
+        body.put("realm_access", jwt.getClaimAsMap("realm_access"));
+        body.put("authorities", token.getAuthorities().stream()
+                .map(a -> a.getAuthority())
+                .collect(Collectors.toList()));
+        authService.findByEmailForMe(email != null ? email : "").ifPresent(u -> {
+            body.put("localUserId", u.getId());
+            body.put("localRole", u.getRole());
+            body.put("fullName", u.getFullName());
+        });
+        return ResponseEntity.ok(body);
     }
 
     @GetMapping

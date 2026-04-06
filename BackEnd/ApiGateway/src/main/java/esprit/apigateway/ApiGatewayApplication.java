@@ -24,6 +24,15 @@ public class ApiGatewayApplication {
     @Value("${formation.service.uri:lb://FORMATION}")
     private String formationServiceUri;
 
+    @Value("${candidature.service.uri:lb://CANDIDATURE}")
+    private String candidatureServiceUri;
+
+    @Value("${contract.service.uri:lb://CONTRACT}")
+    private String contractServiceUri;
+
+    @Value("${interview.service.uri:lb://INTERVIEW}")
+    private String interviewServiceUri;
+
     public static void main(String[] args) {
         SpringApplication.run(ApiGatewayApplication.class, args);
     }
@@ -83,6 +92,21 @@ public class ApiGatewayApplication {
                 .route("inscription-service", r -> r
                         .path("/api/inscriptions/**")
                         .uri(formationServiceUri))
+
+                // CANDIDATURE : contrôleurs sous /api/candidatures (ne pas stripPrefix).
+                // Inclure /api/candidatures seul pour POST (certaines versions ne matchent pas /** sans segment).
+                .route("candidature-service", r -> r
+                        .path("/api/candidatures", "/api/candidatures/**")
+                        .uri(candidatureServiceUri))
+
+                // CONTRACT : même logique pour POST /api/contracts
+                .route("contract-service", r -> r
+                        .path("/api/contracts", "/api/contracts/**")
+                        .uri(contractServiceUri))
+
+                .route("interview-service", r -> r
+                        .path("/api/interviews", "/api/interviews/**")
+                        .uri(interviewServiceUri))
 
                 .build();
     }
