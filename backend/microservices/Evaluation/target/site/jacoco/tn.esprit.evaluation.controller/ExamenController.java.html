@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExamenController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.controller</a> &gt; <span class="el_source">ExamenController.java</span></div><h1>ExamenController.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.controller;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import tn.esprit.evaluation.dto.ExamenDto;
+import tn.esprit.evaluation.dto.PassageExamenDto;
+import tn.esprit.evaluation.dto.ReponseExamenRequest;
+import tn.esprit.evaluation.service.ExamenService;
+import tn.esprit.evaluation.service.PassageExamenService;
+
+import java.util.List;
+
+/**
+ * API Examens et passages - Consommable via Gateway.
+ */
+@RestController
+@RequestMapping(&quot;/api/examens&quot;)
+@RequiredArgsConstructor
+@CrossOrigin(origins = &quot;*&quot;)
+public class ExamenController {
+
+    private final ExamenService examenService;
+    private final PassageExamenService passageExamenService;
+
+    // ---------- CRUD Examens ----------
+    @GetMapping
+    public ResponseEntity&lt;List&lt;ExamenDto&gt;&gt; getAll() {
+<span class="nc" id="L31">        return ResponseEntity.ok(examenService.findAll());</span>
+    }
+
+    @GetMapping(&quot;/formation/{formationId}&quot;)
+    public ResponseEntity&lt;List&lt;ExamenDto&gt;&gt; getByFormation(@PathVariable Long formationId) {
+<span class="nc" id="L36">        return ResponseEntity.ok(examenService.findByFormationId(formationId));</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;ExamenDto&gt; getById(@PathVariable Long id) {
+<span class="nc" id="L41">        return ResponseEntity.ok(examenService.findById(id));</span>
+    }
+
+    @GetMapping(&quot;/{id}/passage&quot;)
+    public ResponseEntity&lt;ExamenDto&gt; getPourPassage(@PathVariable Long id) {
+<span class="nc" id="L46">        return ResponseEntity.ok(examenService.getExamenPourPassage(id));</span>
+    }
+
+    @PostMapping
+    public ResponseEntity&lt;ExamenDto&gt; create(@Valid @RequestBody ExamenDto dto) {
+<span class="nc" id="L51">        return ResponseEntity.status(HttpStatus.CREATED).body(examenService.create(dto));</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;ExamenDto&gt; update(@PathVariable Long id, @Valid @RequestBody ExamenDto dto) {
+<span class="nc" id="L56">        return ResponseEntity.ok(examenService.update(id, dto));</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Void&gt; delete(@PathVariable Long id) {
+<span class="nc" id="L61">        examenService.deleteById(id);</span>
+<span class="nc" id="L62">        return ResponseEntity.noContent().build();</span>
+    }
+
+    // ---------- Passer un examen / Résultats ----------
+    @PostMapping(&quot;/{examenId}/passer&quot;)
+    public ResponseEntity&lt;PassageExamenDto&gt; passerExamen(
+            @PathVariable Long examenId,
+            @Valid @RequestBody ReponseExamenRequest request) {
+<span class="nc" id="L70">        return ResponseEntity.ok(passageExamenService.soumettreExamen(examenId, request));</span>
+    }
+
+    @GetMapping(&quot;/resultats/freelancer/{freelancerId}&quot;)
+    public ResponseEntity&lt;List&lt;PassageExamenDto&gt;&gt; getResultatsByFreelancer(@PathVariable Long freelancerId) {
+<span class="nc" id="L75">        return ResponseEntity.ok(passageExamenService.findByFreelancer(freelancerId));</span>
+    }
+
+    @GetMapping(&quot;/{examenId}/resultats&quot;)
+    public ResponseEntity&lt;List&lt;PassageExamenDto&gt;&gt; getResultatsByExamen(@PathVariable Long examenId) {
+<span class="nc" id="L80">        return ResponseEntity.ok(passageExamenService.findByExamen(examenId));</span>
+    }
+
+    @GetMapping(&quot;/{examenId}/freelancer/{freelancerId}&quot;)
+    public ResponseEntity&lt;PassageExamenDto&gt; getPassage(@PathVariable Long examenId, @PathVariable Long freelancerId) {
+<span class="nc" id="L85">        return ResponseEntity.ok(passageExamenService.getPassageByFreelancerAndExamen(examenId, freelancerId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

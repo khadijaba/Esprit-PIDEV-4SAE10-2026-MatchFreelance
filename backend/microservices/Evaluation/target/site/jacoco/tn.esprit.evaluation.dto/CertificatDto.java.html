@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CertificatDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.dto</a> &gt; <span class="el_source">CertificatDto.java</span></div><h1>CertificatDto.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.dto;
+
+import lombok.*;
+import tn.esprit.evaluation.entity.Certificat;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class CertificatDto {
+
+    private Long id;
+    private String numeroCertificat;
+    private Long passageExamenId;
+    private Long freelancerId;
+    private Long examenId;
+    /** Formation liée à l'examen (pour filtrer les recommandations « autres »). */
+    private Long formationId;
+    private String examenTitre;
+    private Integer score;
+    /** Seuil de réussite de l'examen (ex: 60). Pour affichage sur le certificat. */
+    private Integer seuilReussi;
+    private LocalDateTime datePassage;
+    private LocalDateTime dateDelivrance;
+
+    public static CertificatDto fromEntity(Certificat c) {
+<span class="nc bnc" id="L30" title="All 4 branches missed.">        if (c == null || c.getPassageExamen() == null) return null;</span>
+<span class="nc" id="L31">        var p = c.getPassageExamen();</span>
+<span class="nc" id="L32">        var examen = p.getExamen();</span>
+<span class="nc" id="L33">        return CertificatDto.builder()</span>
+<span class="nc" id="L34">                .id(c.getId())</span>
+<span class="nc" id="L35">                .numeroCertificat(c.getNumeroCertificat())</span>
+<span class="nc" id="L36">                .passageExamenId(p.getId())</span>
+<span class="nc" id="L37">                .freelancerId(p.getFreelancerId())</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">                .examenId(examen != null ? examen.getId() : null)</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">                .formationId(examen != null ? examen.getFormationId() : null)</span>
+<span class="nc bnc" id="L40" title="All 2 branches missed.">                .examenTitre(examen != null ? examen.getTitre() : null)</span>
+<span class="nc" id="L41">                .score(p.getScore())</span>
+<span class="nc bnc" id="L42" title="All 2 branches missed.">                .seuilReussi(examen != null ? examen.getSeuilReussi() : 60)</span>
+<span class="nc" id="L43">                .datePassage(p.getDatePassage())</span>
+<span class="nc" id="L44">                .dateDelivrance(c.getDateDelivrance())</span>
+<span class="nc" id="L45">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

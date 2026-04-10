@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>QuestionDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.dto</a> &gt; <span class="el_source">QuestionDto.java</span></div><h1>QuestionDto.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.dto;
+
+import lombok.*;
+import tn.esprit.evaluation.entity.Question;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class QuestionDto {
+
+    private Long id;
+    private Long examenId;
+    private Integer ordre;
+    private String enonce;  // optionnel en création, défaut &quot;Question N&quot; côté service
+    private String optionA;
+    private String optionB;
+    private String optionC;
+    private String optionD;
+    private String bonneReponse; // A, B, C ou D (défaut A côté service)
+
+    public static QuestionDto fromEntity(Question q) {
+<span class="nc bnc" id="L24" title="All 2 branches missed.">        return fromEntity(q, q.getExamen() != null ? q.getExamen().getId() : null);</span>
+    }
+
+    /** Utiliser cet overload pour éviter d’accéder à la relation LAZY examen (évite LazyInitializationException). */
+    public static QuestionDto fromEntity(Question q, Long examenId) {
+<span class="nc" id="L29">        return QuestionDto.builder()</span>
+<span class="nc" id="L30">                .id(q.getId())</span>
+<span class="nc" id="L31">                .examenId(examenId)</span>
+<span class="nc" id="L32">                .ordre(q.getOrdre())</span>
+<span class="nc" id="L33">                .enonce(q.getEnonce())</span>
+<span class="nc" id="L34">                .optionA(q.getOptionA())</span>
+<span class="nc" id="L35">                .optionB(q.getOptionB())</span>
+<span class="nc" id="L36">                .optionC(q.getOptionC())</span>
+<span class="nc" id="L37">                .optionD(q.getOptionD())</span>
+<span class="nc" id="L38">                .bonneReponse(q.getBonneReponse())</span>
+<span class="nc" id="L39">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

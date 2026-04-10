@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CertificatPdfService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.service</a> &gt; <span class="el_source">CertificatPdfService.java</span></div><h1>CertificatPdfService.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.service;
+
+import com.lowagie.text.*;
+import com.lowagie.text.Image;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriUtils;
+import tn.esprit.evaluation.dto.CertificatDto;
+
+import java.awt.Color;
+import java.nio.charset.StandardCharsets;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+
+import javax.imageio.ImageIO;
+
+/**
+ * Génère le PDF du certificat pour téléchargement / affichage.
+ */
+@Service
+@RequiredArgsConstructor
+public class CertificatPdfService {
+
+<span class="fc" id="L37">    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern(&quot;d MMMM yyyy&quot;, Locale.FRANCE);</span>
+
+    /**
+     * Gateway / API publique (ex. http://localhost:8050) — utilisé si QR pointe vers la page HTML du backend.
+     */
+    @Value(&quot;${app.public.base-url:http://localhost:8050}&quot;)
+    private String publicBaseUrl;
+
+    /**
+     * Front Angular (ex. http://192.168.1.10:4200) — recommandé pour QR : scan mobile ne voit pas
+     * « localhost » du PC. Utiliser l’IP locale de votre machine + port 4200.
+     */
+    @Value(&quot;${app.frontend.base-url:http://localhost:4200}&quot;)
+    private String frontendBaseUrl;
+
+    /**
+     * Si true (défaut), le QR ouvre le front : /verify-certificat/{numero} (proxy /api vers la Gateway).
+     * Si false, le QR pointe vers /api/certificats/verify/{numero}/page sur app.public.base-url.
+     */
+    @Value(&quot;${app.certificat.qr-use-frontend:true}&quot;)
+    private boolean qrUseFrontend;
+
+    @Value(&quot;${certificate.logo.path:}&quot;)
+    private String logoPath;
+
+    public byte[] generatePdf(CertificatDto dto) {
+<span class="nc" id="L63">        Document document = new Document(PageSize.A4);</span>
+<span class="nc" id="L64">        ByteArrayOutputStream out = new ByteArrayOutputStream();</span>
+        try {
+<span class="nc" id="L66">            PdfWriter.getInstance(document, out);</span>
+<span class="nc" id="L67">            document.open();</span>
+
+<span class="nc" id="L69">            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 24, new Color(15, 23, 42));</span>
+<span class="nc" id="L70">            Font fontSubtitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, new Color(100, 116, 139));</span>
+<span class="nc" id="L71">            Font fontBody = FontFactory.getFont(FontFactory.HELVETICA, 11, Color.BLACK);</span>
+<span class="nc" id="L72">            Font fontSmall = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.GRAY);</span>
+<span class="nc" id="L73">            Font fontMention = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, new Color(5, 150, 105));</span>
+
+            // Header branding (logo si dispo, sinon bloc texte stylé)
+<span class="nc" id="L76">            addHeader(document);</span>
+
+<span class="nc" id="L78">            Paragraph pCert = new Paragraph(&quot;CERTIFICAT DE RÉUSSITE&quot;, fontTitle);</span>
+<span class="nc" id="L79">            pCert.setAlignment(Element.ALIGN_CENTER);</span>
+<span class="nc" id="L80">            document.add(pCert);</span>
+
+<span class="nc" id="L82">            Paragraph pSousTitre = new Paragraph(&quot;Microservice Evaluation — MatchFreelance&quot;, fontSubtitle);</span>
+<span class="nc" id="L83">            pSousTitre.setSpacingBefore(6);</span>
+<span class="nc" id="L84">            pSousTitre.setAlignment(Element.ALIGN_CENTER);</span>
+<span class="nc" id="L85">            document.add(pSousTitre);</span>
+<span class="nc" id="L86">            document.add(new Paragraph(&quot; &quot;));</span>
+
+<span class="nc bnc" id="L88" title="All 2 branches missed.">            Paragraph pTitre = new Paragraph(dto.getExamenTitre() != null ? dto.getExamenTitre() : &quot;Examen&quot;, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, Color.BLACK));</span>
+<span class="nc" id="L89">            pTitre.setAlignment(Element.ALIGN_CENTER);</span>
+<span class="nc" id="L90">            document.add(pTitre);</span>
+
+<span class="nc bnc" id="L92" title="All 2 branches missed.">            Paragraph pNum = new Paragraph(&quot;N° &quot; + (dto.getNumeroCertificat() != null ? dto.getNumeroCertificat() : &quot;-&quot;), fontSubtitle);</span>
+<span class="nc" id="L93">            pNum.setAlignment(Element.ALIGN_CENTER);</span>
+<span class="nc" id="L94">            document.add(pNum);</span>
+<span class="nc" id="L95">            document.add(new Paragraph(&quot; &quot;));</span>
+
+<span class="nc" id="L97">            String mention = computeMention(dto.getScore());</span>
+<span class="nc" id="L98">            String attestation = &quot;Ce certificat atteste que le participant (Freelancer #&quot; + dto.getFreelancerId() + &quot;) &quot; +</span>
+<span class="nc" id="L99">                    &quot;a passé l'examen avec un score de &quot; + safeInt(dto.getScore()) + &quot; %.&quot;;</span>
+<span class="nc" id="L100">            document.add(new Paragraph(attestation, fontBody));</span>
+<span class="nc" id="L101">            document.add(new Paragraph(&quot; &quot;));</span>
+
+<span class="nc" id="L103">            PdfPTable table = new PdfPTable(2);</span>
+<span class="nc" id="L104">            table.setWidthPercentage(100);</span>
+<span class="nc" id="L105">            table.setWidths(new float[]{1.5f, 2.5f});</span>
+<span class="nc" id="L106">            table.setSpacingBefore(6);</span>
+<span class="nc" id="L107">            table.addCell(infoCell(&quot;Score obtenu&quot;));</span>
+<span class="nc" id="L108">            table.addCell(valueCell(safeInt(dto.getScore()) + &quot; %&quot;));</span>
+<span class="nc" id="L109">            table.addCell(infoCell(&quot;Seuil de passage&quot;));</span>
+<span class="nc" id="L110">            table.addCell(valueCell(safeInt(dto.getSeuilReussi()) + &quot; %&quot;));</span>
+<span class="nc" id="L111">            table.addCell(infoCell(&quot;Décision&quot;));</span>
+<span class="nc bnc" id="L112" title="All 6 branches missed.">            table.addCell(valueCell((dto.getScore() != null &amp;&amp; dto.getSeuilReussi() != null &amp;&amp; dto.getScore() &gt;= dto.getSeuilReussi()) ? &quot;ADMIS&quot; : &quot;REFUSÉ&quot;));</span>
+<span class="nc" id="L113">            table.addCell(infoCell(&quot;Mention&quot;));</span>
+<span class="nc" id="L114">            table.addCell(valueCell(mention));</span>
+<span class="nc" id="L115">            document.add(table);</span>
+<span class="nc" id="L116">            document.add(new Paragraph(&quot; &quot;));</span>
+
+<span class="nc" id="L118">            Paragraph pMention = new Paragraph(&quot;Mention : &quot; + mention, fontMention);</span>
+<span class="nc" id="L119">            pMention.setAlignment(Element.ALIGN_CENTER);</span>
+<span class="nc" id="L120">            document.add(pMention);</span>
+<span class="nc" id="L121">            document.add(new Paragraph(&quot; &quot;));</span>
+
+<span class="nc bnc" id="L123" title="All 2 branches missed.">            String datePassage = dto.getDatePassage() != null ? dto.getDatePassage().format(DATE_FORMAT) : &quot;-&quot;;</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">            String dateDelivrance = dto.getDateDelivrance() != null ? dto.getDateDelivrance().format(DATE_FORMAT) : &quot;-&quot;;</span>
+<span class="nc" id="L125">            document.add(new Paragraph(&quot;Date de passage : &quot; + datePassage, fontSmall));</span>
+<span class="nc" id="L126">            document.add(new Paragraph(&quot;Date de délivrance : &quot; + dateDelivrance, fontSmall));</span>
+<span class="nc" id="L127">            document.add(new Paragraph(&quot; &quot;));</span>
+
+            // QR code de vérification → page Angular (défaut) ou page HTML du microservice
+<span class="nc" id="L130">            String verifyUrl = buildVerifyQrUrl(dto.getNumeroCertificat());</span>
+            try {
+<span class="nc" id="L132">                Image qr = buildQrImage(verifyUrl, 140, 140);</span>
+<span class="nc" id="L133">                qr.setAlignment(Element.ALIGN_CENTER);</span>
+<span class="nc" id="L134">                document.add(qr);</span>
+<span class="nc" id="L135">                Paragraph pVerify = new Paragraph(&quot;Vérifier ce certificat : &quot; + verifyUrl, fontSmall);</span>
+<span class="nc" id="L136">                pVerify.setAlignment(Element.ALIGN_CENTER);</span>
+<span class="nc" id="L137">                document.add(pVerify);</span>
+<span class="nc" id="L138">            } catch (Exception e) {</span>
+                // Si le QR échoue, on n'empêche pas la génération du PDF
+<span class="nc" id="L140">                document.add(new Paragraph(&quot;Vérification : &quot; + verifyUrl, fontSmall));</span>
+<span class="nc" id="L141">            }</span>
+
+<span class="nc" id="L143">            Paragraph footer = new Paragraph(&quot;MatchFreelance — Plateforme de formation et d'évaluation&quot;, fontSmall);</span>
+<span class="nc" id="L144">            footer.setAlignment(Element.ALIGN_CENTER);</span>
+<span class="nc" id="L145">            document.add(footer);</span>
+
+<span class="nc" id="L147">            document.close();</span>
+<span class="nc" id="L148">        } catch (DocumentException e) {</span>
+<span class="nc" id="L149">            throw new RuntimeException(&quot;Erreur génération PDF certificat&quot;, e);</span>
+<span class="nc" id="L150">        }</span>
+<span class="nc" id="L151">        return out.toByteArray();</span>
+    }
+
+    /**
+     * URL encodée dans le QR. Préférer le front Angular (même Wi‑Fi : IP du PC au lieu de localhost).
+     */
+    private String buildVerifyQrUrl(String numeroCertificat) {
+<span class="nc bnc" id="L158" title="All 2 branches missed.">        String num = numeroCertificat != null ? numeroCertificat : &quot;&quot;;</span>
+<span class="nc" id="L159">        String encoded = UriUtils.encodePathSegment(num, StandardCharsets.UTF_8);</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        if (qrUseFrontend) {</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">            String base = frontendBaseUrl == null ? &quot;&quot; : frontendBaseUrl.replaceAll(&quot;/+$&quot;, &quot;&quot;);</span>
+<span class="nc" id="L162">            return base + &quot;/verify-certificat/&quot; + encoded;</span>
+        }
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        String base = publicBaseUrl == null ? &quot;&quot; : publicBaseUrl.replaceAll(&quot;/+$&quot;, &quot;&quot;);</span>
+<span class="nc" id="L165">        return base + &quot;/api/certificats/verify/&quot; + encoded + &quot;/page&quot;;</span>
+    }
+
+    private Image buildQrImage(String content, int width, int height) throws WriterException, IOException, BadElementException {
+<span class="nc" id="L169">        QRCodeWriter writer = new QRCodeWriter();</span>
+<span class="nc" id="L170">        BitMatrix matrix = writer.encode(content, BarcodeFormat.QR_CODE, width, height);</span>
+<span class="nc" id="L171">        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        for (int x = 0; x &lt; width; x++) {</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">            for (int y = 0; y &lt; height; y++) {</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">                image.setRGB(x, y, matrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);</span>
+            }
+        }
+<span class="nc" id="L177">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span>
+<span class="nc" id="L178">        ImageIO.write(image, &quot;png&quot;, baos);</span>
+<span class="nc" id="L179">        return Image.getInstance(baos.toByteArray());</span>
+    }
+
+    private void addHeader(Document document) throws DocumentException {
+        try {
+<span class="nc bnc" id="L184" title="All 4 branches missed.">            if (logoPath != null &amp;&amp; !logoPath.isBlank()) {</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">                InputStream is = getClass().getResourceAsStream(logoPath.startsWith(&quot;/&quot;) ? logoPath : &quot;/&quot; + logoPath);</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">                if (is != null) {</span>
+<span class="nc" id="L187">                    byte[] bytes = is.readAllBytes();</span>
+<span class="nc" id="L188">                    Image logo = Image.getInstance(bytes);</span>
+<span class="nc" id="L189">                    logo.scaleToFit(120, 60);</span>
+<span class="nc" id="L190">                    logo.setAlignment(Element.ALIGN_CENTER);</span>
+<span class="nc" id="L191">                    document.add(logo);</span>
+<span class="nc" id="L192">                    document.add(new Paragraph(&quot; &quot;));</span>
+<span class="nc" id="L193">                    return;</span>
+                }
+            }
+<span class="nc" id="L196">        } catch (Exception ignored) {</span>
+            // fallback texte
+<span class="nc" id="L198">        }</span>
+
+<span class="nc" id="L200">        Font brand = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, new Color(20, 184, 166));</span>
+<span class="nc" id="L201">        Paragraph pBrand = new Paragraph(&quot;MATCHFREELANCE&quot;, brand);</span>
+<span class="nc" id="L202">        pBrand.setAlignment(Element.ALIGN_CENTER);</span>
+<span class="nc" id="L203">        document.add(pBrand);</span>
+<span class="nc" id="L204">        document.add(new Paragraph(&quot; &quot;));</span>
+<span class="nc" id="L205">    }</span>
+
+    private PdfPCell infoCell(String text) {
+<span class="nc" id="L208">        PdfPCell cell = new PdfPCell(new Phrase(text, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(71, 85, 105))));</span>
+<span class="nc" id="L209">        cell.setBackgroundColor(new Color(241, 245, 249));</span>
+<span class="nc" id="L210">        cell.setPadding(8f);</span>
+<span class="nc" id="L211">        return cell;</span>
+    }
+
+    private PdfPCell valueCell(String text) {
+<span class="nc" id="L215">        PdfPCell cell = new PdfPCell(new Phrase(text, FontFactory.getFont(FontFactory.HELVETICA, 10, Color.BLACK)));</span>
+<span class="nc" id="L216">        cell.setPadding(8f);</span>
+<span class="nc" id="L217">        return cell;</span>
+    }
+
+    private int safeInt(Integer value) {
+<span class="nc bnc" id="L221" title="All 2 branches missed.">        return value != null ? value : 0;</span>
+    }
+
+    private String computeMention(Integer score) {
+<span class="nc" id="L225">        int s = safeInt(score);</span>
+<span class="nc bnc" id="L226" title="All 2 branches missed.">        if (s &gt;= 85) return &quot;Très bien&quot;;</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">        if (s &gt;= 70) return &quot;Bien&quot;;</span>
+<span class="nc bnc" id="L228" title="All 2 branches missed.">        if (s &gt;= 60) return &quot;Acceptable&quot;;</span>
+<span class="nc" id="L229">        return &quot;Refus&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,4 +1,11 @@
 {
+  "/api/evaluation-reports": {
+    "target": "http://localhost:8090",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "ws": false
+  },
   "/api/modules": {
     "target": "http://localhost:8081",
     "secure": false,

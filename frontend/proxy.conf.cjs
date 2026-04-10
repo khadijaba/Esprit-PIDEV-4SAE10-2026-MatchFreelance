@@ -1,5 +1,6 @@
 /**
- * Proxy dev :
+ * Proxy dev (ordre : chemins les plus spécifiques d'abord) :
+ * - /api/evaluation-reports → microservice Python (8090), évite 404 si la Gateway n’a pas encore la route
  * - /api/modules → Formation (8081)
  * - /api/projects → Project (8084), rewrite /api/projects -> /projects
  * - reste /api → Gateway (8050)
@@ -11,6 +12,10 @@ function rewriteProjects(path) {
 }
 
 module.exports = {
+  '/api/evaluation-reports': {
+    target: 'http://localhost:8090',
+    ...opts,
+  },
   '/api/modules': {
     target: 'http://localhost:8081',
     ...opts,

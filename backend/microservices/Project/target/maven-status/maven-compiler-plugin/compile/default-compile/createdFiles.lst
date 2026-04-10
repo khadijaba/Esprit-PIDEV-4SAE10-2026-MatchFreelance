@@ -1,0 +1,8 @@
+esprit\project\Service\ProjectServiceImpl.class
+esprit\project\ProjectApplication.class
+esprit\project\Controllers\ProjectController.class
+esprit\project\Service\ProjectService.class
+esprit\project\config\GlobalExceptionHandler.class
+esprit\project\entities\ProjectStatus.class
+esprit\project\Repositories\ProjectRepository.class
+esprit\project\entities\Project.class

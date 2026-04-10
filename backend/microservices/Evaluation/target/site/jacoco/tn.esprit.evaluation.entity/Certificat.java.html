@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Certificat.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.entity</a> &gt; <span class="el_source">Certificat.java</span></div><h1>Certificat.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+/**
+ * Certificat délivré lorsqu'un freelancer réussit un examen (score &gt;= seuil).
+ */
+@Entity
+@Table(name = &quot;certificat&quot;, uniqueConstraints = {
+    @UniqueConstraint(columnNames = {&quot;passage_examen_id&quot;})
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Certificat {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /** Numéro unique du certificat (ex: CERT-xxx) */
+    @Column(name = &quot;numero_certificat&quot;, nullable = false, unique = true, length = 64)
+    private String numeroCertificat;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;passage_examen_id&quot;, nullable = false, unique = true)
+    private PassageExamen passageExamen;
+
+    @Column(name = &quot;date_delivrance&quot;, nullable = false, updatable = false)
+    @Builder.Default
+    private LocalDateTime dateDelivrance = LocalDateTime.now();
+
+    /** Génère un numéro unique pour le certificat. */
+    public static String genererNumero() {
+<span class="nc" id="L41">        return &quot;CERT-&quot; + UUID.randomUUID().toString().substring(0, 8).toUpperCase();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

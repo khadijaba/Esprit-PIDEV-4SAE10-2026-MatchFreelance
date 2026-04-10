@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExamenDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.dto</a> &gt; <span class="el_source">ExamenDto.java</span></div><h1>ExamenDto.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.dto;
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+import lombok.*;
+import tn.esprit.evaluation.entity.Examen;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ExamenDto {
+
+    private Long id;
+    @NotNull(message = &quot;formationId est requis&quot;)
+    private Long formationId;
+    @NotBlank(message = &quot;Le titre est requis&quot;)
+    @jakarta.validation.constraints.Size(min = 1, max = 255)
+    private String titre;
+    @jakarta.validation.constraints.Size(max = 1000)
+    private String description;
+    @NotNull
+    @PositiveOrZero
+    @Max(100)
+    @Builder.Default
+    private Integer seuilReussi = 60;
+
+    @Builder.Default
+    private List&lt;QuestionDto&gt; questions = new ArrayList&lt;&gt;();
+
+    public static ExamenDto fromEntity(Examen e) {
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        final Long examenId = e != null ? e.getId() : null;</span>
+<span class="nc" id="L40">        return ExamenDto.builder()</span>
+<span class="nc" id="L41">                .id(e.getId())</span>
+<span class="nc" id="L42">                .formationId(e.getFormationId())</span>
+<span class="nc" id="L43">                .titre(e.getTitre())</span>
+<span class="nc" id="L44">                .description(e.getDescription())</span>
+<span class="nc" id="L45">                .seuilReussi(e.getSeuilReussi())</span>
+<span class="nc bnc" id="L46" title="All 2 branches missed.">                .questions(e.getQuestions() != null</span>
+<span class="nc" id="L47">                        ? e.getQuestions().stream().map(q -&gt; QuestionDto.fromEntity(q, examenId)).collect(Collectors.toList())</span>
+<span class="nc" id="L48">                        : new ArrayList&lt;&gt;())</span>
+<span class="nc" id="L49">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

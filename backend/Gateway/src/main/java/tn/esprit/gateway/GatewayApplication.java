@@ -31,6 +31,10 @@ public class GatewayApplication {
     @Value("${gateway.service.project:PROJECT}")
     private String projectServiceId;
 
+    /** URL du microservice Python (rapports PDF / graphiques) — pas Eureka, load balancer direct. */
+    @Value("${gateway.evaluation-reports.url:http://localhost:8090}")
+    private String evaluationReportsUrl;
+
     public static void main(String[] args) {
         SpringApplication.run(GatewayApplication.class, args);
     }
@@ -38,6 +42,9 @@ public class GatewayApplication {
     @Bean
     public RouteLocator customRouting(RouteLocatorBuilder builder, NotFoundJsonFilter notFoundJsonFilter, WelcomeJsonFilter welcomeJsonFilter) {
         return builder.routes()
+                // Rapports PDF & graphiques (Python FastAPI) — en premier pour éviter tout conflit de prédicat
+                .route("evaluation-reports", r -> r.path("/api/evaluation-reports", "/api/evaluation-reports/**")
+                        .uri(evaluationReportsUrl))
                 // Auth / Utilisateurs (Freelancers, Clients, Admin) -> lb://USER
                 .route("user-api", r -> r.path("/api/users", "/api/users/**")
                         .uri("lb://" + userServiceId))

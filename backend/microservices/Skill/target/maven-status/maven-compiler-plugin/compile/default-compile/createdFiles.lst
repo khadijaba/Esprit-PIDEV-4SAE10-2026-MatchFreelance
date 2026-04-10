@@ -1,0 +1,17 @@
+esprit\skill\dto\ParcoursIntelligentResponse$ParcoursIntelligentResponseBuilder.class
+esprit\skill\Service\ParcoursIntelligentService.class
+esprit\skill\Service\SkillService.class
+esprit\skill\Service\SkillServiceImpl.class
+esprit\skill\dto\FormationDto.class
+esprit\skill\config\RestTemplateConfig.class
+esprit\skill\SkillApplication.class
+esprit\skill\Repositories\SkillRepository.class
+esprit\skill\Contollers\SkillController.class
+esprit\skill\Contollers\ParcoursIntelligentController.class
+esprit\skill\dto\SkillDto$SkillDtoBuilder.class
+esprit\skill\entities\SkillCategory.class
+esprit\skill\dto\SkillDto.class
+esprit\skill\Service\ParcoursIntelligentService$1.class
+esprit\skill\exception\GlobalExceptionHandler.class
+esprit\skill\dto\ParcoursIntelligentResponse.class
+esprit\skill\entities\Skill.class

@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CertificatController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.controller</a> &gt; <span class="el_source">CertificatController.java</span></div><h1>CertificatController.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.controller;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import tn.esprit.evaluation.client.FormationClient;
+import tn.esprit.evaluation.dto.CertificatDto;
+import tn.esprit.evaluation.service.CertificatPdfService;
+import tn.esprit.evaluation.service.CertificatService;
+
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping(&quot;/api/certificats&quot;)
+@RequiredArgsConstructor
+@CrossOrigin(origins = &quot;*&quot;)
+public class CertificatController {
+
+<span class="fc" id="L28">    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern(&quot;d MMMM yyyy&quot;, Locale.FRANCE);</span>
+
+    private final CertificatService certificatService;
+    private final CertificatPdfService certificatPdfService;
+    private final FormationClient formationClient;
+
+    @Value(&quot;${app.frontend.base-url:http://localhost:4200}&quot;)
+    private String frontendBaseUrl;
+
+    @GetMapping(&quot;/freelancer/{freelancerId}&quot;)
+    public ResponseEntity&lt;List&lt;CertificatDto&gt;&gt; getByFreelancer(@PathVariable Long freelancerId) {
+<span class="nc" id="L39">        return ResponseEntity.ok(certificatService.findByFreelancer(freelancerId));</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;CertificatDto&gt; getById(@PathVariable Long id) {
+<span class="nc" id="L44">        return ResponseEntity.ok(certificatService.findById(id));</span>
+    }
+
+    @GetMapping(value = &quot;/{id}/pdf&quot;, produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity&lt;byte[]&gt; getPdfById(@PathVariable Long id) {
+<span class="nc" id="L49">        CertificatDto dto = certificatService.findById(id);</span>
+<span class="nc" id="L50">        byte[] pdf = certificatPdfService.generatePdf(dto);</span>
+<span class="nc" id="L51">        String filename = &quot;certificat-&quot; + dto.getNumeroCertificat() + &quot;.pdf&quot;;</span>
+<span class="nc" id="L52">        return ResponseEntity.ok()</span>
+<span class="nc" id="L53">                .header(HttpHeaders.CONTENT_DISPOSITION, &quot;inline; filename=\&quot;&quot; + filename + &quot;\&quot;&quot;)</span>
+<span class="nc" id="L54">                .contentLength(pdf.length)</span>
+<span class="nc" id="L55">                .body(pdf);</span>
+    }
+
+    @GetMapping(&quot;/passage/{passageExamenId}&quot;)
+    public ResponseEntity&lt;CertificatDto&gt; getByPassage(@PathVariable Long passageExamenId) {
+<span class="nc" id="L60">        return ResponseEntity.ok(certificatService.findByPassageExamen(passageExamenId));</span>
+    }
+
+    /**
+     * Endpoint public de vérification d'un certificat via son numéro (ex: CERT-XXXX).
+     * Utilisé par le QR code imprimé dans le PDF.
+     */
+    @GetMapping(&quot;/verify/{numero}&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; verify(@PathVariable String numero) {
+        try {
+<span class="nc" id="L70">            CertificatDto dto = certificatService.findByNumero(numero);</span>
+<span class="nc" id="L71">            Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L72">            body.put(&quot;valid&quot;, true);</span>
+<span class="nc" id="L73">            body.put(&quot;numeroCertificat&quot;, dto.getNumeroCertificat());</span>
+<span class="nc" id="L74">            body.put(&quot;freelancerId&quot;, dto.getFreelancerId());</span>
+<span class="nc" id="L75">            body.put(&quot;examenId&quot;, dto.getExamenId());</span>
+<span class="nc" id="L76">            body.put(&quot;formationId&quot;, dto.getFormationId());</span>
+<span class="nc" id="L77">            body.put(&quot;examenTitre&quot;, dto.getExamenTitre());</span>
+<span class="nc" id="L78">            body.put(&quot;score&quot;, dto.getScore());</span>
+<span class="nc" id="L79">            body.put(&quot;dateDelivrance&quot;, dto.getDateDelivrance());</span>
+            try {
+<span class="nc" id="L81">                body.put(&quot;formationsRecommandees&quot;, filterAutresFormations(dto, formationClient.getRecommandationsForFreelancer(dto.getFreelancerId())));</span>
+<span class="nc" id="L82">            } catch (Exception ex) {</span>
+<span class="nc" id="L83">                body.put(&quot;formationsRecommandees&quot;, List.of());</span>
+<span class="nc" id="L84">            }</span>
+<span class="nc" id="L85">            return ResponseEntity.ok(body);</span>
+<span class="nc" id="L86">        } catch (Exception e) {</span>
+<span class="nc" id="L87">            return ResponseEntity.ok(Map.of(</span>
+<span class="nc" id="L88">                    &quot;valid&quot;, false,</span>
+                    &quot;numeroCertificat&quot;, numero,
+<span class="nc bnc" id="L90" title="All 2 branches missed.">                    &quot;message&quot;, e.getMessage() != null ? e.getMessage() : &quot;Certificat introuvable&quot;</span>
+            ));
+        }
+    }
+
+    /**
+     * Page HTML de vérification (pour scan du QR code).
+     * Affiche une carte professionnelle : certificat valide ou introuvable.
+     */
+    @GetMapping(value = &quot;/verify/{numero}/page&quot;, produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity&lt;String&gt; verifyPage(@PathVariable String numero) {
+        String html;
+        try {
+<span class="nc" id="L103">            CertificatDto dto = certificatService.findByNumero(numero);</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">            String dateDelivrance = dto.getDateDelivrance() != null ? dto.getDateDelivrance().format(DATE_FORMAT) : &quot;-&quot;;</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">            String datePassage = dto.getDatePassage() != null ? dto.getDatePassage().format(DATE_FORMAT) : &quot;-&quot;;</span>
+            List&lt;Map&lt;String, Object&gt;&gt; autres;
+            try {
+<span class="nc" id="L108">                autres = filterAutresFormations(dto, formationClient.getRecommandationsForFreelancer(dto.getFreelancerId()));</span>
+<span class="nc" id="L109">            } catch (Exception ex) {</span>
+<span class="nc" id="L110">                autres = List.of();</span>
+<span class="nc" id="L111">            }</span>
+<span class="nc" id="L112">            String recoBlock = buildFormationsRecommandeesHtml(autres, normalizeFrontendBase());</span>
+<span class="nc" id="L113">            html = &quot;&lt;!DOCTYPE html&gt;&lt;html lang=\&quot;fr\&quot;&gt;&lt;head&gt;&lt;meta charset=\&quot;UTF-8\&quot;&gt;&lt;meta name=\&quot;viewport\&quot; content=\&quot;width=device-width,initial-scale=1\&quot;&gt;&quot; +</span>
+                    &quot;&lt;title&gt;Vérification certificat - MatchFreelance&lt;/title&gt;&quot; +
+                    &quot;&lt;style&gt;body{font-family:system-ui,-apple-system,sans-serif;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;padding:1.5rem 0;}&quot; +
+                    &quot;.wrap{max-width:520px;width:92%;}&quot; +
+                    &quot;.card{background:#fff;color:#1e293b;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,.4);padding:2rem;text-align:center;}&quot; +
+                    &quot;.badge{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:9999px;font-weight:700;font-size:14px;margin-bottom:1.5rem;}&quot; +
+                    &quot;.badge.valid{background:#d1fae5;color:#065f46;}&quot; +
+                    &quot;.badge.invalid{background:#fee2e2;color:#991b1b;}&quot; +
+                    &quot;h1{font-size:1.5rem;margin:0 0 .5rem;}&quot; +
+                    &quot;.numero{font-size:1rem;color:#64748b;margin-bottom:1.5rem;}&quot; +
+                    &quot;.detail{text-align:left;background:#f8fafc;border-radius:8px;padding:1rem;margin:.5rem 0;font-size:14px;}&quot; +
+                    &quot;.detail strong{display:inline-block;min-width:140px;color:#475569;}&quot; +
+                    &quot;.reco{margin-top:1.75rem;text-align:left;border-top:1px solid #e2e8f0;padding-top:1.25rem;}&quot; +
+                    &quot;.reco h2{font-size:1rem;margin:0 0 .75rem;color:#0f172a;text-align:center;}&quot; +
+                    &quot;.reco ul{list-style:none;margin:0;padding:0;}&quot; +
+                    &quot;.reco li{margin:.5rem 0;padding:.75rem;border-radius:8px;background:#f1f5f9;border:1px solid #e2e8f0;}&quot; +
+                    &quot;.reco a{color:#0d9488;font-weight:600;text-decoration:none;}&quot; +
+                    &quot;.reco a:hover{text-decoration:underline;}&quot; +
+                    &quot;.reco .meta{font-size:12px;color:#64748b;margin-top:4px;}&quot; +
+                    &quot;.reco .empty{font-size:13px;color:#64748b;text-align:center;}&quot; +
+                    &quot;.footer{margin-top:1.5rem;font-size:12px;color:#94a3b8;}&quot; +
+                    &quot;&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;div class=\&quot;wrap\&quot;&gt;&lt;div class=\&quot;card\&quot;&gt;&quot; +
+                    &quot;&lt;div class=\&quot;badge valid\&quot;&gt;&lt;span&gt;✓&lt;/span&gt; Certificat valide&lt;/div&gt;&quot; +
+                    &quot;&lt;h1&gt;MatchFreelance&lt;/h1&gt;&quot; +
+<span class="nc" id="L137">                    &quot;&lt;p class=\&quot;numero\&quot;&gt;N° &quot; + escapeHtml(dto.getNumeroCertificat()) + &quot;&lt;/p&gt;&quot; +</span>
+<span class="nc" id="L138">                    &quot;&lt;div class=\&quot;detail\&quot;&gt;&lt;strong&gt;Examen&lt;/strong&gt; &quot; + escapeHtml(dto.getExamenTitre()) + &quot;&lt;/div&gt;&quot; +</span>
+<span class="nc" id="L139">                    &quot;&lt;div class=\&quot;detail\&quot;&gt;&lt;strong&gt;Score&lt;/strong&gt; &quot; + dto.getScore() + &quot; %&lt;/div&gt;&quot; +</span>
+<span class="nc" id="L140">                    &quot;&lt;div class=\&quot;detail\&quot;&gt;&lt;strong&gt;Freelancer&lt;/strong&gt; #&quot; + dto.getFreelancerId() + &quot;&lt;/div&gt;&quot; +</span>
+<span class="nc" id="L141">                    &quot;&lt;div class=\&quot;detail\&quot;&gt;&lt;strong&gt;Date de passage&lt;/strong&gt; &quot; + escapeHtml(datePassage) + &quot;&lt;/div&gt;&quot; +</span>
+<span class="nc" id="L142">                    &quot;&lt;div class=\&quot;detail\&quot;&gt;&lt;strong&gt;Délivré le&lt;/strong&gt; &quot; + escapeHtml(dateDelivrance) + &quot;&lt;/div&gt;&quot; +</span>
+                    recoBlock +
+                    &quot;&lt;p class=\&quot;footer\&quot;&gt;Ce certificat a été délivré par la plateforme MatchFreelance.&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;&quot;;
+<span class="nc" id="L145">        } catch (Exception e) {</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">            String msg = e.getMessage() != null ? e.getMessage() : &quot;Certificat introuvable.&quot;;</span>
+<span class="nc" id="L147">            html = &quot;&lt;!DOCTYPE html&gt;&lt;html lang=\&quot;fr\&quot;&gt;&lt;head&gt;&lt;meta charset=\&quot;UTF-8\&quot;&gt;&lt;meta name=\&quot;viewport\&quot; content=\&quot;width=device-width,initial-scale=1\&quot;&gt;&quot; +</span>
+                    &quot;&lt;title&gt;Vérification certificat - MatchFreelance&lt;/title&gt;&quot; +
+                    &quot;&lt;style&gt;body{font-family:system-ui,-apple-system,sans-serif;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;}&quot; +
+                    &quot;.card{background:#fff;color:#1e293b;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,.4);max-width:420px;width:90%;padding:2rem;text-align:center;}&quot; +
+                    &quot;.badge{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:9999px;font-weight:700;font-size:14px;margin-bottom:1.5rem;}&quot; +
+                    &quot;.badge.invalid{background:#fee2e2;color:#991b1b;}&quot; +
+                    &quot;h1{font-size:1.5rem;margin:0 0 .5rem;}&quot; +
+                    &quot;.numero{font-size:1rem;color:#64748b;margin-bottom:1rem;}&quot; +
+                    &quot;.msg{color:#64748b;font-size:14px;}&quot; +
+                    &quot;.footer{margin-top:1.5rem;font-size:12px;color:#94a3b8;}&quot; +
+                    &quot;&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;div class=\&quot;card\&quot;&gt;&quot; +
+                    &quot;&lt;div class=\&quot;badge invalid\&quot;&gt;&lt;span&gt;✕&lt;/span&gt; Certificat invalide&lt;/div&gt;&quot; +
+                    &quot;&lt;h1&gt;MatchFreelance&lt;/h1&gt;&quot; +
+<span class="nc" id="L160">                    &quot;&lt;p class=\&quot;numero\&quot;&gt;N° &quot; + escapeHtml(numero) + &quot;&lt;/p&gt;&quot; +</span>
+<span class="nc" id="L161">                    &quot;&lt;p class=\&quot;msg\&quot;&gt;&quot; + escapeHtml(msg) + &quot;&lt;/p&gt;&quot; +</span>
+                    &quot;&lt;p class=\&quot;footer\&quot;&gt;Vérifiez le numéro ou contactez la plateforme.&lt;/p&gt;&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;&quot;;
+<span class="nc" id="L163">        }</span>
+<span class="nc" id="L164">        return ResponseEntity.ok()</span>
+<span class="nc" id="L165">                .contentType(MediaType.parseMediaType(&quot;text/html;charset=UTF-8&quot;))</span>
+<span class="nc" id="L166">                .body(html);</span>
+    }
+
+    private static String escapeHtml(String s) {
+<span class="nc bnc" id="L170" title="All 2 branches missed.">        if (s == null) return &quot;&quot;;</span>
+<span class="nc" id="L171">        return s.replace(&quot;&amp;&quot;, &quot;&amp;amp;&quot;).replace(&quot;&lt;&quot;, &quot;&amp;lt;&quot;).replace(&quot;&gt;&quot;, &quot;&amp;gt;&quot;).replace(&quot;\&quot;&quot;, &quot;&amp;quot;&quot;);</span>
+    }
+
+    /** Exclut la formation de l'examen courant pour proposer d'autres parcours. */
+    private static List&lt;Map&lt;String, Object&gt;&gt; filterAutresFormations(CertificatDto dto, List&lt;Map&lt;String, Object&gt;&gt; raw) {
+<span class="nc bnc" id="L176" title="All 4 branches missed.">        if (raw == null || raw.isEmpty()) return List.of();</span>
+<span class="nc bnc" id="L177" title="All 2 branches missed.">        Long exclude = dto != null ? dto.getFormationId() : null;</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        if (exclude == null) return raw.stream().limit(12).collect(Collectors.toList());</span>
+<span class="nc" id="L179">        return raw.stream()</span>
+<span class="nc" id="L180">                .filter(m -&gt; {</span>
+<span class="nc" id="L181">                    Object id = m.get(&quot;id&quot;);</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">                    if (id == null) return true;</span>
+                    try {
+<span class="nc bnc" id="L184" title="All 2 branches missed.">                        return !exclude.equals(Long.valueOf(id.toString()));</span>
+<span class="nc" id="L185">                    } catch (NumberFormatException e) {</span>
+<span class="nc" id="L186">                        return true;</span>
+                    }
+                })
+<span class="nc" id="L189">                .limit(12)</span>
+<span class="nc" id="L190">                .collect(Collectors.toList());</span>
+    }
+
+    private String normalizeFrontendBase() {
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        return frontendBaseUrl == null ? &quot;&quot; : frontendBaseUrl.replaceAll(&quot;/+$&quot;, &quot;&quot;);</span>
+    }
+
+    private String buildFormationsRecommandeesHtml(List&lt;Map&lt;String, Object&gt;&gt; formations, String base) {
+<span class="nc bnc" id="L198" title="All 4 branches missed.">        if (formations == null || formations.isEmpty()) {</span>
+<span class="nc" id="L199">            return &quot;&lt;div class=\&quot;reco\&quot;&gt;&lt;h2&gt;Autres formations recommandées pour vous&lt;/h2&gt;&lt;p class=\&quot;empty\&quot;&gt;Aucune suggestion disponible pour le moment (vérifiez que le microservice Formation est démarré).&lt;/p&gt;&lt;/div&gt;&quot;;</span>
+        }
+<span class="nc" id="L201">        StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L202">        sb.append(&quot;&lt;div class=\&quot;reco\&quot;&gt;&lt;h2&gt;Autres formations recommandées pour vous&lt;/h2&gt;&lt;ul&gt;&quot;);</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">        for (Map&lt;String, Object&gt; f : formations) {</span>
+<span class="nc" id="L204">            Object idObj = f.get(&quot;id&quot;);</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">            String titre = f.get(&quot;titre&quot;) != null ? f.get(&quot;titre&quot;).toString() : &quot;Formation&quot;;</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">            String type = f.get(&quot;typeFormation&quot;) != null ? f.get(&quot;typeFormation&quot;).toString() : &quot;&quot;;</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">            String niveau = f.get(&quot;niveau&quot;) != null ? f.get(&quot;niveau&quot;).toString() : &quot;&quot;;</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">            String href = base + &quot;/formations/&quot; + (idObj != null ? idObj : &quot;&quot;);</span>
+<span class="nc" id="L209">            String meta = joinFormationMeta(type, niveau);</span>
+<span class="nc" id="L210">            sb.append(&quot;&lt;li&gt;&lt;a href=\&quot;&quot;).append(escapeHtml(href)).append(&quot;\&quot; target=\&quot;_blank\&quot; rel=\&quot;noopener\&quot;&gt;&quot;)</span>
+<span class="nc" id="L211">                    .append(escapeHtml(titre)).append(&quot;&lt;/a&gt;&quot;);</span>
+<span class="nc bnc" id="L212" title="All 2 branches missed.">            if (!meta.isEmpty()) {</span>
+<span class="nc" id="L213">                sb.append(&quot;&lt;div class=\&quot;meta\&quot;&gt;&quot;).append(escapeHtml(meta)).append(&quot;&lt;/div&gt;&quot;);</span>
+            }
+<span class="nc" id="L215">            sb.append(&quot;&lt;/li&gt;&quot;);</span>
+<span class="nc" id="L216">        }</span>
+<span class="nc" id="L217">        sb.append(&quot;&lt;/ul&gt;&lt;/div&gt;&quot;);</span>
+<span class="nc" id="L218">        return sb.toString();</span>
+    }
+
+    private static String joinFormationMeta(String type, String niveau) {
+<span class="nc" id="L222">        List&lt;String&gt; parts = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L223" title="All 4 branches missed.">        if (type != null &amp;&amp; !type.isBlank()) parts.add(type);</span>
+<span class="nc bnc" id="L224" title="All 4 branches missed.">        if (niveau != null &amp;&amp; !niveau.isBlank()) parts.add(niveau);</span>
+<span class="nc" id="L225">        return String.join(&quot; · &quot;, parts);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

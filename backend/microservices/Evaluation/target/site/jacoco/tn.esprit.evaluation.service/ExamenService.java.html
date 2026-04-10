@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExamenService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.service</a> &gt; <span class="el_source">ExamenService.java</span></div><h1>ExamenService.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import tn.esprit.evaluation.dto.ExamenDto;
+import tn.esprit.evaluation.dto.QuestionDto;
+import tn.esprit.evaluation.entity.Examen;
+import tn.esprit.evaluation.entity.Question;
+import tn.esprit.evaluation.exception.ResourceNotFoundException;
+import tn.esprit.evaluation.repository.ExamenRepository;
+import tn.esprit.evaluation.repository.QuestionRepository;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class ExamenService {
+
+    private final ExamenRepository examenRepository;
+    private final QuestionRepository questionRepository;
+
+    @Transactional(readOnly = true)
+    public List&lt;ExamenDto&gt; findAll() {
+<span class="nc" id="L27">        return examenRepository.findAll().stream()</span>
+<span class="nc" id="L28">                .map(ExamenDto::fromEntity)</span>
+<span class="nc" id="L29">                .collect(Collectors.toList());</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;ExamenDto&gt; findByFormationId(Long formationId) {
+<span class="nc" id="L34">        return examenRepository.findByFormationIdWithQuestions(formationId).stream()</span>
+<span class="nc" id="L35">                .map(ExamenDto::fromEntity)</span>
+<span class="nc" id="L36">                .collect(Collectors.toList());</span>
+    }
+
+    @Transactional(readOnly = true)
+    public ExamenDto findById(Long id) {
+<span class="nc" id="L41">        Examen e = examenRepository.findByIdWithQuestions(id)</span>
+<span class="nc" id="L42">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Examen&quot;, id));</span>
+<span class="nc" id="L43">        return ExamenDto.fromEntity(e);</span>
+    }
+
+    /** Retourne l'examen avec les questions pour le passage. */
+    @Transactional(readOnly = true)
+    public ExamenDto getExamenPourPassage(Long id) {
+<span class="nc" id="L49">        Examen e = examenRepository.findByIdWithQuestions(id)</span>
+<span class="nc" id="L50">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Examen&quot;, id));</span>
+<span class="nc" id="L51">        ExamenDto dto = ExamenDto.fromEntity(e);</span>
+        // Sécurité / mode certifiant : on ne renvoie pas la bonne réponse au client.
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        if (dto.getQuestions() != null) {</span>
+<span class="nc" id="L54">            dto.getQuestions().forEach(q -&gt; q.setBonneReponse(null));</span>
+        }
+<span class="nc" id="L56">        return dto;</span>
+    }
+
+    @Transactional
+    public ExamenDto create(ExamenDto dto) {
+<span class="nc" id="L61">        Examen e = Examen.builder()</span>
+<span class="nc" id="L62">                .formationId(dto.getFormationId())</span>
+<span class="nc" id="L63">                .titre(dto.getTitre())</span>
+<span class="nc" id="L64">                .description(dto.getDescription())</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">                .seuilReussi(dto.getSeuilReussi() != null ? dto.getSeuilReussi() : 60)</span>
+<span class="nc" id="L66">                .build();</span>
+<span class="nc" id="L67">        e = examenRepository.save(e);</span>
+<span class="nc bnc" id="L68" title="All 4 branches missed.">        if (dto.getQuestions() != null &amp;&amp; !dto.getQuestions().isEmpty()) {</span>
+<span class="nc" id="L69">            int ordre = 0;</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">            for (QuestionDto qd : dto.getQuestions()) {</span>
+<span class="nc bnc" id="L71" title="All 4 branches missed.">                String enonce = (qd.getEnonce() != null &amp;&amp; !qd.getEnonce().isBlank()) ? qd.getEnonce().trim() : (&quot;Question &quot; + (ordre + 1));</span>
+<span class="nc" id="L72">                String br = qd.getBonneReponse();</span>
+<span class="nc bnc" id="L73" title="All 4 branches missed.">                if (br == null || br.isBlank()) br = &quot;A&quot;;</span>
+<span class="nc" id="L74">                else br = br.toUpperCase().trim().substring(0, 1);</span>
+<span class="nc bnc" id="L75" title="All 8 branches missed.">                if (!&quot;A&quot;.equals(br) &amp;&amp; !&quot;B&quot;.equals(br) &amp;&amp; !&quot;C&quot;.equals(br) &amp;&amp; !&quot;D&quot;.equals(br)) br = &quot;A&quot;;</span>
+<span class="nc" id="L76">                Question q = Question.builder()</span>
+<span class="nc" id="L77">                        .examen(e)</span>
+<span class="nc" id="L78">                        .ordre(ordre++)</span>
+<span class="nc" id="L79">                        .enonce(enonce)</span>
+<span class="nc" id="L80">                        .optionA(qd.getOptionA())</span>
+<span class="nc" id="L81">                        .optionB(qd.getOptionB())</span>
+<span class="nc" id="L82">                        .optionC(qd.getOptionC())</span>
+<span class="nc" id="L83">                        .optionD(qd.getOptionD())</span>
+<span class="nc" id="L84">                        .bonneReponse(br)</span>
+<span class="nc" id="L85">                        .build();</span>
+<span class="nc" id="L86">                questionRepository.save(q);</span>
+<span class="nc" id="L87">            }</span>
+        }
+<span class="nc" id="L89">        Examen finalE = e;</span>
+<span class="nc" id="L90">        return ExamenDto.fromEntity(examenRepository.findByIdWithQuestions(e.getId()).orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Examen&quot;, finalE.getId())));</span>
+    }
+
+    @Transactional
+    public ExamenDto update(Long id, ExamenDto dto) {
+<span class="nc" id="L95">        Examen e = examenRepository.findById(id)</span>
+<span class="nc" id="L96">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Examen&quot;, id));</span>
+<span class="nc" id="L97">        e.setTitre(dto.getTitre());</span>
+<span class="nc" id="L98">        e.setDescription(dto.getDescription());</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        e.setSeuilReussi(dto.getSeuilReussi() != null ? dto.getSeuilReussi() : e.getSeuilReussi());</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        e.setFormationId(dto.getFormationId() != null ? dto.getFormationId() : e.getFormationId());</span>
+<span class="nc" id="L101">        return ExamenDto.fromEntity(examenRepository.save(e));</span>
+    }
+
+    @Transactional
+    public void deleteById(Long id) {
+<span class="nc bnc" id="L106" title="All 2 branches missed.">        if (!examenRepository.existsById(id))</span>
+<span class="nc" id="L107">            throw new ResourceNotFoundException(&quot;Examen&quot;, id);</span>
+<span class="nc" id="L108">        examenRepository.deleteById(id);</span>
+<span class="nc" id="L109">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

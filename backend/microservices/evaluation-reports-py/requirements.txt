@@ -1,0 +1,8 @@
+# pydantic 2.10.x impose pydantic-core 2.27.x souvent SANS roue cp314 → compilation Rust.
+# 2.11+ : pydantic-core avec roues binaires pour Python 3.14 (Windows).
+fastapi>=0.115.6,<0.116
+uvicorn[standard]>=0.34.0,<0.35
+pydantic>=2.11.0,<3
+reportlab>=4.2.5,<5
+pillow>=10.4.0,<12
+python-multipart>=0.0.20,<0.1
