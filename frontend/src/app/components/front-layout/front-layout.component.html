@@ -1,75 +1,92 @@
-<div class="flex min-h-screen flex-col bg-[#f8fafc]">
+<div class="flex min-h-screen flex-col bg-slate-50">
   <!-- Header -->
-  <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md shadow-sm">
-    <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-      <a routerLink="/" class="flex items-center gap-3">
-        <img src="/logo-matchfreelance.png" alt="MatchFreelance" class="h-10 w-auto object-contain" />
-        <div class="flex flex-col">
-          <span class="text-xl font-bold tracking-tight text-slate-900">
-            <span class="text-[#2563eb]">Match</span><span class="text-[#ea580c]">Freelance</span>
-          </span>
-          <span class="text-xs font-medium text-slate-500">Connecting Skills to Opportunities</span>
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <a routerLink="/" class="flex items-center gap-2">
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
         </div>
+        <span class="text-xl font-bold text-slate-900">FreelanceHub</span>
       </a>
-      <nav class="flex items-center gap-1">
-        <a routerLink="/" routerLinkActive="bg-teal-50 text-teal-700" [routerLinkActiveOptions]="{exact:true}"
-          class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
-          Accueil
+      <nav class="flex items-center gap-6">
+        <a routerLink="/" routerLinkActive="text-indigo-600" [routerLinkActiveOptions]="{exact:true}"
+          class="text-sm font-medium text-slate-600 transition hover:text-slate-900">
+          Home
         </a>
-        <a routerLink="/projects" routerLinkActive="bg-teal-50 text-teal-700"
-          class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
-          Projets
+        <a routerLink="/projects" routerLinkActive="text-indigo-600"
+          class="text-sm font-medium text-slate-600 transition hover:text-slate-900">
+          Find Projects
         </a>
-        <a routerLink="/formations" routerLinkActive="bg-teal-50 text-teal-700"
-          class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
-          Formations
+        <a routerLink="/events" routerLinkActive="text-indigo-600"
+          class="text-sm font-medium text-slate-600 transition hover:text-slate-900">
+          Events
         </a>
-        <a routerLink="/projects"
-          class="ml-2 inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-600/25 transition hover:bg-teal-700 hover:shadow-teal-600/30">
-          Trouver un projet
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+        <a routerLink="/client" routerLinkActive="text-indigo-600"
+          class="text-sm font-medium text-slate-600 transition hover:text-slate-900">
+          Client Dashboard
         </a>
       </nav>
+
+      <!-- User Menu -->
+      <div class="flex items-center gap-4">
+        @if (auth.currentUser(); as user) {
+        @if (user.role === 'FREELANCER') {
+        <div
+          class="hidden items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-600/20 sm:flex">
+          <span>🏆</span>
+          <span>{{ user.points }} pts</span>
+        </div>
+        }
+
+        <div class="flex items-center gap-3 border-l border-slate-200 pl-4">
+          <div class="text-right hidden sm:block">
+            <div class="text-sm font-medium text-slate-900">{{ user.name }}</div>
+            <button (click)="auth.loginAs(user.role === 'FREELANCER' ? 'CLIENT' : 'FREELANCER')"
+              class="text-xs text-indigo-600 hover:text-indigo-800 hover:underline">
+              Switch to {{ user.role === 'FREELANCER' ? 'Client' : 'Freelancer' }}
+            </button>
+          </div>
+          <img [src]="user.avatarUrl" alt="" class="h-8 w-8 rounded-full bg-slate-100 ring-2 ring-white">
+          <button (click)="auth.logout()" class="text-sm text-slate-500 hover:text-red-600" title="Logout">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </div>
+        } @else {
+        <div class="flex items-center gap-4">
+          <a routerLink="/login" class="text-sm font-medium text-slate-600 hover:text-slate-900">Sign in</a>
+          <button (click)="auth.loginAs('FREELANCER')"
+            class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+            Demo Login
+          </button>
+        </div>
+        }
+      </div>
     </div>
   </header>
 
+  <!-- Main -->
   <main class="flex-1">
     <router-outlet />
   </main>
 
   <!-- Footer -->
-  <footer class="border-t border-slate-200 bg-white">
-    <div class="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
-      <div class="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
-        <div class="sm:col-span-2 lg:col-span-1">
-          <div class="flex items-center gap-3">
-            <img src="/logo-matchfreelance.png" alt="MatchFreelance" class="h-10 w-auto object-contain" />
-            <span class="text-lg font-bold text-slate-900">
-              <span class="text-[#2563eb]">Match</span><span class="text-[#ea580c]">Freelance</span>
-            </span>
-          </div>
-          <p class="mt-4 text-sm leading-relaxed text-slate-500">
-            Connecting Skills to Opportunities — Projets, formations et évaluation pour freelancers.
-          </p>
+  <footer class="border-t border-slate-200 bg-white py-12">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
+        <div class="flex items-center gap-2">
+          <div class="h-8 w-8 rounded-lg bg-indigo-600"></div>
+          <span class="font-semibold text-slate-900">FreelanceHub</span>
         </div>
-        <div>
-          <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Explorer</h4>
-          <ul class="mt-4 space-y-3">
-            <li><a routerLink="/" class="text-sm text-slate-600 transition hover:text-teal-600">Accueil</a></li>
-            <li><a routerLink="/projects" class="text-sm text-slate-600 transition hover:text-teal-600">Projets</a></li>
-            <li><a routerLink="/formations" class="text-sm text-slate-600 transition hover:text-teal-600">Formations</a></li>
-          </ul>
+        <p class="text-sm text-slate-500">Connect with clients. Build your freelance career.</p>
+        <div class="flex gap-6 text-sm text-slate-500">
+          <a routerLink="/projects" class="hover:text-slate-700">Projects</a>
         </div>
-        <div>
-          <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Plateforme</h4>
-          <ul class="mt-4 space-y-3">
-            <li><a routerLink="/admin" class="text-sm text-slate-600 transition hover:text-teal-600">Espace admin</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-100 pt-8 sm:flex-row">
-        <p class="text-sm text-slate-400">© {{ currentYear }} MatchFreelance. Tous droits réservés.</p>
-        <p class="text-sm text-slate-500">Projets · Formations · Examens (évaluations)</p>
       </div>
     </div>
   </footer>

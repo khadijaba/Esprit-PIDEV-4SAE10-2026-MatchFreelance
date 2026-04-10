@@ -21,7 +21,8 @@ export class ProjectFormComponent implements OnInit {
   form: ProjectRequest = {
     title: '',
     description: '',
-    budget: 0,
+    minBudget: 1000,
+    maxBudget: 5000,
     duration: 1,
     status: 'OPEN',
   };
@@ -50,7 +51,8 @@ export class ProjectFormComponent implements OnInit {
           this.form = {
             title: p.title,
             description: p.description,
-            budget: p.budget,
+            minBudget: p.minBudget,
+            maxBudget: p.maxBudget,
             duration: p.duration,
             status: p.status,
           };
