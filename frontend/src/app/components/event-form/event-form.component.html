@@ -1,0 +1,287 @@
+<div class="mx-auto max-w-2xl space-y-6">
+    <!-- Header -->
+    <div>
+        <nav class="flex items-center gap-2 text-sm text-gray-500">
+            <a routerLink="/admin/events" class="hover:text-indigo-600">Events</a>
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="text-gray-900">{{ isEdit ? 'Edit Event' : 'New Event' }}</span>
+        </nav>
+        <h1 class="mt-4 text-2xl font-bold text-gray-900">{{ isEdit ? 'Edit Event' : 'Create Event' }}</h1>
+    </div>
+
+    @if (loading) {
+    <div class="flex justify-center py-12">
+        <div class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+    </div>
+    }
+
+    @if (!loading) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()"
+        class="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+
+        <!-- Title -->
+        <div>
+            <label for="title" class="block text-sm font-medium text-gray-700">Title *</label>
+            <input id="title" formControlName="title" type="text"
+                class="mt-1 block w-full rounded-lg border px-4 py-2 text-sm shadow-sm focus:ring-1"
+                [class.border-red-500]="form.get('title')?.invalid && form.get('title')?.touched"
+                [class.border-gray-300]="!(form.get('title')?.invalid && form.get('title')?.touched)"
+                [class.focus:border-red-500]="form.get('title')?.invalid && form.get('title')?.touched"
+                [class.focus:ring-red-500]="form.get('title')?.invalid && form.get('title')?.touched"
+                [class.focus:border-indigo-500]="!(form.get('title')?.invalid && form.get('title')?.touched)"
+                [class.focus:ring-indigo-500]="!(form.get('title')?.invalid && form.get('title')?.touched)"
+                placeholder="e.g. Spring Hackathon 2026" />
+            @if (getError('title')) {
+            <p class="mt-1 text-sm text-red-600">{{ getError('title') }}</p>
+            }
+            <p class="mt-0.5 text-xs text-gray-500">{{ form.get('title')?.value?.length ?? 0 }}/{{ TITLE_MAX }}</p>
+        </div>
+
+        <!-- Description -->
+        <div>
+            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+            <textarea id="description" formControlName="description" rows="4"
+                class="mt-1 block w-full rounded-lg border px-4 py-2 text-sm shadow-sm focus:ring-1"
+                [class.border-red-500]="form.get('description')?.invalid && form.get('description')?.touched"
+                [class.border-gray-300]="!(form.get('description')?.invalid && form.get('description')?.touched)"
+                [class.focus:border-red-500]="form.get('description')?.invalid && form.get('description')?.touched"
+                [class.focus:ring-red-500]="form.get('description')?.invalid && form.get('description')?.touched"
+                [class.focus:border-indigo-500]="!(form.get('description')?.invalid && form.get('description')?.touched)"
+                [class.focus:ring-indigo-500]="!(form.get('description')?.invalid && form.get('description')?.touched)"
+                placeholder="Describe the event..."></textarea>
+            @if (getError('description')) {
+            <p class="mt-1 text-sm text-red-600">{{ getError('description') }}</p>
+            }
+            <p class="mt-0.5 text-xs text-gray-500">{{ form.get('description')?.value?.length ?? 0 }}/{{ DESC_MAX }}</p>
+        </div>
+
+        <!-- Type & Status -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+                <label for="type" class="block text-sm font-medium text-gray-700">Type *</label>
+                <select id="type" formControlName="type"
+                    class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    @for (t of eventTypes; track t) {
+                    <option [value]="t">{{ typeLabel(t) }}</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700">Status *</label>
+                <select id="status" formControlName="status"
+                    class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    @for (s of eventStatuses; track s) {
+                    <option [value]="s">{{ s }}</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <!-- Dates -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+                <label for="startDate" class="block text-sm font-medium text-gray-700">Start Date *</label>
+                <input id="startDate" formControlName="startDate" type="datetime-local"
+                    class="mt-1 block w-full rounded-lg border px-4 py-2 text-sm shadow-sm focus:ring-1"
+                    [class.border-red-500]="form.get('startDate')?.invalid && form.get('startDate')?.touched"
+                    [class.border-gray-300]="!(form.get('startDate')?.invalid && form.get('startDate')?.touched)"
+                    [class.focus:border-red-500]="form.get('startDate')?.invalid && form.get('startDate')?.touched"
+                    [class.focus:ring-red-500]="form.get('startDate')?.invalid && form.get('startDate')?.touched"
+                    [class.focus:border-indigo-500]="!(form.get('startDate')?.invalid && form.get('startDate')?.touched)"
+                    [class.focus:ring-indigo-500]="!(form.get('startDate')?.invalid && form.get('startDate')?.touched)" />
+                @if (getError('startDate')) {
+                <p class="mt-1 text-sm text-red-600">{{ getError('startDate') }}</p>
+                }
+            </div>
+            <div>
+                <label for="endDate" class="block text-sm font-medium text-gray-700">End Date *</label>
+                <input id="endDate" formControlName="endDate" type="datetime-local"
+                    class="mt-1 block w-full rounded-lg border px-4 py-2 text-sm shadow-sm focus:ring-1"
+                    [class.border-red-500]="(form.get('endDate')?.invalid && form.get('endDate')?.touched) || form.errors?.['endDateAfterStart']"
+                    [class.border-gray-300]="!(form.get('endDate')?.invalid && form.get('endDate')?.touched) && !form.errors?.['endDateAfterStart']"
+                    [class.focus:border-red-500]="(form.get('endDate')?.invalid && form.get('endDate')?.touched) || form.errors?.['endDateAfterStart']"
+                    [class.focus:ring-red-500]="(form.get('endDate')?.invalid && form.get('endDate')?.touched) || form.errors?.['endDateAfterStart']"
+                    [class.focus:border-indigo-500]="!(form.get('endDate')?.invalid && form.get('endDate')?.touched) && !form.errors?.['endDateAfterStart']"
+                    [class.focus:ring-indigo-500]="!(form.get('endDate')?.invalid && form.get('endDate')?.touched) && !form.errors?.['endDateAfterStart']" />
+                @if (getError('endDate')) {
+                <p class="mt-1 text-sm text-red-600">{{ getError('endDate') }}</p>
+                }
+                @if (form.errors?.['endDateAfterStart'] && !getError('endDate')) {
+                <p class="mt-1 text-sm text-red-600">End date must be after start date.</p>
+                }
+            </div>
+        </div>
+
+        <!-- Max Participants & Team Event -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+                <label for="maxParticipants" class="block text-sm font-medium text-gray-700">Max Participants</label>
+                <input id="maxParticipants" formControlName="maxParticipants" type="number" min="1" max="999999"
+                    class="mt-1 block w-full rounded-lg border px-4 py-2 text-sm shadow-sm focus:ring-1"
+                    [class.border-red-500]="form.get('maxParticipants')?.invalid && form.get('maxParticipants')?.touched"
+                    [class.border-gray-300]="!(form.get('maxParticipants')?.invalid && form.get('maxParticipants')?.touched)"
+                    [class.focus:border-red-500]="form.get('maxParticipants')?.invalid && form.get('maxParticipants')?.touched"
+                    [class.focus:ring-red-500]="form.get('maxParticipants')?.invalid && form.get('maxParticipants')?.touched"
+                    [class.focus:border-indigo-500]="!(form.get('maxParticipants')?.invalid && form.get('maxParticipants')?.touched)"
+                    [class.focus:ring-indigo-500]="!(form.get('maxParticipants')?.invalid && form.get('maxParticipants')?.touched)"
+                    placeholder="Leave empty for unlimited" />
+                @if (getError('maxParticipants')) {
+                <p class="mt-1 text-sm text-red-600">{{ getError('maxParticipants') }}</p>
+                }
+            </div>
+            <div class="flex items-end">
+                <label class="flex items-center gap-3">
+                    <input formControlName="teamEvent" type="checkbox"
+                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                    <span class="text-sm font-medium text-gray-700">Team Event</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Eligibility Criteria -->
+        <div>
+            <label for="eligibilityCriteria" class="block text-sm font-medium text-gray-700">Eligibility
+                Criteria</label>
+            <textarea id="eligibilityCriteria" formControlName="eligibilityCriteria" rows="3"
+                class="mt-1 block w-full rounded-lg border px-4 py-2 text-sm shadow-sm focus:ring-1"
+                [class.border-red-500]="form.get('eligibilityCriteria')?.invalid && form.get('eligibilityCriteria')?.touched"
+                [class.border-gray-300]="!(form.get('eligibilityCriteria')?.invalid && form.get('eligibilityCriteria')?.touched)"
+                [class.focus:border-red-500]="form.get('eligibilityCriteria')?.invalid && form.get('eligibilityCriteria')?.touched"
+                [class.focus:ring-red-500]="form.get('eligibilityCriteria')?.invalid && form.get('eligibilityCriteria')?.touched"
+                [class.focus:border-indigo-500]="!(form.get('eligibilityCriteria')?.invalid && form.get('eligibilityCriteria')?.touched)"
+                [class.focus:ring-indigo-500]="!(form.get('eligibilityCriteria')?.invalid && form.get('eligibilityCriteria')?.touched)"
+                placeholder='e.g. {"minExperience": 2, "requiredSkills": ["Angular", "Java"]}'></textarea>
+            @if (getError('eligibilityCriteria')) {
+            <p class="mt-1 text-sm text-red-600">{{ getError('eligibilityCriteria') }}</p>
+            }
+            <p class="mt-0.5 text-xs text-gray-500">{{ form.get('eligibilityCriteria')?.value?.length ?? 0 }}/{{ ELIGIBILITY_MAX }}</p>
+        </div>
+
+        <!-- Planned Rewards -->
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <label class="block text-sm font-medium text-gray-700">Planned Rewards</label>
+                <button type="button" (click)="addReward()"
+                    class="inline-flex items-center gap-2 rounded-lg bg-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-200">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Reward
+                </button>
+            </div>
+
+            <!-- Rewards List -->
+            <div formArrayName="plannedRewards" class="space-y-3">
+                @if (plannedRewards.length === 0) {
+                <div class="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center">
+                    <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-600">No rewards planned yet</p>
+                    <p class="text-xs text-gray-500">Add rewards to encourage participation</p>
+                </div>
+                } @else {
+                @for (reward of plannedRewards.controls; track $index; let i = $index) {
+                <div [formGroupName]="i"
+                    class="relative rounded-lg border border-gray-200 bg-gradient-to-br hover:shadow-md transition p-4">
+                    <!-- Reward Type Badge -->
+                    <div class="absolute right-4 top-4">
+                        <span [class]="getRewardTypeBadgeClass(reward.get('type')?.value)">
+                            {{ reward.get('type')?.value }}
+                        </span>
+                    </div>
+
+                    <!-- Remove Button -->
+                    <button type="button" (click)="removeReward(i)"
+                        class="absolute right-4 bottom-4 text-gray-400 hover:text-red-600 transition">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+
+                    <div class="space-y-4 pr-12">
+                        <!-- Row 1: Type & Value -->
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
+                                    Reward Type *
+                                </label>
+                                <select formControlName="type"
+                                    class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                    @for (t of rewardTypes; track t) {
+                                    <option [value]="t">{{ t.replace(/_/g, ' ') }}</option>
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
+                                    Value/Amount *
+                                </label>
+                                <input type="text" formControlName="value"
+                                    class="block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-1"
+                                    [class.border-red-500]="reward.get('value')?.invalid && reward.get('value')?.touched"
+                                    [class.border-gray-300]="!(reward.get('value')?.invalid && reward.get('value')?.touched)"
+                                    [class.focus:border-red-500]="reward.get('value')?.invalid && reward.get('value')?.touched"
+                                    [class.focus:ring-red-500]="reward.get('value')?.invalid && reward.get('value')?.touched"
+                                    [class.focus:border-indigo-500]="!(reward.get('value')?.invalid && reward.get('value')?.touched)"
+                                    [class.focus:ring-indigo-500]="!(reward.get('value')?.invalid && reward.get('value')?.touched)"
+                                    [placeholder]="getPlaceholderForType(reward.get('type')?.value)" />
+                                @if (getRewardError(reward, 'value')) {
+                                <p class="mt-1 text-xs text-red-600">{{ getRewardError(reward, 'value') }}</p>
+                                }
+                                <p class="mt-0.5 text-xs text-gray-500">{{ reward.get('value')?.value?.length ?? 0 }}/{{ REWARD_VALUE_MAX }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Description -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">
+                                Description
+                            </label>
+                            <input type="text" formControlName="description"
+                                class="block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:ring-1"
+                                [class.border-red-500]="reward.get('description')?.invalid && reward.get('description')?.touched"
+                                [class.border-gray-300]="!(reward.get('description')?.invalid && reward.get('description')?.touched)"
+                                [class.focus:border-red-500]="reward.get('description')?.invalid && reward.get('description')?.touched"
+                                [class.focus:ring-red-500]="reward.get('description')?.invalid && reward.get('description')?.touched"
+                                [class.focus:border-indigo-500]="!(reward.get('description')?.invalid && reward.get('description')?.touched)"
+                                [class.focus:ring-indigo-500]="!(reward.get('description')?.invalid && reward.get('description')?.touched)"
+                                placeholder="e.g. 'Spring Boot Certification'" />
+                            @if (getRewardError(reward, 'description')) {
+                            <p class="mt-1 text-xs text-red-600">{{ getRewardError(reward, 'description') }}</p>
+                            }
+                            <p class="mt-0.5 text-xs text-gray-500">{{ reward.get('description')?.value?.length ?? 0 }}/{{ REWARD_DESC_MAX }}</p>
+                        </div>
+
+                        <!-- Row 3: Visibility -->
+                        <div class="flex items-center gap-3 pt-2 border-t border-gray-100">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" formControlName="visibleOnProfile"
+                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                                <span class="text-sm text-gray-600">Visible on participant profile</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                }
+                }
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 border-t border-gray-200 pt-4">
+            <a routerLink="/admin/events"
+                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+                Cancel
+            </a>
+            <button type="submit" [disabled]="form.invalid || submitting"
+                class="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50">
+                {{ submitting ? 'Saving...' : (isEdit ? 'Update Event' : 'Create Event') }}
+            </button>
+        </div>
+    </form>
+    }
+</div>

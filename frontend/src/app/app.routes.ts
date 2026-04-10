@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { LayoutComponent } from './components/layout/layout.component';
 import { FrontLayoutComponent } from './components/front-layout/front-layout.component';
+import { ClientLayoutComponent } from './components/client-layout/client-layout.component';
 
 export const routes: Routes = [
   // Frontoffice (public)
@@ -24,24 +25,14 @@ export const routes: Routes = [
           import('./components/front-project-detail/front-project-detail.component').then((m) => m.FrontProjectDetailComponent),
       },
       {
-        path: 'formations',
+        path: 'events',
         loadComponent: () =>
-          import('./components/front-formation-list/front-formation-list.component').then((m) => m.FrontFormationListComponent),
+          import('./components/front-event-list/front-event-list.component').then((m) => m.FrontEventListComponent),
       },
       {
-        path: 'formations/:id',
+        path: 'events/:id',
         loadComponent: () =>
-          import('./components/front-formation-detail/front-formation-detail.component').then((m) => m.FrontFormationDetailComponent),
-      },
-      {
-        path: 'formations/:formationId/examen/:examenId',
-        loadComponent: () =>
-          import('./components/passer-examen/passer-examen.component').then((m) => m.PasserExamenComponent),
-      },
-      {
-        path: 'certificat/:id',
-        loadComponent: () =>
-          import('./components/certificat-view/certificat-view.component').then((m) => m.CertificatViewComponent),
+          import('./components/front-event-detail/front-event-detail.component').then((m) => m.FrontEventDetailComponent),
       },
     ],
   },
@@ -78,39 +69,68 @@ export const routes: Routes = [
           import('./components/project-details/project-details.component').then((m) => m.ProjectDetailsComponent),
       },
       {
-        path: 'formations',
+        path: 'candidatures',
         loadComponent: () =>
-          import('./components/formation-list/formation-list.component').then((m) => m.FormationListComponent),
+          import('./components/candidature-list/candidature-list.component').then((m) => m.CandidatureListComponent),
       },
       {
-        path: 'formations/new',
+        path: 'contracts',
         loadComponent: () =>
-          import('./components/formation-form/formation-form.component').then((m) => m.FormationFormComponent),
+          import('./components/contract-list/contract-list.component').then((m) => m.ContractListComponent),
       },
       {
-        path: 'formations/:id/edit',
+        path: 'contracts/:id',
         loadComponent: () =>
-          import('./components/formation-form/formation-form.component').then((m) => m.FormationFormComponent),
+          import('./components/contract-details/contract-details.component').then((m) => m.ContractDetailsComponent),
       },
       {
-        path: 'formations/:id',
+        path: 'events',
         loadComponent: () =>
-          import('./components/formation-details/formation-details.component').then((m) => m.FormationDetailsComponent),
+          import('./components/event-list/event-list.component').then((m) => m.EventListComponent),
       },
       {
-        path: 'examens',
+        path: 'events/new',
         loadComponent: () =>
-          import('./components/examen-list/examen-list.component').then((m) => m.ExamenListComponent),
+          import('./components/event-form/event-form.component').then((m) => m.EventFormComponent),
       },
       {
-        path: 'examens/new',
+        path: 'events/:id/edit',
         loadComponent: () =>
-          import('./components/examen-form/examen-form.component').then((m) => m.ExamenFormComponent),
+          import('./components/event-form/event-form.component').then((m) => m.EventFormComponent),
       },
       {
-        path: 'examens/:id',
+        path: 'events/:id',
         loadComponent: () =>
-          import('./components/examen-details/examen-details.component').then((m) => m.ExamenDetailsComponent),
+          import('./components/event-detail/event-detail.component').then((m) => m.EventDetailComponent),
+      },
+      {
+        path: 'events/:id/participants',
+        loadComponent: () =>
+          import('./components/participation-list/participation-list.component').then((m) => m.ParticipationListComponent),
+      },
+    ],
+  },
+
+  // Client dashboard (project owners review applications)
+  {
+    path: 'client',
+    component: ClientLayoutComponent,
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./components/client-dashboard/client-dashboard.component').then((m) => m.ClientDashboardComponent),
+      },
+      {
+        path: 'projects/new',
+        loadComponent: () =>
+          import('./components/client-project-form/client-project-form.component').then((m) => m.ClientProjectFormComponent),
+      },
+      {
+        path: 'projects/:id',
+        loadComponent: () =>
+          import('./components/client-project-detail/client-project-detail.component').then((m) => m.ClientProjectDetailComponent),
       },
     ],
   },

@@ -71,83 +71,6 @@
     </div>
   </div>
 
-  <!-- Inscriptions en attente -->
-  <div class="rounded-xl border-2 border-teal-200 bg-teal-50/50 p-6 shadow-sm">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <div class="rounded-full bg-teal-100 p-4">
-          <svg class="h-8 w-8 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <div>
-          <h3 class="text-lg font-bold text-gray-800">Inscriptions en attente</h3>
-          <p class="text-sm text-gray-600">Validez ou annulez les inscriptions des freelancers aux formations.</p>
-          <p class="mt-1 text-2xl font-bold text-teal-700">{{ inscriptionsEnAttente.length }} inscription(s)</p>
-        </div>
-      </div>
-      <a routerLink="/admin/formations" class="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-medium text-white shadow hover:bg-teal-700 transition">
-        Voir les formations
-      </a>
-    </div>
-    @if (inscriptionsLoading) {
-      <p class="mt-4 text-sm text-gray-500">Chargement…</p>
-    } @else if (inscriptionsEnAttente.length > 0) {
-      <div class="mt-4 overflow-x-auto rounded-lg border border-teal-100 bg-white">
-        <table class="w-full text-left text-sm">
-          <thead class="border-b border-teal-100 bg-teal-50/50">
-            <tr>
-              <th class="px-4 py-2 font-medium text-gray-600">Formation</th>
-              <th class="px-4 py-2 font-medium text-gray-600">Freelancer #</th>
-              <th class="px-4 py-2 font-medium text-gray-600">Date</th>
-              <th class="px-4 py-2 font-medium text-gray-600 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            @for (ins of inscriptionsEnAttente; track ins.id) {
-              <tr class="hover:bg-gray-50">
-                <td class="px-4 py-3 font-medium text-gray-800">{{ ins.formationTitre ?? 'Formation #' + ins.formationId }}</td>
-                <td class="px-4 py-3 text-gray-600">{{ ins.freelancerId }}</td>
-                <td class="px-4 py-3 text-gray-600">{{ ins.dateInscription | date:'short' }}</td>
-                <td class="px-4 py-3 text-right">
-                  <a [routerLink]="['/admin/formations', ins.formationId]" class="text-teal-600 hover:text-teal-800 font-medium">Valider / Gérer</a>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    } @else {
-      <p class="mt-4 text-sm text-gray-500">Aucune inscription en attente.</p>
-    }
-  </div>
-
-  <!-- Examens (Évaluations) - entité visible -->
-  <div class="rounded-xl border-2 border-amber-200 bg-amber-50/50 p-6 shadow-sm">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <div class="rounded-full bg-amber-100 p-4">
-          <svg class="h-8 w-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <div>
-          <h3 class="text-lg font-bold text-gray-800">Examens (Évaluations)</h3>
-          <p class="text-sm text-gray-600">Gérer les examens des formations. Les freelancers passent l'examen pour valider une formation.</p>
-          <p class="mt-1 text-2xl font-bold text-amber-700">{{ examensCount }} examen(s)</p>
-        </div>
-      </div>
-      <div class="flex gap-3">
-        <a routerLink="/admin/examens" class="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-medium text-white shadow hover:bg-amber-700 transition">
-          Voir tous les examens
-        </a>
-        <a routerLink="/admin/examens/new" class="inline-flex items-center gap-2 rounded-lg border-2 border-amber-600 bg-white px-4 py-2.5 text-sm font-medium text-amber-700 hover:bg-amber-50 transition">
-          Nouvel examen
-        </a>
-      </div>
-    </div>
-  </div>
-
   <!-- Recent Projects -->
   <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
     <div class="border-b border-gray-200 px-6 py-4">
@@ -169,7 +92,7 @@
               <td class="px-6 py-4">
                 <a [routerLink]="['/admin/projects', project.id]" class="font-medium text-indigo-600 hover:text-indigo-800">{{ project.title }}</a>
               </td>
-              <td class="px-6 py-4 text-gray-600">{{ project.budget | number:'1.0-0' }} $</td>
+              <td class="px-6 py-4 text-gray-600">{{ project.minBudget | number:'1.0-0' }} - {{ project.maxBudget | number:'1.0-0' }} $</td>
               <td class="px-6 py-4 text-gray-600">{{ project.duration }} days</td>
               <td class="px-6 py-4">
                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"

@@ -5,7 +5,7 @@ import { Project, ProjectRequest, ProjectStatus } from '../models/project.model'
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
-  // Use relative URL so Angular dev server proxy (proxy.conf.json) forwards to backend on 8082
+  // Use relative URL so Angular dev server proxy (proxy.conf.json) forwards to backend on 8081
   private readonly api = '/api/projects';
 
   constructor(private http: HttpClient) {}
@@ -25,6 +25,10 @@ export class ProjectService {
   search(title: string): Observable<Project[]> {
     const params = new HttpParams().set('title', title);
     return this.http.get<Project[]>(`${this.api}/search`, { params });
+  }
+
+  getByClientId(clientId: number): Observable<Project[]> {
+    return this.http.get<Project[]>(`${this.api}/client/${clientId}`);
   }
 
   create(project: ProjectRequest): Observable<Project> {

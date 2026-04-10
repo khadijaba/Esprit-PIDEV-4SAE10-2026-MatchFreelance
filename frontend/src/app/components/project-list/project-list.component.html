@@ -62,7 +62,7 @@
                     {{ project.title }}
                   </a>
                 </td>
-                <td class="px-6 py-4 text-gray-600">{{ project.budget | number:'1.0-0' }} $</td>
+                <td class="px-6 py-4 text-gray-600">{{ project.minBudget | number:'1.0-0' }} - {{ project.maxBudget | number:'1.0-0' }} $</td>
                 <td class="px-6 py-4 text-gray-600">{{ project.duration }} days</td>
                 <td class="px-6 py-4">
                   <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"

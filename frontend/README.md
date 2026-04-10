@@ -1,44 +1,51 @@
-# Frontend Angular — MatchFreelance
+# FreelanceHub — Angular Frontend
 
-Frontend Angular du projet (Gateway + microservices), situé à la racine du projet : `springBoot_pi/frontend`.
+Angular frontend for the Freelancing Platform Back Office.
 
-## Prérequis
+## Prerequisites
 
 - Node.js 18+
 - npm
 
-## Installation
+## Setup
 
 ```bash
-cd springBoot_pi/frontend
+cd angular
 npm install
 ```
 
-## Lancer le frontend
+## Run
 
-1. **Démarrer le backend** (depuis la racine du repo) :
-   - Eureka Server (port 8761)
-   - Gateway (port 8050)
-   - Microservice Formation (inscrit dans Eureka)
-   - Microservice Evaluation (port 8083)
+**1. Start the Spring Boot backend** (from project root):
 
-2. **Démarrer Angular** :
+```bash
+./mvnw spring-boot:run
+```
+
+Backend runs on **http://localhost:8081**
+
+**2. Start the Angular dev server:**
 
 ```bash
 npm start
 ```
 
-L’app tourne sur **http://localhost:4200**. Les appels vers `/api/*` sont proxifiés vers la Gateway (8050).
+Frontend runs on **http://localhost:4200**
 
-## Structure
+API requests to `/api/*` are proxied to the backend automatically.
 
-- **Proxy** : `proxy.conf.json` envoie `/api` → `http://localhost:8050`
-- **Services** : `examen.service.ts`, `formation.service.ts`, etc. utilisent des URLs relatives `/api/...`
+## Features
 
-## Build production
+- **Dashboard** — Overview stats (total projects, open, in progress, total budget) and recent projects
+- **Projects** — List with search, status filter, view, edit, delete
+- **Create/Edit Project** — Form with validation (title, description, budget, duration, status)a
+- **Project Details** — Full project view with edit/delete actions
+- **Toast Notifications** — Success and error feedback for all actions
+- **Responsive Layout** — Sidebar collapses on mobile with overlay
 
-```bash
-npm run build
-```
+## Tech Stack
 
-Les fichiers générés sont dans `dist/`.
+- Angular 21
+- Tailwind CSS 4
+- Standalone components
+- RxJS

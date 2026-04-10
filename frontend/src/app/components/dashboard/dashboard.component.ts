@@ -2,10 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProjectService } from '../../services/project.service';
-import { ExamenService } from '../../services/examen.service';
-import { InscriptionService } from '../../services/inscription.service';
 import { Project, ProjectStatus } from '../../models/project.model';
-import { Inscription } from '../../models/inscription.model';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,29 +13,10 @@ import { Inscription } from '../../models/inscription.model';
 export class DashboardComponent implements OnInit {
   projects: Project[] = [];
   stats = { total: 0, open: 0, inProgress: 0, completed: 0, cancelled: 0, totalBudget: 0 };
-  examensCount = 0;
-  inscriptionsEnAttente: Inscription[] = [];
-  inscriptionsLoading = false;
 
-  constructor(
-    private projectService: ProjectService,
-    private examenService: ExamenService,
-    private inscriptionService: InscriptionService
-  ) {}
+  constructor(private projectService: ProjectService) {}
 
   ngOnInit() {
-    this.examenService.getAll().subscribe({
-      next: (data) => (this.examensCount = data.length),
-      error: () => {},
-    });
-    this.inscriptionsLoading = true;
-    this.inscriptionService.getEnAttente().subscribe({
-      next: (data) => {
-        this.inscriptionsEnAttente = data;
-        this.inscriptionsLoading = false;
-      },
-      error: () => (this.inscriptionsLoading = false),
-    });
     this.projectService.getAll().subscribe((data) => {
       this.projects = data;
       this.stats.total = data.length;
@@ -46,7 +24,7 @@ export class DashboardComponent implements OnInit {
       this.stats.inProgress = data.filter((p) => p.status === 'IN_PROGRESS').length;
       this.stats.completed = data.filter((p) => p.status === 'COMPLETED').length;
       this.stats.cancelled = data.filter((p) => p.status === 'CANCELLED').length;
-      this.stats.totalBudget = data.reduce((sum, p) => sum + p.budget, 0);
+      this.stats.totalBudget = data.reduce((sum, p) => sum + (p.minBudget + p.maxBudget) / 2, 0);
     });
   }
 

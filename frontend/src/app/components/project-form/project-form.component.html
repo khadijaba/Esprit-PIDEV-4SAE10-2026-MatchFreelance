@@ -38,15 +38,25 @@
     </div>
 
     <!-- Budget & Duration -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
       <div>
-        <label for="budget" class="mb-1.5 block text-sm font-medium text-gray-700">Budget ($) *</label>
-        <input id="budget" type="number" [(ngModel)]="form.budget" name="budget" required min="1"
-          #budgetInput="ngModel"
+        <label for="minBudget" class="mb-1.5 block text-sm font-medium text-gray-700">Min Budget ($) *</label>
+        <input id="minBudget" type="number" [(ngModel)]="form.minBudget" name="minBudget" required min="1"
+          #minBudgetInput="ngModel"
+          class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          placeholder="1000" />
+        @if (minBudgetInput.invalid && minBudgetInput.touched) {
+          <p class="mt-1 text-xs text-red-500">Min budget must be positive</p>
+        }
+      </div>
+      <div>
+        <label for="maxBudget" class="mb-1.5 block text-sm font-medium text-gray-700">Max Budget ($) *</label>
+        <input id="maxBudget" type="number" [(ngModel)]="form.maxBudget" name="maxBudget" required min="1"
+          #maxBudgetInput="ngModel"
           class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           placeholder="5000" />
-        @if (budgetInput.invalid && budgetInput.touched) {
-          <p class="mt-1 text-xs text-red-500">Budget must be positive</p>
+        @if (maxBudgetInput.invalid && maxBudgetInput.touched) {
+          <p class="mt-1 text-xs text-red-500">Max budget must be positive</p>
         }
       </div>
       <div>

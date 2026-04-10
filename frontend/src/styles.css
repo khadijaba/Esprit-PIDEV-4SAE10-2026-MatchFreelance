@@ -1,22 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
-/* Design system — plateforme FreelanceHub */
-:root {
-  --fh-primary: 20 184 166;      /* teal-500 */
-  --fh-primary-dark: 13 116 119;  /* teal-700 */
-  --fh-accent: 245 158 11;       /* amber-500 */
-  --fh-surface: 248 250 252;      /* slate-50 */
-  --fh-muted: 100 116 139;       /* slate-400 */
-  --fh-border: 226 232 240;      /* slate-200 */
+html {
+    font-family: 'Inter', system-ui, sans-serif;
 }
 
-/* Focus visible pour accessibilité */
-*:focus-visible {
-  outline: 2px solid rgb(var(--fh-primary));
-  outline-offset: 2px;
+body {
+    @apply antialiased text-slate-600 bg-slate-50;
 }
 
-/* Liens et boutons utilisent la primary */
-a:hover, button:hover {
-  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+/* Glassmorphism utility */
+.glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
 }
