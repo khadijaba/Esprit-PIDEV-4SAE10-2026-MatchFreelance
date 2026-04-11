@@ -1,0 +1,176 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex items-center gap-3">
+    <button (click)="router.navigate(['/admin/events', eventId])" class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800">Event Feedback</h2>
+      @if (stats) {
+        <p class="text-sm text-gray-500">{{ stats.eventTitle }}</p>
+      }
+    </div>
+    <button (click)="showForm = !showForm" class="ml-auto inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+      Leave Feedback
+    </button>
+  </div>
+
+  <!-- Stats Panel -->
+  @if (stats) {
+    <div class="grid gap-6 lg:grid-cols-2">
+      <!-- Average Rating Card -->
+      <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div class="flex items-center gap-6">
+          <div class="text-center">
+            <p class="text-5xl font-bold text-indigo-600">{{ stats.averageRating }}</p>
+            <div class="mt-1 flex items-center gap-0.5">
+              @for (s of stars(Math.round(stats.averageRating)); track $index) {
+                <svg class="h-4 w-4" [class]="s === 'filled' ? 'text-yellow-400' : 'text-gray-300'" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              }
+            </div>
+            <p class="mt-1 text-xs text-gray-500">{{ stats.totalFeedbacks }} reviews</p>
+          </div>
+
+          <!-- Rating Distribution Bars -->
+          <div class="flex-1 space-y-1.5">
+            @for (r of [5, 4, 3, 2, 1]; track r) {
+              <div class="flex items-center gap-2">
+                <span class="w-3 text-xs font-medium text-gray-500">{{ r }}</span>
+                <svg class="h-3.5 w-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                <div class="flex-1 h-2.5 rounded-full bg-gray-100 overflow-hidden">
+                  <div class="h-full rounded-full bg-yellow-400 transition-all" [style.width]="barWidth(stats.ratingDistribution[r] || 0)"></div>
+                </div>
+                <span class="w-6 text-xs text-gray-500 text-right">{{ stats.ratingDistribution[r] || 0 }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm text-center">
+          <p class="text-3xl font-bold text-gray-800">{{ stats.totalFeedbacks }}</p>
+          <p class="text-sm text-gray-500">Total Reviews</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm text-center">
+          <p class="text-3xl font-bold text-gray-800">{{ feedbacks.length }}</p>
+          <p class="text-sm text-gray-500">All (incl. pending)</p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- New Feedback Form -->
+  @if (showForm) {
+    <div class="rounded-xl border border-indigo-200 bg-indigo-50/50 p-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Leave Your Feedback</h3>
+      <div class="space-y-4">
+        <!-- Star Rating -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+          <div class="flex items-center gap-1">
+            @for (r of [1, 2, 3, 4, 5]; track r) {
+              <button (click)="setRating(r)" (mouseenter)="hoverRating = r" (mouseleave)="hoverRating = 0" class="p-0.5">
+                <svg class="h-8 w-8 transition" [class]="r <= (hoverRating || form.rating) ? 'text-yellow-400' : 'text-gray-300'" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </button>
+            }
+            <span class="ml-2 text-sm font-medium text-gray-600">{{ form.rating }}/5</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select [(ngModel)]="form.category" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+              <option value="OVERALL">Overall</option>
+              <option value="CONTENT">Content</option>
+              <option value="ORGANIZATION">Organization</option>
+              <option value="SPEAKER">Speaker</option>
+              <option value="VENUE">Venue</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" [(ngModel)]="form.anonymous" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+              <span class="text-sm text-gray-700">Submit anonymously</span>
+            </label>
+          </div>
+        </div>
+
+        @if (!form.anonymous) {
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Your Name*</label>
+              <input type="text" [(ngModel)]="form.authorName" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="John Doe">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input type="email" [(ngModel)]="form.authorEmail" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="john@example.com">
+            </div>
+          </div>
+        }
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Comment*</label>
+          <textarea [(ngModel)]="form.comment" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="Share your experience..."></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <button (click)="showForm = false" class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
+          <button (click)="submitFeedback()" class="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Submit Feedback</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="flex justify-center py-12">
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+    </div>
+  }
+
+  <!-- Feedbacks List -->
+  @if (!loading && feedbacks.length > 0) {
+    <div class="space-y-3">
+      <h3 class="text-lg font-semibold text-gray-800">All Reviews</h3>
+      @for (fb of feedbacks; track fb.id) {
+        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div class="flex items-start gap-3">
+            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-600 shrink-0">
+              {{ fb.anonymous ? '?' : (fb.authorName ? fb.authorName[0].toUpperCase() : 'U') }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-semibold text-gray-800">{{ fb.anonymous ? 'Anonymous' : (fb.authorName || 'Unknown') }}</span>
+                <span class="rounded-full px-2 py-0.5 text-xs font-medium" [ngClass]="statusClass(fb.status)">{{ fb.status }}</span>
+                <span class="text-xs text-gray-400">{{ fb.createdAt | date:'mediumDate' }}</span>
+              </div>
+              <div class="flex items-center gap-0.5 mb-1">
+                @for (s of stars(fb.rating); track $index) {
+                  <svg class="h-4 w-4" [class]="s === 'filled' ? 'text-yellow-400' : 'text-gray-300'" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                }
+                <span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">{{ fb.category }}</span>
+              </div>
+              @if (fb.comment) {
+                <p class="text-sm text-gray-700">{{ fb.comment }}</p>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,153 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800">Feedback & Reviews</h2>
+      <p class="text-sm text-gray-500">Manage event feedbacks and ratings</p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+    <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <p class="text-xs font-medium text-gray-500">Total</p>
+      <p class="text-2xl font-bold text-gray-800">{{ statCounts.total }}</p>
+    </div>
+    <div class="rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm">
+      <p class="text-xs font-medium text-yellow-600">Pending</p>
+      <p class="text-2xl font-bold text-yellow-700">{{ statCounts.pending }}</p>
+    </div>
+    <div class="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm">
+      <p class="text-xs font-medium text-green-600">Approved</p>
+      <p class="text-2xl font-bold text-green-700">{{ statCounts.approved }}</p>
+    </div>
+    <div class="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
+      <p class="text-xs font-medium text-red-600">Rejected</p>
+      <p class="text-2xl font-bold text-red-700">{{ statCounts.rejected }}</p>
+    </div>
+    <div class="rounded-xl border border-orange-200 bg-orange-50 p-4 shadow-sm">
+      <p class="text-xs font-medium text-orange-600">Flagged</p>
+      <p class="text-2xl font-bold text-orange-700">{{ statCounts.flagged }}</p>
+    </div>
+    <div class="rounded-xl border border-indigo-200 bg-indigo-50 p-4 shadow-sm">
+      <p class="text-xs font-medium text-indigo-600">Avg Rating</p>
+      <div class="flex items-center gap-1">
+        <p class="text-2xl font-bold text-indigo-700">{{ statCounts.avgRating }}</p>
+        <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-wrap gap-3">
+    <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+      <option value="ALL">All Statuses</option>
+      <option value="PENDING">Pending</option>
+      <option value="APPROVED">Approved</option>
+      <option value="REJECTED">Rejected</option>
+      <option value="FLAGGED">Flagged</option>
+    </select>
+    <select [(ngModel)]="categoryFilter" (ngModelChange)="applyFilters()" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+      <option value="ALL">All Categories</option>
+      <option value="OVERALL">Overall</option>
+      <option value="CONTENT">Content</option>
+      <option value="ORGANIZATION">Organization</option>
+      <option value="SPEAKER">Speaker</option>
+      <option value="VENUE">Venue</option>
+    </select>
+  </div>
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="flex justify-center py-12">
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!loading && filtered.length === 0) {
+    <div class="rounded-xl border-2 border-dashed border-gray-300 py-16 text-center">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+      </svg>
+      <p class="mt-2 text-sm text-gray-500">No feedbacks found</p>
+    </div>
+  }
+
+  <!-- Feedback Cards -->
+  @if (!loading && filtered.length > 0) {
+    <div class="space-y-4">
+      @for (fb of filtered; track fb.id) {
+        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <!-- Left: Author & Rating -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-600">
+                  {{ fb.anonymous ? '?' : (fb.authorName ? fb.authorName[0].toUpperCase() : 'U') }}
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-gray-800">{{ fb.anonymous ? 'Anonymous' : (fb.authorName || 'Unknown') }}</p>
+                  <p class="text-xs text-gray-500">{{ fb.createdAt | date:'medium' }}</p>
+                </div>
+              </div>
+
+              <!-- Stars -->
+              <div class="flex items-center gap-0.5 mb-2">
+                @for (s of stars(fb.rating); track $index) {
+                  @if (s === 'filled') {
+                    <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  } @else {
+                    <svg class="h-5 w-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  }
+                }
+                <span class="ml-1 text-sm font-medium text-gray-600">{{ fb.rating }}/5</span>
+              </div>
+
+              <!-- Comment -->
+              @if (fb.comment) {
+                <p class="text-sm text-gray-700 leading-relaxed">{{ fb.comment }}</p>
+              }
+
+              <!-- Tags -->
+              <div class="mt-3 flex flex-wrap gap-2">
+                <a [routerLink]="['/admin/events', fb.eventId]" class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100">
+                  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  {{ fb.eventTitle }}
+                </a>
+                <span class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">{{ fb.category }}</span>
+                <span class="rounded-full px-2.5 py-1 text-xs font-medium" [ngClass]="statusClass(fb.status)">{{ fb.status }}</span>
+              </div>
+            </div>
+
+            <!-- Right: Actions -->
+            <div class="flex items-center gap-1">
+              @if (fb.status === 'PENDING') {
+                <button (click)="approve(fb.id)" title="Approve" class="rounded-lg p-2 text-green-600 hover:bg-green-50">
+                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                </button>
+                <button (click)="reject(fb.id)" title="Reject" class="rounded-lg p-2 text-red-600 hover:bg-red-50">
+                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              }
+              @if (fb.status !== 'FLAGGED') {
+                <button (click)="flag(fb.id)" title="Flag" class="rounded-lg p-2 text-orange-500 hover:bg-orange-50">
+                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" /></svg>
+                </button>
+              }
+              <button (click)="deleteFeedback(fb.id)" title="Delete" class="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-500">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

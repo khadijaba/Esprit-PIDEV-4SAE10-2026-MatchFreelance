@@ -118,6 +118,56 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./components/event-calendar/event-calendar.component').then((m) => m.EventCalendarComponent),
       },
+      {
+        path: 'workspaces',
+        loadComponent: () =>
+          import('./components/workspace-list/workspace-list.component').then((m) => m.WorkspaceListComponent),
+      },
+      {
+        path: 'workspaces/new',
+        loadComponent: () =>
+          import('./components/workspace-form/workspace-form.component').then((m) => m.WorkspaceFormComponent),
+      },
+      {
+        path: 'workspaces/:id/edit',
+        loadComponent: () =>
+          import('./components/workspace-form/workspace-form.component').then((m) => m.WorkspaceFormComponent),
+      },
+      {
+        path: 'workspaces/:id',
+        loadComponent: () =>
+          import('./components/workspace-detail/workspace-detail.component').then((m) => m.WorkspaceDetailComponent),
+      },
+      {
+        path: 'sponsors',
+        loadComponent: () =>
+          import('./components/sponsor-list/sponsor-list.component').then((m) => m.SponsorListComponent),
+      },
+      {
+        path: 'sponsors/new',
+        loadComponent: () =>
+          import('./components/sponsor-form/sponsor-form.component').then((m) => m.SponsorFormComponent),
+      },
+      {
+        path: 'sponsors/:id/edit',
+        loadComponent: () =>
+          import('./components/sponsor-form/sponsor-form.component').then((m) => m.SponsorFormComponent),
+      },
+      {
+        path: 'sponsors/:id',
+        loadComponent: () =>
+          import('./components/sponsor-detail/sponsor-detail.component').then((m) => m.SponsorDetailComponent),
+      },
+      {
+        path: 'feedbacks',
+        loadComponent: () =>
+          import('./components/feedback-list/feedback-list.component').then((m) => m.FeedbackListComponent),
+      },
+      {
+        path: 'events/:eventId/feedbacks',
+        loadComponent: () =>
+          import('./components/feedback-event/feedback-event.component').then((m) => m.FeedbackEventComponent),
+      },
     ],
   },
 

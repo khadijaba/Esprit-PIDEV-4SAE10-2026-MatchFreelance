@@ -1,0 +1,196 @@
+@if (loading) {
+  <div class="flex justify-center py-20">
+    <div class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+  </div>
+}
+
+@if (workspace) {
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-3">
+        <a routerLink="/admin/workspaces" class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </a>
+        <div>
+          <div class="flex items-center gap-3">
+            <h2 class="text-2xl font-bold text-gray-800">{{ workspace.name }}</h2>
+            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="workspaceStatusClass(workspace.status)">
+              {{ workspace.status }}
+            </span>
+          </div>
+          <p class="text-sm text-gray-500">Contract #{{ workspace.contractId }} · {{ workspace.accessLevel }}</p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button (click)="openMilestoneForm()" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Milestone
+        </button>
+        @if (workspace.status === 'ACTIVE') {
+          <button (click)="archiveWorkspace()" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
+            Archive
+          </button>
+        }
+        <button (click)="deleteWorkspace()" class="inline-flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Description & Stats -->
+    <div class="grid gap-6 lg:grid-cols-4">
+      <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-2">
+        <h3 class="text-sm font-medium text-gray-500">Description</h3>
+        <p class="mt-2 text-gray-700 whitespace-pre-wrap">{{ workspace.description || 'No description provided.' }}</p>
+      </div>
+      <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h3 class="text-sm font-medium text-gray-500">Overall Progress</h3>
+        <p class="mt-2 text-3xl font-bold text-gray-800">{{ workspace.overallProgress }}%</p>
+        <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+          <div class="h-full rounded-full transition-all duration-500" [class]="progressColor(workspace.overallProgress)"
+            [style.width.%]="workspace.overallProgress"></div>
+        </div>
+      </div>
+      <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h3 class="text-sm font-medium text-gray-500">Milestones</h3>
+        <p class="mt-2 text-3xl font-bold text-gray-800">{{ workspace.completedMilestones }}<span class="text-lg text-gray-400">/{{ workspace.totalMilestones }}</span></p>
+        <p class="mt-1 text-sm text-gray-500">completed</p>
+      </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div>
+      <h3 class="mb-4 text-lg font-semibold text-gray-800">Milestone Board</h3>
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        @for (status of statusColumns; track status) {
+          <div class="rounded-xl border border-gray-200 bg-gray-50 border-t-4" [class]="columnHeaderColor(status)">
+            <div class="flex items-center justify-between p-3">
+              <h4 class="text-sm font-semibold text-gray-600">{{ statusLabel(status) }}</h4>
+              <span class="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-500 shadow-sm">
+                {{ getMilestonesByStatus(status).length }}
+              </span>
+            </div>
+            <div class="space-y-3 p-3 pt-0 min-h-[100px]">
+              @for (m of getMilestonesByStatus(status); track m.id) {
+                <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition">
+                  <div class="flex items-start justify-between">
+                    <h5 class="font-medium text-gray-800 text-sm">{{ m.title }}</h5>
+                    <div class="flex gap-1">
+                      <button (click)="openMilestoneForm(m)" class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-indigo-600" title="Edit">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button (click)="deleteMilestone(m.id)" class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600" title="Delete">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  @if (m.description) {
+                    <p class="mt-1 text-xs text-gray-500 line-clamp-2">{{ m.description }}</p>
+                  }
+
+                  <!-- Progress bar -->
+                  <div class="mt-3">
+                    <div class="flex items-center justify-between text-xs text-gray-500">
+                      <span>{{ m.progress }}%</span>
+                      @if (m.deadline) {
+                        <span>{{ m.deadline | date:'shortDate' }}</span>
+                      }
+                    </div>
+                    <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                      <div class="h-full rounded-full transition-all duration-300" [class]="progressColor(m.progress)"
+                        [style.width.%]="m.progress"></div>
+                    </div>
+                  </div>
+
+                  @if (m.budgetAllocated) {
+                    <p class="mt-2 text-xs text-gray-400">Budget: ${{ m.budgetAllocated | number:'1.2-2' }}</p>
+                  }
+
+                  <!-- Quick actions -->
+                  <div class="mt-3 flex gap-1">
+                    @if (m.status !== 'COMPLETED') {
+                      <button (click)="completeMilestone(m)" class="rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-100">
+                        Complete
+                      </button>
+                    }
+                    @if (m.status === 'TODO') {
+                      <button (click)="updateMilestoneProgress(m, 10)" class="rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100">
+                        Start
+                      </button>
+                    }
+                  </div>
+                </div>
+              } @empty {
+                <p class="py-4 text-center text-xs text-gray-400">No milestones</p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Milestone Form Modal -->
+  @if (showMilestoneForm) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" (click)="closeMilestoneForm()">
+      <div class="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">{{ editingMilestone ? 'Edit' : 'New' }} Milestone</h3>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+            <input type="text" [(ngModel)]="newMilestone.title" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="Milestone title">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea [(ngModel)]="newMilestone.description" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="Describe this milestone..."></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+              <input type="date" [(ngModel)]="newMilestone.deadline" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Budget ($)</label>
+              <input type="number" [(ngModel)]="newMilestone.budgetAllocated" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="0.00">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select [(ngModel)]="newMilestone.status" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <option value="TODO">To Do</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="REVIEW">Review</option>
+                <option value="COMPLETED">Completed</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Assignee ID</label>
+              <input type="number" [(ngModel)]="newMilestone.assigneeId" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="Optional">
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-3">
+          <button (click)="closeMilestoneForm()" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
+            Cancel
+          </button>
+          <button (click)="saveMilestone()" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+            {{ editingMilestone ? 'Update' : 'Create' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+}
