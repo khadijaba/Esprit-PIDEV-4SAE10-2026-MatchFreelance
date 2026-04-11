@@ -94,6 +94,8 @@ export class EventFormComponent implements OnInit {
             teamEvent: [false],
             status: ['UPCOMING', Validators.required],
             createdById: [null],
+            imageUrl: [''],
+            requiredSkills: [''],
             plannedRewards: this.fb.array([]),
         }, { validators: endDateAfterStartDate });
 
@@ -117,6 +119,8 @@ export class EventFormComponent implements OnInit {
                             teamEvent: event.teamEvent ?? false,
                             status: event.status,
                             createdById: event.createdById ?? null,
+                            imageUrl: event.imageUrl ?? '',
+                            requiredSkills: event.requiredSkills ?? '',
                         });
                         this.plannedRewards.clear();
                         (event.plannedRewards || []).forEach((r: { type?: string; value?: string; description?: string; visibleOnProfile?: boolean }) => {

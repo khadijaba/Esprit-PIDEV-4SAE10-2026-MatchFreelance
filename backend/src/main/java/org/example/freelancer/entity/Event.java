@@ -53,6 +53,12 @@ public class Event {
 
     private Long createdById;
 
+    @Column(columnDefinition = "TEXT")
+    private String imageUrl;
+
+    @Column(columnDefinition = "TEXT")
+    private String requiredSkills;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
@@ -165,6 +171,22 @@ public class Event {
 
     public void setCreatedById(Long createdById) {
         this.createdById = createdById;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String getRequiredSkills() {
+        return requiredSkills;
+    }
+
+    public void setRequiredSkills(String requiredSkills) {
+        this.requiredSkills = requiredSkills;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -142,6 +142,27 @@
 
         <!-- Eligibility Criteria -->
         <div>
+            <label for="imageUrl" class="block text-sm font-medium text-gray-700">Banner Image URL</label>
+            <div class="mt-1 flex gap-3">
+                <input id="imageUrl" formControlName="imageUrl" type="url"
+                    class="block w-full rounded-lg border border-gray-300 px-4 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    placeholder="https://example.com/event-banner.jpg" />
+            </div>
+            @if (form.get('imageUrl')?.value) {
+            <div class="mt-2 overflow-hidden rounded-lg border border-gray-200">
+                <img [src]="form.get('imageUrl')?.value" alt="Banner preview"
+                    class="h-32 w-full object-cover"
+                    (error)="form.get('imageUrl')?.setErrors({invalidUrl: true})" />
+            </div>
+            }
+            @if (form.get('imageUrl')?.errors?.['invalidUrl']) {
+            <p class="mt-1 text-sm text-red-600">Could not load image. Check the URL.</p>
+            }
+            <p class="mt-0.5 text-xs text-gray-500">Optional. Provide a URL for the event banner image.</p>
+        </div>
+
+        <!-- Eligibility Criteria (original) -->
+        <div>
             <label for="eligibilityCriteria" class="block text-sm font-medium text-gray-700">Eligibility
                 Criteria</label>
             <textarea id="eligibilityCriteria" formControlName="eligibilityCriteria" rows="3"
@@ -160,6 +181,15 @@
         </div>
 
         <!-- Planned Rewards -->
+        <div>
+            <label for="requiredSkills" class="block text-sm font-medium text-gray-700">Required Skills</label>
+            <input id="requiredSkills" formControlName="requiredSkills" type="text"
+                class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                placeholder="Angular, Java, Python, Docker (comma-separated)" />
+            <p class="mt-0.5 text-xs text-gray-500">Comma-separated list of skills required for this event. Used for filtering.</p>
+        </div>
+
+        <!-- Planned Rewards (original) -->
         <div class="space-y-4">
             <div class="flex items-center justify-between">
                 <label class="block text-sm font-medium text-gray-700">Planned Rewards</label>

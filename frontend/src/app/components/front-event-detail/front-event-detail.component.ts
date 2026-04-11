@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EventService } from '../../services/event.service';
 import { ToastService } from '../../services/toast.service';
+import { NotificationService } from '../../services/notification.service';
 import { Event, Participation } from '../../models/event.model';
 
 @Component({
@@ -37,7 +38,8 @@ export class FrontEventDetailComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private eventService: EventService,
-        private toast: ToastService
+        private toast: ToastService,
+        private notificationService: NotificationService
     ) { }
 
     ngOnInit() {
@@ -78,6 +80,14 @@ export class FrontEventDetailComponent implements OnInit {
                 this.toast.success('Successfully registered!');
                 this.participantCount++;
                 this.registering = false;
+                // Trigger notification
+                this.notificationService.notifyRegistration(this.event!.title, this.event!.id);
+                // Schedule a reminder 30 minutes before the event starts
+                this.notificationService.scheduleEventReminder(
+                    this.event!.id,
+                    this.event!.title,
+                    this.event!.startDate
+                );
             },
             error: (err) => {
                 const msg = typeof err.error === 'string' ? err.error : 'Registration failed';

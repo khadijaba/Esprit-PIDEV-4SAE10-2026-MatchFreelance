@@ -1,0 +1,168 @@
+<section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <div class="text-center mb-10">
+        <h1 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Event Calendar</h1>
+        <p class="mx-auto mt-3 max-w-2xl text-lg text-gray-500">Browse upcoming hackathons, webinars, and challenges at a glance.</p>
+    </div>
+
+    @if (loading) {
+    <div class="mt-12 flex justify-center">
+        <div class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+    </div>
+    }
+
+    @if (!loading) {
+    <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <!-- Calendar Header -->
+        <div class="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50 px-6 py-4">
+            <div class="flex items-center gap-3">
+                <button (click)="prevMonth()"
+                    class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white p-2 text-gray-600 shadow-sm transition hover:bg-gray-50 hover:text-gray-900">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <h2 class="text-xl font-bold text-gray-900 min-w-[200px] text-center">{{ monthLabel }}</h2>
+                <button (click)="nextMonth()"
+                    class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white p-2 text-gray-600 shadow-sm transition hover:bg-gray-50 hover:text-gray-900">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
+            <button (click)="goToday()"
+                class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700">
+                Today
+            </button>
+        </div>
+
+        <!-- Weekday Headers -->
+        <div class="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
+            @for (day of weekDays; track day) {
+            <div class="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                {{ day }}
+            </div>
+            }
+        </div>
+
+        <!-- Calendar Grid -->
+        @for (week of weeks; track $index) {
+        <div class="grid grid-cols-7 divide-x divide-gray-100">
+            @for (day of week; track day.date.toISOString()) {
+            <div
+                (click)="selectDay(day)"
+                class="min-h-[100px] cursor-pointer border-b border-gray-100 p-2 transition-colors"
+                [class.bg-white]="day.isCurrentMonth && !day.isToday"
+                [class.bg-gray-50]="!day.isCurrentMonth"
+                [class.bg-indigo-50]="day.isToday"
+                [class.ring-2]="selectedDay === day"
+                [class.ring-indigo-500]="selectedDay === day"
+                [class.ring-inset]="selectedDay === day">
+
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium"
+                        [class.text-gray-900]="day.isCurrentMonth && !day.isToday"
+                        [class.text-gray-400]="!day.isCurrentMonth"
+                        [class.text-indigo-700]="day.isToday"
+                        [class.font-bold]="day.isToday">
+                        {{ day.date.getDate() }}
+                    </span>
+                    @if (day.isToday) {
+                    <span class="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
+                        {{ day.date.getDate() }}
+                    </span>
+                    }
+                    @if (day.events.length > 0) {
+                    <span class="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+                        {{ day.events.length }}
+                    </span>
+                    }
+                </div>
+
+                <!-- Event dots -->
+                <div class="mt-1 flex flex-wrap gap-1">
+                    @for (event of day.events.slice(0, 3); track event.id) {
+                    <div class="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs"
+                        [class]="typeColor(event.type) + ' text-white'">
+                        <span class="truncate max-w-[80px]">{{ event.title }}</span>
+                    </div>
+                    }
+                    @if (day.events.length > 3) {
+                    <span class="text-xs text-gray-500 font-medium">+{{ day.events.length - 3 }} more</span>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+        }
+    </div>
+
+    <!-- Legend -->
+    <div class="mt-6 flex flex-wrap items-center gap-4 justify-center">
+        <span class="text-sm font-medium text-gray-500">Event Types:</span>
+        <div class="flex items-center gap-1.5">
+            <span class="h-3 w-3 rounded-full bg-purple-500"></span>
+            <span class="text-xs text-gray-600">Hackathon</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+            <span class="h-3 w-3 rounded-full bg-amber-500"></span>
+            <span class="text-xs text-gray-600">Challenge</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+            <span class="h-3 w-3 rounded-full bg-blue-500"></span>
+            <span class="text-xs text-gray-600">Webinar</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+            <span class="h-3 w-3 rounded-full bg-emerald-500"></span>
+            <span class="text-xs text-gray-600">Milestone</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+            <span class="h-3 w-3 rounded-full bg-pink-500"></span>
+            <span class="text-xs text-gray-600">Community</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+            <span class="h-3 w-3 rounded-full bg-orange-500"></span>
+            <span class="text-xs text-gray-600">Skill Race</span>
+        </div>
+    </div>
+
+    <!-- Selected Day Detail Panel -->
+    @if (selectedDay && selectedDay.events.length > 0) {
+    <div class="mt-8 rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50 p-6 shadow-sm">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">
+            📅 Events on {{ selectedDay.date | date:'fullDate' }}
+        </h3>
+        <div class="space-y-3">
+            @for (event of selectedDay.events; track event.id) {
+            <a [routerLink]="['/events', event.id]"
+                class="flex items-center gap-4 rounded-xl border border-white/60 bg-white p-4 shadow-sm transition hover:shadow-md hover:-translate-y-0.5">
+                <span class="text-2xl">{{ typeIcon(event.type) }}</span>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <h4 class="font-semibold text-gray-900 truncate">{{ event.title }}</h4>
+                        <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium" [class]="statusClass(event.status)">
+                            {{ event.status }}
+                        </span>
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500 line-clamp-1">{{ event.description || 'No description' }}</p>
+                    <div class="mt-1 flex items-center gap-3 text-xs text-gray-400">
+                        <span>{{ event.startDate | date:'shortTime' }} - {{ event.endDate | date:'shortTime' }}</span>
+                        <span>{{ event.maxParticipants ?? '∞' }} spots</span>
+                        <span class="uppercase">{{ event.type | lowercase }}</span>
+                    </div>
+                </div>
+                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </a>
+            }
+        </div>
+    </div>
+    }
+
+    @if (selectedDay && selectedDay.events.length === 0) {
+    <div class="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
+        <p class="text-gray-500">No events on {{ selectedDay.date | date:'fullDate' }}</p>
+    </div>
+    }
+    }
+</section>

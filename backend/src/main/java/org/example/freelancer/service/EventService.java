@@ -101,6 +101,8 @@ public class EventService {
                     event.setMaxParticipants(updated.getMaxParticipants());
                     event.setTeamEvent(updated.isTeamEvent());
                     event.setStatus(updated.getStatus());
+                    event.setImageUrl(updated.getImageUrl());
+                    event.setRequiredSkills(updated.getRequiredSkills());
 
                     if (updated.getPlannedRewards() != null) {
                         event.getPlannedRewards().clear();

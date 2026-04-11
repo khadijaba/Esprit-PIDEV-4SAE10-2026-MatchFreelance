@@ -30,6 +30,11 @@ export const routes: Routes = [
           import('./components/front-event-list/front-event-list.component').then((m) => m.FrontEventListComponent),
       },
       {
+        path: 'events/calendar',
+        loadComponent: () =>
+          import('./components/event-calendar/event-calendar.component').then((m) => m.EventCalendarComponent),
+      },
+      {
         path: 'events/:id',
         loadComponent: () =>
           import('./components/front-event-detail/front-event-detail.component').then((m) => m.FrontEventDetailComponent),
@@ -107,6 +112,11 @@ export const routes: Routes = [
         path: 'events/:id/participants',
         loadComponent: () =>
           import('./components/participation-list/participation-list.component').then((m) => m.ParticipationListComponent),
+      },
+      {
+        path: 'events-calendar',
+        loadComponent: () =>
+          import('./components/event-calendar/event-calendar.component').then((m) => m.EventCalendarComponent),
       },
     ],
   },

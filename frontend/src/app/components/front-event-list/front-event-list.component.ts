@@ -24,6 +24,10 @@ export class FrontEventListComponent implements OnInit {
     aiSearchLoading = false;
     aiSearchResults: Event[] = [];
 
+    // Skill Filter State
+    allSkills: string[] = [];
+    selectedSkills: string[] = [];
+
     private destroyRef = inject(DestroyRef);
 
     constructor(
@@ -43,6 +47,7 @@ export class FrontEventListComponent implements OnInit {
                 next: (data) => {
                     this.events = data;
                     this.filteredEvents = data;
+                    this.extractSkills();
                     this.loading = false;
                 },
                 error: () => {
@@ -117,5 +122,55 @@ export class FrontEventListComponent implements OnInit {
 
     typeLabel(type: string): string {
         return type.replace(/_/g, ' ');
+    }
+
+    extractSkills() {
+        const skillSet = new Set<string>();
+        this.events.forEach(event => {
+            if (event.requiredSkills) {
+                event.requiredSkills.split(',').forEach(s => {
+                    const trimmed = s.trim();
+                    if (trimmed) skillSet.add(trimmed);
+                });
+            }
+        });
+        this.allSkills = Array.from(skillSet).sort();
+    }
+
+    toggleSkill(skill: string) {
+        const idx = this.selectedSkills.indexOf(skill);
+        if (idx >= 0) {
+            this.selectedSkills = this.selectedSkills.filter(s => s !== skill);
+        } else {
+            this.selectedSkills = [...this.selectedSkills, skill];
+        }
+        this.applySkillFilter();
+    }
+
+    isSkillSelected(skill: string): boolean {
+        return this.selectedSkills.includes(skill);
+    }
+
+    clearSkillFilter() {
+        this.selectedSkills = [];
+        this.applySkillFilter();
+    }
+
+    applySkillFilter() {
+        if (this.aiSearchActive) return; // Don't override AI search results
+        if (this.selectedSkills.length === 0) {
+            this.filteredEvents = this.events;
+            return;
+        }
+        this.filteredEvents = this.events.filter(event => {
+            if (!event.requiredSkills) return false;
+            const eventSkills = event.requiredSkills.split(',').map(s => s.trim().toLowerCase());
+            return this.selectedSkills.some(skill => eventSkills.includes(skill.toLowerCase()));
+        });
+    }
+
+    getEventSkills(event: Event): string[] {
+        if (!event.requiredSkills) return [];
+        return event.requiredSkills.split(',').map(s => s.trim()).filter(s => s.length > 0);
     }
 }

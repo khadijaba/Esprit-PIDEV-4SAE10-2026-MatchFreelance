@@ -16,6 +16,8 @@ export interface Event {
   teamEvent: boolean;
   status: EventStatus;
   createdById: number | null;
+  imageUrl: string | null;
+  requiredSkills: string | null;
   createdAt: string;
   updatedAt: string;
   plannedRewards?: Reward[];
@@ -32,6 +34,8 @@ export interface EventRequest {
   teamEvent?: boolean;
   status?: EventStatus;
   createdById?: number | null;
+  imageUrl?: string | null;
+  requiredSkills?: string | null;
   plannedRewards?: RewardRequest[];
 }
 

@@ -24,6 +24,11 @@
           class="text-sm font-medium text-slate-600 transition hover:text-slate-900">
           Events
         </a>
+        <a routerLink="/events/calendar" routerLinkActive="text-indigo-600"
+          [routerLinkActiveOptions]="{exact:true}"
+          class="text-sm font-medium text-slate-600 transition hover:text-slate-900">
+          Calendar
+        </a>
         <a routerLink="/client" routerLinkActive="text-indigo-600"
           class="text-sm font-medium text-slate-600 transition hover:text-slate-900">
           Client Dashboard
@@ -32,6 +37,7 @@
 
       <!-- User Menu -->
       <div class="flex items-center gap-4">
+        <app-notification-bell />
         @if (auth.currentUser(); as user) {
         @if (user.role === 'FREELANCER') {
         <div
