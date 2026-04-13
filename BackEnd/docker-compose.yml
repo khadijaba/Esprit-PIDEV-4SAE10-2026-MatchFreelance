@@ -1,0 +1,299 @@
+x-ms-common: &ms-common
+  restart: unless-stopped
+  networks:
+    - microservices-network
+  environment: &ms-env
+    EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka/
+    SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+    SPRING_DATASOURCE_USERNAME: root
+    SPRING_DATASOURCE_PASSWORD: root
+  depends_on: &ms-depends
+    mysql-ms:
+      condition: service_healthy
+    eureka:
+      condition: service_started
+    config-server:
+      condition: service_started
+
+services:
+
+  # ── Base de données ──────────────────────────────────────────
+  mysql-ms:
+    image: mysql:8.0
+    container_name: mysql-ms
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: skill
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_ms_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  # ── Infrastructure Spring ────────────────────────────────────
+  eureka:
+    build:
+      context: ${BACKEND_ROOT}/Eureka
+    image: emna450/backend-eureka:latest
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  config-server:
+    build:
+      context: ${BACKEND_ROOT}/ConfigServer
+    image: emna450/backend-config-server:latest
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  gateway:
+    build:
+      context: ${BACKEND_ROOT}/ApiGateway
+    image: emna450/api-gateway:latest
+    container_name: gateway-service
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+      SERVER_PORT: "8086"
+    ports:
+      - "8065:8086"
+    depends_on:
+      - eureka
+      - config-server
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.5
+    container_name: keycloak
+    command: start-dev
+    ports:
+      - "8180:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  # ── Microservices ────────────────────────────────────────────
+  skill-ms:
+    <<: *ms-common
+    build:
+      context: ${BACKEND_ROOT}/Microservices/Skill
+    image: emna450/backend-skill:latest
+    container_name: skill-ms
+    environment:
+      <<: *ms-env
+      SERVER_PORT: "8083"
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-ms:3306/skill?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    ports:
+      - "8083:8083"
+    depends_on:
+      <<: *ms-depends
+
+  project-ms:
+    <<: *ms-common
+    build:
+      context: ${BACKEND_ROOT}/Microservices/Project
+    image: emna450/backend-project:latest
+    container_name: project-ms
+    environment:
+      <<: *ms-env
+      SERVER_PORT: "8084"
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-ms:3306/project?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    ports:
+      - "8084:8084"
+    depends_on:
+      <<: *ms-depends
+
+  user-ms:
+    <<: *ms-common
+    build:
+      context: ${BACKEND_ROOT}/Microservices/User
+    image: emna450/backend-user:latest
+    container_name: user-ms
+    environment:
+      <<: *ms-env
+      SERVER_PORT: "8085"
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-ms:3306/user?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/matchfreelancer/protocol/openid-connect/certs
+    ports:
+      - "8085:8085"
+    depends_on:
+      <<: *ms-depends
+      keycloak:
+        condition: service_started
+
+  formation-ms:
+    <<: *ms-common
+    build:
+      context: ${BACKEND_ROOT}/Microservices/Formation
+    image: emna450/backend-formation:latest
+    container_name: formation-ms
+    environment:
+      <<: *ms-env
+      SERVER_PORT: "8081"
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-ms:3306/FormationDB?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    ports:
+      - "8081:8081"
+    depends_on:
+      <<: *ms-depends
+
+  candidature-ms:
+    <<: *ms-common
+    build:
+      context: ${BACKEND_ROOT}/Microservices/Candidature
+    image: emna450/backend-candidature:latest
+    container_name: candidature-ms
+    environment:
+      <<: *ms-env
+      SERVER_PORT: "8087"
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-ms:3306/freelancing_candidatures?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    ports:
+      - "8087:8087"
+    depends_on:
+      <<: *ms-depends
+
+  interview-ms:
+    <<: *ms-common
+    build:
+      context: ${BACKEND_ROOT}/Microservices/Interview
+    image: emna450/backend-interview:latest
+    container_name: interview-ms
+    environment:
+      <<: *ms-env
+      SERVER_PORT: "8089"
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-ms:3306/freelancing_interviews?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    ports:
+      - "8089:8089"
+    depends_on:
+      <<: *ms-depends
+
+  contract-ms:
+    <<: *ms-common
+    build:
+      context: ${BACKEND_ROOT}/Microservices/Contract
+    image: emna450/backend-contract:latest
+    container_name: contract-ms
+    environment:
+      <<: *ms-env
+      SERVER_PORT: "8088"
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-ms:3306/freelancing_contracts?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    ports:
+      - "8088:8088"
+    depends_on:
+      <<: *ms-depends
+
+  # ── DevOps ───────────────────────────────────────────────────
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  sonar-db:
+    image: postgres:15
+    container_name: sonar-db
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonarqube
+    volumes:
+      - sonar_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sonarqube
+    depends_on:
+      - sonar-db
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  # ── Monitoring ───────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge
+
+volumes:
+  mysql_ms_data:
+  keycloak_data:
+  jenkins_home:
+  sonar_db_data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  prometheus_data:
+  grafana_data:

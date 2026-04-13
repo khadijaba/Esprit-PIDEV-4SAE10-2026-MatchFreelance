@@ -53,8 +53,10 @@ public class CandidatureService {
         assertProjectOwner(projectId, clientId);
         List<Candidature> candidatures = candidatureRepository.findByProjectId(projectId);
         Map<Long, String> freelancerNames = resolveFreelancerNames(candidatures);
+        // Ne pas appeler le microservice INTERVIEW ici : le front charge les entretiens via
+        // GET /api/interviews/candidature/{id} (évite appels Feign en chaîne, timeouts et 500).
         return candidatures.stream()
-                .map(c -> toResponseDTO(c, freelancerNames, clientId))
+                .map(c -> toResponseDTO(c, freelancerNames, null))
                 .collect(Collectors.toList());
     }
 

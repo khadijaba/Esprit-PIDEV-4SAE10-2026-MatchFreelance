@@ -12,9 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Rôles realm Keycloak ({@code realm_access.roles}) → {@code ROLE_*} pour Spring Security.
- */
+
 public class KeycloakRealmRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
 
     @Override
