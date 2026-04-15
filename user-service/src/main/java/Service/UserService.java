@@ -45,6 +45,34 @@ public class UserService {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        
+        // Create admin user on startup if none exists
+        createAdminUserIfNotExists();
+    }
+
+    private void createAdminUserIfNotExists() {
+        try {
+            // Check if any admin user exists
+            List<User> adminUsers = userRepository.findByRole(Role.ADMIN);
+            if (adminUsers.isEmpty()) {
+                // Create default admin user
+                User adminUser = User.builder()
+                        .firstName("Admin")
+                        .lastName("User")
+                        .email("admin@demo.com")
+                        .password(passwordEncoder.encode("admin123"))
+                        .role(Role.ADMIN)
+                        .birthDate(java.time.LocalDate.now())
+                        .address("System Generated")
+                        .enabled(true)
+                        .build();
+                
+                userRepository.save(adminUser);
+                logger.info("✓ Default admin user created: admin@demo.com / admin123");
+            }
+        } catch (Exception e) {
+            logger.error("Failed to create admin user: {}", e.getMessage());
+        }
     }
 
     // Generate 6-digit verification code
@@ -306,6 +334,28 @@ public class UserService {
         userRepository.save(user);
 
         logger.info("✓ User status updated: {} is now {}", user.getEmail(), enabled ? "enabled" : "disabled");
+    }
+
+    // ─── ADMIN METHODS ───────────────────────────────────────────
+    
+    public List<User> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        // Clear passwords for security
+        users.forEach(user -> user.setPassword(null));
+        return users;
+    }
+
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        // Prevent deleting admin users
+        if (user.getRole() == Role.ADMIN) {
+            throw new RuntimeException("Impossible de supprimer un utilisateur administrateur");
+        }
+
+        userRepository.delete(user);
+        logger.info("✓ User deleted: {}", user.getEmail());
     }
 
     private double calculateEuclideanDistance(String desc1, String desc2) {
