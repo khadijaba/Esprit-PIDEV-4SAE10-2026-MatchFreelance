@@ -176,6 +176,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./components/visio-call/visio-call.component').then((m) => m.VisioCallComponent),
       },
+      {
+        path: 'productivity',
+        loadComponent: () =>
+          import('./components/productivity-board/productivity-board.component').then((m) => m.ProductivityBoardComponent),
+      },
     ],
   },
 

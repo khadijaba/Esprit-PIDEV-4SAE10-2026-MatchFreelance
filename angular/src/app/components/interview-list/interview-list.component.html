@@ -31,6 +31,38 @@
           }
         </select>
       </div>
+      @if (role === 'client') {
+        <div>
+          <label class="mb-1.5 block text-xs font-medium text-[var(--fiverr-dark)]">Nom freelancer</label>
+          <input type="text" [(ngModel)]="nameFilter" placeholder="Rechercher par nom"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-2 focus:ring-[var(--fiverr-green)]/20" />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-xs font-medium text-[var(--fiverr-dark)]">Fiabilité min.</label>
+          <select [(ngModel)]="minFiabilityFilter"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-2 focus:ring-[var(--fiverr-green)]/20">
+            @for (opt of fiabilityOptions; track opt.value) {
+              <option [ngValue]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+      }
+      @if (role === 'freelancer') {
+        <div>
+          <label class="mb-1.5 block text-xs font-medium text-[var(--fiverr-dark)]">Nom client</label>
+          <input type="text" [(ngModel)]="nameFilter" placeholder="Rechercher par nom"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-2 focus:ring-[var(--fiverr-green)]/20" />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-xs font-medium text-[var(--fiverr-dark)]">Fiabilité min.</label>
+          <select [(ngModel)]="minFiabilityFilter"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-2 focus:ring-[var(--fiverr-green)]/20">
+            @for (opt of fiabilityOptions; track opt.value) {
+              <option [ngValue]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+      }
       @if (isAdmin) {
         <div>
           <label class="mb-1.5 block text-xs font-medium text-[var(--fiverr-dark)]">ID Projet</label>
@@ -73,6 +105,11 @@
       <p class="mt-4 font-medium text-[var(--fiverr-dark)]">Aucun entretien</p>
       <p class="mt-1 text-sm text-[var(--fiverr-gray)]">Modifiez les filtres ou attendez de nouvelles propositions.</p>
     </div>
+  } @else if (filteredInterviews.length === 0) {
+    <div class="rounded-xl border border-dashed border-gray-200 bg-white p-16 text-center shadow-sm">
+      <p class="font-medium text-[var(--fiverr-dark)]">Aucun entretien ne correspond aux filtres (nom / fiabilité).</p>
+      <p class="mt-1 text-sm text-[var(--fiverr-gray)]">Modifiez le nom ou la fiabilité min.</p>
+    </div>
   } @else {
     <!-- Stats strip (workload for freelancer only; per-interview fiabilité is in the table) -->
     @if (role === 'freelancer' && workloadLabel) {
@@ -89,6 +126,12 @@
             <tr>
               <th class="px-5 py-3.5 font-semibold text-[var(--fiverr-dark)]">Date / Heure</th>
               <th class="px-5 py-3.5 font-semibold text-[var(--fiverr-dark)]">Temps restant</th>
+              @if (role === 'client') {
+                <th class="px-5 py-3.5 font-semibold text-[var(--fiverr-dark)]">Freelancer</th>
+              }
+              @if (role === 'freelancer') {
+                <th class="px-5 py-3.5 font-semibold text-[var(--fiverr-dark)]">Client</th>
+              }
               @if (role === 'client') {
                 <th class="px-5 py-3.5 font-semibold text-[var(--fiverr-dark)]">Fiabilité freelancer</th>
               }
@@ -110,7 +153,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            @for (i of interviews; track i.id) {
+            @for (i of filteredInterviews; track i.id) {
               <tr class="transition hover:bg-[var(--fiverr-gray-light)]/50"
                 [class.cursor-pointer]="detailLink(i)"
                 (click)="detailLink(i) && goToDetail(i)"
@@ -123,6 +166,12 @@
                 <td class="px-5 py-4 text-[var(--fiverr-gray)]">
                   {{ timeLeftLabel(i) }}
                 </td>
+                @if (role === 'client') {
+                  <td class="px-5 py-4 font-medium text-[var(--fiverr-dark)]">{{ displayNamesByUserId[i.freelancerId] || ('#' + i.freelancerId) }}</td>
+                }
+                @if (role === 'freelancer') {
+                  <td class="px-5 py-4 font-medium text-[var(--fiverr-dark)]">{{ displayNamesByUserId[i.ownerId] || ('#' + i.ownerId) }}</td>
+                }
                 @if (role === 'client') {
                   <td class="px-5 py-4">
                     <span class="font-medium text-[var(--fiverr-green)]">{{ getReliabilityLabel(i) }}</span>
@@ -177,43 +226,45 @@
                   }
                 </td>
                 <td class="px-5 py-4 text-right" (click)="$event.stopPropagation()">
+                  <div class="flex flex-wrap items-center justify-end gap-2">
                   @if (i.status === 'PROPOSED') {
                     @if (role === 'freelancer') {
-                      <button (click)="confirm(i)" class="rounded-lg bg-[var(--fiverr-green)] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[var(--fiverr-green-hover)] mr-1.5">Accepter</button>
-                      <button (click)="reject(i)" class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50">Refuser</button>
+                      <button type="button" (click)="confirm(i)" class="inline-flex shrink-0 rounded-lg bg-[var(--fiverr-green)] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[var(--fiverr-green-hover)]">Accepter</button>
+                      <button type="button" (click)="reject(i)" class="inline-flex shrink-0 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50">Refuser</button>
                     } @else if (role === 'client') {
-                      <button (click)="cancel(i)" class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50">Annuler</button>
+                      <button type="button" (click)="cancel(i)" class="inline-flex shrink-0 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50">Annuler</button>
                     } @else {
-                      <button (click)="confirm(i)" class="rounded-lg bg-[var(--fiverr-green)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--fiverr-green-hover)] mr-1.5">Accepter</button>
-                      <button (click)="cancel(i)" class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--fiverr-gray)] hover:bg-gray-50 mr-1.5">Annuler</button>
-                      <button (click)="reject(i)" class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">Refuser</button>
+                      <button type="button" (click)="confirm(i)" class="inline-flex shrink-0 rounded-lg bg-[var(--fiverr-green)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--fiverr-green-hover)]">Accepter</button>
+                      <button type="button" (click)="cancel(i)" class="inline-flex shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--fiverr-gray)] hover:bg-gray-50">Annuler</button>
+                      <button type="button" (click)="reject(i)" class="inline-flex shrink-0 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">Refuser</button>
                     }
                   } @else if (i.status === 'CONFIRMED') {
                     @if (role === 'freelancer') {
                       @if (isPastEnd(i)) {
-                        <button (click)="complete(i)" class="rounded-lg bg-[var(--fiverr-green)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--fiverr-green-hover)] mr-1.5">Terminé</button>
-                        <button (click)="noShow(i)" class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--fiverr-gray)] hover:bg-gray-50">No show</button>
+                        <button type="button" (click)="complete(i)" class="inline-flex shrink-0 rounded-lg bg-[var(--fiverr-green)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--fiverr-green-hover)]">Terminé</button>
+                        <button type="button" (click)="noShow(i)" class="inline-flex shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--fiverr-gray)] hover:bg-gray-50">No show</button>
                       } @else {
-                        <button (click)="cancel(i)" class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50">Refuser</button>
+                        <button type="button" (click)="cancel(i)" class="inline-flex shrink-0 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50">Refuser</button>
                       }
                     } @else if (role === 'client') {
                       @if (isPastEnd(i)) {
-                        <button (click)="complete(i)" class="rounded-lg bg-[var(--fiverr-green)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--fiverr-green-hover)] mr-1.5">Terminé</button>
-                        <button (click)="noShow(i)" class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--fiverr-gray)] hover:bg-gray-50">No show</button>
+                        <button type="button" (click)="complete(i)" class="inline-flex shrink-0 rounded-lg bg-[var(--fiverr-green)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--fiverr-green-hover)]">Terminé</button>
+                        <button type="button" (click)="noShow(i)" class="inline-flex shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--fiverr-gray)] hover:bg-gray-50">No show</button>
                       } @else {
-                        <button (click)="cancel(i)" class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 mr-1.5">Annuler</button>
+                        <button type="button" (click)="cancel(i)" class="inline-flex shrink-0 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">Annuler</button>
                       }
                     } @else {
                       @if (isPastEnd(i)) {
-                        <button (click)="complete(i)" class="rounded-lg bg-[var(--fiverr-green)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--fiverr-green-hover)] mr-1.5">Terminé</button>
-                        <button (click)="noShow(i)" class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--fiverr-gray)] hover:bg-gray-50">No show</button>
+                        <button type="button" (click)="complete(i)" class="inline-flex shrink-0 rounded-lg bg-[var(--fiverr-green)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--fiverr-green-hover)]">Terminé</button>
+                        <button type="button" (click)="noShow(i)" class="inline-flex shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--fiverr-gray)] hover:bg-gray-50">No show</button>
                       } @else {
-                        <button (click)="cancel(i)" class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--fiverr-gray)] hover:bg-gray-50 mr-1.5">Annuler</button>
+                        <button type="button" (click)="cancel(i)" class="inline-flex shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-[var(--fiverr-gray)] hover:bg-gray-50">Annuler</button>
                       }
                     }
                   } @else {
                     <span class="text-xs text-[var(--fiverr-gray)]">—</span>
                   }
+                  </div>
                 </td>
               </tr>
             }
