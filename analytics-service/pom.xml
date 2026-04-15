@@ -15,7 +15,7 @@
     <artifactId>analytics-service</artifactId>
     <version>1.0.0</version>
     <name>Analytics Service</name>
-    <description>Reactive microservice with PostgreSQL (R2DBC) — advanced stack vs JPA/MySQL</description>
+    <description>Reactive microservice with MySQL (R2DBC)</description>
 
     <properties>
         <java.version>17</java.version>
@@ -44,13 +44,14 @@
             <artifactId>spring-boot-starter-data-r2dbc</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>r2dbc-postgresql</artifactId>
+            <groupId>io.asyncer</groupId>
+            <artifactId>r2dbc-mysql</artifactId>
+            <version>1.0.5</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>

@@ -45,6 +45,12 @@ export const routes: Routes = [
         canActivate: [roleGuard(['FREELANCER'])],
       },
       {
+        path: 'applications',
+        loadComponent: () =>
+          import('./components/freelancer-applications/freelancer-applications.component').then((m) => m.FreelancerApplicationsComponent),
+        canActivate: [roleGuard(['FREELANCER'])],
+      },
+      {
         path: 'contracts/:id',
         loadComponent: () =>
           import('./components/freelancer-contract-detail/freelancer-contract-detail.component').then((m) => m.FreelancerContractDetailComponent),
