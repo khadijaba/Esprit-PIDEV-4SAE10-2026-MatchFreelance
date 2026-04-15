@@ -30,9 +30,12 @@ public class AdminController {
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         try {
             userService.deleteUser(id);
-            return ResponseEntity.ok("Utilisateur supprimé avec succès");
+            return ResponseEntity.ok(java.util.Map.of(
+                "message", "Utilisateur supprimé avec succès",
+                "success", true
+            ));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         }
     }
 
@@ -42,14 +45,18 @@ public class AdminController {
         try {
             Boolean enabled = request.get("enabled");
             if (enabled == null) {
-                return ResponseEntity.badRequest().body("Enabled status is required");
+                return ResponseEntity.badRequest().body(java.util.Map.of("error", "Enabled status is required"));
             }
             
             userService.updateUserStatus(id, enabled);
             String status = enabled ? "activé" : "désactivé";
-            return ResponseEntity.ok("Utilisateur " + status + " avec succès");
+            return ResponseEntity.ok(java.util.Map.of(
+                "message", "Utilisateur " + status + " avec succès",
+                "success", true,
+                "enabled", enabled
+            ));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         }
     }
 }
