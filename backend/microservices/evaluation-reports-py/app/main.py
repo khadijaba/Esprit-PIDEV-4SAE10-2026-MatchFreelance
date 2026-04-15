@@ -1,4 +1,4 @@
-﻿"""API FastAPI — rapports PDF, graphiques et résumé exécutif (module Évaluation)."""
+"""API FastAPI — rapports PDF, graphiques et résumé exécutif (module Évaluation)."""
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,6 +6,7 @@ from fastapi.responses import Response, JSONResponse
 from pydantic import BaseModel, Field, model_validator
 
 from app.charts import evolution_png, histogram_png
+from app.exam_auto_generate import build_examen_from_modules
 from app.pdf_report import build_dashboard_pdf, build_executive_summary
 
 PREFIX = "/api/evaluation-reports"
@@ -61,6 +62,17 @@ class ExecutiveSummaryRequest(BaseModel):
     evolution_values: list[float] = Field(..., min_length=1)
 
 
+class AutoExamenGenerateRequest(BaseModel):
+    """Payload envoyé par le microservice Evaluation (Java), clés JSON camelCase."""
+
+    formationId: int
+    titreFormation: str = ""
+    modules: list[dict] = Field(..., min_length=1)
+    suffixeTitre: str | None = None
+    seuilReussi: int = Field(60, ge=0, le=100)
+    useLlm: bool | None = None
+
+
 @app.get("/health")
 def health():
     return {"status": "UP", "service": "evaluation-reports-py"}
@@ -90,6 +102,24 @@ def post_executive_summary(body: ExecutiveSummaryRequest):
         return build_executive_summary(body.scores, body.evolution_values)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f'{type(e).__name__}: {e}') from e
+
+
+@app.post(f"{PREFIX}/exam/auto-generate")
+def post_auto_generate_examen(body: AutoExamenGenerateRequest):
+    """
+    Squelette d'examen QCM (points / difficultés / lots parcours) pour création via Evaluation Java.
+    """
+    try:
+        return build_examen_from_modules(
+            formation_id=body.formationId,
+            titre_formation=body.titreFormation or "",
+            modules=body.modules,
+            suffixe_titre=body.suffixeTitre,
+            seuil_reussi=body.seuilReussi,
+            use_llm=body.useLlm,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @app.post(f"{PREFIX}/reports/pdf")

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExamenQuestionRedactionUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.service</a> &gt; <span class="el_source">ExamenQuestionRedactionUtil.java</span></div><h1>ExamenQuestionRedactionUtil.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.service;
+
+import java.util.Map;
+
+/**
+ * Rédaction de QCM « réels » (énoncé + distracteurs crédibles) à partir des métadonnées module / formation.
+ */
+public final class ExamenQuestionRedactionUtil {
+
+    private ExamenQuestionRedactionUtil() {
+    }
+
+    public static String str(Object o) {
+<span class="nc bnc" id="L14" title="All 2 branches missed.">        return o != null ? o.toString() : &quot;&quot;;</span>
+    }
+
+    public static int parseOrdreModule(Object o) {
+<span class="nc bnc" id="L18" title="All 2 branches missed.">        if (o == null) {</span>
+<span class="nc" id="L19">            return 0;</span>
+        }
+        try {
+<span class="nc" id="L22">            return Integer.parseInt(o.toString());</span>
+<span class="nc" id="L23">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L24">            return 0;</span>
+        }
+    }
+
+    public static String shorten(String s, int max) {
+<span class="nc bnc" id="L29" title="All 4 branches missed.">        if (s == null || s.length() &lt;= max) {</span>
+<span class="nc bnc" id="L30" title="All 2 branches missed.">            return s != null ? s : &quot;&quot;;</span>
+        }
+<span class="nc" id="L32">        return s.substring(0, Math.max(0, max - 3)) + &quot;...&quot;;</span>
+    }
+
+    public static String themeDepuisModule(String modTitre) {
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        return shorten(modTitre == null ? &quot;&quot; : modTitre.trim(), 120);</span>
+    }
+
+    /**
+     * Énoncé +4 options ; la bonne réponse métier est toujours &lt;strong&gt;A&lt;/strong&gt; (affirmation correcte pédagogique).
+     */
+    public static String[] redigerQcmDepuisModule(String modTitre, String description, int variante) {
+<span class="nc bnc" id="L43" title="All 4 branches missed.">        String titre = (modTitre == null || modTitre.isBlank()) ? &quot;Module&quot; : modTitre.trim();</span>
+<span class="nc" id="L44">        String titreCourt = shorten(titre, 72);</span>
+<span class="nc bnc" id="L45" title="All 4 branches missed.">        String ctx = (description == null || description.isBlank())</span>
+<span class="nc" id="L46">                ? &quot;&quot;</span>
+<span class="nc" id="L47">                : &quot; Rappel : &quot; + shorten(description.trim(), 180);</span>
+
+<span class="nc bnc" id="L49" title="All 4 branches missed.">        String enonce = switch (variante % 4) {</span>
+<span class="nc" id="L50">            case 0 -&gt; &quot;Concernant le module « &quot;</span>
+                    + titreCourt
+                    + &quot; », quelle affirmation décrit le mieux ce qu'un apprenant doit en retirer ?&quot;
+                    + ctx;
+<span class="nc" id="L54">            case 1 -&gt; &quot;Pour le module « &quot;</span>
+                    + titreCourt
+                    + &quot; », laquelle de ces propositions correspond à une attente réaliste de la formation ?&quot;
+                    + ctx;
+<span class="nc" id="L58">            case 2 -&gt; &quot;Dans le cadre du module « &quot;</span>
+                    + titreCourt
+                    + &quot; », quelle réponse est la plus cohérente avec un objectif pédagogique sérieux ?&quot;
+                    + ctx;
+<span class="nc" id="L62">            default -&gt; &quot;À propos de « &quot;</span>
+                    + titreCourt
+                    + &quot; », identifiez l'affirmation la plus juste du point de vue apprentissage.&quot;
+                    + ctx;
+        };
+
+<span class="nc" id="L68">        String a = &quot;Les objectifs du module sont atteints en suivant les activités proposées et en reliant le contenu à des situations concrètes.&quot;;</span>
+<span class="nc" id="L69">        String b = &quot;Ce module est purement informatif : aucune compétence n'est attendue après son étude.&quot;;</span>
+<span class="nc" id="L70">        String c = &quot;Le contenu peut être sauté sans impact sur la compréhension du reste de la formation.&quot;;</span>
+<span class="nc" id="L71">        String d = &quot;La validation repose uniquement sur la mémorisation de listes, sans mise en pratique.&quot;;</span>
+
+<span class="nc" id="L73">        return new String[] { shorten(enonce, 1000), a, b, c, d };</span>
+    }
+
+    /** QCM lorsqu'aucun module n'est disponible : ancrage sur le titre de formation. */
+    public static String[] redigerQcmDepuisFormationSeule(String formationTitre, int variante) {
+<span class="nc bnc" id="L78" title="All 4 branches missed.">        String t = (formationTitre == null || formationTitre.isBlank())</span>
+<span class="nc" id="L79">                ? &quot;cette formation&quot;</span>
+<span class="nc" id="L80">                : &quot;« &quot; + shorten(formationTitre.trim(), 64) + &quot; »&quot;;</span>
+<span class="nc bnc" id="L81" title="All 3 branches missed.">        String enonce = switch (variante % 3) {</span>
+<span class="nc" id="L82">            case 0 -&gt; &quot;Pour la formation &quot; + t + &quot;, quelle affirmation reflète le mieux une attente raisonnable pour l'apprenant ?&quot;;</span>
+<span class="nc" id="L83">            case 1 -&gt; &quot;Dans le parcours &quot; + t + &quot;, quelle proposition est la plus cohérente avec un dispositif de formation professionnelle ?&quot;;</span>
+<span class="nc" id="L84">            default -&gt; &quot;Concernant &quot; + t + &quot;, identifiez l'affirmation la plus juste concernant l'acquisition de compétences.&quot;;</span>
+        };
+<span class="nc" id="L86">        String a = &quot;La formation vise des compétences mobilisables et propose des mises en situation ou exercices pour les ancrer.&quot;;</span>
+<span class="nc" id="L87">        String b = &quot;La formation ne fixe aucun objectif mesurable : le suivi des acquis est optionnel.&quot;;</span>
+<span class="nc" id="L88">        String c = &quot;Les contenus sont décorrélés des besoins métier et n'ont pas à être appliqués en contexte réel.&quot;;</span>
+<span class="nc" id="L89">        String d = &quot;La réussite se limite à la présence aux séances, sans vérification des acquis.&quot;;</span>
+<span class="nc" id="L90">        return new String[] { shorten(enonce, 1000), a, b, c, d };</span>
+    }
+
+    public static Map&lt;String, Object&gt; modulePourIndex(java.util.List&lt;Map&lt;String, Object&gt;&gt; modules, int index) {
+<span class="nc bnc" id="L94" title="All 4 branches missed.">        if (modules == null || modules.isEmpty()) {</span>
+<span class="nc" id="L95">            return null;</span>
+        }
+<span class="nc" id="L97">        return modules.get(Math.floorMod(index, modules.size()));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

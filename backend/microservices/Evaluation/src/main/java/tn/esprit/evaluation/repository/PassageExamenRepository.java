@@ -27,4 +27,7 @@ public interface PassageExamenRepository extends JpaRepository<PassageExamen, Lo
     Optional<PassageExamen> findByExamenIdAndFreelancerIdWithExamen(@Param("examenId") Long examenId, @Param("freelancerId") Long freelancerId);
 
     boolean existsByExamenIdAndFreelancerId(Long examenId, Long freelancerId);
+
+    @Query("SELECT p FROM PassageExamen p JOIN FETCH p.examen e WHERE p.freelancerId = :freelancerId AND e.formationId = :formationId ORDER BY p.datePassage DESC")
+    List<PassageExamen> findByFreelancerIdAndFormationId(@Param("freelancerId") Long freelancerId, @Param("formationId") Long formationId);
 }

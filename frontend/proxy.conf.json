@@ -1,23 +1,51 @@
-{
-  "/api/evaluation-reports": {
-    "target": "http://localhost:8090",
+[
+  {
+    "context": ["/api/evaluation-reports", "/api/evaluation-reports/**"],
+       "target": "http://127.0.0.1:8090",
     "secure": false,
     "changeOrigin": true,
-    "logLevel": "debug",
+    "logLevel": "warn",
     "ws": false
   },
-  "/api/modules": {
-    "target": "http://localhost:8081",
+  {
+    "context": ["/api/modules", "/api/modules/**"],
+    "target": "http://127.0.0.1:8081",
     "secure": false,
     "changeOrigin": true,
-    "logLevel": "debug",
+    "logLevel": "warn",
     "ws": false
   },
-  "/api": {
-    "target": "http://localhost:8050",
+  {
+    "context": ["/api/projects", "/api/projects/**"],
+    "target": "http://127.0.0.1:8084",
+    "pathRewrite": { "^/api/projects": "/projects" },
     "secure": false,
     "changeOrigin": true,
-    "logLevel": "debug",
+    "logLevel": "warn",
+    "ws": false
+  },
+  {
+    "context": ["/api/examens", "/api/examens/**"],
+    "target": "http://127.0.0.1:8083",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "warn",
+    "ws": false
+  },
+  {
+    "context": ["/api/certificats", "/api/certificats/**"],
+    "target": "http://127.0.0.1:8083",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "warn",
+    "ws": false
+  },
+  {
+    "context": ["/api"],
+    "target": "http://127.0.0.1:8050",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "warn",
     "ws": false
   }
-}
+]

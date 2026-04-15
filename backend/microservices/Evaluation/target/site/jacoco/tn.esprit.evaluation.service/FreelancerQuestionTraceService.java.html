@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FreelancerQuestionTraceService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.service</a> &gt; <span class="el_source">FreelancerQuestionTraceService.java</span></div><h1>FreelancerQuestionTraceService.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import tn.esprit.evaluation.entity.FreelancerQuestionTrace;
+import tn.esprit.evaluation.entity.Question;
+import tn.esprit.evaluation.repository.FreelancerQuestionTraceRepository;
+import tn.esprit.evaluation.util.QcmReponseNormalizer;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class FreelancerQuestionTraceService {
+
+    private final FreelancerQuestionTraceRepository traceRepository;
+
+    @Transactional
+    public void enregistrerResultats(Long freelancerId, List&lt;Question&gt; questions, List&lt;String&gt; reponses) {
+<span class="nc bnc" id="L22" title="All 4 branches missed.">        if (freelancerId == null || questions == null) {</span>
+<span class="nc" id="L23">            return;</span>
+        }
+<span class="nc bnc" id="L25" title="All 2 branches missed.">        for (int i = 0; i &lt; questions.size(); i++) {</span>
+<span class="nc" id="L26">            Question q = questions.get(i);</span>
+<span class="nc bnc" id="L27" title="All 2 branches missed.">            if (q.getId() == null) {</span>
+<span class="nc" id="L28">                continue;</span>
+            }
+<span class="nc bnc" id="L30" title="All 2 branches missed.">            String brute = i &lt; reponses.size() ? reponses.get(i) : null;</span>
+<span class="nc" id="L31">            boolean ok = QcmReponseNormalizer.reponseQcmCorrecte(brute, q.getBonneReponse());</span>
+
+<span class="nc" id="L33">            FreelancerQuestionTrace trace = traceRepository</span>
+<span class="nc" id="L34">                    .findByFreelancerIdAndQuestion_Id(freelancerId, q.getId())</span>
+<span class="nc" id="L35">                    .orElseGet(() -&gt; FreelancerQuestionTrace.builder()</span>
+<span class="nc" id="L36">                            .freelancerId(freelancerId)</span>
+<span class="nc" id="L37">                            .question(q)</span>
+<span class="nc" id="L38">                            .wrongCount(0)</span>
+<span class="nc" id="L39">                            .correctCount(0)</span>
+<span class="nc" id="L40">                            .lastWasWrong(false)</span>
+<span class="nc" id="L41">                            .build());</span>
+<span class="nc bnc" id="L42" title="All 2 branches missed.">            if (ok) {</span>
+<span class="nc" id="L43">                trace.setCorrectCount(trace.getCorrectCount() + 1);</span>
+<span class="nc" id="L44">                trace.setLastWasWrong(false);</span>
+            } else {
+<span class="nc" id="L46">                trace.setWrongCount(trace.getWrongCount() + 1);</span>
+<span class="nc" id="L47">                trace.setLastWasWrong(true);</span>
+            }
+<span class="nc" id="L49">            trace.setUpdatedAt(LocalDateTime.now());</span>
+<span class="nc" id="L50">            traceRepository.save(trace);</span>
+        }
+<span class="nc" id="L52">    }</span>
+
+    public List&lt;Long&gt; listerQuestionIdsRatéesHistoriquement(Long freelancerId, Long examenId) {
+<span class="nc" id="L55">        return traceRepository.findQuestionIdsRatéesHistoriquement(freelancerId, examenId);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

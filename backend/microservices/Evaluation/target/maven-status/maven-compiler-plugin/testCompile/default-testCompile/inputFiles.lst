@@ -1,2 +1,4 @@
 C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\test\java\tn\esprit\evaluation\EvaluationApplicationTests.java
 C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\test\java\tn\esprit\evaluation\service\PassageExamenServiceTest.java
+C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\test\java\tn\esprit\evaluation\util\QcmReponseNormalizerTest.java
+C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\test\java\tn\esprit\evaluation\util\QuestionDifficultyPonderationTest.java

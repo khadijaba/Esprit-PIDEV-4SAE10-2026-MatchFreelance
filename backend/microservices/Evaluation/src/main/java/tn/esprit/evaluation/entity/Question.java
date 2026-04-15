@@ -3,6 +3,7 @@ package tn.esprit.evaluation.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import tn.esprit.evaluation.domain.NiveauDifficulteQuestion;
 
 /**
  * Question QCM d'un examen. Une seule bonne réponse (A, B, C ou D).
@@ -46,4 +47,35 @@ public class Question {
     /** Bonne réponse : A, B, C ou D */
     @Column(name = "bonne_reponse", nullable = false, length = 1)
     private String bonneReponse;
+
+    /** Lot parcours : COMMUN (les deux), STANDARD ou RENFORCEMENT uniquement. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "parcours_inclusion", nullable = false, length = 20)
+    @Builder.Default
+    private ParcoursInclusion parcoursInclusion = ParcoursInclusion.COMMUN;
+
+    /** Pour l’examen adaptatif : FACILE / MOYEN / DIFFICILE. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "niveau_difficulte", nullable = false, length = 20)
+    @Builder.Default
+    private NiveauDifficulteQuestion niveauDifficulte = NiveauDifficulteQuestion.MOYEN;
+
+    /**
+     * Thème pédagogique (ex. "SQL", "Angular") pour relier les erreurs à des modules Formation / fiches.
+     */
+    @Column(name = "theme", length = 120)
+    private String theme;
+
+    /**
+     * Compétence métier évaluée par la question (ex. « Java », « Networking »). Si vide, le score par compétence
+     * retombe sur {@link #theme} puis sur « Autres ».
+     */
+    @Column(name = "skill", length = 120)
+    private String skill;
+
+    /**
+     * Explication pédagogique (pourquoi la bonne réponse est correcte) — affichée dans la correction détaillée.
+     */
+    @Column(name = "explication", length = 2000)
+    private String explication;
 }

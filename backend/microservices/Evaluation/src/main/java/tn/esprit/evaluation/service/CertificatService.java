@@ -10,6 +10,7 @@ import tn.esprit.evaluation.exception.ResourceNotFoundException;
 import tn.esprit.evaluation.repository.CertificatRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,6 +58,13 @@ public class CertificatService {
         return certificatRepository.findByPassageExamenIdWithPassageAndExamen(passageExamenId)
                 .map(CertificatDto::fromEntity)
                 .orElseThrow(() -> new ResourceNotFoundException("Aucun certificat pour ce passage: " + passageExamenId));
+    }
+
+    /** Pour enrichir un passage réussi sans lever d'exception si le certificat n'existe pas encore. */
+    @Transactional(readOnly = true)
+    public Optional<CertificatDto> findByPassageExamenIdOptional(Long passageExamenId) {
+        return certificatRepository.findByPassageExamenIdWithPassageAndExamen(passageExamenId)
+                .map(CertificatDto::fromEntity);
     }
 
     @Transactional(readOnly = true)

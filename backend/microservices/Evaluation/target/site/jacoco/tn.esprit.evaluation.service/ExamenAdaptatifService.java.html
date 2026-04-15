@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExamenAdaptatifService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.service</a> &gt; <span class="el_source">ExamenAdaptatifService.java</span></div><h1>ExamenAdaptatifService.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import tn.esprit.evaluation.ExamenMetierConstants;
+import tn.esprit.evaluation.domain.TypeParcours;
+import tn.esprit.evaluation.dto.*;
+import tn.esprit.evaluation.entity.ExamenAdaptatifEtape;
+import tn.esprit.evaluation.entity.ExamenAdaptatifSession;
+import tn.esprit.evaluation.entity.Question;
+import tn.esprit.evaluation.exception.ResourceNotFoundException;
+import tn.esprit.evaluation.repository.ExamenAdaptatifSessionRepository;
+import tn.esprit.evaluation.repository.ExamenRepository;
+import tn.esprit.evaluation.repository.PassageExamenRepository;
+import tn.esprit.evaluation.repository.QuestionRepository;
+import tn.esprit.evaluation.util.QcmReponseNormalizer;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * Examen adaptatif : après chaque bonne réponse la difficulté augmente, après une erreur elle diminue.
+ */
+@Service
+@RequiredArgsConstructor
+public class ExamenAdaptatifService {
+
+    @Value(&quot;${app.examen.adaptatif.nb-questions:7}&quot;)
+    private int nbQuestionsCible;
+
+    private final ExamenAdaptatifSessionRepository sessionRepository;
+    private final ExamenRepository examenRepository;
+    private final QuestionRepository questionRepository;
+    private final PassageExamenRepository passageExamenRepository;
+    private final PassageExamenService passageExamenService;
+
+    @Transactional
+    public AdaptatifDemarrageDto demarrer(Long examenId, DemarrerAdaptatifRequest req) {
+<span class="nc bnc" id="L42" title="All 2 branches missed.">        if (!examenRepository.existsById(examenId)) {</span>
+<span class="nc" id="L43">            throw new ResourceNotFoundException(&quot;Examen&quot;, examenId);</span>
+        }
+
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        ReponseExamenRequest.ModePassage mode = req.getMode() != null</span>
+<span class="nc" id="L47">                ? req.getMode()</span>
+<span class="nc" id="L48">                : ReponseExamenRequest.ModePassage.CERTIFIANT;</span>
+
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        if (mode == ReponseExamenRequest.ModePassage.CERTIFIANT</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">                &amp;&amp; passageExamenRepository.existsByExamenIdAndFreelancerId(examenId, req.getFreelancerId())) {</span>
+<span class="nc" id="L52">            throw new RuntimeException(&quot;Ce freelancer a déjà passé cet examen.&quot;);</span>
+        }
+
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        TypeParcours typeParcours = req.getTypeParcours() != null ? req.getTypeParcours() : TypeParcours.STANDARD;</span>
+<span class="nc" id="L56">        List&lt;Question&gt; pool = poolFiltre(examenId, typeParcours);</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        int minPool = mode == ReponseExamenRequest.ModePassage.ENTRAINEMENT</span>
+<span class="nc" id="L58">                ? 1</span>
+<span class="nc" id="L59">                : ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN;</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (pool.size() &lt; minPool) {</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">            throw new RuntimeException(mode == ReponseExamenRequest.ModePassage.ENTRAINEMENT</span>
+<span class="nc" id="L62">                    ? &quot;Aucune question pour ce parcours (examen adaptatif).&quot;</span>
+<span class="nc" id="L63">                    : (&quot;L'examen adaptatif certifiant nécessite au moins &quot;</span>
+                    + ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN
+                    + &quot; questions pour ce parcours (actuellement : &quot;
+<span class="nc" id="L66">                    + pool.size()</span>
+                    + &quot;). Ajoutez des questions avec des niveaux FACILE, MOYEN et DIFFICILE.&quot;));
+        }
+
+<span class="nc" id="L70">        sessionRepository.annulerSessionsEnCours(</span>
+                examenId,
+<span class="nc" id="L72">                req.getFreelancerId(),</span>
+                ExamenAdaptatifSession.StatutSession.EN_COURS,
+                ExamenAdaptatifSession.StatutSession.ANNULEE);
+
+<span class="nc" id="L76">        ExamenAdaptatifSession session = ExamenAdaptatifSession.builder()</span>
+<span class="nc" id="L77">                .token(UUID.randomUUID().toString())</span>
+<span class="nc" id="L78">                .examenId(examenId)</span>
+<span class="nc" id="L79">                .freelancerId(req.getFreelancerId())</span>
+<span class="nc" id="L80">                .typeParcours(typeParcours)</span>
+<span class="nc" id="L81">                .modePassage(mode)</span>
+<span class="nc" id="L82">                .difficulteCibleRang(2)</span>
+<span class="nc" id="L83">                .statut(ExamenAdaptatifSession.StatutSession.EN_COURS)</span>
+<span class="nc" id="L84">                .expiresAt(LocalDateTime.now().plusHours(4))</span>
+<span class="nc" id="L85">                .build();</span>
+
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        int minSession = mode == ReponseExamenRequest.ModePassage.ENTRAINEMENT</span>
+<span class="nc" id="L88">                ? 1</span>
+<span class="nc" id="L89">                : ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN;</span>
+<span class="nc" id="L90">        int total = Math.max(minSession, Math.min(nbQuestionsCible, pool.size()));</span>
+<span class="nc" id="L91">        Set&lt;Long&gt; vide = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L92">        Question first = pickQuestion(pool, vide, 2);</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        if (first == null) {</span>
+<span class="nc" id="L94">            first = pickRelax(pool, vide, 2);</span>
+        }
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        if (first == null) {</span>
+<span class="nc" id="L97">            throw new RuntimeException(&quot;Impossible de choisir une première question pour l'examen adaptatif.&quot;);</span>
+        }
+<span class="nc" id="L99">        session.setQuestionCouranteId(first.getId());</span>
+<span class="nc" id="L100">        sessionRepository.save(session);</span>
+
+<span class="nc" id="L102">        return AdaptatifDemarrageDto.builder()</span>
+<span class="nc" id="L103">                .token(session.getToken())</span>
+<span class="nc" id="L104">                .question(toQuestionSansReponse(first, examenId))</span>
+<span class="nc" id="L105">                .numeroQuestion(1)</span>
+<span class="nc" id="L106">                .questionsTotal(total)</span>
+<span class="nc" id="L107">                .difficulteCible(rankToLabel(2))</span>
+<span class="nc" id="L108">                .build();</span>
+    }
+
+    @Transactional
+    public AdaptatifEtapeReponseDto repondre(Long examenId, String token, AdaptatifRepondreRequest body) {
+<span class="nc" id="L113">        ExamenAdaptatifSession session = sessionRepository.findByTokenAndExamenIdWithEtapes(token, examenId)</span>
+<span class="nc" id="L114">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Session adaptative introuvable ou expirée.&quot;));</span>
+
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        if (session.getStatut() != ExamenAdaptatifSession.StatutSession.EN_COURS) {</span>
+<span class="nc" id="L117">            throw new RuntimeException(&quot;Cette session d'examen n'est plus active.&quot;);</span>
+        }
+<span class="nc bnc" id="L119" title="All 2 branches missed.">        if (session.getExpiresAt().isBefore(LocalDateTime.now())) {</span>
+<span class="nc" id="L120">            session.setStatut(ExamenAdaptatifSession.StatutSession.ANNULEE);</span>
+<span class="nc" id="L121">            sessionRepository.save(session);</span>
+<span class="nc" id="L122">            throw new RuntimeException(&quot;Session expirée. Redémarrez un examen adaptatif.&quot;);</span>
+        }
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        if (!Objects.equals(session.getQuestionCouranteId(), body.getQuestionId())) {</span>
+<span class="nc" id="L125">            throw new RuntimeException(&quot;La question soumise ne correspond pas à la question en cours.&quot;);</span>
+        }
+
+<span class="nc" id="L128">        List&lt;Question&gt; poolValidation = poolFiltre(examenId, session.getTypeParcours());</span>
+<span class="nc" id="L129">        Question q = poolValidation.stream()</span>
+<span class="nc" id="L130">                .filter(x -&gt; Objects.equals(x.getId(), body.getQuestionId()))</span>
+<span class="nc" id="L131">                .findFirst()</span>
+<span class="nc" id="L132">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Question&quot;, body.getQuestionId()));</span>
+
+<span class="nc" id="L134">        String rep = QcmReponseNormalizer.extraireLettreReponse(body.getReponse());</span>
+<span class="nc" id="L135">        boolean correct = QcmReponseNormalizer.reponseQcmCorrecte(body.getReponse(), q.getBonneReponse());</span>
+
+<span class="nc" id="L137">        int ordre = session.getEtapes().size();</span>
+<span class="nc" id="L138">        ExamenAdaptatifEtape etape = ExamenAdaptatifEtape.builder()</span>
+<span class="nc" id="L139">                .session(session)</span>
+<span class="nc" id="L140">                .questionId(q.getId())</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">                .reponseChoisie(rep.isEmpty() ? &quot;?&quot; : rep)</span>
+<span class="nc" id="L142">                .correct(correct)</span>
+<span class="nc" id="L143">                .ordre(ordre)</span>
+<span class="nc" id="L144">                .build();</span>
+<span class="nc" id="L145">        session.getEtapes().add(etape);</span>
+
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        int nextRank = correct</span>
+<span class="nc" id="L148">                ? Math.min(3, session.getDifficulteCibleRang() + 1)</span>
+<span class="nc" id="L149">                : Math.max(1, session.getDifficulteCibleRang() - 1);</span>
+<span class="nc" id="L150">        session.setDifficulteCibleRang(nextRank);</span>
+
+<span class="nc" id="L152">        List&lt;Question&gt; pool = poolFiltre(examenId, session.getTypeParcours());</span>
+<span class="nc" id="L153">        Set&lt;Long&gt; dejaPosees = session.getEtapes().stream()</span>
+<span class="nc" id="L154">                .map(ExamenAdaptatifEtape::getQuestionId)</span>
+<span class="nc" id="L155">                .collect(Collectors.toSet());</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        int minSession = session.getModePassage() == ReponseExamenRequest.ModePassage.ENTRAINEMENT</span>
+<span class="nc" id="L157">                ? 1</span>
+<span class="nc" id="L158">                : ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN;</span>
+<span class="nc" id="L159">        int totalCible = Math.max(minSession, Math.min(nbQuestionsCible, pool.size()));</span>
+
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        if (session.getEtapes().size() &gt;= totalCible) {</span>
+<span class="nc" id="L162">            return finaliserSession(session, examenId, correct, nextRank);</span>
+        }
+
+<span class="nc" id="L165">        Question next = pickQuestion(pool, dejaPosees, nextRank);</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">        if (next == null) {</span>
+<span class="nc" id="L167">            next = pickRelax(pool, dejaPosees, nextRank);</span>
+        }
+<span class="nc bnc" id="L169" title="All 2 branches missed.">        if (next == null) {</span>
+<span class="nc" id="L170">            return finaliserSession(session, examenId, correct, nextRank);</span>
+        }
+
+<span class="nc" id="L173">        session.setQuestionCouranteId(next.getId());</span>
+<span class="nc" id="L174">        sessionRepository.save(session);</span>
+
+<span class="nc" id="L176">        return AdaptatifEtapeReponseDto.builder()</span>
+<span class="nc" id="L177">                .reponseCorrecte(correct)</span>
+<span class="nc" id="L178">                .termine(false)</span>
+<span class="nc" id="L179">                .difficulteApresAjustement(rankToLabel(nextRank))</span>
+<span class="nc" id="L180">                .numeroQuestion(session.getEtapes().size() + 1)</span>
+<span class="nc" id="L181">                .questionsTotal(totalCible)</span>
+<span class="nc" id="L182">                .prochaineQuestion(toQuestionSansReponse(next, examenId))</span>
+<span class="nc" id="L183">                .build();</span>
+    }
+
+    private AdaptatifEtapeReponseDto finaliserSession(
+            ExamenAdaptatifSession session,
+            Long examenId,
+            boolean derniereReponseCorrecte,
+            int dernierRang) {
+
+<span class="nc" id="L192">        session.setStatut(ExamenAdaptatifSession.StatutSession.TERMINEE);</span>
+<span class="nc" id="L193">        session.setQuestionCouranteId(null);</span>
+<span class="nc" id="L194">        sessionRepository.save(session);</span>
+
+<span class="nc" id="L196">        List&lt;ExamenAdaptatifEtape&gt; etapes = new ArrayList&lt;&gt;(session.getEtapes());</span>
+<span class="nc" id="L197">        etapes.sort(Comparator.comparingInt(ExamenAdaptatifEtape::getOrdre));</span>
+<span class="nc" id="L198">        List&lt;Question&gt; ordered = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L199">        List&lt;String&gt; reponses = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">        for (ExamenAdaptatifEtape e : etapes) {</span>
+<span class="nc" id="L201">            Question qq = questionRepository.findById(e.getQuestionId())</span>
+<span class="nc" id="L202">                    .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Question&quot;, e.getQuestionId()));</span>
+<span class="nc" id="L203">            ordered.add(qq);</span>
+<span class="nc" id="L204">            reponses.add(e.getReponseChoisie());</span>
+<span class="nc" id="L205">        }</span>
+
+<span class="nc" id="L207">        PassageExamenDto passage = passageExamenService.soumettreSequenceAdaptatif(</span>
+                examenId,
+<span class="nc" id="L209">                session.getFreelancerId(),</span>
+<span class="nc" id="L210">                session.getTypeParcours(),</span>
+<span class="nc" id="L211">                session.getModePassage(),</span>
+                ordered,
+                reponses);
+
+<span class="nc" id="L215">        return AdaptatifEtapeReponseDto.builder()</span>
+<span class="nc" id="L216">                .reponseCorrecte(derniereReponseCorrecte)</span>
+<span class="nc" id="L217">                .termine(true)</span>
+<span class="nc" id="L218">                .difficulteApresAjustement(rankToLabel(dernierRang))</span>
+<span class="nc" id="L219">                .resultat(passage)</span>
+<span class="nc" id="L220">                .build();</span>
+    }
+
+    private List&lt;Question&gt; poolFiltre(Long examenId, TypeParcours typeParcours) {
+<span class="nc" id="L224">        List&lt;Question&gt; all = questionRepository.findByExamenIdOrderByOrdreAsc(examenId);</span>
+<span class="nc" id="L225">        return QuestionParcoursFilter.filterForParcours(all, typeParcours);</span>
+    }
+
+    private QuestionDto toQuestionSansReponse(Question q, Long examenId) {
+<span class="nc" id="L229">        QuestionDto dto = QuestionDto.fromEntity(q, examenId);</span>
+<span class="nc" id="L230">        dto.setBonneReponse(null);</span>
+<span class="nc" id="L231">        return dto;</span>
+    }
+
+    private static int rankOf(Question q) {
+<span class="nc bnc" id="L235" title="All 2 branches missed.">        if (q.getNiveauDifficulte() == null) {</span>
+<span class="nc" id="L236">            return 2;</span>
+        }
+<span class="nc bnc" id="L238" title="All 3 branches missed.">        return switch (q.getNiveauDifficulte()) {</span>
+<span class="nc" id="L239">            case FACILE -&gt; 1;</span>
+<span class="nc" id="L240">            case MOYEN -&gt; 2;</span>
+<span class="nc" id="L241">            case DIFFICILE -&gt; 3;</span>
+        };
+    }
+
+    private static String rankToLabel(int r) {
+<span class="nc bnc" id="L246" title="All 3 branches missed.">        return switch (Math.max(1, Math.min(3, r))) {</span>
+<span class="nc" id="L247">            case 1 -&gt; &quot;FACILE&quot;;</span>
+<span class="nc" id="L248">            case 3 -&gt; &quot;DIFFICILE&quot;;</span>
+<span class="nc" id="L249">            default -&gt; &quot;MOYEN&quot;;</span>
+        };
+    }
+
+    private static Question pickQuestion(List&lt;Question&gt; pool, Set&lt;Long&gt; dejaPosees, int targetRank) {
+<span class="nc" id="L254">        List&lt;Question&gt; c = pool.stream()</span>
+<span class="nc bnc" id="L255" title="All 4 branches missed.">                .filter(q -&gt; q.getId() != null &amp;&amp; !dejaPosees.contains(q.getId()))</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">                .filter(q -&gt; rankOf(q) == targetRank)</span>
+<span class="nc" id="L257">                .collect(Collectors.toList());</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">        if (c.isEmpty()) {</span>
+<span class="nc" id="L259">            return null;</span>
+        }
+<span class="nc" id="L261">        Collections.shuffle(c);</span>
+<span class="nc" id="L262">        return c.get(0);</span>
+    }
+
+    private static Question pickRelax(List&lt;Question&gt; pool, Set&lt;Long&gt; dejaPosees, int targetRank) {
+<span class="nc" id="L266">        List&lt;Question&gt; avail = pool.stream()</span>
+<span class="nc bnc" id="L267" title="All 4 branches missed.">                .filter(q -&gt; q.getId() != null &amp;&amp; !dejaPosees.contains(q.getId()))</span>
+<span class="nc" id="L268">                .collect(Collectors.toList());</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">        if (avail.isEmpty()) {</span>
+<span class="nc" id="L270">            return null;</span>
+        }
+<span class="nc" id="L272">        avail.sort(Comparator.comparingInt(q -&gt; Math.abs(rankOf(q) - targetRank)));</span>
+<span class="nc" id="L273">        int bestDist = Math.abs(rankOf(avail.get(0)) - targetRank);</span>
+<span class="nc" id="L274">        List&lt;Question&gt; tie = avail.stream()</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">                .filter(q -&gt; Math.abs(rankOf(q) - targetRank) == bestDist)</span>
+<span class="nc" id="L276">                .collect(Collectors.toList());</span>
+<span class="nc" id="L277">        Collections.shuffle(tie);</span>
+<span class="nc" id="L278">        return tie.get(0);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

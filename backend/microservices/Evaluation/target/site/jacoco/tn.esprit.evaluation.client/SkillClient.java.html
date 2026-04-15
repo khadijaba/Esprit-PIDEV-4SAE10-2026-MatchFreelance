@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SkillClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.client</a> &gt; <span class="el_source">SkillClient.java</span></div><h1>SkillClient.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.client;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Client vers le microservice Skill (attribution de compétences freelancer).
+ */
+@Component
+@RequiredArgsConstructor
+<span class="fc" id="L30">@Slf4j</span>
+public class SkillClient {
+
+    private static final String SKILL_SERVICE = &quot;http://SKILL&quot;;
+    private final RestTemplate restTemplate;
+
+    /**
+     * Sous-ensemble de la réponse Skill {@code /skills/parcours/intelligent} (champs ignorés inconnus).
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ParcoursIntelligentBrief {
+        private List&lt;String&gt; gapsDetectes;
+    }
+
+    @Getter
+    public static class AttributionOutcome {
+<span class="nc" id="L50">        public enum Kind { CREATED, ALREADY_EXISTS, FAILED }</span>
+        private final Kind kind;
+        private final Long skillId;
+
+<span class="nc" id="L54">        public AttributionOutcome(Kind kind, Long skillId) {</span>
+<span class="nc" id="L55">            this.kind = kind;</span>
+<span class="nc" id="L56">            this.skillId = skillId;</span>
+<span class="nc" id="L57">        }</span>
+    }
+
+    public AttributionOutcome creerCompetenceFreelancer(
+            Long freelancerId,
+            String nom,
+            String categorieSkill,
+            String niveau,
+            int anneesExperience) {
+        try {
+<span class="nc" id="L67">            HttpHeaders headers = new HttpHeaders();</span>
+<span class="nc" id="L68">            headers.setContentType(MediaType.APPLICATION_JSON);</span>
+<span class="nc" id="L69">            Map&lt;String, Object&gt; body = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L70">            body.put(&quot;name&quot;, nom);</span>
+<span class="nc" id="L71">            body.put(&quot;category&quot;, categorieSkill);</span>
+<span class="nc" id="L72">            body.put(&quot;freelancerId&quot;, freelancerId);</span>
+<span class="nc" id="L73">            body.put(&quot;level&quot;, niveau);</span>
+<span class="nc" id="L74">            body.put(&quot;yearsOfExperience&quot;, anneesExperience);</span>
+
+<span class="nc" id="L76">            ResponseEntity&lt;Map&gt; response = restTemplate.postForEntity(</span>
+                    SKILL_SERVICE + &quot;/api/skills&quot;,
+                    new HttpEntity&lt;&gt;(body, headers),
+                    Map.class
+            );
+<span class="nc" id="L81">            Map&lt;?, ?&gt; map = response.getBody();</span>
+<span class="nc" id="L82">            Long id = null;</span>
+<span class="nc bnc" id="L83" title="All 4 branches missed.">            if (map != null &amp;&amp; map.get(&quot;id&quot;) != null) {</span>
+<span class="nc" id="L84">                id = ((Number) map.get(&quot;id&quot;)).longValue();</span>
+            }
+<span class="nc" id="L86">            return new AttributionOutcome(AttributionOutcome.Kind.CREATED, id);</span>
+<span class="nc" id="L87">        } catch (HttpStatusCodeException e) {</span>
+<span class="nc" id="L88">            String b = e.getResponseBodyAsString();</span>
+<span class="nc bnc" id="L89" title="All 4 branches missed.">            if (b != null &amp;&amp; b.toLowerCase().contains(&quot;already exists&quot;)) {</span>
+<span class="nc" id="L90">                return new AttributionOutcome(AttributionOutcome.Kind.ALREADY_EXISTS, null);</span>
+            }
+<span class="nc" id="L92">            log.warn(&quot;Skill MS refus pour freelancer {}: {}&quot;, freelancerId, e.getMessage());</span>
+<span class="nc" id="L93">            return new AttributionOutcome(AttributionOutcome.Kind.FAILED, null);</span>
+<span class="nc" id="L94">        } catch (Exception e) {</span>
+<span class="nc" id="L95">            log.warn(&quot;Impossible d'appeler Skill pour freelancer {}: {}&quot;, freelancerId, e.getMessage());</span>
+<span class="nc" id="L96">            return new AttributionOutcome(AttributionOutcome.Kind.FAILED, null);</span>
+        }
+    }
+
+    /**
+     * Appelle GET {@code /api/skills/parcours/intelligent?freelancerId=...} (microservice SKILL).
+     * En cas d’échec (réseau, service arrêté), retourne un objet avec liste de gaps vide.
+     */
+    /**
+     * Compétences enregistrées pour le freelancer (GET {@code /api/skills/freelancer/{id}}).
+     */
+    public List&lt;Map&lt;String, Object&gt;&gt; getSkillsByFreelancer(Long freelancerId) {
+        try {
+<span class="nc" id="L109">            List&lt;Map&lt;String, Object&gt;&gt; data = restTemplate.exchange(</span>
+                    SKILL_SERVICE + &quot;/api/skills/freelancer/&quot; + freelancerId,
+                    HttpMethod.GET,
+                    null,
+<span class="nc" id="L113">                    new ParameterizedTypeReference&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt;() {}</span>
+<span class="nc" id="L114">            ).getBody();</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">            return data != null ? data : Collections.emptyList();</span>
+<span class="nc" id="L116">        } catch (Exception e) {</span>
+<span class="nc" id="L117">            log.warn(&quot;Impossible de charger les skills du freelancer {}: {}&quot;, freelancerId, e.getMessage());</span>
+<span class="nc" id="L118">            return Collections.emptyList();</span>
+        }
+    }
+
+    public ParcoursIntelligentBrief getParcoursIntelligent(Long freelancerId) {
+        try {
+<span class="nc" id="L124">            ParcoursIntelligentBrief body = restTemplate.getForObject(</span>
+                    SKILL_SERVICE + &quot;/api/skills/parcours/intelligent?freelancerId=&quot; + freelancerId,
+                    ParcoursIntelligentBrief.class
+            );
+<span class="nc bnc" id="L128" title="All 4 branches missed.">            if (body == null || body.getGapsDetectes() == null) {</span>
+<span class="nc" id="L129">                return new ParcoursIntelligentBrief(Collections.emptyList());</span>
+            }
+<span class="nc" id="L131">            return body;</span>
+<span class="nc" id="L132">        } catch (Exception e) {</span>
+<span class="nc" id="L133">            log.warn(&quot;Skill parcours intelligent indisponible pour freelancer {}: {}&quot;, freelancerId, e.getMessage());</span>
+<span class="nc" id="L134">            return new ParcoursIntelligentBrief(Collections.emptyList());</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

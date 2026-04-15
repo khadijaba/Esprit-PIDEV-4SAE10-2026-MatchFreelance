@@ -41,6 +41,11 @@ export class MonActiviteComponent implements OnInit {
       this.loading = false;
       return;
     }
+    if (this.auth.getStoredUser()?.role !== 'FREELANCER') {
+      this.error = 'Cette page est réservée aux comptes Freelancer.';
+      this.loading = false;
+      return;
+    }
     const fid = this.freelancerId;
     if (!fid) {
       this.error = 'Profil incomplet.';

@@ -3,6 +3,8 @@
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import tn.esprit.evaluation.domain.TypeParcours;
+import tn.esprit.evaluation.entity.Examen;
 
 import java.time.LocalDateTime;
 
@@ -44,9 +46,14 @@ public class PassageExamen {
     @Builder.Default
     private LocalDateTime datePassage = LocalDateTime.now();
 
-<span class="fc" id="L47">    public enum ResultatExamen {</span>
-<span class="fc" id="L48">        REUSSI,</span>
-<span class="fc" id="L49">        ECHOUE</span>
+    /** Parcours utilisé pour ce passage (sous-ensemble de questions). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;type_parcours&quot;, length = 20)
+    private TypeParcours typeParcours;
+
+<span class="fc" id="L54">    public enum ResultatExamen {</span>
+<span class="fc" id="L55">        REUSSI,</span>
+<span class="fc" id="L56">        ECHOUE</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

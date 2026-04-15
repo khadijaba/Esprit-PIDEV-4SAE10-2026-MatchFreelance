@@ -3,6 +3,8 @@ package tn.esprit.evaluation.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import tn.esprit.evaluation.domain.TypeParcours;
+import tn.esprit.evaluation.entity.Examen;
 
 import java.time.LocalDateTime;
 
@@ -43,6 +45,11 @@ public class PassageExamen {
     @Column(name = "date_passage", updatable = false)
     @Builder.Default
     private LocalDateTime datePassage = LocalDateTime.now();
+
+    /** Parcours utilisé pour ce passage (sous-ensemble de questions). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_parcours", length = 20)
+    private TypeParcours typeParcours;
 
     public enum ResultatExamen {
         REUSSI,

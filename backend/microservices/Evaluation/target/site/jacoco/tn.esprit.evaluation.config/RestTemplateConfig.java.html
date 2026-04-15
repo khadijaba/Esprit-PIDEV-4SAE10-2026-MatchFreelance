@@ -3,15 +3,34 @@
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-<span class="fc" id="L9">public class RestTemplateConfig {</span>
+<span class="fc" id="L11">public class RestTemplateConfig {</span>
 
+    /**
+     * Eureka / noms de service ({@code http://FORMATION/...}). Ne pas utiliser pour des URLs absolues
+     * ({@code http://127.0.0.1:11434}) : le load-balancer interpréterait l’hôte comme un serviceId.
+     */
     @Bean
+    @Primary
     @LoadBalanced
     public RestTemplate restTemplate() {
-<span class="fc" id="L14">        return new RestTemplate();</span>
+<span class="fc" id="L21">        return new RestTemplate();</span>
+    }
+
+    /**
+     * Appels HTTP directs : Ollama (inférence parfois lente), microservices Python, etc.
+     * Délais longs pour éviter des coupures silencieuses côté client HTTP.
+     */
+    @Bean(name = &quot;externalRestTemplate&quot;)
+    public RestTemplate externalRestTemplate() {
+<span class="fc" id="L30">        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();</span>
+<span class="fc" id="L31">        factory.setConnectTimeout(30_000);</span>
+<span class="fc" id="L32">        factory.setReadTimeout(600_000);</span>
+<span class="fc" id="L33">        return new RestTemplate(factory);</span>
     }
 }
 

@@ -199,6 +199,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./components/previsionnel/previsionnel.component').then((m) => m.PrevisionnelComponent),
       },
+      {
+        path: 'ranking',
+        loadComponent: () =>
+          import('./components/ranking-recommendation/ranking-recommendation.component').then(
+            (m) => m.RankingRecommendationComponent
+          ),
+      },
     ],
   },
 

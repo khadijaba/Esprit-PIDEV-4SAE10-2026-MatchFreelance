@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>QuestionDifficultyPonderation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.util</a> &gt; <span class="el_source">QuestionDifficultyPonderation.java</span></div><h1>QuestionDifficultyPonderation.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.util;
+
+import tn.esprit.evaluation.domain.NiveauDifficulteQuestion;
+
+/**
+ * Pondération des questions pour le score final : FACILE 1, MOYEN 2, DIFFICILE 3.
+ * Si toutes les questions ont le même niveau, le pourcentage coïncide avec le taux de bonnes réponses.
+ */
+public final class QuestionDifficultyPonderation {
+
+    private QuestionDifficultyPonderation() {
+    }
+
+    public static int poids(NiveauDifficulteQuestion niveau) {
+<span class="fc bfc" id="L15" title="All 2 branches covered.">        if (niveau == null) {</span>
+<span class="fc" id="L16">            return poids(NiveauDifficulteQuestion.MOYEN);</span>
+        }
+<span class="fc bfc" id="L18" title="All 3 branches covered.">        return switch (niveau) {</span>
+<span class="fc" id="L19">            case FACILE -&gt; 1;</span>
+<span class="fc" id="L20">            case MOYEN -&gt; 2;</span>
+<span class="fc" id="L21">            case DIFFICILE -&gt; 3;</span>
+        };
+    }
+
+    public static int pourcentagePlancher(int pointsObtenus, int pointsMax) {
+<span class="fc bfc" id="L26" title="All 2 branches covered.">        if (pointsMax &lt;= 0) {</span>
+<span class="fc" id="L27">            return 0;</span>
+        }
+<span class="fc" id="L29">        return (100 * pointsObtenus) / pointsMax;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

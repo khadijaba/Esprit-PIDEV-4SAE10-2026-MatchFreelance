@@ -56,9 +56,27 @@
     </div>
 
     <div class="border-t border-gray-100 pt-6">
-      <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-gray-800">Questions (QCM)</h3>
-        <button type="button" (click)="addQuestion()" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800">Questions (QCM)</h3>
+          <p class="mt-1 text-xs text-gray-500">
+            Minimum {{ deficitParcours() > 0 ? 'manquant pour au moins un parcours — ' : '' }}
+            <strong>{{ countStandard() }}</strong> question(s) pour le passage <em>Standard</em>,
+            <strong>{{ countRenforcement() }}</strong> pour <em>Renforcement</em>
+            (objectif {{ minQuestionsParcours }} chacun). Le lot <strong>Commun</strong> compte pour les deux.
+          </p>
+          @if (deficitParcours() > 0) {
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                (click)="completerAvecQuestionsCommun()"
+                class="rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100">
+                Compléter : +{{ deficitParcours() }} question(s) en lot Commun
+              </button>
+            </div>
+          }
+        </div>
+        <button type="button" (click)="addQuestion()" class="shrink-0 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
           + Question
         </button>
       </div>
@@ -89,6 +107,105 @@
               <option value="D">D</option>
             </select>
           </div>
+          <div class="mt-3 grid gap-2 sm:grid-cols-2">
+            <div>
+              <label class="text-xs font-medium text-gray-600">Lot parcours</label>
+              <select [(ngModel)]="q.parcoursInclusion" [name]="'pi' + $index" class="mt-0.5 w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+                <option value="COMMUN">Commun (standard + renforcement)</option>
+                <option value="STANDARD">Standard uniquement</option>
+                <option value="RENFORCEMENT">Renforcement uniquement</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-600">Thème (révision ciblée)</label>
+              <input
+                type="text"
+                [(ngModel)]="q.theme"
+                [name]="'theme' + $index"
+                placeholder="ex. Spring Security, SQL…"
+                class="mt-0.5 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="text-xs font-medium text-gray-600">Compétence / skill (score par compétence)</label>
+              <input
+                type="text"
+                [(ngModel)]="q.skill"
+                [name]="'skill' + $index"
+                placeholder="ex. Java, Networking, Cloud — laisser vide pour utiliser le thème comme repli"
+                class="mt-0.5 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+            </div>
+          </div>
+          <label class="mt-3 block text-xs font-medium text-gray-600">Explication (correction détaillée pour l’apprenant)</label>
+          <textarea
+            [(ngModel)]="q.explication"
+            [name]="'explication' + $index"
+            rows="2"
+            placeholder="Pourquoi la bonne réponse est correcte, piège à éviter, rappel de cours…"
+            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"></textarea>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              (click)="validerQuestionAvecIa($index)"
+              [disabled]="validatingIndex === $index"
+              class="rounded-lg border border-violet-300 bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-900 hover:bg-violet-100 disabled:opacity-50">
+              @if (validatingIndex === $index) {
+                <span class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-violet-400 border-t-violet-800 align-middle"></span>
+                Analyse IA…
+              } @else {
+                Valider avec l’IA (clarté, justesse, ambiguïté)
+              }
+            </button>
+            <span class="text-xs text-gray-500">Utilise le LLM configuré sur Evaluation (ex. Ollama local).</span>
+          </div>
+          @if (validationQuestionIndex === $index && validationResult) {
+            <div
+              class="mt-3 rounded-lg border px-3 py-3 text-sm"
+              [class.border-emerald-200]="validationResult.parseOk && validationResult.publishable === true"
+              [class.bg-emerald-50/80]="validationResult.parseOk && validationResult.publishable === true"
+              [class.border-amber-200]="validationResult.parseOk && validationResult.publishable !== true"
+              [class.bg-amber-50/80]="validationResult.parseOk && validationResult.publishable !== true"
+              [class.border-red-200]="!validationResult.llmConfigured || !validationResult.parseOk"
+              [class.bg-red-50/70]="!validationResult.llmConfigured || !validationResult.parseOk">
+              <p class="font-semibold text-gray-900">Avis du validateur IA</p>
+              @if (!validationResult.llmConfigured) {
+                <p class="mt-2 text-red-800">{{ validationResult.errorMessage }}</p>
+              } @else if (!validationResult.parseOk) {
+                <p class="mt-2 text-red-800">{{ validationResult.errorMessage }}</p>
+              } @else {
+                <div class="mt-2 flex flex-wrap gap-2 text-xs">
+                  <span class="rounded-full bg-white px-2 py-0.5 font-medium ring-1 ring-gray-200">
+                    Clarté : {{ validationResult.clairScore ?? '—' }}/5
+                  </span>
+                  <span class="rounded-full bg-white px-2 py-0.5 font-medium ring-1 ring-gray-200">
+                    Justesse : {{ validationResult.correctTechniqueScore ?? '—' }}/5
+                  </span>
+                  @if (validationResult.ambigu === true) {
+                    <span class="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-950">Ambigu</span>
+                  } @else if (validationResult.ambigu === false) {
+                    <span class="rounded-full bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-900">Peu ambigu</span>
+                  }
+                  @if (validationResult.publishable === true) {
+                    <span class="rounded-full bg-emerald-200 px-2 py-0.5 font-semibold text-emerald-950">Publication OK</span>
+                  } @else if (validationResult.publishable === false) {
+                    <span class="rounded-full bg-rose-200 px-2 py-0.5 font-semibold text-rose-950">Révision recommandée</span>
+                  }
+                </div>
+                @if (validationResult.ambiguDetails) {
+                  <p class="mt-2 text-xs text-gray-800"><span class="font-medium">Ambiguïté :</span> {{ validationResult.ambiguDetails }}</p>
+                }
+                @if (validationResult.summary) {
+                  <p class="mt-2 text-sm text-gray-800">{{ validationResult.summary }}</p>
+                }
+                @if (validationResult.suggestions?.length) {
+                  <ul class="mt-2 list-inside list-disc text-xs text-gray-700">
+                    @for (s of validationResult.suggestions; track s) {
+                      <li>{{ s }}</li>
+                    }
+                  </ul>
+                }
+              }
+            </div>
+          }
         </div>
       }
     </div>

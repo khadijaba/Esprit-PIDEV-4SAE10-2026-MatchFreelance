@@ -3,6 +3,7 @@
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import tn.esprit.evaluation.domain.TypeParcours;
 
 import java.util.List;
 
@@ -25,13 +26,25 @@ public class ReponseExamenRequest {
     @NotEmpty(message = &quot;Au moins une réponse est requise&quot;)
     private List&lt;String&gt; reponses;
 
-    /** Mode de passage : ENTRAINEMENT (avec correction) ou CERTIFIANT (sans correction, certificat possible). */
+    /** Mode de passage : ENTRAINEMENT (pas d'enregistrement certifiant) ou CERTIFIANT (certificat possible ; correction renvoyee aussi apres soumission). */
     @Builder.Default
     private ModePassage mode = ModePassage.CERTIFIANT;
 
-<span class="fc" id="L32">    public enum ModePassage {</span>
-<span class="fc" id="L33">        ENTRAINEMENT,</span>
-<span class="fc" id="L34">        CERTIFIANT</span>
+    /**
+     * Doit correspondre au même parcours que celui utilisé pour charger les questions ({@code GET .../passage}).
+     */
+    @Builder.Default
+    private TypeParcours typeParcours = TypeParcours.STANDARD;
+
+    /**
+     * Si vrai : passage en révision ciblée (sous-ensemble de questions déjà ratées au moins une fois).
+     * Uniquement avec {@link ModePassage#ENTRAINEMENT} ; le nombre minimum de questions du parcours ne s'applique pas.
+     */
+    private Boolean revisionCiblee;
+
+<span class="fc" id="L45">    public enum ModePassage {</span>
+<span class="fc" id="L46">        ENTRAINEMENT,</span>
+<span class="fc" id="L47">        CERTIFIANT</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

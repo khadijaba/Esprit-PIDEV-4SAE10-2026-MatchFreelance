@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>QuestionParcoursFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.service</a> &gt; <span class="el_source">QuestionParcoursFilter.java</span></div><h1>QuestionParcoursFilter.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.service;
+
+import tn.esprit.evaluation.domain.TypeParcours;
+import tn.esprit.evaluation.entity.ParcoursInclusion;
+import tn.esprit.evaluation.entity.Question;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public final class QuestionParcoursFilter {
+
+    private QuestionParcoursFilter() {
+    }
+
+    public static boolean matches(ParcoursInclusion inclusion, TypeParcours typeParcours) {
+<span class="pc bpc" id="L17" title="1 of 2 branches missed.">        ParcoursInclusion inc = inclusion != null ? inclusion : ParcoursInclusion.COMMUN;</span>
+<span class="pc bpc" id="L18" title="1 of 2 branches missed.">        if (inc == ParcoursInclusion.COMMUN) {</span>
+<span class="fc" id="L19">            return true;</span>
+        }
+<span class="nc bnc" id="L21" title="All 2 branches missed.">        if (typeParcours == TypeParcours.STANDARD) {</span>
+<span class="nc bnc" id="L22" title="All 2 branches missed.">            return inc == ParcoursInclusion.STANDARD;</span>
+        }
+<span class="nc bnc" id="L24" title="All 2 branches missed.">        return inc == ParcoursInclusion.RENFORCEMENT;</span>
+    }
+
+    public static List&lt;Question&gt; filterForParcours(List&lt;Question&gt; questions, TypeParcours typeParcours) {
+<span class="fc" id="L28">        List&lt;Question&gt; filtered = questions.stream()</span>
+<span class="fc" id="L29">                .filter(q -&gt; matches(q.getParcoursInclusion(), typeParcours))</span>
+<span class="fc" id="L30">                .sorted(Comparator.comparing(Question::getOrdre, Comparator.nullsLast(Comparator.naturalOrder())))</span>
+<span class="fc" id="L31">                .collect(Collectors.toList());</span>
+<span class="pc bpc" id="L32" title="3 of 4 branches missed.">        if (filtered.isEmpty() &amp;&amp; !questions.isEmpty()) {</span>
+<span class="nc" id="L33">            return questions.stream()</span>
+<span class="nc" id="L34">                    .sorted(Comparator.comparing(Question::getOrdre, Comparator.nullsLast(Comparator.naturalOrder())))</span>
+<span class="nc" id="L35">                    .collect(Collectors.toList());</span>
+        }
+<span class="fc" id="L37">        return filtered;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

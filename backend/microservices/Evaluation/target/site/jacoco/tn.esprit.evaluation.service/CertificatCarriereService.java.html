@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CertificatCarriereService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.service</a> &gt; <span class="el_source">CertificatCarriereService.java</span></div><h1>CertificatCarriereService.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import tn.esprit.evaluation.client.FormationClient;
+import tn.esprit.evaluation.client.ProjectClient;
+import tn.esprit.evaluation.client.SkillClient;
+import tn.esprit.evaluation.dto.CompetenceAttribueeDto;
+import tn.esprit.evaluation.dto.PassageExamenDto;
+import tn.esprit.evaluation.dto.ProjetMarcheDto;
+import tn.esprit.evaluation.entity.Examen;
+import tn.esprit.evaluation.entity.PassageExamen;
+import tn.esprit.evaluation.repository.QuestionRepository;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * Après obtention du certificat : niveau déduit du score, compétence(s) sur Skill, projets marché triés selon le niveau.
+ * Les appels externes sont tolérants aux pannes (ne doit pas faire échouer la soumission d'examen).
+ */
+@Service
+@RequiredArgsConstructor
+<span class="fc" id="L32">@Slf4j</span>
+public class CertificatCarriereService {
+
+<span class="fc" id="L35">    private static final Set&lt;String&gt; SKILL_CATEGORIES = Set.of(</span>
+            &quot;WEB_DEVELOPMENT&quot;, &quot;MOBILE_DEVELOPMENT&quot;, &quot;DATA_SCIENCE&quot;, &quot;DEVOPS&quot;,
+            &quot;CYBERSECURITY&quot;, &quot;DESIGN&quot;, &quot;AI&quot;);
+
+    private static final int MAX_THEMES_SKILLS = 3;
+    private static final int PROJETS_MARCHE_LIMIT = 5;
+
+    private final CertificatService certificatService;
+    private final FormationClient formationClient;
+    private final SkillClient skillClient;
+    private final ProjectClient projectClient;
+    private final QuestionRepository questionRepository;
+
+    public void enrichirApresCertificat(PassageExamenDto dto, PassageExamen passage, Examen examen) {
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        if (passage.getResultat() != PassageExamen.ResultatExamen.REUSSI) {</span>
+<span class="nc" id="L50">            return;</span>
+        }
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        int score = dto.getScore() != null ? dto.getScore() : 0;</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        int seuil = examen.getSeuilReussi() != null ? examen.getSeuilReussi() : 60;</span>
+<span class="nc" id="L54">        String niveau = calculerNiveau(score, seuil);</span>
+<span class="nc" id="L55">        dto.setNiveauCalcule(niveau);</span>
+
+<span class="nc bnc" id="L57" title="All 4 branches missed.">        if (dto.getCertificat() == null &amp;&amp; passage.getId() != null) {</span>
+<span class="nc" id="L58">            certificatService.findByPassageExamenIdOptional(passage.getId()).ifPresent(dto::setCertificat);</span>
+        }
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (dto.getCertificat() == null) {</span>
+<span class="nc" id="L61">            dto.setMessageCarriere(String.format(</span>
+                    &quot;Niveau « %s » calculé à partir de votre score (%d %%). &quot;
+                            + &quot;Sans certificat joint, aucune compétence ni projet n’est synchronisé pour cette réponse.&quot;,
+<span class="nc" id="L64">                    niveau, score));</span>
+<span class="nc" id="L65">            dto.setCompetencesAttribuees(Collections.emptyList());</span>
+<span class="nc" id="L66">            dto.setProjetsMarcheRecommandes(Collections.emptyList());</span>
+<span class="nc" id="L67">            return;</span>
+        }
+
+        try {
+<span class="nc" id="L71">            Map&lt;String, Object&gt; formation = formationClient.getFormationById(examen.getFormationId());</span>
+<span class="nc" id="L72">            String categorie = resolveCategorie(formation);</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">            String titreFormation = formation.get(&quot;titre&quot;) != null</span>
+<span class="nc" id="L74">                    ? formation.get(&quot;titre&quot;).toString()</span>
+<span class="nc" id="L75">                    : examen.getTitre();</span>
+
+<span class="nc" id="L77">            int annees = anneesPourNiveau(niveau);</span>
+<span class="nc" id="L78">            String nomSkillPrincipal = &quot;Certifié — &quot; + titreFormation + &quot; (examen &quot; + examen.getId() + &quot;)&quot;;</span>
+
+<span class="nc" id="L80">            List&lt;CompetenceAttribueeDto&gt; competences = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L82">            SkillClient.AttributionOutcome principal = skillClient.creerCompetenceFreelancer(</span>
+<span class="nc" id="L83">                    passage.getFreelancerId(),</span>
+                    nomSkillPrincipal,
+                    categorie,
+                    niveau,
+                    annees);
+<span class="nc" id="L88">            appendCompetence(competences, nomSkillPrincipal, categorie, niveau, principal);</span>
+
+<span class="nc" id="L90">            int themesAjoutes = 0;</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">            for (String themeBrut : questionRepository.findDistinctThemesByExamenId(examen.getId())) {</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">                if (themesAjoutes &gt;= MAX_THEMES_SKILLS) {</span>
+<span class="nc" id="L93">                    break;</span>
+                }
+<span class="nc bnc" id="L95" title="All 2 branches missed.">                String t = themeBrut != null ? themeBrut.trim() : &quot;&quot;;</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">                if (t.length() &lt; 2) {</span>
+<span class="nc" id="L97">                    continue;</span>
+                }
+<span class="nc bnc" id="L99" title="All 2 branches missed.">                String court = t.length() &gt; 60 ? t.substring(0, 57) + &quot;…&quot; : t;</span>
+<span class="nc" id="L100">                String nomTheme = &quot;Thème certifié — &quot; + court;</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">                if (nomTheme.equalsIgnoreCase(nomSkillPrincipal)) {</span>
+<span class="nc" id="L102">                    continue;</span>
+                }
+<span class="nc" id="L104">                SkillClient.AttributionOutcome th = skillClient.creerCompetenceFreelancer(</span>
+<span class="nc" id="L105">                        passage.getFreelancerId(),</span>
+                        nomTheme,
+                        categorie,
+                        niveau,
+<span class="nc" id="L109">                        Math.max(1, annees - 1));</span>
+<span class="nc" id="L110">                appendCompetence(competences, nomTheme, categorie, niveau, th);</span>
+<span class="nc" id="L111">                themesAjoutes++;</span>
+<span class="nc" id="L112">            }</span>
+
+<span class="nc" id="L114">            dto.setCompetencesAttribuees(competences);</span>
+
+<span class="nc" id="L116">            List&lt;Map&lt;String, Object&gt;&gt; brut = projectClient.projetsPourMarcheApresCertificat(categorie, niveau, PROJETS_MARCHE_LIMIT);</span>
+<span class="nc" id="L117">            Set&lt;String&gt; jetonsProfil = buildFreelancerSkillTokens(</span>
+<span class="nc" id="L118">                    skillClient.getSkillsByFreelancer(passage.getFreelancerId()),</span>
+                    categorie);
+
+<span class="nc" id="L121">            List&lt;ProjetMarcheDto&gt; projets = brut.stream()</span>
+<span class="nc" id="L122">                    .map(m -&gt; {</span>
+<span class="nc" id="L123">                        int alignSkills = scoreAlignementProjet(m, jetonsProfil, categorie);</span>
+<span class="nc" id="L124">                        return ProjetMarcheDto.builder()</span>
+<span class="nc" id="L125">                                .id(toLong(m.get(&quot;id&quot;)))</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">                                .titre(m.get(&quot;title&quot;) != null ? m.get(&quot;title&quot;).toString() : null)</span>
+<span class="nc" id="L127">                                .budget(toDouble(m.get(&quot;budget&quot;)))</span>
+<span class="nc" id="L128">                                .dureeJours(toInt(m.get(&quot;duration&quot;)))</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">                                .statut(m.get(&quot;status&quot;) != null ? m.get(&quot;status&quot;).toString() : null)</span>
+<span class="nc" id="L130">                                .scoreAlignementSkills(alignSkills)</span>
+<span class="nc" id="L131">                                .raison(String.format(</span>
+                                        &quot;Adéquation des compétences requises avec votre profil Skill : %d/100. &quot;
+                                                + &quot;Domaine formation %s, niveau métier %s (examen %d %%).&quot;,
+<span class="nc" id="L134">                                        alignSkills, categorie, niveau, score))</span>
+<span class="nc" id="L135">                                .build();</span>
+                    })
+<span class="nc" id="L137">                    .sorted(Comparator.comparingInt(</span>
+                            (ProjetMarcheDto projet) -&gt;
+<span class="nc bnc" id="L139" title="All 2 branches missed.">                                    projet.getScoreAlignementSkills() != null ? projet.getScoreAlignementSkills() : 0)</span>
+<span class="nc" id="L140">                            .reversed())</span>
+<span class="nc" id="L141">                    .collect(Collectors.toList());</span>
+<span class="nc" id="L142">            dto.setProjetsMarcheRecommandes(projets);</span>
+<span class="nc" id="L143">            dto.setMessageCarriere(String.format(</span>
+                    &quot;Niveau %s déduit du score (%d %%). %d compétence(s) enregistrée(s) ou signalée(s) sur Skill ; &quot;
+                            + &quot;%d projet(s) marché proposé(s), triés par score d’adéquation compétences (meilleur alignement en premier).&quot;,
+<span class="nc" id="L146">                    niveau, score, competences.size(), projets.size()));</span>
+<span class="nc" id="L147">        } catch (Exception e) {</span>
+<span class="nc" id="L148">            log.warn(&quot;Enrichissement carrière post-certificat partiel ou en échec: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L149">            dto.setMessageCarriere(String.format(</span>
+                    &quot;Niveau « %s » calculé à partir de votre score. &quot;
+                            + &quot;La synchronisation avec Formation / Skill / Project a échoué : &quot;
+                            + &quot;lancez Eureka, les microservices concernés, puis rechargez cette page.&quot;,
+                    niveau));
+<span class="nc bnc" id="L154" title="All 4 branches missed.">            if (dto.getCompetencesAttribuees() == null || dto.getCompetencesAttribuees().isEmpty()) {</span>
+<span class="nc" id="L155">                dto.setCompetencesAttribuees(List.of(CompetenceAttribueeDto.builder()</span>
+<span class="nc" id="L156">                        .nom(&quot;Synchronisation compétence indisponible&quot;)</span>
+<span class="nc" id="L157">                        .categorie(&quot;—&quot;)</span>
+<span class="nc" id="L158">                        .niveau(niveau)</span>
+<span class="nc" id="L159">                        .statut(&quot;SERVICE_INDISPONIBLE&quot;)</span>
+<span class="nc" id="L160">                        .build()));</span>
+            }
+<span class="nc bnc" id="L162" title="All 2 branches missed.">            if (dto.getProjetsMarcheRecommandes() == null) {</span>
+<span class="nc" id="L163">                dto.setProjetsMarcheRecommandes(Collections.emptyList());</span>
+            }
+<span class="nc" id="L165">        }</span>
+<span class="nc" id="L166">    }</span>
+
+    private static void appendCompetence(
+            List&lt;CompetenceAttribueeDto&gt; competences,
+            String nom,
+            String categorie,
+            String niveau,
+            SkillClient.AttributionOutcome outcome) {
+<span class="nc" id="L174">        CompetenceAttribueeDto.CompetenceAttribueeDtoBuilder cb = CompetenceAttribueeDto.builder()</span>
+<span class="nc" id="L175">                .nom(nom)</span>
+<span class="nc" id="L176">                .categorie(categorie)</span>
+<span class="nc" id="L177">                .niveau(niveau);</span>
+<span class="nc bnc" id="L178" title="All 4 branches missed.">        switch (outcome.getKind()) {</span>
+<span class="nc" id="L179">            case CREATED -&gt; competences.add(cb.skillId(outcome.getSkillId()).statut(&quot;CREE&quot;).build());</span>
+<span class="nc" id="L180">            case ALREADY_EXISTS -&gt; competences.add(cb.statut(&quot;DEJA_PRESENTE&quot;).build());</span>
+<span class="nc" id="L181">            case FAILED -&gt; competences.add(cb.statut(&quot;INDISPONIBLE&quot;).build());</span>
+        }
+<span class="nc" id="L183">    }</span>
+
+    private static String calculerNiveau(int score, int seuil) {
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        if (score &gt;= 95) {</span>
+<span class="nc" id="L187">            return &quot;EXPERT&quot;;</span>
+        }
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        if (score &gt;= 85) {</span>
+<span class="nc" id="L190">            return &quot;AVANCE&quot;;</span>
+        }
+<span class="nc" id="L192">        int interSup = Math.max(seuil + 15, 75);</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">        if (score &gt;= interSup) {</span>
+<span class="nc" id="L194">            return &quot;INTERMEDIAIRE_SUPERIEUR&quot;;</span>
+        }
+<span class="nc" id="L196">        return &quot;INTERMEDIAIRE&quot;;</span>
+    }
+
+    private static String resolveCategorie(Map&lt;String, Object&gt; formation) {
+<span class="nc" id="L200">        Object tf = formation.get(&quot;typeFormation&quot;);</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        String raw = tf != null ? tf.toString().trim().toUpperCase() : &quot;WEB_DEVELOPMENT&quot;;</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">        if (!SKILL_CATEGORIES.contains(raw)) {</span>
+<span class="nc" id="L203">            return &quot;WEB_DEVELOPMENT&quot;;</span>
+        }
+<span class="nc" id="L205">        return raw;</span>
+    }
+
+    /**
+     * Jetons normalisés (catégorie, mots des noms de compétences, niveaux) pour comparer aux {@code requiredSkills} des projets.
+     */
+    private static Set&lt;String&gt; buildFreelancerSkillTokens(List&lt;Map&lt;String, Object&gt;&gt; skills, String domainCategory) {
+<span class="nc" id="L212">        Set&lt;String&gt; t = new HashSet&lt;&gt;();</span>
+<span class="nc bnc" id="L213" title="All 4 branches missed.">        if (domainCategory != null &amp;&amp; !domainCategory.isBlank()) {</span>
+<span class="nc" id="L214">            t.add(domainCategory.toUpperCase(Locale.ROOT));</span>
+        }
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        for (Map&lt;String, Object&gt; s : skills) {</span>
+<span class="nc" id="L217">            Object cat = s.get(&quot;category&quot;);</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">            if (cat != null) {</span>
+<span class="nc" id="L219">                t.add(cat.toString().toUpperCase(Locale.ROOT));</span>
+            }
+<span class="nc" id="L221">            Object name = s.get(&quot;name&quot;);</span>
+<span class="nc bnc" id="L222" title="All 2 branches missed.">            if (name != null) {</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">                for (String w : name.toString().toUpperCase(Locale.ROOT).split(&quot;[^A-Z0-9]+&quot;)) {</span>
+<span class="nc bnc" id="L224" title="All 2 branches missed.">                    if (w.length() &gt; 2) {</span>
+<span class="nc" id="L225">                        t.add(w);</span>
+                    }
+                }
+            }
+<span class="nc" id="L229">            Object lvl = s.get(&quot;level&quot;);</span>
+<span class="nc bnc" id="L230" title="All 2 branches missed.">            if (lvl != null) {</span>
+<span class="nc" id="L231">                t.add(lvl.toString().toUpperCase(Locale.ROOT));</span>
+            }
+<span class="nc" id="L233">        }</span>
+<span class="nc" id="L234">        return t;</span>
+    }
+
+    /**
+     * 0–100 : part des compétences requises du projet couverte par le profil freelancer (nom / catégorie / domaine).
+     */
+    private static int scoreAlignementProjet(Map&lt;String, Object&gt; projet, Set&lt;String&gt; profilTokens, String domainCategory) {
+<span class="nc bnc" id="L241" title="All 2 branches missed.">        String dom = domainCategory != null ? domainCategory.toUpperCase(Locale.ROOT) : &quot;&quot;;</span>
+<span class="nc" id="L242">        Object rs = projet.get(&quot;requiredSkills&quot;);</span>
+<span class="nc bnc" id="L243" title="All 4 branches missed.">        if (!(rs instanceof List&lt;?&gt; list) || list.isEmpty()) {</span>
+<span class="nc" id="L244">            Object title = projet.get(&quot;title&quot;);</span>
+<span class="nc bnc" id="L245" title="All 6 branches missed.">            if (title != null &amp;&amp; !dom.isEmpty() &amp;&amp; title.toString().toUpperCase(Locale.ROOT).contains(dom)) {</span>
+<span class="nc" id="L246">                return 35;</span>
+            }
+<span class="nc bnc" id="L248" title="All 2 branches missed.">            return profilTokens.isEmpty() ? 5 : 15;</span>
+        }
+<span class="nc" id="L250">        int n = list.size();</span>
+<span class="nc" id="L251">        int matched = 0;</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">        for (Object o : list) {</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">            if (o == null) {</span>
+<span class="nc" id="L254">                continue;</span>
+            }
+<span class="nc" id="L256">            String req = o.toString().toUpperCase(Locale.ROOT);</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">            if (req.isBlank()) {</span>
+<span class="nc" id="L258">                continue;</span>
+            }
+<span class="nc" id="L260">            boolean ok = false;</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">            for (String tok : profilTokens) {</span>
+<span class="nc bnc" id="L262" title="All 2 branches missed.">                if (tok.length() &lt; 2) {</span>
+<span class="nc" id="L263">                    continue;</span>
+                }
+<span class="nc bnc" id="L265" title="All 4 branches missed.">                if (req.contains(tok) || tok.contains(req)) {</span>
+<span class="nc" id="L266">                    ok = true;</span>
+<span class="nc" id="L267">                    break;</span>
+                }
+<span class="nc" id="L269">            }</span>
+<span class="nc bnc" id="L270" title="All 6 branches missed.">            if (!ok &amp;&amp; !dom.isEmpty() &amp;&amp; req.contains(dom)) {</span>
+<span class="nc" id="L271">                ok = true;</span>
+            }
+<span class="nc bnc" id="L273" title="All 2 branches missed.">            if (ok) {</span>
+<span class="nc" id="L274">                matched++;</span>
+            }
+<span class="nc" id="L276">        }</span>
+<span class="nc" id="L277">        return (int) Math.round(100.0 * matched / n);</span>
+    }
+
+    private static int anneesPourNiveau(String niveau) {
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        if (&quot;EXPERT&quot;.equals(niveau)) {</span>
+<span class="nc" id="L282">            return 4;</span>
+        }
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        if (&quot;AVANCE&quot;.equals(niveau)) {</span>
+<span class="nc" id="L285">            return 3;</span>
+        }
+<span class="nc bnc" id="L287" title="All 2 branches missed.">        if (&quot;INTERMEDIAIRE_SUPERIEUR&quot;.equals(niveau)) {</span>
+<span class="nc" id="L288">            return 2;</span>
+        }
+<span class="nc" id="L290">        return 1;</span>
+    }
+
+    private static Long toLong(Object o) {
+<span class="nc bnc" id="L294" title="All 2 branches missed.">        if (o == null) {</span>
+<span class="nc" id="L295">            return null;</span>
+        }
+<span class="nc bnc" id="L297" title="All 2 branches missed.">        if (o instanceof Number n) {</span>
+<span class="nc" id="L298">            return n.longValue();</span>
+        }
+        try {
+<span class="nc" id="L301">            return Long.parseLong(o.toString());</span>
+<span class="nc" id="L302">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L303">            return null;</span>
+        }
+    }
+
+    private static Double toDouble(Object o) {
+<span class="nc bnc" id="L308" title="All 2 branches missed.">        if (o == null) {</span>
+<span class="nc" id="L309">            return null;</span>
+        }
+<span class="nc bnc" id="L311" title="All 2 branches missed.">        if (o instanceof Number n) {</span>
+<span class="nc" id="L312">            return n.doubleValue();</span>
+        }
+        try {
+<span class="nc" id="L315">            return Double.parseDouble(o.toString());</span>
+<span class="nc" id="L316">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L317">            return null;</span>
+        }
+    }
+
+    private static Integer toInt(Object o) {
+<span class="nc bnc" id="L322" title="All 2 branches missed.">        if (o == null) {</span>
+<span class="nc" id="L323">            return null;</span>
+        }
+<span class="nc bnc" id="L325" title="All 2 branches missed.">        if (o instanceof Number n) {</span>
+<span class="nc" id="L326">            return n.intValue();</span>
+        }
+        try {
+<span class="nc" id="L329">            return Integer.parseInt(o.toString());</span>
+<span class="nc" id="L330">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L331">            return null;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

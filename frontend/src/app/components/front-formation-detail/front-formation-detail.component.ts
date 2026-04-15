@@ -6,7 +6,7 @@ import { InscriptionService } from '../../services/inscription.service';
 import { ExamenService } from '../../services/examen.service';
 import { ModuleService } from '../../services/module.service';
 import { ToastService } from '../../services/toast.service';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, FREELANCER_ID_STORAGE_KEY } from '../../services/auth.service';
 import {
   Formation,
   NiveauFormation,
@@ -16,8 +16,6 @@ import {
   TYPE_FORMATION_LABELS,
 } from '../../models/formation.model';
 import { Inscription, StatutInscription } from '../../models/inscription.model';
-
-const FREELANCER_ID_KEY = 'freelancerId';
 
 @Component({
   selector: 'app-front-formation-detail',
@@ -47,6 +45,11 @@ export class FrontFormationDetailComponent implements OnInit {
     return this.auth;
   }
 
+  get isFreelancerSession(): boolean {
+    const u = this.auth.getStoredUser();
+    return u?.role === 'FREELANCER' && u.userId != null;
+  }
+
   constructor(
     private formationService: FormationService,
     private inscriptionService: InscriptionService,
@@ -60,11 +63,11 @@ export class FrontFormationDetailComponent implements OnInit {
 
   ngOnInit() {
     const user = this.auth.getStoredUser();
-    if (user?.role === 'FREELANCER' && user.userId) {
+    if (user?.role === 'FREELANCER' && user.userId != null) {
       this.freelancerIdInput = String(user.userId);
-      localStorage.setItem(FREELANCER_ID_KEY, String(user.userId));
+      localStorage.setItem(FREELANCER_ID_STORAGE_KEY, String(user.userId));
     } else {
-      const stored = localStorage.getItem(FREELANCER_ID_KEY);
+      const stored = localStorage.getItem(FREELANCER_ID_STORAGE_KEY);
       if (stored) this.freelancerIdInput = stored;
     }
 
@@ -161,6 +164,10 @@ export class FrontFormationDetailComponent implements OnInit {
   }
 
   get currentFreelancerId(): number | null {
+    const u = this.auth.getStoredUser();
+    if (u?.role === 'FREELANCER' && u.userId != null) {
+      return u.userId;
+    }
     const n = parseInt(this.freelancerIdInput, 10);
     return Number.isNaN(n) ? null : n;
   }
@@ -172,12 +179,16 @@ export class FrontFormationDetailComponent implements OnInit {
   }
 
   saveFreelancerId() {
-    const n = this.currentFreelancerId;
-    if (n == null) {
+    if (this.isFreelancerSession) {
+      this.toast.info("Vous êtes connecté : l'ID utilisé est celui de votre compte.");
+      return;
+    }
+    const n = parseInt(this.freelancerIdInput, 10);
+    if (Number.isNaN(n) || n < 1) {
       this.toast.error("Veuillez entrer un ID freelancer valide.");
       return;
     }
-    localStorage.setItem(FREELANCER_ID_KEY, String(n));
+    localStorage.setItem(FREELANCER_ID_STORAGE_KEY, String(n));
     this.toast.success("Profil freelancer enregistré.");
     this.loadResultatsFreelancer();
   }

@@ -1,2 +1,4 @@
 tn\esprit\evaluation\EvaluationApplicationTests.class
+tn\esprit\evaluation\util\QcmReponseNormalizerTest.class
 tn\esprit\evaluation\service\PassageExamenServiceTest.class
+tn\esprit\evaluation\util\QuestionDifficultyPonderationTest.class

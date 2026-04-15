@@ -8,6 +8,17 @@ const API = '/api/users';
 const TOKEN_KEY = 'mf_token';
 const USER_KEY = 'mf_user';
 
+/** Ancien ID persisté pour démo hors-ligne ; doit être aligné sur la session ou supprimé à la déconnexion. */
+export const FREELANCER_ID_STORAGE_KEY = 'freelancerId';
+
+function syncFreelancerIdLocalStorage(res: AuthResponse): void {
+  if (res.role === 'FREELANCER' && res.userId != null) {
+    localStorage.setItem(FREELANCER_ID_STORAGE_KEY, String(res.userId));
+  } else {
+    localStorage.removeItem(FREELANCER_ID_STORAGE_KEY);
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   constructor(
@@ -25,6 +36,7 @@ export class AuthService {
           fullName: res.fullName,
           role: res.role,
         }));
+        syncFreelancerIdLocalStorage(res);
       })
     );
   }
@@ -39,6 +51,7 @@ export class AuthService {
           fullName: res.fullName,
           role: res.role,
         }));
+        syncFreelancerIdLocalStorage(res);
       })
     );
   }
@@ -65,6 +78,7 @@ export class AuthService {
   clearSession(): void {
     sessionStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(USER_KEY);
+    localStorage.removeItem(FREELANCER_ID_STORAGE_KEY);
   }
 
   logout(): void {

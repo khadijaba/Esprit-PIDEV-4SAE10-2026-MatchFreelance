@@ -37,5 +37,50 @@ public class FormationClient {
             return Collections.emptyList();
         }
     }
+
+    public List<Map<String, Object>> getModulesByFormation(Long formationId) {
+        try {
+            List<Map<String, Object>> data = restTemplate.exchange(
+                    FORMATION_SERVICE + "/api/modules/formation/" + formationId,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+            ).getBody();
+            return data != null ? data : Collections.emptyList();
+        } catch (Exception e) {
+            log.warn("Impossible de récupérer les modules formation {}: {}", formationId, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    public Map<String, Object> getFormationById(Long formationId) {
+        try {
+            Map<String, Object> data = restTemplate.exchange(
+                    FORMATION_SERVICE + "/api/formations/" + formationId,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            ).getBody();
+            return data != null ? data : Collections.emptyMap();
+        } catch (Exception e) {
+            log.warn("Impossible de récupérer la formation {}: {}", formationId, e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    public List<Map<String, Object>> getInscriptionsByFreelancer(Long freelancerId) {
+        try {
+            List<Map<String, Object>> data = restTemplate.exchange(
+                    FORMATION_SERVICE + "/api/inscriptions/freelancer/" + freelancerId,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+            ).getBody();
+            return data != null ? data : Collections.emptyList();
+        } catch (Exception e) {
+            log.warn("Impossible de récupérer les inscriptions freelancer {}: {}", freelancerId, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
 }
 

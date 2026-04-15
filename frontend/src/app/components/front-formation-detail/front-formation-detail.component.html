@@ -100,8 +100,10 @@
                 min="1"
                 [value]="freelancerIdInput"
                 (input)="freelancerIdInput = $any($event.target).value"
+                [readOnly]="isFreelancerSession"
+                [title]="isFreelancerSession ? 'ID lié à votre compte (session).' : 'Saisissez votre ID freelancer'"
                 placeholder="Ex. 1"
-                class="rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                class="rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 read-only:bg-slate-50 read-only:cursor-not-allowed"
               />
             </div>
             <button

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FreelancerThemeScoreLogService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.service</a> &gt; <span class="el_source">FreelancerThemeScoreLogService.java</span></div><h1>FreelancerThemeScoreLogService.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import tn.esprit.evaluation.entity.FreelancerThemeScoreLog;
+import tn.esprit.evaluation.entity.Question;
+import tn.esprit.evaluation.repository.FreelancerThemeScoreLogRepository;
+import tn.esprit.evaluation.util.QcmReponseNormalizer;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+@RequiredArgsConstructor
+public class FreelancerThemeScoreLogService {
+
+    private final FreelancerThemeScoreLogRepository logRepository;
+
+    @Transactional
+    public void enregistrerScoresParTheme(Long freelancerId, Long examenId, List&lt;Question&gt; questions, List&lt;String&gt; reponses) {
+<span class="nc bnc" id="L23" title="All 6 branches missed.">        if (freelancerId == null || examenId == null || questions == null) {</span>
+<span class="nc" id="L24">            return;</span>
+        }
+<span class="nc" id="L26">        Map&lt;String, Integer&gt; bonParTheme = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L27">        Map&lt;String, Integer&gt; totalParTheme = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L28" title="All 2 branches missed.">        for (int i = 0; i &lt; questions.size(); i++) {</span>
+<span class="nc" id="L29">            Question q = questions.get(i);</span>
+<span class="nc" id="L30">            String theme = q.getTheme();</span>
+<span class="nc bnc" id="L31" title="All 4 branches missed.">            if (theme == null || theme.isBlank()) {</span>
+<span class="nc" id="L32">                theme = &quot;Sans thème&quot;;</span>
+            } else {
+<span class="nc" id="L34">                theme = theme.trim();</span>
+            }
+<span class="nc bnc" id="L36" title="All 2 branches missed.">            String brute = i &lt; reponses.size() ? reponses.get(i) : null;</span>
+<span class="nc" id="L37">            boolean ok = QcmReponseNormalizer.reponseQcmCorrecte(brute, q.getBonneReponse());</span>
+
+<span class="nc" id="L39">            totalParTheme.merge(theme, 1, Integer::sum);</span>
+<span class="nc bnc" id="L40" title="All 2 branches missed.">            if (ok) {</span>
+<span class="nc" id="L41">                bonParTheme.merge(theme, 1, Integer::sum);</span>
+            }
+        }
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        for (Map.Entry&lt;String, Integer&gt; e : totalParTheme.entrySet()) {</span>
+<span class="nc" id="L45">            String theme = e.getKey();</span>
+<span class="nc" id="L46">            int total = e.getValue();</span>
+<span class="nc" id="L47">            int bon = bonParTheme.getOrDefault(theme, 0);</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">            int pct = total &gt; 0 ? QcmReponseNormalizer.pourcentagePlancher(bon, total) : 0;</span>
+<span class="nc" id="L49">            logRepository.save(FreelancerThemeScoreLog.builder()</span>
+<span class="nc" id="L50">                    .freelancerId(freelancerId)</span>
+<span class="nc" id="L51">                    .examenId(examenId)</span>
+<span class="nc" id="L52">                    .theme(theme)</span>
+<span class="nc" id="L53">                    .scorePercent(pct)</span>
+<span class="nc" id="L54">                    .build());</span>
+<span class="nc" id="L55">        }</span>
+<span class="nc" id="L56">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

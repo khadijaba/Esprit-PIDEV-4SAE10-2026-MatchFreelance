@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExamenAdaptatifSession.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.entity</a> &gt; <span class="el_source">ExamenAdaptatifSession.java</span></div><h1>ExamenAdaptatifSession.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import tn.esprit.evaluation.domain.TypeParcours;
+import tn.esprit.evaluation.dto.ReponseExamenRequest;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Session d’examen adaptatif : une question à la fois, difficulté ajustée selon les réponses.
+ */
+@Entity
+@Table(name = &quot;examen_adaptatif_session&quot;)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ExamenAdaptatifSession {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = &quot;token&quot;, nullable = false, unique = true, length = 40)
+    private String token;
+
+    @Column(name = &quot;examen_id&quot;, nullable = false)
+    private Long examenId;
+
+    @Column(name = &quot;freelancer_id&quot;, nullable = false)
+    private Long freelancerId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;type_parcours&quot;, nullable = false, length = 20)
+    private TypeParcours typeParcours;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;mode_passage&quot;, nullable = false, length = 20)
+    private ReponseExamenRequest.ModePassage modePassage;
+
+    /**
+     * Rang de difficulté cible pour la prochaine question : 1=FACILE, 2=MOYEN, 3=DIFFICILE.
+     */
+    @Column(name = &quot;difficulte_cible_rang&quot;, nullable = false)
+    @Builder.Default
+    private int difficulteCibleRang = 2;
+
+    @Column(name = &quot;question_courante_id&quot;)
+    private Long questionCouranteId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private StatutSession statut = StatutSession.EN_COURS;
+
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = &quot;expires_at&quot;, nullable = false)
+    private LocalDateTime expiresAt;
+
+    @OneToMany(mappedBy = &quot;session&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy(&quot;ordre ASC&quot;)
+    @Builder.Default
+    private List&lt;ExamenAdaptatifEtape&gt; etapes = new ArrayList&lt;&gt;();
+
+<span class="fc" id="L71">    public enum StatutSession {</span>
+<span class="fc" id="L72">        EN_COURS,</span>
+<span class="fc" id="L73">        TERMINEE,</span>
+<span class="fc" id="L74">        ANNULEE</span>
+    }
+
+    @PrePersist
+    protected void onCreate() {
+<span class="nc" id="L79">        createdAt = LocalDateTime.now();</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">        if (expiresAt == null) {</span>
+<span class="nc" id="L81">            expiresAt = createdAt.plusHours(4);</span>
+        }
+<span class="nc" id="L83">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

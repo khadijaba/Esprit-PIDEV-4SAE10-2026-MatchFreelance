@@ -117,21 +117,56 @@
     </div>
 
       <!-- Examens de cette formation -->
-    @if (examensLoading) {
-      <p class="text-sm text-gray-500 pt-4 border-t border-gray-100">Chargement des examens...</p>
-    } @else if (examens.length > 0) {
       <div class="pt-4 border-t border-gray-100">
         <h4 class="text-sm font-semibold text-gray-700 mb-2">Examens de cette formation</h4>
-        <ul class="space-y-2">
-          @for (e of examens; track e.id) {
-            <li class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50/50 px-3 py-2">
-              <span class="font-medium text-gray-800">{{ e.titre }}</span>
-              <a [routerLink]="['/admin/examens', e.id]" class="text-sm text-indigo-600 hover:text-indigo-800">Voir résultats</a>
-            </li>
+        <div class="mb-4 rounded-xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-4 shadow-sm">
+          <p class="text-sm font-semibold text-gray-900">Générer automatiquement un examen</p>
+          <p class="mt-1 text-xs text-gray-600">
+            À partir des <strong>modules</strong> : les questions sont <strong>affichées en prévisualisation</strong> ; après vérification, validez pour enregistrer ou régénérez un nouveau jeu. Au moins <strong>7 questions</strong> par parcours (Standard et Renforcement).
+          </p>
+          <label class="mt-2 flex cursor-pointer items-center gap-2 text-xs text-gray-700">
+            <input
+              type="checkbox"
+              [(ngModel)]="useLlmForAutoGenerate"
+              name="useLlmFormationDetail"
+              [disabled]="generatingExamen || confirmingExamen"
+              class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+            <span>Rédaction LLM (ex. Ollama <code class="rounded bg-white/80 px-1">http://127.0.0.1:11434/v1</code> côté serveur)</span>
+          </label>
+          <button
+            type="button"
+            (click)="generateExamenFromModules()"
+            [disabled]="generatingExamen || confirmingExamen || modulesLoading || modules.length === 0"
+            class="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50">
+            @if (generatingExamen) {
+              <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+              Génération en cours…
+            } @else {
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Prévisualiser l’examen depuis les modules
+            }
+          </button>
+          @if (!modulesLoading && modules.length === 0) {
+            <p class="mt-2 text-xs text-amber-700">Ajoutez d’abord au moins un module pour activer ce bouton.</p>
           }
-        </ul>
+        </div>
+        @if (examensLoading) {
+          <p class="text-sm text-gray-500">Chargement des examens…</p>
+        } @else if (examens.length > 0) {
+          <ul class="space-y-2">
+            @for (e of examens; track e.id) {
+              <li class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50/50 px-3 py-2">
+                <span class="font-medium text-gray-800">{{ e.titre }}</span>
+                <a [routerLink]="['/admin/examens', e.id]" class="text-sm text-indigo-600 hover:text-indigo-800">Voir résultats</a>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="text-sm text-gray-500">Aucun examen pour l’instant — utilisez le bouton ci-dessus ou <a routerLink="/admin/examens/new" class="font-medium text-indigo-600 hover:underline">créez un examen manuellement</a>.</p>
+        }
       </div>
-    }
 
     <!-- Inscriptions -->
     @if (inscriptionsLoading) {
@@ -192,5 +227,60 @@
       </a>
     </div>
   </div>
+
+  @if (draftGeneratedExamen) {
+    <div class="fixed inset-0 z-[100] flex items-end justify-center sm:items-center p-4 bg-black/50" role="dialog" aria-modal="true">
+      <div class="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl flex flex-col">
+        <div class="shrink-0 border-b border-gray-200 px-5 py-4 flex items-start justify-between gap-3 bg-indigo-50/80">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Prévisualisation — non enregistrée</p>
+            <h3 class="text-lg font-bold text-gray-900 mt-1">{{ draftGeneratedExamen.titre }}</h3>
+            <p class="text-sm text-gray-600 mt-1">{{ draftGeneratedExamen.description }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ draftGeneratedExamen.questions.length }} question(s) · seuil {{ draftGeneratedExamen.seuilReussi }} %</p>
+          </div>
+          <button type="button" (click)="closeDraftPreview()" class="rounded-lg p-2 text-gray-500 hover:bg-white/80 hover:text-gray-800" aria-label="Fermer">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          @for (q of draftGeneratedExamen.questions; track q.ordre) {
+            <div class="rounded-xl border border-gray-200 bg-gray-50/80 p-4 text-sm">
+              <p class="font-semibold text-gray-900"><span class="text-indigo-600">#{{ q.ordre + 1 }}</span> · {{ q.enonce }}</p>
+              @if (q.theme) {
+                <p class="text-xs text-gray-500 mt-1">Thème : {{ q.theme }} · {{ q.parcoursInclusion }} · {{ q.niveauDifficulte }}</p>
+              }
+              <ul class="mt-3 space-y-1.5 text-gray-800">
+                <li [class.ring-2]="q.bonneReponse === 'A'" [class.ring-emerald-400]="q.bonneReponse === 'A'" class="rounded-md px-2 py-1 bg-white/90"><span class="font-medium text-indigo-700">A</span> {{ optionLabel(q, 'A') }}</li>
+                <li [class.ring-2]="q.bonneReponse === 'B'" [class.ring-emerald-400]="q.bonneReponse === 'B'" class="rounded-md px-2 py-1 bg-white/90"><span class="font-medium text-indigo-700">B</span> {{ optionLabel(q, 'B') }}</li>
+                <li [class.ring-2]="q.bonneReponse === 'C'" [class.ring-emerald-400]="q.bonneReponse === 'C'" class="rounded-md px-2 py-1 bg-white/90"><span class="font-medium text-indigo-700">C</span> {{ optionLabel(q, 'C') }}</li>
+                <li [class.ring-2]="q.bonneReponse === 'D'" [class.ring-emerald-400]="q.bonneReponse === 'D'" class="rounded-md px-2 py-1 bg-white/90"><span class="font-medium text-indigo-700">D</span> {{ optionLabel(q, 'D') }}</li>
+              </ul>
+              <p class="text-xs text-emerald-800 mt-2 font-medium">Bonne réponse : {{ q.bonneReponse }}</p>
+              @if (q.explication) {
+                <p class="text-xs text-gray-600 mt-2 border-t border-gray-200 pt-2">{{ q.explication }}</p>
+              }
+            </div>
+          }
+        </div>
+        <div class="shrink-0 border-t border-gray-200 px-5 py-4 flex flex-wrap gap-3 justify-end bg-white">
+          <button type="button" (click)="closeDraftPreview()" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
+          <button
+            type="button"
+            (click)="regenerateDraftExamen()"
+            [disabled]="generatingExamen"
+            class="rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-100 disabled:opacity-50">
+            {{ generatingExamen ? 'Régénération…' : 'Régénérer (nouveau jeu)' }}
+          </button>
+          <button
+            type="button"
+            (click)="confirmDraftExamen()"
+            [disabled]="confirmingExamen || generatingExamen"
+            class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+            {{ confirmingExamen ? 'Enregistrement…' : 'Valider et créer l’examen' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
   }
 </div>

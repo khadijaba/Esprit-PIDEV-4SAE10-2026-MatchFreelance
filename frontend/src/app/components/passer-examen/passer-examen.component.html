@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8">
+<div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
   <a [routerLink]="['/formations', formationId]" class="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-teal-600">
     ← Retour à la formation
   </a>
@@ -13,10 +13,20 @@
     <div class="rounded-2xl border border-slate-200 bg-white shadow-xl overflow-hidden">
       <div class="border-b border-slate-100 bg-teal-50/50 px-6 py-6">
         <h1 class="text-2xl font-bold text-slate-900">{{ examen.titre }}</h1>
+        <p class="mt-2 inline-flex items-center rounded-full border border-fuchsia-300 bg-fuchsia-100 px-3 py-1 text-xs font-bold text-fuchsia-900">
+          NEW UI : Simulateur + Learning Path activés
+        </p>
         @if (examen.description) {
           <p class="mt-2 text-sm text-slate-600">{{ examen.description }}</p>
         }
         <p class="mt-2 text-sm text-slate-500">Seuil pour réussir : {{ examen.seuilReussi }} %</p>
+        <p
+          class="mt-4 rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3 text-sm font-semibold leading-snug text-amber-950 shadow-sm">
+          Info : chrono pondéré par difficulté (base {{ secondesParQuestion }} s) :
+          <strong>FACILE ≈ {{ secondesFacileEstimees }} s</strong>,
+          <strong>MOYEN = {{ secondesParQuestion }} s</strong>,
+          <strong>DIFFICILE ≈ {{ secondesDifficileEstimees }} s</strong>.
+        </p>
       </div>
 
       <div class="px-6 py-6">
@@ -29,99 +39,948 @@
         <input
           type="number"
           min="1"
-          [value]="freelancerIdInput"
-          (input)="freelancerIdInput = $any($event.target).value"
+          [(ngModel)]="freelancerIdInput"
+          (blur)="onFreelancerIdChanged()"
+          name="freelancerIdInput"
+          [readOnly]="isFreelancerConnected"
+          [title]="isFreelancerConnected ? 'ID lié à votre compte (session).' : 'Saisissez votre ID freelancer'"
           placeholder="Ex. 1"
-          class="mb-6 w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500" />
-      </div>
+          class="mb-6 w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500 read-only:bg-slate-50 read-only:cursor-not-allowed" />
 
-      <form (ngSubmit)="submit()" class="border-t border-slate-100 px-6 py-6">
-        <h2 class="text-lg font-semibold text-slate-800 mb-4">Questions</h2>
-        @for (q of examen.questions; track trackByIndex($index)) {
-          <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-            <p class="font-medium text-slate-800">{{ $index + 1 }}. {{ q.enonce }}</p>
-            <div class="mt-3 space-y-2">
-              @if (q.optionA) {
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" [name]="'q' + $index" value="A" [(ngModel)]="reponses[$index]" class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
-                  <span class="text-sm text-slate-700">A. {{ q.optionA }}</span>
-                </label>
+        <div class="mb-6">
+          <label class="mb-1 block text-sm font-medium text-slate-700">Parcours d'évaluation</label>
+          <select
+            [(ngModel)]="selectedParcours"
+            (ngModelChange)="onParcoursChange()"
+            name="parcours"
+            class="w-full max-w-md rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+            <option value="STANDARD">Standard (questions communes + lot standard)</option>
+            <option value="RENFORCEMENT">Renforcement (communes + questions ciblées révision)</option>
+          </select>
+          <p class="mt-1 text-xs text-slate-500">Le même parcours doit être utilisé pour charger l'examen et pour envoyer les réponses.</p>
+        </div>
+
+        <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-4 space-y-3">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700">Type de passage</label>
+            <select
+              [(ngModel)]="passageMode"
+              (ngModelChange)="onPassageModeChange()"
+              name="passageMode"
+              class="w-full max-w-md rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+              <option value="CERTIFIANT">Certifiant — tentative officielle, certificat si réussi</option>
+              <option value="ENTRAINEMENT">Entraînement — correction détaillée et suivi des thèmes</option>
+            </select>
+          </div>
+          @if (examMode === 'classique' && passageMode === 'ENTRAINEMENT') {
+            <label class="flex cursor-pointer items-start gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                [(ngModel)]="revisionCiblee"
+                (ngModelChange)="onRevisionCibleeChange()"
+                name="revisionCiblee"
+                class="mt-1 h-4 w-4 rounded border-slate-300" />
+              <span>
+                <strong>Révision ciblée</strong> : uniquement les questions déjà ratées au moins une fois (historique d’entraînement ou de passage).
+              </span>
+            </label>
+          }
+          <p class="text-xs text-slate-600">
+            Temps de base : <strong>{{ secondesParQuestion }} s</strong>, ajusté automatiquement selon la difficulté de chaque question. Accessibilité : enregistrer un temps majoré avec
+            <code class="rounded bg-white px-1">POST /api/examens/freelancer/&lt;id&gt;/amenagement-temps</code>
+            et corps <code class="rounded bg-white px-1">&#123; &quot;multiplicateurChrono&quot;: 1.5 &#125;</code> (max 3).
+          </p>
+        </div>
+
+        @if (objectifs.length) {
+          <div class="mb-6 rounded-xl border border-violet-200 bg-violet-50/50 px-4 py-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-violet-900">Objectifs personnels (par thème)</p>
+            <ul class="mt-2 space-y-2 text-sm text-slate-800">
+              @for (o of objectifs; track o.id) {
+                <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-violet-100 bg-white/80 px-3 py-2">
+                  <span>
+                    <span class="font-medium">{{ o.theme }}</span>
+                    — cible {{ o.objectifScore }} %
+                    <span class="text-slate-600">| dernier {{ o.dernierScoreTheme ?? '—' }} %</span>
+                    @if (o.objectifAtteint) {
+                      <span class="ml-2 font-semibold text-emerald-700">objectif atteint</span>
+                    }
+                  </span>
+                  <button type="button" (click)="supprimerObjectif(o.id)" class="text-xs font-medium text-red-600 hover:underline">
+                    Retirer
+                  </button>
+                </li>
               }
-              @if (q.optionB) {
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" [name]="'q' + $index" value="B" [(ngModel)]="reponses[$index]" class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
-                  <span class="text-sm text-slate-700">B. {{ q.optionB }}</span>
-                </label>
-              }
-              @if (q.optionC) {
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" [name]="'q' + $index" value="C" [(ngModel)]="reponses[$index]" class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
-                  <span class="text-sm text-slate-700">C. {{ q.optionC }}</span>
-                </label>
-              }
-              @if (q.optionD) {
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" [name]="'q' + $index" value="D" [(ngModel)]="reponses[$index]" class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
-                  <span class="text-sm text-slate-700">D. {{ q.optionD }}</span>
-                </label>
-              }
-            </div>
+            </ul>
           </div>
         }
-        <div class="flex gap-3 pt-4">
+        <div class="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-dashed border-violet-200 bg-white/60 px-3 py-3">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600">Thème à suivre</label>
+            <input
+              type="text"
+              [(ngModel)]="newObjectifTheme"
+              name="newObjectifTheme"
+              placeholder="ex. React"
+              class="w-44 rounded-lg border border-slate-300 px-2 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600">Objectif %</label>
+            <input
+              type="number"
+              min="1"
+              max="100"
+              [(ngModel)]="newObjectifScore"
+              name="newObjectifScore"
+              class="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-sm" />
+          </div>
           <button
-            type="submit"
-            [disabled]="!canSubmit() || submitting"
-            class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed">
-            @if (submitting) {
-              <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-            } @else {
-              Envoyer mes réponses
-            }
+            type="button"
+            (click)="creerObjectif()"
+            class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700">
+            Ajouter l’objectif
           </button>
-          <a [routerLink]="['/formations', formationId]" class="rounded-xl border border-slate-300 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
-            Annuler
-          </a>
         </div>
-      </form>
+
+        @if (risqueLoading) {
+          <p class="mb-4 text-sm text-slate-500">Analyse du profil…</p>
+        }
+        @if (risque && !risqueLoading) {
+          <div
+            class="mb-6 rounded-xl border px-4 py-3 text-sm"
+            [class.border-amber-300]="risque.alerteFormateur"
+            [class.bg-amber-50]="risque.alerteFormateur"
+            [class.border-slate-200]="!risque.alerteFormateur"
+            [class.bg-slate-50]="!risque.alerteFormateur">
+            <p class="font-semibold text-slate-800">Parcours apprenant — risque d'échec estimé : {{ risque.scoreRisque }}/100 ({{ risque.niveau }})</p>
+            <p class="mt-2 text-slate-700">{{ risque.messageApprenant }}</p>
+            @if (risque.parcoursRecommande) {
+              <p class="mt-2 text-slate-600">
+                Parcours suggéré par la plateforme : <strong>{{ risque.parcoursRecommande === 'RENFORCEMENT' ? 'Renforcement' : 'Standard' }}</strong>
+              </p>
+            }
+            @if (risque.facteurs?.length) {
+              <ul class="mt-2 list-inside list-disc text-xs text-slate-600">
+                @for (f of risque.facteurs; track f) {
+                  <li>{{ f }}</li>
+                }
+              </ul>
+            }
+            @if (risque.alerteFormateur && risque.messageFormateur) {
+              <p class="mt-3 rounded-lg border border-amber-200 bg-white/80 px-3 py-2 text-xs font-medium text-amber-900">
+                Alerte formateur : {{ risque.messageFormateur }}
+              </p>
+            }
+          </div>
+        }
+
+        <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-sm">
+          <div class="flex items-start justify-between gap-2">
+            <p class="font-semibold text-emerald-900">Simulateur avant certifiant</p>
+            <button
+              type="button"
+              (click)="refreshSimulationEtRemediation()"
+              class="rounded border border-emerald-300 bg-white px-2 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-100">
+              Rafraîchir
+            </button>
+          </div>
+          @if (simulationLoading) {
+            <p class="mt-1 text-sm text-emerald-900">Simulation de réussite en cours…</p>
+          } @else if (simulation) {
+            <p class="mt-1 text-emerald-900">
+              Probabilité : {{ simulation.probabiliteReussite }}% ({{ simulation.niveauConfiance || 'N/A' }})
+            </p>
+            <p class="mt-1 text-emerald-900">{{ simulation.recommandation || '—' }}</p>
+            <p class="mt-2 text-xs text-emerald-800">
+              Historique : moyenne {{ simulation.scoreMoyenHistorique ?? '—' }}% · réussite {{ simulation.tauxReussiteHistorique ?? '—' }}%
+              · préparation moyenne {{ simulation.tempsMoyenPreparationJours ?? '—' }} jour(s)
+            </p>
+            @if (simulation.modulesAvantCertifiant?.length) {
+              <ul class="mt-2 list-inside list-disc text-xs text-emerald-900">
+                @for (m of simulation.modulesAvantCertifiant; track m.id) {
+                  <li>{{ m.titre || ('Module #' + m.id) }} ({{ m.dureeMinutes ?? 0 }} min)</li>
+                }
+              </ul>
+            }
+          } @else if (simulationError) {
+            <p class="mt-1 text-sm text-red-700">{{ simulationError }}</p>
+          } @else {
+            <p class="mt-1 text-sm text-slate-600">Aucune simulation disponible pour le moment.</p>
+          }
+        </div>
+
+        <div class="mb-6 rounded-xl border border-violet-200 bg-violet-50/50 px-4 py-3 text-sm">
+          <p class="font-semibold text-violet-900">Learning path personnalisé</p>
+          @if (planRemediationLoading) {
+            <p class="mt-1 text-sm text-violet-900">Plan de remédiation en cours…</p>
+          } @else if (planRemediation) {
+            <p class="mt-1 text-violet-900">{{ planRemediation.resume || 'Plan de remédiation prêt.' }}</p>
+            <p class="mt-2 text-xs text-violet-800">
+              Parcours suggéré : {{ planRemediation.parcoursSuggere || 'STANDARD' }} · Objectif score :
+              {{ planRemediation.objectifScoreCible ?? '—' }}% · Temps total estimé :
+              {{ planRemediation.estimationTotaleMinutes ?? 0 }} min
+            </p>
+            @if (planRemediation.etapes?.length) {
+              <ol class="mt-2 space-y-1 text-xs text-violet-950">
+                @for (etape of planRemediation.etapes; track etape.sequence) {
+                  <li
+                    class="rounded border px-2 py-1"
+                    [class.border-emerald-200]="isEtapeRemediationTerminee(etape.sequence)"
+                    [class.bg-emerald-50]="isEtapeRemediationTerminee(etape.sequence)"
+                    [class.border-violet-100]="!isEtapeRemediationTerminee(etape.sequence)"
+                    [class.bg-white/80]="!isEtapeRemediationTerminee(etape.sequence)">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                      <span>
+                        <strong>Étape {{ etape.sequence }}:</strong>
+                        {{ etape.moduleTitre || ('Module #' + etape.moduleId) }} · {{ etape.dureeEstimeeMinutes ?? 0 }} min ·
+                        cible {{ etape.dateCible || '—' }}
+                      </span>
+                      <button
+                        type="button"
+                        (click)="toggleEtapeRemediation(etape.sequence)"
+                        class="rounded border px-2 py-1 text-[11px] font-medium"
+                        [class.border-emerald-300]="!isEtapeRemediationTerminee(etape.sequence)"
+                        [class.text-emerald-800]="!isEtapeRemediationTerminee(etape.sequence)"
+                        [class.bg-white]="!isEtapeRemediationTerminee(etape.sequence)"
+                        [class.border-slate-300]="isEtapeRemediationTerminee(etape.sequence)"
+                        [class.text-slate-700]="isEtapeRemediationTerminee(etape.sequence)"
+                        [class.bg-slate-100]="isEtapeRemediationTerminee(etape.sequence)">
+                        {{ isEtapeRemediationTerminee(etape.sequence) ? 'Annuler terminé' : 'Marquer terminée' }}
+                      </button>
+                    </div>
+                  </li>
+                }
+              </ol>
+            }
+          } @else if (planRemediationError) {
+            <p class="mt-1 text-sm text-red-700">{{ planRemediationError }}</p>
+          } @else {
+            <p class="mt-1 text-sm text-slate-600">Aucun learning path disponible pour le moment.</p>
+          }
+        </div>
+
+        <div class="mb-6 rounded-xl border border-indigo-100 bg-indigo-50/40 px-4 py-4">
+          <label class="mb-2 block text-sm font-medium text-slate-800">Mode d’évaluation</label>
+          <select
+            [(ngModel)]="examMode"
+            (ngModelChange)="onExamModeChange()"
+            name="examMode"
+            class="w-full max-w-md rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+            <option value="classique">Classique — une question à la fois (temps selon difficulté)</option>
+            <option value="adaptatif">Adaptatif — difficulté ajustée après chaque réponse</option>
+          </select>
+          @if (examMode === 'classique') {
+            <p class="mt-2 text-xs leading-relaxed text-slate-600">
+              Les questions s’affichent <strong class="font-semibold">une par une</strong>.
+              Le temps dépend de la difficulté de la question (facile < moyen < difficile) : sans réponse, passage automatique à la suivante (comptée comme non répondue).
+            </p>
+          }
+          @if (examMode === 'adaptatif') {
+            <p class="mt-2 text-xs leading-relaxed text-slate-600">
+              Bonne réponse : question suivante plus exigeante. Erreur : question plus accessible.
+              Le temps dépend de la difficulté de la question (facile < moyen < difficile) : sans réponse, passage automatique à la suivante (réponse non renseignée).
+              Le score final porte sur la séquence réellement passée (certifiant, une seule tentative comme l’examen classique).
+            </p>
+          }
+        </div>
+
+        @if (repartitionSkillsPourExamen().length) {
+          <div class="mb-6 rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50/80 to-white px-4 py-4 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-wide text-sky-950">Scoring par compétence</p>
+            <p class="mt-1 text-xs leading-relaxed text-slate-600">
+              Chaque question est rattachée à une <strong>compétence</strong> (champ dédié ou, à défaut, au thème pédagogique). Après l’envoi, vous verrez un
+              <strong>pourcentage par compétence</strong> (pondération FACILE&nbsp;1 · MOYEN&nbsp;2 · DIFFICILE&nbsp;3), comme pour la note globale.
+            </p>
+            <ul class="mt-3 space-y-2">
+              @for (s of repartitionSkillsPourExamen(); track s.label) {
+                <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-sky-100 bg-white/95 px-3 py-2 text-sm text-slate-800 shadow-sm">
+                  <span class="font-semibold text-slate-900">{{ s.label }}</span>
+                  <span class="tabular-nums text-xs text-slate-600 sm:text-sm">
+                    {{ s.count }} question(s) · poids max <span class="font-semibold text-slate-800">{{ s.poidsMax }}</span>
+                  </span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+
+      @if (examMode === 'adaptatif') {
+        <div class="border-t border-slate-100 px-6 py-6">
+          @if (!adaptatifToken) {
+            <p class="mb-4 text-sm text-slate-600">
+              L’examen adaptatif nécessite au moins deux questions dans le parcours choisi, avec des niveaux de difficulté variés (facile, moyen, difficile).
+            </p>
+            <div class="flex flex-wrap gap-3">
+              <button
+                type="button"
+                (click)="demarrerAdaptatif()"
+                [disabled]="!canDemarrerAdaptatif()"
+                class="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                @if (adaptatifDemarrage) {
+                  <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                } @else {
+                  Commencer l’examen adaptatif
+                }
+              </button>
+              <a [routerLink]="['/formations', formationId]" class="rounded-xl border border-slate-300 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                Annuler
+              </a>
+            </div>
+          } @else if (adaptatifQuestion) {
+            <div class="mb-4 flex flex-wrap items-center gap-2 text-sm">
+              <span class="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-800">
+                Question {{ adaptatifNumero }} / {{ adaptatifTotal }}
+              </span>
+              @if (adaptatifChronoRestant != null) {
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold tabular-nums ring-2 ring-inset"
+                  [class.bg-amber-100]="adaptatifChronoRestant <= 3"
+                  [class.text-amber-900]="adaptatifChronoRestant <= 3"
+                  [class.ring-amber-400]="adaptatifChronoRestant <= 3"
+                  [class.bg-teal-100]="adaptatifChronoRestant > 3"
+                  [class.text-teal-900]="adaptatifChronoRestant > 3"
+                  [class.ring-teal-400]="adaptatifChronoRestant > 3">
+                  <span class="inline-block h-2 w-2 rounded-full bg-current opacity-80 animate-pulse" aria-hidden="true"></span>
+                  Temps : {{ adaptatifChronoRestant }} s
+                </span>
+              }
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                Temps alloué : {{ adaptatifSecondesQuestion }} s
+              </span>
+              @if (libelleComplexiteQuestion(adaptatifQuestion.niveauDifficulte); as compAdap) {
+                <span
+                  class="inline-flex items-center gap-1 rounded-full border border-slate-200/90 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow-sm ring-1 ring-slate-100"
+                  title="Complexité de cette question pour le score (pondération)">
+                  Complexité :
+                  <span class="font-bold text-slate-900 normal-case tracking-normal">{{ compAdap }}</span>
+                </span>
+              }
+              @if (adaptatifDifficulteLibelle) {
+                <span class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-900">
+                  Difficulté cible : {{ adaptatifDifficulteLibelle }}
+                </span>
+              }
+              @if (libelleSkillQuestion(adaptatifQuestion); as skAd) {
+                <span
+                  class="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-950"
+                  title="Compétence évaluée sur cette question">
+                  Compétence : <span class="font-bold normal-case">{{ skAd }}</span>
+                </span>
+              }
+            </div>
+            @if (adaptatifEtapeFeedback) {
+              <div
+                class="mb-4 rounded-lg border px-4 py-3 text-sm"
+                [class.border-emerald-200]="adaptatifEtapeFeedback.correct"
+                [class.bg-emerald-50]="adaptatifEtapeFeedback.correct"
+                [class.border-amber-200]="!adaptatifEtapeFeedback.correct"
+                [class.bg-amber-50]="!adaptatifEtapeFeedback.correct">
+                <p class="font-medium text-slate-900">
+                  {{ adaptatifEtapeFeedback.correct ? 'Bonne réponse.' : 'Réponse incorrecte.' }}
+                  @if (adaptatifEtapeFeedback.difficulte) {
+                    <span class="ml-1 font-normal text-slate-700">
+                      Prochaine difficulté cible : {{ adaptatifEtapeFeedback.difficulte }}.
+                    </span>
+                  }
+                </p>
+              </div>
+            }
+            <form (ngSubmit)="submitAdaptatif()" class="space-y-4">
+              <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                <p class="font-medium text-slate-800">{{ adaptatifNumero }}. {{ adaptatifQuestion.enonce }}</p>
+                <div class="mt-3 space-y-2">
+                  @if (adaptatifQuestion.optionA) {
+                    <label class="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        name="adaptRep"
+                        value="A"
+                        [(ngModel)]="adaptatifReponse"
+                        class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
+                      <span class="text-sm text-slate-700">A. {{ adaptatifQuestion.optionA }}</span>
+                    </label>
+                  }
+                  @if (adaptatifQuestion.optionB) {
+                    <label class="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        name="adaptRep"
+                        value="B"
+                        [(ngModel)]="adaptatifReponse"
+                        class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
+                      <span class="text-sm text-slate-700">B. {{ adaptatifQuestion.optionB }}</span>
+                    </label>
+                  }
+                  @if (adaptatifQuestion.optionC) {
+                    <label class="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        name="adaptRep"
+                        value="C"
+                        [(ngModel)]="adaptatifReponse"
+                        class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
+                      <span class="text-sm text-slate-700">C. {{ adaptatifQuestion.optionC }}</span>
+                    </label>
+                  }
+                  @if (adaptatifQuestion.optionD) {
+                    <label class="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        name="adaptRep"
+                        value="D"
+                        [(ngModel)]="adaptatifReponse"
+                        class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
+                      <span class="text-sm text-slate-700">D. {{ adaptatifQuestion.optionD }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-3 pt-2">
+                <button
+                  type="submit"
+                  [disabled]="!canSubmitAdaptatif()"
+                  class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                  @if (submitting) {
+                    <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                  } @else {
+                    Valider cette réponse
+                  }
+                </button>
+                <a [routerLink]="['/formations', formationId]" class="rounded-xl border border-slate-300 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  Annuler
+                </a>
+              </div>
+            </form>
+          }
+        </div>
+      } @else {
+        <div class="border-t border-slate-100 px-6 py-6">
+          <h2 class="mb-4 text-lg font-semibold text-slate-800">Questions</h2>
+          @if (classiqueQuestionCourante; as q) {
+            <div class="mb-4 flex flex-wrap items-center gap-2 text-sm">
+              <span class="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-800">
+                Question {{ classiqueQuestionIndex + 1 }} / {{ examen.questions.length }}
+              </span>
+              @if (classiqueChronoRestant != null) {
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold tabular-nums ring-2 ring-inset"
+                  [class.bg-amber-100]="classiqueChronoRestant <= 3"
+                  [class.text-amber-900]="classiqueChronoRestant <= 3"
+                  [class.ring-amber-400]="classiqueChronoRestant <= 3"
+                  [class.bg-teal-100]="classiqueChronoRestant > 3"
+                  [class.text-teal-900]="classiqueChronoRestant > 3"
+                  [class.ring-teal-400]="classiqueChronoRestant > 3">
+                  <span class="inline-block h-2 w-2 rounded-full bg-current opacity-80 animate-pulse" aria-hidden="true"></span>
+                  Temps : {{ classiqueChronoRestant }} s
+                </span>
+              }
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                Temps alloué : {{ classiqueSecondesQuestion }} s
+              </span>
+              @if (libelleComplexiteQuestion(q.niveauDifficulte); as compCl) {
+                <span
+                  class="inline-flex items-center gap-1 rounded-full border border-slate-200/90 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow-sm ring-1 ring-slate-100"
+                  title="Complexité de cette question pour le score (pondération)">
+                  Complexité :
+                  <span class="font-bold text-slate-900 normal-case tracking-normal">{{ compCl }}</span>
+                </span>
+              }
+              @if (libelleSkillQuestion(q); as skCl) {
+                <span
+                  class="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-950"
+                  title="Compétence évaluée sur cette question">
+                  Compétence : <span class="font-bold normal-case">{{ skCl }}</span>
+                </span>
+              }
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+              <p class="font-medium text-slate-800">{{ classiqueQuestionIndex + 1 }}. {{ q.enonce }}</p>
+              <div class="mt-3 space-y-2">
+                @if (q.optionA) {
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      name="classiqueRep"
+                      value="A"
+                      [(ngModel)]="reponses[classiqueQuestionIndex]"
+                      class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
+                    <span class="text-sm text-slate-700">A. {{ q.optionA }}</span>
+                  </label>
+                }
+                @if (q.optionB) {
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      name="classiqueRep"
+                      value="B"
+                      [(ngModel)]="reponses[classiqueQuestionIndex]"
+                      class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
+                    <span class="text-sm text-slate-700">B. {{ q.optionB }}</span>
+                  </label>
+                }
+                @if (q.optionC) {
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      name="classiqueRep"
+                      value="C"
+                      [(ngModel)]="reponses[classiqueQuestionIndex]"
+                      class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
+                    <span class="text-sm text-slate-700">C. {{ q.optionC }}</span>
+                  </label>
+                }
+                @if (q.optionD) {
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      name="classiqueRep"
+                      value="D"
+                      [(ngModel)]="reponses[classiqueQuestionIndex]"
+                      class="rounded-full border-slate-300 text-teal-600 focus:ring-teal-500" />
+                    <span class="text-sm text-slate-700">D. {{ q.optionD }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-3 pt-4">
+              <button
+                type="button"
+                (click)="avancerClassique(false)"
+                [disabled]="submitting"
+                class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                @if (submitting) {
+                  <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                } @else if (classiqueQuestionIndex >= examen.questions.length - 1) {
+                  Envoyer l’examen
+                } @else {
+                  Question suivante
+                }
+              </button>
+              <a [routerLink]="['/formations', formationId]" class="rounded-xl border border-slate-300 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                Annuler
+              </a>
+            </div>
+          }
+        </div>
+      }
     </div>
   }
 
   @if (!loading && resultat) {
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-xl p-8 text-center">
-      <h2 class="text-2xl font-bold text-slate-900">Résultat de l'examen</h2>
-      <p class="mt-4 text-4xl font-bold" [class.text-emerald-600]="resultat.resultat === 'REUSSI'" [class.text-red-600]="resultat.resultat === 'ECHOUE'">
-        {{ resultat.resultat === 'REUSSI' ? 'Réussi' : 'Échoué' }}
-      </p>
-      <p class="mt-2 text-lg text-slate-600">Score : {{ resultat.score }} %</p>
+    <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-lg shadow-slate-200/50 ring-1 ring-slate-100">
+      <div
+        class="border-b px-6 py-8 sm:px-10 sm:py-10 text-center"
+        [class.border-emerald-100]="resultat.resultat === 'REUSSI'"
+        [class.bg-gradient-to-b]="resultat.resultat === 'REUSSI'"
+        [class.from-emerald-50/90]="resultat.resultat === 'REUSSI'"
+        [class.to-white]="resultat.resultat === 'REUSSI'"
+        [class.border-slate-100]="resultat.resultat === 'ECHOUE'"
+        [class.bg-gradient-to-b]="resultat.resultat === 'ECHOUE'"
+        [class.from-slate-50]="resultat.resultat === 'ECHOUE'"
+        [class.to-white]="resultat.resultat === 'ECHOUE'">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Résultat d’évaluation</p>
+        <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{{ examen?.titre ?? 'Examen' }}</h2>
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <span
+            class="inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ring-1 ring-inset"
+            [class.bg-emerald-600]="resultat.resultat === 'REUSSI'"
+            [class.text-white]="resultat.resultat === 'REUSSI'"
+            [class.ring-emerald-600/20]="resultat.resultat === 'REUSSI'"
+            [class.bg-red-600]="resultat.resultat === 'ECHOUE'"
+            [class.text-white]="resultat.resultat === 'ECHOUE'"
+            [class.ring-red-600/20]="resultat.resultat === 'ECHOUE'">
+            {{ resultat.resultat === 'REUSSI' ? 'Admis' : 'Non admis' }}
+          </span>
+          @if (resultat.typeParcours) {
+            <span class="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
+              Parcours {{ resultat.typeParcours === 'RENFORCEMENT' ? 'renforcement' : 'standard' }}
+            </span>
+          }
+        </div>
+        <div class="mx-auto mt-8 flex max-w-md flex-col items-center justify-center gap-1 rounded-2xl border border-slate-200/80 bg-white/80 px-8 py-6 shadow-sm backdrop-blur-sm">
+          <span class="text-xs font-medium uppercase tracking-wider text-slate-500">Score obtenu</span>
+          <p class="text-5xl font-bold tabular-nums tracking-tight text-slate-900">{{ resultat.score }}<span class="text-2xl font-semibold text-slate-500">%</span></p>
+          @if (examen?.seuilReussi != null) {
+            <p class="text-sm text-slate-500">Seuil de réussite : {{ examen?.seuilReussi }} %</p>
+          }
+          @if (resultat.pointsObtenus != null && resultat.pointsMax != null && resultat.pointsMax > 0) {
+            <p class="mt-3 text-center text-sm font-medium text-slate-700">
+              Points obtenus&nbsp;: <span class="tabular-nums font-bold text-slate-900">{{ resultat.pointsObtenus }}</span>
+              &nbsp;/&nbsp;<span class="tabular-nums">{{ resultat.pointsMax }}</span>
+              <span class="block text-xs font-normal text-slate-500">(somme des poids des réponses correctes — FACILE 1, MOYEN 2, DIFFICILE 3)</span>
+            </p>
+          }
+          @if (pourcentageBrutNote() != null) {
+            <div class="mt-4 w-full max-w-md rounded-xl border border-slate-200 bg-white/90 px-4 py-3 text-left shadow-sm">
+              <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Calcul de la note (pondérée)</p>
+              <p class="mt-2 text-sm leading-relaxed text-slate-800">
+                               <span class="tabular-nums font-semibold text-slate-900"
+                  >({{ resultat.pointsObtenus }} / {{ resultat.pointsMax }}) × 100</span
+                >
+                =
+                <span class="tabular-nums font-bold text-teal-800"
+                  >{{ (pourcentageBrutNote() ?? 0) | number: '1.0-2' }}&nbsp;%</span
+                >
+              </p>
+              <p class="mt-1.5 text-xs leading-relaxed text-slate-600">
+                La note affichée
+                <span class="font-semibold tabular-nums text-slate-800">{{ resultat.score }}&nbsp;%</span>
+                reprend ce calcul (arrondi éventuel côté serveur).
+              </p>
+            </div>
+          }
+          <p class="mt-3 max-w-md text-center text-xs leading-relaxed text-slate-500">
+            Note en %&nbsp;: total des points corrects divisé par le total des points possibles sur les questions posées.
+          </p>
+          @if (
+            resultat.scoreSansPonderation != null &&
+            resultat.scoreSansPonderation !== resultat.score &&
+            resultat.totalQuestions != null &&
+            resultat.bonnesReponses != null
+          ) {
+            <p class="mt-1 max-w-md text-center text-xs text-slate-500">
+              Sans pondération&nbsp;: {{ resultat.scoreSansPonderation }}&nbsp;% ({{ resultat.bonnesReponses }}/{{ resultat.totalQuestions }} bonnes réponses).
+            </p>
+          }
+        </div>
+      </div>
+
+      <div class="space-y-6 px-6 py-8 sm:px-10 sm:pb-10">
+      @if (resultat.scoreParSkill?.length) {
+        <div class="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50/90 to-white px-4 py-5 text-left shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wider text-sky-950">Score par compétence</p>
+          <p class="mt-1 text-xs text-slate-600">
+            Pourcentage pondéré par skill (même règle que la note globale : FACILE&nbsp;1, MOYEN&nbsp;2, DIFFICILE&nbsp;3).
+          </p>
+          <ul class="mt-4 space-y-4">
+            @for (s of resultat.scoreParSkill; track s.skill) {
+              <li class="rounded-lg border border-sky-100 bg-white/90 px-3 py-3 shadow-sm">
+                <div class="flex flex-wrap items-baseline justify-between gap-2">
+                  <span class="font-semibold text-slate-900">{{ s.skill }}</span>
+                  <span class="text-lg font-bold tabular-nums text-sky-900">{{ s.pourcentage }}&nbsp;%</span>
+                </div>
+                <div class="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    class="h-full rounded-full bg-gradient-to-r from-sky-500 to-teal-500 transition-[width] duration-500"
+                    [style.width.%]="s.pourcentage"></div>
+                </div>
+                <p class="mt-2 text-xs text-slate-600">
+                  Points&nbsp;:
+                  <span class="font-semibold tabular-nums text-slate-800">{{ s.pointsObtenus }}</span>
+                  / {{ s.pointsMax }}
+                  <span class="text-slate-400">·</span>
+                  {{ s.bonnesReponses }}/{{ s.totalQuestions }} réponse(s) correcte(s)
+                </p>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+      @if (resultat.correction?.length) {
+        <div
+          class="rounded-xl border bg-gradient-to-br to-white px-4 py-5 text-left shadow-sm"
+          [class.border-teal-100]="resultat.mode === 'ENTRAINEMENT'"
+          [class.from-teal-50/60]="resultat.mode === 'ENTRAINEMENT'"
+          [class.border-indigo-100]="resultat.mode === 'CERTIFIANT'"
+          [class.from-indigo-50/50]="resultat.mode === 'CERTIFIANT'"
+          [class.border-slate-200]="resultat.mode !== 'ENTRAINEMENT' && resultat.mode !== 'CERTIFIANT'"
+          [class.from-slate-50/60]="resultat.mode !== 'ENTRAINEMENT' && resultat.mode !== 'CERTIFIANT'">
+          <p
+            class="text-xs font-semibold uppercase tracking-wider"
+            [class.text-teal-900]="resultat.mode === 'ENTRAINEMENT'"
+            [class.text-indigo-950]="resultat.mode === 'CERTIFIANT'"
+            [class.text-slate-800]="resultat.mode !== 'ENTRAINEMENT' && resultat.mode !== 'CERTIFIANT'">
+            Correction détaillée
+            @if (resultat.mode === 'CERTIFIANT') {
+              <span class="ml-2 font-normal normal-case text-slate-600">— passage certifiant</span>
+            }
+          </p>
+          <ul class="mt-4 space-y-4">
+            @for (c of resultat.correction; track c.questionId ?? $index) {
+              <li
+                class="rounded-lg border-2 px-4 py-3 text-sm shadow-sm"
+                [class.border-emerald-400]="c.correct"
+                [class.bg-emerald-50/80]="c.correct"
+                [class.ring-1]="c.correct"
+                [class.ring-emerald-200/80]="c.correct"
+                [class.border-red-500]="!c.correct"
+                [class.bg-red-50/95]="!c.correct"
+                [class.ring-1]="!c.correct"
+                [class.ring-red-200]="!c.correct">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-semibold text-slate-900">Question {{ $index + 1 }}</span>
+                  @if (c.correct) {
+                    <span
+                      class="inline-flex items-center rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+                      Bonne réponse
+                    </span>
+                  } @else {
+                    <span
+                      class="inline-flex items-center rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+                      Réponse incorrecte
+                    </span>
+                  }
+                  @if (c.niveauDifficulte) {
+                    <span class="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 ring-1 ring-slate-200">
+                      {{ c.niveauDifficulte }} · poids {{ c.poids ?? '—' }}
+                    </span>
+                  }
+                  @if (c.skill) {
+                    <span
+                      class="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-950"
+                      title="Compétence évaluée">
+                      {{ c.skill }}
+                    </span>
+                  }
+                  @if (c.theme && c.theme !== c.skill) {
+                    <span class="text-xs text-slate-500">Thème : {{ c.theme }}</span>
+                  }
+                </div>
+                @if (c.enonce) {
+                  <p class="mt-2 text-sm leading-relaxed text-slate-800">{{ c.enonce }}</p>
+                }
+                <div class="mt-3 space-y-2 text-xs sm:text-[13px]">
+                  <p class="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-slate-700">
+                    <span class="font-semibold text-slate-600">Votre réponse</span>
+                    <span
+                      class="inline-flex min-w-[2rem] items-center justify-center rounded-md px-2 py-0.5 font-mono text-sm font-bold tabular-nums"
+                      [class.bg-emerald-100]="c.correct"
+                      [class.text-emerald-900]="c.correct"
+                      [class.ring-1]="c.correct"
+                      [class.ring-emerald-300/80]="c.correct"
+                      [class.bg-red-100]="!c.correct"
+                      [class.text-red-900]="!c.correct"
+                      [class.ring-1]="!c.correct"
+                      [class.ring-red-300]="!c.correct">
+                      {{ c.reponseChoisie || '—' }}
+                    </span>
+                  </p>
+                  <p class="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-slate-700">
+                    <span class="font-semibold text-slate-600">Bonne réponse</span>
+                    <span
+                      class="inline-flex min-w-[2rem] items-center justify-center rounded-md bg-emerald-100 px-2 py-0.5 font-mono text-sm font-bold tabular-nums text-emerald-950 ring-1 ring-emerald-300/80">
+                      {{ c.bonneReponse }}
+                    </span>
+                    @if (c.poids != null) {
+                      <span class="text-slate-600">
+                        · Points&nbsp;:
+                        <span class="font-semibold tabular-nums text-slate-900">{{ c.pointsSurQuestion ?? 0 }} / {{ c.poids }}</span>
+                      </span>
+                    }
+                  </p>
+                </div>
+                @if (c.explication) {
+                  <div
+                    class="mt-3 rounded-lg border px-3 py-2 text-xs leading-relaxed"
+                    [class.border-slate-200]="c.correct"
+                    [class.bg-white/80]="c.correct"
+                    [class.text-slate-700]="c.correct"
+                    [class.border-red-200]="!c.correct"
+                    [class.bg-red-100/60]="!c.correct"
+                    [class.text-red-950]="!c.correct">
+                    <span class="font-semibold" [class.text-slate-800]="c.correct" [class.text-red-900]="!c.correct"
+                      >Explication — </span
+                    >{{ c.explication }}
+                  </div>
+                } @else if (!c.correct) {
+                  <p class="mt-2 text-xs italic text-red-700/90">Aucune explication n’a été renseignée pour cette question (administration).</p>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+      }
+      @if (resultat.messageFeedback) {
+        <div class="rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-3 text-left text-sm leading-relaxed text-slate-700">
+          {{ resultat.messageFeedback }}
+        </div>
+      }
+      @if (resultat.analyseErreurs?.length) {
+        <div class="rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-4 text-left">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Axes à renforcer</p>
+          <p class="mt-1 text-xs leading-relaxed text-slate-500">
+            Chaque ligne reprend le <span class="font-medium text-slate-600">numéro de la question</span> affiché dans la correction détaillée, pour retrouver vite l’énoncé et l’explication.
+          </p>
+          <ul class="mt-3 space-y-2 text-sm text-slate-700">
+            @for (a of resultat.analyseErreurs; track a) {
+              <li class="flex gap-2">
+                <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" aria-hidden="true"></span>
+                <span>{{ a }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+      @if (resultat.modulesRevisionCibles?.length) {
+        <div class="rounded-xl border border-teal-200/60 bg-gradient-to-br from-teal-50/80 to-white px-4 py-5 text-left">
+          <p class="text-xs font-semibold uppercase tracking-wider text-teal-800">Modules recommandés</p>
+          <ul class="mt-3 space-y-3">
+            @for (m of resultat.modulesRevisionCibles; track m.id) {
+              <li class="rounded-lg border border-teal-100/80 bg-white px-4 py-3 text-sm shadow-sm">
+                <span class="font-semibold text-slate-900">{{ m.titre }}</span>
+                @if (m.dureeMinutes != null) {
+                  <span class="ml-2 text-slate-500">{{ m.dureeMinutes }} min</span>
+                }
+                @if (m.raison) {
+                  <p class="mt-1.5 text-xs leading-relaxed text-slate-600">{{ m.raison }}</p>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+      }
+      @if (resultat.evaluationRisque?.alerteFormateur && resultat.evaluationRisque?.messageFormateur) {
+        <div class="rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-left text-xs font-medium text-amber-950">
+          <span class="font-semibold">Note formateur — </span>{{ resultat.evaluationRisque?.messageFormateur }}
+        </div>
+      }
 
       @if (resultat.resultat === 'REUSSI') {
         @if (certificatLoading) {
-          <p class="mt-6 text-sm text-slate-500">Génération du certificat…</p>
+          <div class="flex items-center justify-center gap-3 py-8 text-sm text-slate-600">
+            <span class="h-5 w-5 animate-spin rounded-full border-2 border-teal-200 border-t-teal-600" aria-hidden="true"></span>
+            Préparation de votre certificat…
+          </div>
         }
         @if (certificat && !certificatLoading) {
-          <div class="mt-8 text-left max-w-2xl mx-auto w-full">
-            <p class="mb-4 text-center text-sm font-semibold text-amber-800">Certificat délivré — aperçu (identique au PDF)</p>
-            <app-certificat-display [certificat]="certificat" [showVerify]="true" />
-            <div class="mt-6 flex flex-wrap justify-center gap-3">
-              <button type="button" (click)="goToCertificatView()" class="inline-block rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">
-                Page dédiée certificat
-              </button>
-              <button type="button" (click)="openCertificatPdf()" class="inline-block rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
-                Télécharger le PDF
-              </button>
+          <div class="space-y-8 border-t border-slate-100 pt-8">
+            <div>
+              <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Profil &amp; marché</h3>
+              <p class="mt-1 text-sm text-slate-600">Données calculées à partir de votre score et synchronisées avec la plateforme.</p>
+            </div>
+
+            <div class="rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/30 p-6 shadow-sm ring-1 ring-emerald-900/5">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-wider text-emerald-800/80">Niveau attribué</p>
+                  <p class="mt-2 text-2xl font-bold tracking-tight text-slate-900">{{ niveauCarriereLibelle() }}</p>
+                </div>
+                <div class="rounded-xl bg-white/90 px-4 py-3 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200/80 sm:max-w-md">
+                  {{ messageCarriereAffiche() }}
+                </div>
+              </div>
+            </div>
+
+            @if (resultat.competencesAttribuees?.length) {
+              <div>
+                <h4 class="text-sm font-semibold text-slate-900">Compétences</h4>
+                <p class="mt-0.5 text-xs text-slate-500">Mise à jour de votre profil sur le service Compétences.</p>
+                <ul class="mt-4 space-y-3">
+                  @for (c of resultat.competencesAttribuees; track $index) {
+                    <li class="flex flex-col gap-2 rounded-xl border border-slate-200/90 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                      <div class="min-w-0 flex-1">
+                        <p class="font-semibold text-slate-900">{{ c.nom }}</p>
+                        <p class="mt-1 text-xs text-slate-500">
+                          Domaine <span class="font-medium text-slate-700">{{ domaineLibelle(c.categorie) }}</span>
+                          · Niveau <span class="font-medium text-slate-700">{{ niveauCodeLibelle(c.niveau) }}</span>
+                        </p>
+                      </div>
+                      @if (c.statut) {
+                        <span
+                          class="inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset"
+                          [ngClass]="competenceStatutBadgeClass(c.statut)">
+                          {{ competenceStatutLibelle(c.statut) }}
+                        </span>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            } @else {
+              <p class="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 px-4 py-3 text-xs leading-relaxed text-slate-600">
+                Aucune compétence n’a été renvoyée par le serveur. Vérifiez que le microservice Skill et Eureka sont démarrés.
+              </p>
+            }
+
+            @if (resultat.projetsMarcheRecommandes?.length) {
+              <div>
+                <h4 class="text-sm font-semibold text-slate-900">Opportunités projet</h4>
+                <p class="mt-0.5 text-xs text-slate-500">
+                  Tri par score d’adéquation compétences (du plus aligné à votre profil Skill au moins aligné).
+                </p>
+                <ul class="mt-4 space-y-3">
+                  @for (proj of resultat.projetsMarcheRecommandes; track proj.id) {
+                    <li class="rounded-xl border border-indigo-200/50 bg-gradient-to-b from-indigo-50/40 to-white p-4 shadow-sm ring-1 ring-indigo-900/5">
+                      <div class="flex flex-wrap items-start justify-between gap-2">
+                        <p class="font-semibold text-slate-900">{{ proj.titre }}</p>
+                        <span
+                          class="inline-flex shrink-0 items-center rounded-full bg-indigo-600 px-3 py-1 text-sm font-bold tabular-nums text-white shadow-sm"
+                          title="Adéquation entre les compétences requises du projet et votre profil Skill (0–100).">
+                          {{ projetScoreAffiche(proj) }}/100
+                        </span>
+                      </div>
+                      <div class="mt-2 flex flex-wrap gap-2">
+                        <span
+                          class="inline-flex items-center rounded-md bg-violet-50 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-violet-900 ring-1 ring-violet-200/80">
+                          Score d’adéquation {{ projetScoreAffiche(proj) }}/100
+                        </span>
+                        @if (proj.budget != null) {
+                          <span class="inline-flex items-center rounded-md bg-white px-2.5 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
+                            Budget {{ proj.budget | number : '1.0-0' }}
+                          </span>
+                        }
+                        @if (proj.dureeJours != null) {
+                          <span class="inline-flex items-center rounded-md bg-white px-2.5 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
+                            {{ proj.dureeJours }} j.
+                          </span>
+                        }
+                        @if (proj.statut) {
+                          <span class="inline-flex items-center rounded-md bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-900 ring-1 ring-indigo-200/80">
+                            {{ proj.statut }}
+                          </span>
+                        }
+                      </div>
+                      @if (proj.raison) {
+                        <p class="mt-3 text-xs leading-relaxed text-slate-600">{{ proj.raison }}</p>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            } @else {
+              <p class="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 px-4 py-3 text-xs leading-relaxed text-slate-600">
+                Aucun projet ouvert ne correspond pour l’instant. Ajoutez des offres au statut <strong class="font-semibold">OPEN</strong> avec des compétences requises (ex. WEB_DEVELOPMENT) dans le microservice Project.
+              </p>
+            }
+
+            <div class="rounded-2xl border border-amber-200/60 bg-amber-50/20 p-6 ring-1 ring-amber-900/5">
+              <p class="text-center text-xs font-semibold uppercase tracking-wider text-amber-900/90">Certificat officiel</p>
+              <p class="mt-1 text-center text-xs text-amber-800/80">Aperçu identique au document PDF</p>
+              <div class="mt-5">
+                <app-certificat-display [certificat]="certificat" [showVerify]="true" />
+              </div>
+              <div class="mt-6 flex flex-wrap justify-center gap-3">
+                <button
+                  type="button"
+                  (click)="goToCertificatView()"
+                  class="inline-flex items-center justify-center rounded-xl bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700">
+                  Voir la page certificat
+                </button>
+                <button
+                  type="button"
+                  (click)="openCertificatPdf()"
+                  class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50">
+                  Télécharger le PDF
+                </button>
+              </div>
             </div>
           </div>
         }
       }
 
-      <div class="mt-8 flex justify-center gap-4">
-        <a [routerLink]="['/formations', formationId]" class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white hover:bg-teal-700">
+      <div class="flex flex-col gap-3 border-t border-slate-100 pt-8 sm:flex-row sm:justify-center sm:gap-4">
+        <a
+          [routerLink]="['/formations', formationId]"
+          class="inline-flex items-center justify-center rounded-xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700">
           Retour à la formation
         </a>
-        <a routerLink="/formations" class="rounded-xl border border-slate-300 px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
-          Liste des formations
+        <a
+          routerLink="/formations"
+          class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+          Catalogue des formations
         </a>
+      </div>
       </div>
     </div>
   }

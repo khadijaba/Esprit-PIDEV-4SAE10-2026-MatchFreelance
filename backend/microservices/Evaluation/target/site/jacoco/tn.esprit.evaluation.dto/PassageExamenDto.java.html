@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PassageExamenDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.dto</a> &gt; <span class="el_source">PassageExamenDto.java</span></div><h1>PassageExamenDto.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.dto;
 
 import lombok.*;
+import tn.esprit.evaluation.domain.TypeParcours;
 import tn.esprit.evaluation.entity.PassageExamen;
 
 import java.time.LocalDateTime;
@@ -18,6 +19,15 @@ public class PassageExamenDto {
     private Long examenId;
     private String examenTitre;
     private Integer score;
+    /**
+     * Pourcentage sans pondération (bonnes / total), pour comparaison avec {@link #score}
+     * lorsque les difficultés ne sont pas toutes identiques.
+     */
+    private Integer scoreSansPonderation;
+    /** Somme des poids des questions (FACILE 1 + MOYEN 2 + DIFFICILE 3). */
+    private Integer pointsMax;
+    /** Points obtenus (somme des poids des réponses correctes). */
+    private Integer pointsObtenus;
     private PassageExamen.ResultatExamen resultat;
     private LocalDateTime datePassage;
     private ReponseExamenRequest.ModePassage mode;
@@ -25,7 +35,7 @@ public class PassageExamenDto {
     private Integer bonnesReponses;
     /** Certificat auto-généré lorsque resultat == REUSSI (renvoyé directement dans la réponse). */
     private CertificatDto certificat;
-    /** Correction détaillée (uniquement en mode ENTRAINEMENT). */
+    /** Correction détaillée renvoyée après soumission (certifiant ou entraînement) ; absente si passage rechargé depuis la base sans rejouer les réponses. */
     private List&lt;CorrectionItemDto&gt; correction;
     /** Analyse automatique: axes d'amélioration détectés sur les erreurs. */
     private List&lt;String&gt; analyseErreurs;
@@ -34,16 +44,38 @@ public class PassageExamenDto {
     /** Feedback : formations recommandées (en lien avec Formation). */
     private List&lt;FormationRecoDto&gt; formationsRecommandees;
 
+    /** Parcours utilisé (lots de questions). */
+    private TypeParcours typeParcours;
+
+    /** Modules Formation ciblés selon les thèmes des questions ratées (max 3). */
+    private List&lt;ModuleRevisionDto&gt; modulesRevisionCibles;
+
+    /** Synthèse risque (même logique que {@code GET .../parcours/risque/...}). */
+    private RiskEvaluationDto evaluationRisque;
+
+    /** Niveau métier déduit du score après réussite certifiante (ex. INTERMEDIAIRE, AVANCE). */
+    private String niveauCalcule;
+    /** Compétences ajoutées ou signalées sur le profil Skill après certificat. */
+    private List&lt;CompetenceAttribueeDto&gt; competencesAttribuees;
+    /** Projets ouverts du microservice Project alignés sur le domaine / marché. */
+    private List&lt;ProjetMarcheDto&gt; projetsMarcheRecommandes;
+    /** Résumé court pour l’apprenant (carrière post-certificat). */
+    private String messageCarriere;
+
+    /** Score pondéré par compétence (skill), même logique que le score global. */
+    private List&lt;SkillScoreDto&gt; scoreParSkill;
+
     public static PassageExamenDto fromEntity(PassageExamen p) {
-<span class="fc" id="L38">        return PassageExamenDto.builder()</span>
-<span class="fc" id="L39">                .id(p.getId())</span>
-<span class="fc" id="L40">                .freelancerId(p.getFreelancerId())</span>
-<span class="fc" id="L41">                .examenId(p.getExamen().getId())</span>
-<span class="fc" id="L42">                .examenTitre(p.getExamen().getTitre()) </span>
-<span class="fc" id="L43">                .score(p.getScore())</span>
-<span class="fc" id="L44">                .resultat(p.getResultat())</span>
-<span class="fc" id="L45">                .datePassage(p.getDatePassage())</span>
-<span class="fc" id="L46">                .build();</span>
+<span class="fc" id="L69">        return PassageExamenDto.builder()</span>
+<span class="fc" id="L70">                .id(p.getId())</span>
+<span class="fc" id="L71">                .freelancerId(p.getFreelancerId())</span>
+<span class="fc" id="L72">                .examenId(p.getExamen().getId())</span>
+<span class="fc" id="L73">                .examenTitre(p.getExamen().getTitre()) </span>
+<span class="fc" id="L74">                .score(p.getScore())</span>
+<span class="fc" id="L75">                .resultat(p.getResultat())</span>
+<span class="fc" id="L76">                .datePassage(p.getDatePassage())</span>
+<span class="fc" id="L77">                .typeParcours(p.getTypeParcours())</span>
+<span class="fc" id="L78">                .build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

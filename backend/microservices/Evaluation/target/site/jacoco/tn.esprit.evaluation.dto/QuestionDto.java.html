@@ -20,23 +20,45 @@ public class QuestionDto {
     private String optionD;
     private String bonneReponse; // A, B, C ou D (défaut A côté service)
 
+    /** COMMUN, STANDARD ou RENFORCEMENT (parcours différenciés). */
+    private String parcoursInclusion;
+
+    /** Thème pour recommandations de révision (modules Formation). */
+    private String theme;
+
+    /** Compétence évaluée (score par compétence) ; si absent, le thème est utilisé comme repli. */
+    private String skill;
+
+    /** FACILE, MOYEN, DIFFICILE — examen adaptatif. */
+    private String niveauDifficulte;
+
+    /** Explication affichée après correction (optionnel). */
+    private String explication;
+
     public static QuestionDto fromEntity(Question q) {
-<span class="nc bnc" id="L24" title="All 2 branches missed.">        return fromEntity(q, q.getExamen() != null ? q.getExamen().getId() : null);</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        return fromEntity(q, q.getExamen() != null ? q.getExamen().getId() : null);</span>
     }
 
     /** Utiliser cet overload pour éviter d’accéder à la relation LAZY examen (évite LazyInitializationException). */
     public static QuestionDto fromEntity(Question q, Long examenId) {
-<span class="nc" id="L29">        return QuestionDto.builder()</span>
-<span class="nc" id="L30">                .id(q.getId())</span>
-<span class="nc" id="L31">                .examenId(examenId)</span>
-<span class="nc" id="L32">                .ordre(q.getOrdre())</span>
-<span class="nc" id="L33">                .enonce(q.getEnonce())</span>
-<span class="nc" id="L34">                .optionA(q.getOptionA())</span>
-<span class="nc" id="L35">                .optionB(q.getOptionB())</span>
-<span class="nc" id="L36">                .optionC(q.getOptionC())</span>
-<span class="nc" id="L37">                .optionD(q.getOptionD())</span>
-<span class="nc" id="L38">                .bonneReponse(q.getBonneReponse())</span>
-<span class="nc" id="L39">                .build();</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        String pi = q.getParcoursInclusion() != null ? q.getParcoursInclusion().name() : &quot;COMMUN&quot;;</span>
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        String nd = q.getNiveauDifficulte() != null ? q.getNiveauDifficulte().name() : &quot;MOYEN&quot;;</span>
+<span class="nc" id="L46">        return QuestionDto.builder()</span>
+<span class="nc" id="L47">                .id(q.getId())</span>
+<span class="nc" id="L48">                .examenId(examenId)</span>
+<span class="nc" id="L49">                .ordre(q.getOrdre())</span>
+<span class="nc" id="L50">                .enonce(q.getEnonce())</span>
+<span class="nc" id="L51">                .optionA(q.getOptionA())</span>
+<span class="nc" id="L52">                .optionB(q.getOptionB())</span>
+<span class="nc" id="L53">                .optionC(q.getOptionC())</span>
+<span class="nc" id="L54">                .optionD(q.getOptionD())</span>
+<span class="nc" id="L55">                .bonneReponse(q.getBonneReponse())</span>
+<span class="nc" id="L56">                .parcoursInclusion(pi)</span>
+<span class="nc" id="L57">                .theme(q.getTheme())</span>
+<span class="nc" id="L58">                .skill(q.getSkill())</span>
+<span class="nc" id="L59">                .niveauDifficulte(nd)</span>
+<span class="nc" id="L60">                .explication(q.getExplication())</span>
+<span class="nc" id="L61">                .build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

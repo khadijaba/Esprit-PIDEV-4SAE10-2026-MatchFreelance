@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExamenPythonGeneratorClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.client</a> &gt; <span class="el_source">ExamenPythonGeneratorClient.java</span></div><h1>ExamenPythonGeneratorClient.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.client;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import tn.esprit.evaluation.dto.ExamenDto;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Appelle le service Python (evaluation-reports-py) pour construire le squelette d'examen.
+ * URL absolue recommandée (ex. http://localhost:8090/api/evaluation-reports/exam/auto-generate).
+ */
+@Component
+<span class="fc" id="L23">@Slf4j</span>
+public class ExamenPythonGeneratorClient {
+
+    private final RestTemplate restTemplate;
+
+    @Value(&quot;${app.examen.python-generator-url:}&quot;)
+    private String pythonGeneratorUrl;
+
+<span class="fc" id="L31">    public ExamenPythonGeneratorClient(@Qualifier(&quot;externalRestTemplate&quot;) RestTemplate restTemplate) {</span>
+<span class="fc" id="L32">        this.restTemplate = restTemplate;</span>
+<span class="fc" id="L33">    }</span>
+
+    public boolean isConfigured() {
+<span class="nc bnc" id="L36" title="All 4 branches missed.">        return pythonGeneratorUrl != null &amp;&amp; !pythonGeneratorUrl.isBlank();</span>
+    }
+
+    /**
+     * @return corps d'examen prêt pour {@code examenService.create}, ou {@code null} si échec / non configuré
+     */
+    public ExamenDto generate(
+            Long formationId,
+            String titreFormation,
+            List&lt;Map&lt;String, Object&gt;&gt; modules,
+            String suffixeTitre,
+            Integer seuilReussi,
+            Boolean useLlm) {
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        if (!isConfigured()) {</span>
+<span class="nc" id="L50">            return null;</span>
+        }
+<span class="nc" id="L52">        Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L53">        body.put(&quot;formationId&quot;, formationId);</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">        body.put(&quot;titreFormation&quot;, titreFormation != null ? titreFormation : &quot;&quot;);</span>
+<span class="nc" id="L55">        body.put(&quot;modules&quot;, modules);</span>
+<span class="nc bnc" id="L56" title="All 4 branches missed.">        if (suffixeTitre != null &amp;&amp; !suffixeTitre.isBlank()) {</span>
+<span class="nc" id="L57">            body.put(&quot;suffixeTitre&quot;, suffixeTitre);</span>
+        }
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        body.put(&quot;seuilReussi&quot;, seuilReussi != null ? seuilReussi : 60);</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (useLlm != null) {</span>
+<span class="nc" id="L61">            body.put(&quot;useLlm&quot;, useLlm);</span>
+        }
+
+<span class="nc" id="L64">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="nc" id="L65">        headers.setContentType(MediaType.APPLICATION_JSON);</span>
+<span class="nc" id="L66">        HttpEntity&lt;Map&lt;String, Object&gt;&gt; entity = new HttpEntity&lt;&gt;(body, headers);</span>
+        try {
+<span class="nc" id="L68">            ExamenDto dto = restTemplate.postForObject(pythonGeneratorUrl.trim(), entity, ExamenDto.class);</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">            if (dto != null) {</span>
+<span class="nc" id="L70">                dto.setFormationId(formationId);</span>
+            }
+<span class="nc" id="L72">            return dto;</span>
+<span class="nc" id="L73">        } catch (RestClientException e) {</span>
+<span class="nc" id="L74">            log.warn(&quot;Génération examen Python indisponible ({}): {}&quot;, pythonGeneratorUrl, e.getMessage());</span>
+<span class="nc" id="L75">            return null;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

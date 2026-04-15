@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>QcmReponseNormalizer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">evaluation</a> &gt; <a href="index.source.html" class="el_package">tn.esprit.evaluation.util</a> &gt; <span class="el_source">QcmReponseNormalizer.java</span></div><h1>QcmReponseNormalizer.java</h1><pre class="source lang-java linenums">package tn.esprit.evaluation.util;
+
+import java.text.Normalizer;
+import java.util.Locale;
+
+/**
+ * Normalisation des réponses QCM (A–D) pour un traitement homogène côté API, front et correcteurs.
+ */
+public final class QcmReponseNormalizer {
+
+    private QcmReponseNormalizer() {
+    }
+
+    /**
+     * Extrait la lettre A–D à partir d'une saisie libre (ex. « b) », « (C) », espaces, casse).
+     */
+    public static String extraireLettreReponse(String raw) {
+<span class="pc bpc" id="L18" title="1 of 4 branches missed.">        if (raw == null || raw.isBlank()) {</span>
+<span class="fc" id="L19">            return &quot;&quot;;</span>
+        }
+<span class="fc" id="L21">        String t = raw.trim();</span>
+<span class="fc bfc" id="L22" title="All 2 branches covered.">        if (&quot;?&quot;.equals(t)) {</span>
+<span class="fc" id="L23">            return &quot;&quot;;</span>
+        }
+<span class="fc" id="L25">        String s = Normalizer.normalize(t, Normalizer.Form.NFKC).toUpperCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L26" title="All 2 branches covered.">        for (int i = 0; i &lt; s.length(); i++) {</span>
+<span class="fc" id="L27">            char c = s.charAt(i);</span>
+<span class="fc bfc" id="L28" title="All 4 branches covered.">            if (c &gt;= 'A' &amp;&amp; c &lt;= 'D') {</span>
+<span class="fc" id="L29">                return String.valueOf(c);</span>
+            }
+        }
+<span class="fc" id="L32">        return &quot;&quot;;</span>
+    }
+
+    public static String extraireLettreBonneReponse(String bonneEnBase) {
+<span class="fc" id="L36">        return extraireLettreReponse(bonneEnBase);</span>
+    }
+
+    public static boolean reponseQcmCorrecte(String reponseChoisieBrute, String bonneReponseEnBase) {
+<span class="fc" id="L40">        String attendu = extraireLettreBonneReponse(bonneReponseEnBase);</span>
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        if (attendu.isEmpty()) {</span>
+<span class="fc" id="L42">            return false;</span>
+        }
+<span class="fc" id="L44">        return extraireLettreReponse(reponseChoisieBrute).equals(attendu);</span>
+    }
+
+    /**
+     * Pourcentage entier par défaut (plancher) : pas d'arrondi favorable pour le candidat.
+     */
+    public static int pourcentagePlancher(int bonnes, int total) {
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">        if (total &lt;= 0) {</span>
+<span class="nc" id="L52">            return 0;</span>
+        }
+<span class="fc" id="L54">        return (100 * bonnes) / total;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
