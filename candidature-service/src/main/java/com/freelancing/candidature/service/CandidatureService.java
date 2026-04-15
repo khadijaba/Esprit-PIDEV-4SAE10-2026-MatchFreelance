@@ -258,16 +258,11 @@ public class CandidatureService {
     }
 
     private void reopenProjectAndResetCandidatures(Long projectId, ProjectClient.ProjectResponse project) {
-        List<Candidature> accepted = candidatureRepository.findByProjectIdAndStatus(projectId, CandidatureStatus.ACCEPTED);
-        for (Candidature c : accepted) {
-            c.setStatus(CandidatureStatus.REJECTED);
-            candidatureRepository.save(c);
-        }
-        List<Candidature> rejected = candidatureRepository.findByProjectIdAndStatus(projectId, CandidatureStatus.REJECTED);
-        for (Candidature c : rejected) {
-            c.setStatus(CandidatureStatus.PENDING);
-            candidatureRepository.save(c);
-        }
+        // Delete all candidatures for this project when contract is cancelled
+        List<Candidature> allCandidatures = candidatureRepository.findByProjectId(projectId);
+        candidatureRepository.deleteAll(allCandidatures);
+        
+        // Reopen the project
         ProjectClient.ProjectUpdateRequest update = new ProjectClient.ProjectUpdateRequest();
         update.setTitle(project.getTitle());
         update.setDescription(project.getDescription());
