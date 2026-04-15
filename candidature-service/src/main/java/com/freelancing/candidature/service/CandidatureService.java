@@ -147,9 +147,13 @@ public class CandidatureService {
         contractReq.setProjectId(c.getProjectId());
         contractReq.setFreelancerId(c.getFreelancerId());
         contractReq.setClientId(effectiveClientId);
-        String terms = "Contract based on freelancer application.";
-        if (c.getMessage() != null && !c.getMessage().isBlank()) {
-            terms += "\n\nApplication message: " + c.getMessage();
+        String terms = "Project: " + project.getTitle();
+        if (project.getDescription() != null && !project.getDescription().isBlank()) {
+            terms += "\n\nDescription: " + project.getDescription();
+        }
+        terms += "\n\nBudget: " + (c.getProposedBudget() != null ? c.getProposedBudget() : 0) + " TND";
+        if (project.getDuration() != null) {
+            terms += "\nDuration: " + project.getDuration() + " days";
         }
         contractReq.setTerms(terms);
         contractReq.setProposedBudget(c.getProposedBudget());
@@ -229,13 +233,37 @@ public class CandidatureService {
         if (project == null || project.getClientId() == null || !project.getClientId().equals(clientId)) {
             throw new RuntimeException("Only the project owner can cancel");
         }
-        contractClient.cancelContract(contractId);
-        List<Candidature> accepted = candidatureRepository.findByProjectIdAndStatus(contract.getProjectId(), CandidatureStatus.ACCEPTED);
+        contractClient.cancelContract(contractId, clientId);
+        reopenProjectAndResetCandidatures(contract.getProjectId(), project);
+    }
+
+    /**
+     * Freelancer backs out: same contract cancellation + project reopened and candidatures reset as for client cancel.
+     */
+    @Transactional
+    public void cancelContractAsFreelancer(Long contractId, Long freelancerId) {
+        ContractClient.ContractResponse contract = contractClient.getContractById(contractId);
+        if (contract == null) {
+            throw new RuntimeException("Contract not found");
+        }
+        if (contract.getFreelancerId() == null || !contract.getFreelancerId().equals(freelancerId)) {
+            throw new RuntimeException("Only the assigned freelancer can cancel this contract");
+        }
+        ProjectClient.ProjectResponse project = projectClient.getProjectById(contract.getProjectId());
+        if (project == null) {
+            throw new RuntimeException("Project not found");
+        }
+        contractClient.cancelContractAsFreelancer(contractId, freelancerId);
+        reopenProjectAndResetCandidatures(contract.getProjectId(), project);
+    }
+
+    private void reopenProjectAndResetCandidatures(Long projectId, ProjectClient.ProjectResponse project) {
+        List<Candidature> accepted = candidatureRepository.findByProjectIdAndStatus(projectId, CandidatureStatus.ACCEPTED);
         for (Candidature c : accepted) {
             c.setStatus(CandidatureStatus.REJECTED);
             candidatureRepository.save(c);
         }
-        List<Candidature> rejected = candidatureRepository.findByProjectIdAndStatus(contract.getProjectId(), CandidatureStatus.REJECTED);
+        List<Candidature> rejected = candidatureRepository.findByProjectIdAndStatus(projectId, CandidatureStatus.REJECTED);
         for (Candidature c : rejected) {
             c.setStatus(CandidatureStatus.PENDING);
             candidatureRepository.save(c);
@@ -248,7 +276,7 @@ public class CandidatureService {
         update.setDuration(project.getDuration());
         update.setStatus("OPEN");
         update.setClientId(project.getClientId());
-        projectClient.updateProjectStatus(contract.getProjectId(), update);
+        projectClient.updateProjectStatus(projectId, update);
     }
 
     private Map<Long, String> resolveFreelancerNames(List<Candidature> candidatures) {

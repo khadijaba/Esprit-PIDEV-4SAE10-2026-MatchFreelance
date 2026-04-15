@@ -1,15 +1,16 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProjectService } from '../../services/project.service';
 import { CandidatureService } from '../../services/candidature.service';
-import { ContractService } from '../../services/contract.service';
+import { ContractService, ContractPartyAmendRequest } from '../../services/contract.service';
+import { Contract } from '../../models/contract.model';
 import { ToastService } from '../../services/toast.service';
 import { Project, ProjectStatus, ContractSummary } from '../../models/project.model';
 import { Candidature, CandidatureStatus } from '../../models/candidature.model';
 import { RankedCandidature, BudgetStats } from '../../models/ranking.model';
-import { FinancialSummary, ContractHealth } from '../../models/contract-advanced.model';
+import { FinancialSummary, ContractHealth, ContractAiBriefing } from '../../models/contract-advanced.model';
 import { TaskListComponent } from '../task-list/task-list.component';
 import { InterviewScheduleComponent } from '../interview-schedule/interview-schedule.component';
 import { SwipeCardComponent } from '../swipe-card/swipe-card.component';
@@ -17,11 +18,14 @@ import { ChatComponent } from '../chat/chat.component';
 import { AuthService } from '../../services/auth.service';
 import { analyzePitch, projectToPitchJob } from '../../services/pitch-analyzer.service';
 import type { PitchAnalysisResult } from '../../services/pitch-analyzer.service';
+import { ContractPreviewService, PreviewResponse } from '../../services/contract-preview.service';
+import { PreviewModalComponent } from '../preview-modal/preview-modal.component';
+import { SignatureModalComponent } from '../signature-modal/signature-modal.component';
 
 @Component({
   selector: 'app-client-project-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TaskListComponent, InterviewScheduleComponent, SwipeCardComponent, ChatComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TaskListComponent, InterviewScheduleComponent, SwipeCardComponent, ChatComponent, PreviewModalComponent, SignatureModalComponent],
   templateUrl: './client-project-detail.component.html',
 })
 export class ClientProjectDetailComponent implements OnInit {
@@ -41,19 +45,34 @@ export class ClientProjectDetailComponent implements OnInit {
   budgetStats: BudgetStats | null = null;
   loadingRanked = false;
   loadingBudgetStats = false;
-  ratingContractId: number | null = null;
   financialSummary: Record<number, FinancialSummary> = {};
   contractHealth: Record<number, ContractHealth> = {};
   loadingFinancial: number | null = null;
   loadingHealth: number | null = null;
   showFinancialId: number | null = null;
   showHealthId: number | null = null;
-  ratingValue = 5;
-  ratingReview = '';
-  ratingSubmitting = false;
+  aiBriefingByContract: Record<number, ContractAiBriefing> = {};
+  loadingAiBriefing: number | null = null;
+  showAiBriefingId: number | null = null;
   /** Candidature id whose pitch analysis is currently shown. */
   analyzedCandidatureId: number | null = null;
   pitchAnalysisResult: PitchAnalysisResult | null = null;
+
+  // Preview feature
+  previewService = inject(ContractPreviewService);
+  showPreviewModal = signal(false);
+  currentPreview = signal<PreviewResponse | null>(null);
+  generatingPreview = signal(false);
+
+  // Signature feature
+  showSignatureModal = false;
+  pendingDownloadContractId: number | null = null;
+
+  amendOpenForId: number | null = null;
+  amendTerms = '';
+  amendProposedBudget: number | null = null;
+  amendEndDate = '';
+  amendSaving = false;
 
   get pendingCandidatures(): Candidature[] {
     return this.candidatures.filter((c) => c.status === 'PENDING');
@@ -233,6 +252,90 @@ export class ClientProjectDetailComponent implements OnInit {
     });
   }
 
+  isDraftOrActive(contract: ContractSummary): boolean {
+    const s = (contract.status || '').toUpperCase();
+    return s === 'DRAFT' || s === 'ACTIVE';
+  }
+
+  toggleClientAmend(c: ContractSummary) {
+    if (this.amendOpenForId === c.id) {
+      this.amendOpenForId = null;
+      return;
+    }
+    this.amendOpenForId = c.id;
+    // Use project description instead of old contract terms
+    if (this.project) {
+      let terms = 'Project: ' + this.project.title;
+      if (this.project.description) {
+        terms += '\n\nDescription: ' + this.project.description;
+      }
+      if (c.proposedBudget != null) {
+        terms += '\n\nBudget: ' + c.proposedBudget + ' TND';
+      }
+      if (this.project.duration) {
+        terms += '\nDuration: ' + this.project.duration + ' days';
+      }
+      this.amendTerms = terms;
+    } else {
+      this.amendTerms = c.terms ?? '';
+    }
+    this.amendProposedBudget = c.proposedBudget ?? null;
+    if (c.endDate) {
+      const d = new Date(c.endDate);
+      this.amendEndDate = !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : '';
+    } else {
+      this.amendEndDate = '';
+    }
+  }
+
+  saveClientAmend(c: ContractSummary) {
+    if (!this.project?.contracts) return;
+    this.amendSaving = true;
+    const body: ContractPartyAmendRequest = {
+      actorClientId: this.clientId,
+      terms: this.amendTerms,
+    };
+    if (this.amendProposedBudget != null && !Number.isNaN(Number(this.amendProposedBudget))) {
+      body.proposedBudget = Number(this.amendProposedBudget);
+    }
+    if (this.amendEndDate?.trim()) {
+      body.endDate = new Date(this.amendEndDate.trim() + 'T12:00:00').toISOString();
+    }
+    this.contractService.partyAmend(c.id, body).subscribe({
+      next: (updated) => {
+        this.patchContractSummaryFromResponse(c.id, updated);
+        this.amendSaving = false;
+        this.amendOpenForId = null;
+        this.toast.success('Contract updated');
+      },
+      error: (err) => {
+        this.amendSaving = false;
+        this.toast.error(err?.error?.message || 'Failed to update contract');
+      },
+    });
+  }
+
+  private patchContractSummaryFromResponse(contractId: number, updated: Contract) {
+    if (!this.project?.contracts) return;
+    const idx = this.project.contracts.findIndex((x) => x.id === contractId);
+    if (idx === -1) return;
+    const prev = this.project.contracts[idx];
+    this.project.contracts[idx] = {
+      ...prev,
+      terms: updated.terms,
+      proposedBudget: updated.proposedBudget,
+      extraTasksBudget: updated.extraTasksBudget,
+      applicationMessage: updated.applicationMessage,
+      status: updated.status as string,
+      startDate: updated.startDate,
+      endDate: updated.endDate,
+      pendingExtraAmount: updated.pendingExtraAmount,
+      pendingExtraReason: updated.pendingExtraReason,
+      pendingExtraRequestedAt: updated.pendingExtraRequestedAt,
+      progressPercent: updated.progressPercent,
+    };
+  }
+
   onCancel(contract: ContractSummary) {
     if (!confirm('Cancel this contract and reopen the project to choose another freelancer?')) return;
     this.contractActionLoading = true;
@@ -257,57 +360,35 @@ export class ClientProjectDetailComponent implements OnInit {
     });
   }
 
-  onSubmitRating(contract: ContractSummary) {
-    if (!this.project) return;
-    if (!this.ratingValue || this.ratingValue < 1 || this.ratingValue > 5) {
-      this.toast.error('Please select a rating between 1 and 5');
-      return;
-    }
-    if (contract.clientRating != null) {
-      this.toast.error('You have already rated this contract');
-      return;
-    }
-    this.ratingContractId = contract.id;
-    this.ratingSubmitting = true;
-    this.contractService
-      .rateContract(contract.id, this.ratingValue, this.ratingReview?.trim() || undefined, this.clientId)
-      .subscribe({
-        next: (updated) => {
-          const idx = this.project!.contracts?.findIndex((c) => c.id === contract.id) ?? -1;
-          if (idx !== -1 && this.project!.contracts) {
-            this.project!.contracts[idx] = {
-              ...this.project!.contracts[idx],
-              clientRating: updated.clientRating,
-              clientReview: updated.clientReview,
-              clientReviewedAt: updated.clientReviewedAt,
-            };
-          }
-          this.ratingSubmitting = false;
-          this.ratingContractId = null;
-          this.toast.success('Thank you for your review');
-        },
-        error: (err) => {
-          this.ratingSubmitting = false;
-          this.ratingContractId = null;
-          this.toast.error(err?.error?.message || 'Failed to submit review');
-        },
-      });
+  downloadContractPdf(contract: ContractSummary) {
+    this.pendingDownloadContractId = contract.id;
+    this.showSignatureModal = true;
   }
 
-  downloadContractPdf(contract: ContractSummary) {
-    this.contractService.downloadPdf(contract.id).subscribe({
+  onSignatureSigned(signature: string) {
+    if (this.pendingDownloadContractId === null) return;
+    const contractId = this.pendingDownloadContractId;
+    this.showSignatureModal = false;
+    this.contractService.downloadPdf(contractId, signature).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `contract-${contract.id}.pdf`;
+        a.download = `contract-${contractId}-signed.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
+        this.pendingDownloadContractId = null;
       },
       error: () => {
         this.toast.error('Failed to download contract PDF');
+        this.pendingDownloadContractId = null;
       },
     });
+  }
+
+  onSignatureCancelled() {
+    this.showSignatureModal = false;
+    this.pendingDownloadContractId = null;
   }
 
   statusClass(status: ProjectStatus): string {
@@ -361,6 +442,25 @@ export class ClientProjectDetailComponent implements OnInit {
       },
       error: () => {
         this.loadingHealth = null;
+      },
+    });
+  }
+
+  loadAiBriefing(contractId: number) {
+    if (this.aiBriefingByContract[contractId] != null) {
+      this.showAiBriefingId = this.showAiBriefingId === contractId ? null : contractId;
+      return;
+    }
+    this.loadingAiBriefing = contractId;
+    this.contractService.getAiBriefing(contractId, { viewerClientId: this.clientId }).subscribe({
+      next: (data) => {
+        this.aiBriefingByContract[contractId] = data;
+        this.showAiBriefingId = contractId;
+        this.loadingAiBriefing = null;
+      },
+      error: (err) => {
+        this.loadingAiBriefing = null;
+        this.toast.error(err?.error?.message || err?.message || 'AI briefing unavailable (enable Ollama on the server or try again).');
       },
     });
   }
@@ -435,5 +535,74 @@ export class ClientProjectDetailComponent implements OnInit {
         this.toast.error(err?.error?.message || 'Failed to respond');
       },
     });
+  }
+
+  // Preview feature methods
+  async generatePreview(contractId: number) {
+    this.generatingPreview.set(true);
+    try {
+      const preview = await this.previewService.generatePreview(contractId, 'modern');
+      this.currentPreview.set(preview);
+      this.showPreviewModal.set(true);
+      this.toast.success('Preview generated!');
+    } catch (error) {
+      console.error('Preview generation failed:', error);
+      this.toast.error('Failed to generate preview. Please try again.');
+    } finally {
+      this.generatingPreview.set(false);
+    }
+  }
+
+  async approvePreview() {
+    const preview = this.currentPreview();
+    if (!preview) return;
+    
+    try {
+      await this.previewService.submitFeedback(
+        preview.contractId,
+        preview.previewId,
+        { feedback: 'Approved by client', status: 'APPROVED' }
+      );
+      this.toast.success('Preview approved!');
+      this.showPreviewModal.set(false);
+    } catch (error) {
+      this.toast.error('Failed to approve preview');
+    }
+  }
+
+  async handlePreviewFeedback(feedback: string) {
+    const preview = this.currentPreview();
+    if (!preview) return;
+    
+    try {
+      await this.previewService.submitFeedback(
+        preview.contractId,
+        preview.previewId,
+        { feedback, status: 'REVISION_REQUESTED' }
+      );
+      this.toast.success('Feedback submitted');
+    } catch (error) {
+      this.toast.error('Failed to submit feedback');
+    }
+  }
+
+  async handlePreviewRegenerate(data: { feedback: string; style: string }) {
+    const preview = this.currentPreview();
+    if (!preview) return;
+    
+    this.generatingPreview.set(true);
+    try {
+      const newPreview = await this.previewService.regeneratePreview(
+        preview.contractId,
+        preview.previewId,
+        data
+      );
+      this.currentPreview.set(newPreview);
+      this.toast.success('Preview regenerated with your feedback!');
+    } catch (error) {
+      this.toast.error('Failed to regenerate preview');
+    } finally {
+      this.generatingPreview.set(false);
+    }
   }
 }

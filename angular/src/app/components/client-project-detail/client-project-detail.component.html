@@ -29,10 +29,6 @@
       </div>
     </div>
 
-    <div class="mt-8">
-      <app-task-list [projectId]="project.id" />
-    </div>
-
     @if (project.status === 'IN_PROGRESS' || project.status === 'COMPLETED') {
       <div class="mt-8">
         <h2 class="mb-4 text-lg font-semibold text-slate-900">Contract(s)</h2>
@@ -50,7 +46,7 @@
                   <div class="flex items-center gap-3">
                     <span class="font-semibold text-slate-900">Contract #{{ contract.id }}</span>
                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                      {{ contract.status === 'ACTIVE' ? 'bg-amber-100 text-amber-700' : contract.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600' }}">
+                      {{ contract.status === 'ACTIVE' ? 'bg-amber-100 text-amber-700' : contract.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' : contract.status === 'DRAFT' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600' }}">
                       {{ contract.status }}
                     </span>
                   </div>
@@ -63,8 +59,8 @@
                       }
                     </p>
                   }
-                  @if (contract.applicationMessage) {
-                    <p class="mt-2 text-sm text-slate-600">{{ contract.applicationMessage }}</p>
+                  @if (project?.description) {
+                    <p class="mt-2 text-sm text-slate-600">{{ project.description }}</p>
                   }
                   @if (contract.startDate || contract.endDate) {
                     <p class="mt-2 text-xs text-slate-500">
@@ -77,86 +73,20 @@
                       <div class="h-full rounded-full bg-teal-600 transition-all duration-300" [style.width.%]="contract.progressPercent ?? 0"></div>
                     </div>
                   </div>
-                  @if (contract.terms) {
+                  @if (project?.description) {
                     <details class="mt-4">
-                      <summary class="cursor-pointer text-sm font-medium text-teal-600 hover:text-teal-700">View full terms</summary>
-                      <p class="mt-2 whitespace-pre-wrap text-sm text-slate-600">{{ contract.terms }}</p>
+                      <summary class="cursor-pointer text-sm font-medium text-teal-600 hover:text-teal-700">View project details</summary>
+                      <div class="mt-2 text-sm text-slate-600">
+                        <p class="font-semibold">{{ project.title }}</p>
+                        <p class="mt-2 whitespace-pre-wrap">{{ project.description }}</p>
+                        @if (project.minBudget && project.maxBudget) {
+                          <p class="mt-2"><span class="font-medium">Budget range:</span> {{ project.minBudget | number:'1.0-0' }} - {{ project.maxBudget | number:'1.0-0' }} TND</p>
+                        }
+                        @if (project.duration) {
+                          <p class="mt-1"><span class="font-medium">Duration:</span> {{ project.duration }} days</p>
+                        }
+                      </div>
                     </details>
-                  }
-                  @if (contract.status === 'COMPLETED') {
-                    <div class="mt-4 border-t border-slate-200 pt-4">
-                      @if (contract.clientRating != null) {
-                        <div class="flex items-start justify-between gap-3">
-                          <div>
-                            <p class="text-sm font-semibold text-slate-900">
-                              Your rating:
-                              <span class="text-amber-500">
-                                {{ '★'.repeat(contract.clientRating) }}{{ '☆'.repeat(5 - contract.clientRating) }}
-                              </span>
-                              <span class="ml-1 text-xs text-slate-500">({{ contract.clientRating }}/5)</span>
-                            </p>
-                            @if (contract.clientReview) {
-                              <p class="mt-1 text-sm text-slate-700">{{ contract.clientReview }}</p>
-                            }
-                          </div>
-                          @if (contract.clientReviewedAt) {
-                            <p class="text-xs text-slate-400">Rated {{ contract.clientReviewedAt | date:'medium' }}</p>
-                          }
-                        </div>
-                      } @else {
-                        <div class="space-y-3">
-                          <p class="text-sm font-semibold text-slate-900">Rate this freelancer</p>
-                          <div class="space-y-1">
-                            <p class="text-sm text-slate-700">Rating</p>
-                            <div class="flex items-center gap-1">
-                              @for (star of [1, 2, 3, 4, 5]; track star) {
-                                <button
-                                  type="button"
-                                  (click)="ratingValue = star"
-                                  [disabled]="ratingSubmitting && ratingContractId === contract.id"
-                                  class="text-2xl leading-none focus:outline-none"
-                                  [class.text-amber-500]="star <= ratingValue"
-                                  [class.text-slate-300]="star > ratingValue"
-                                >
-                                  ★
-                                </button>
-                              }
-                              <span class="ml-2 text-xs text-slate-500">{{ ratingValue }}/5</span>
-                            </div>
-                          </div>
-                          <div>
-                            <label class="mb-1 block text-sm font-medium text-slate-700" for="review-{{ contract.id }}">
-                              Review (optional)
-                            </label>
-                            <textarea
-                              id="review-{{ contract.id }}"
-                              rows="3"
-                              [(ngModel)]="ratingReview"
-                              [disabled]="ratingSubmitting && ratingContractId === contract.id"
-                              placeholder="Share feedback about your experience working with this freelancer..."
-                              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-                            ></textarea>
-                          </div>
-                          <div class="flex justify-end">
-                            <button
-                              type="button"
-                              (click)="onSubmitRating(contract)"
-                              [disabled]="ratingSubmitting && ratingContractId === contract.id"
-                              class="inline-flex items-center rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
-                            >
-                              @if (ratingSubmitting && ratingContractId === contract.id) {
-                                <span
-                                  class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
-                                ></span>
-                                Saving...
-                              } @else {
-                                Submit review
-                              }
-                            </button>
-                          </div>
-                        </div>
-                      }
-                    </div>
                   }
                   @if (contract.status === 'ACTIVE' && contract.pendingExtraAmount != null && contract.pendingExtraAmount > 0) {
                     <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
@@ -179,11 +109,15 @@
                 </div>
                 <div class="flex shrink-0 flex-col items-end gap-2">
                   @if (contract.status === 'ACTIVE') {
-                    <div class="flex gap-2">
+                    <div class="flex flex-wrap justify-end gap-2">
                       <button (click)="onPay(contract)" [disabled]="contractActionLoading"
                         class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 transition disabled:opacity-50">
                         Pay
                       </button>
+                    </div>
+                  }
+                  @if (isDraftOrActive(contract)) {
+                    <div class="flex flex-wrap justify-end gap-2">
                       <button (click)="onCancel(contract)" [disabled]="contractActionLoading"
                         class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-50">
                         Cancel
@@ -201,6 +135,26 @@
                     </svg>
                     Download PDF
                   </button>
+                  
+                  <!-- AI Preview Button -->
+                  <button
+                    type="button"
+                    (click)="generatePreview(contract.id)"
+                    [disabled]="generatingPreview()"
+                    class="inline-flex items-center gap-2 rounded-lg border-2 border-indigo-300 bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-1.5 text-xs font-semibold text-indigo-700 hover:from-indigo-100 hover:to-purple-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                  >
+                    @if (generatingPreview()) {
+                      <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Generating...</span>
+                    } @else {
+                      <span>🎨</span>
+                      <span>Preview Project</span>
+                    }
+                  </button>
+                  
                   <div class="flex flex-wrap gap-1">
                     <button type="button" (click)="loadFinancialSummary(contract.id)"
                       [disabled]="loadingFinancial === contract.id"
@@ -211,6 +165,11 @@
                       [disabled]="loadingHealth === contract.id"
                       class="inline-flex items-center gap-1 rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
                       @if (loadingHealth === contract.id) { … } @else { Health }
+                    </button>
+                    <button type="button" (click)="loadAiBriefing(contract.id)"
+                      [disabled]="loadingAiBriefing === contract.id"
+                      class="inline-flex items-center gap-1 rounded-lg border border-violet-200 px-2.5 py-1 text-xs font-medium text-violet-800 hover:bg-violet-50 disabled:opacity-50">
+                      @if (loadingAiBriefing === contract.id) { … } @else { AI briefing }
                     </button>
                   </div>
                 </div>
@@ -243,6 +202,46 @@
                   </div>
                   @if (h.flags && h.flags.length > 0) {
                     <p class="mt-2 text-xs text-slate-600">{{ h.flags.join(' · ') }}</p>
+                  }
+                </div>
+              }
+              @if (showAiBriefingId === contract.id && aiBriefingByContract[contract.id]) {
+                @let ab = aiBriefingByContract[contract.id];
+                <div class="mt-4 rounded-lg border border-violet-200 bg-violet-50/60 p-4">
+                  <div class="flex flex-wrap items-start justify-between gap-2">
+                    <h4 class="text-sm font-semibold text-violet-900">Contract AI briefing</h4>
+                    @if (ab.fallback) {
+                      <span class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Heuristic fallback</span>
+                    }
+                  </div>
+                  <p class="mt-2 rounded-md border border-violet-100 bg-white/80 p-2 text-xs text-slate-700">{{ ab.disclaimer }}</p>
+                  <p class="mt-3 text-sm text-slate-800">{{ ab.summary }}</p>
+                  <div class="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                    <div>
+                      <span class="text-xs font-semibold uppercase text-violet-800">Timeline risk</span>
+                      <p class="text-slate-700">{{ ab.timelineRisk }}</p>
+                    </div>
+                    <div>
+                      <span class="text-xs font-semibold uppercase text-violet-800">Freelancer communication</span>
+                      <p class="text-slate-700">{{ ab.chatTone }}</p>
+                    </div>
+                  </div>
+                  @if (ab.suggestedNextSteps.length) {
+                    <div class="mt-3">
+                      <span class="text-xs font-semibold uppercase text-violet-800">Suggested next steps</span>
+                      <ol class="mt-1 list-inside list-decimal text-sm text-slate-700">
+                        @for (step of ab.suggestedNextSteps; track $index) {
+                          <li>{{ step }}</li>
+                        }
+                      </ol>
+                    </div>
+                  }
+                  @if (ab.model || ab.generatedAt) {
+                    <p class="mt-3 text-xs text-slate-500">
+                      @if (ab.model) { Model: {{ ab.model }} }
+                      @if (ab.model && ab.generatedAt) { · }
+                      @if (ab.generatedAt) { {{ ab.generatedAt | date:'medium' }} }
+                    </p>
                   }
                 </div>
               }
@@ -454,11 +453,6 @@
                     @if (r.extraTasksBudget && r.extraTasksBudget > 0) { (incl. {{ r.extraTasksBudget | number:'1.0-0' }} TND extra) }
                   </p>
                   <p class="mt-2 text-xs text-slate-400">Applied {{ r.createdAt | date:'medium' }}</p>
-                  @if (r.status === 'PENDING') {
-                    <div class="mt-4">
-                      <app-interview-schedule [candidatureId]="r.id" />
-                    </div>
-                  }
                 </div>
                 @if (r.status === 'PENDING') {
                   <div class="flex shrink-0 flex-wrap gap-2">
@@ -499,11 +493,6 @@
                   Total: @if (c.proposedBudget != null && c.proposedBudget !== undefined) { {{ (c.proposedBudget || 0) + (c.extraTasksBudget || 0) | number:'1.0-0' }} TND } @if (c.extraTasksBudget && c.extraTasksBudget > 0) { (incl. {{ c.extraTasksBudget | number:'1.0-0' }} TND extra) } @else { — } 
                 </p>
                 <p class="mt-2 text-xs text-slate-400">Applied {{ c.createdAt | date:'medium' }}</p>
-                @if (c.status === 'PENDING') {
-                  <div class="mt-4">
-                    <app-interview-schedule [candidatureId]="c.id" />
-                  </div>
-                }
               </div>
               @if (c.status === 'PENDING') {
                 <div class="flex shrink-0 flex-wrap gap-2">
@@ -528,3 +517,18 @@
     </div>
   </div>
 }
+
+<!-- Preview Modal -->
+@if (showPreviewModal() && currentPreview()) {
+  <app-preview-modal
+    [preview]="currentPreview()!"
+    (onClose)="showPreviewModal.set(false)"
+  />
+}
+
+<app-signature-modal
+  [show]="showSignatureModal"
+  [signerName]="project?.clientName || ''"
+  (signed)="onSignatureSigned($event)"
+  (cancelled)="onSignatureCancelled()"
+/>

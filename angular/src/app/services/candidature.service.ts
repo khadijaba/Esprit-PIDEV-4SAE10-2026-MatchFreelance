@@ -61,6 +61,14 @@ export class CandidatureService {
     return this.http.put<void>(`${this.api}/contract/${contractId}/cancel?clientId=${clientId}`, {});
   }
 
+  /** Freelancer cancels: contract cancelled + project reopened (same orchestration as client cancel). */
+  cancelContractAsFreelancer(contractId: number, freelancerId: number): Observable<void> {
+    return this.http.put<void>(
+      `${this.api}/contract/${contractId}/cancel-freelancer?freelancerId=${freelancerId}`,
+      {}
+    );
+  }
+
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/${id}`);
   }

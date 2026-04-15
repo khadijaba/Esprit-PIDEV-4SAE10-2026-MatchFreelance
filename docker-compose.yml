@@ -1,12 +1,10 @@
-# MatchFreelance — full stack (MySQL, PostgreSQL, Eureka, Config, Gateway, microservices, Angular)
-# Atelier-style images: JAR built on host (Maven), then docker/Dockerfile.atelier copies target/*.jar.
+# MatchFreelance — Production Ready Configuration
+# Core services: User, Project, Candidature, Contract, Analytics
 # Usage (from repo root):
 #   .\scripts\build-jars.ps1   # or: bash scripts/build-jars.sh
 #   docker compose up --build
 # UI: http://localhost:4200  |  Gateway: http://localhost:8081  |  Eureka: http://localhost:8761
-# Skill MS: direct http://localhost:8093/api  |  via gateway: http://localhost:8081/api/skills  (etc.)
-# MySQL root password: matchfreelance (see MYSQL_* env below)
-# Alternative (Maven inside Docker, no local JAR): use docker/Dockerfile.service — see MICROSERVICES.md
+# MySQL root password: matchfreelance
 
 name: matchfreelance
 
@@ -24,7 +22,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: matchfreelance
     ports:
-      # Host 3307 if local MySQL (e.g. XAMPP) already uses 3306
       - "3307:3306"
     volumes:
       - mf_mysql_data:/var/lib/mysql
@@ -164,109 +161,11 @@ services:
       JAVA_OPTS: "-Xmx384m"
       EUREKA_INSTANCE_HOSTNAME: contract-service
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/freelancing_contracts?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    depends_on:
-      mysql:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-      config-server:
-        condition: service_started
-
-  interview-service:
-    build:
-      context: ./interview-service
-      dockerfile: ../docker/Dockerfile.atelier
-      args:
-        JAR_FILE: interview-service-1.0.0.jar
-        EXPOSE_PORT: "8086"
-    container_name: mf-interview
-    ports:
-      - "8086:8086"
-    environment:
-      <<: *java-common
-      JAVA_OPTS: "-Xmx384m"
-      SPRING_APPLICATION_NAME: interview-service
-      SERVER_PORT: "8086"
-      EUREKA_INSTANCE_HOSTNAME: interview-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/freelancing_interviews?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    depends_on:
-      mysql:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-      config-server:
-        condition: service_started
-
-  evaluation-service:
-    build:
-      context: ./evaluation-service
-      dockerfile: ../docker/Dockerfile.atelier
-      args:
-        JAR_FILE: evaluation-service-1.0.0.jar
-        EXPOSE_PORT: "8090"
-    container_name: mf-evaluation
-    ports:
-      - "8090:8090"
-    environment:
-      <<: *java-common
-      JAVA_OPTS: "-Xmx384m"
-      SPRING_APPLICATION_NAME: evaluation-service
-      SERVER_PORT: "8090"
-      EUREKA_INSTANCE_HOSTNAME: evaluation-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/EvaluationDB?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    depends_on:
-      mysql:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-      config-server:
-        condition: service_started
-
-  formation-service:
-    build:
-      context: ./formation-service
-      dockerfile: ../docker/Dockerfile.atelier
-      args:
-        JAR_FILE: formation-service-1.0.0.jar
-        EXPOSE_PORT: "8092"
-    container_name: mf-formation
-    ports:
-      - "8092:8092"
-    environment:
-      <<: *java-common
-      JAVA_OPTS: "-Xmx384m"
-      SPRING_APPLICATION_NAME: formation-service
-      SERVER_PORT: "8092"
-      EUREKA_INSTANCE_HOSTNAME: formation-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/FormationDB?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    depends_on:
-      mysql:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-      config-server:
-        condition: service_started
-
-  skill-service:
-    build:
-      context: ./skill-service
-      dockerfile: ../docker/Dockerfile.atelier
-      args:
-        JAR_FILE: skill-service-1.0.0.jar
-        EXPOSE_PORT: "8093"
-    container_name: mf-skill
-    ports:
-      - "8093:8093"
-    environment:
-      <<: *java-common
-      JAVA_OPTS: "-Xmx384m"
-      SPRING_APPLICATION_NAME: skill-service
-      SERVER_PORT: "8093"
-      EUREKA_INSTANCE_HOSTNAME: skill-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/freelancing_skills?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      FILE_UPLOAD_DIR: /data/skill-uploads
-    volumes:
-      - mf_skill_uploads:/data/skill-uploads
+      # AI Configuration - Ollama (local LLM for contract analysis)
+      CONTRACT_AI_OLLAMA_ENABLED: "true"
+      CONTRACT_AI_OLLAMA_BASE_URL: "http://host.docker.internal:11434"
+      CONTRACT_AI_OLLAMA_MODEL: "llama3.2:1b"
+      CONTRACT_AI_OLLAMA_READ_TIMEOUT_SECONDS: "120"
     depends_on:
       mysql:
         condition: service_healthy
@@ -330,12 +229,6 @@ services:
         condition: service_started
       contract-service:
         condition: service_started
-      interview-service:
-        condition: service_started
-      evaluation-service:
-        condition: service_started
-      formation-service:
-        condition: service_started
 
   frontend:
     build:
@@ -349,4 +242,3 @@ services:
 
 volumes:
   mf_mysql_data:
-  mf_skill_uploads:

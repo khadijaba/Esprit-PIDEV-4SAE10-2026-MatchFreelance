@@ -1,6 +1,8 @@
 package com.freelancing.contract.controller;
 
+import com.freelancing.contract.dto.ContractCancelPartyRequestDTO;
 import com.freelancing.contract.dto.ContractHealthDTO;
+import com.freelancing.contract.dto.ContractPartyAmendRequestDTO;
 import com.freelancing.contract.dto.ContractRequestDTO;
 import com.freelancing.contract.dto.ContractResponseDTO;
 import com.freelancing.contract.dto.FinancialSummaryDTO;
@@ -10,7 +12,11 @@ import com.freelancing.contract.dto.RespondExtraBudgetRequestDTO;
 import com.freelancing.contract.dto.UpdateProgressRequestDTO;
 import com.freelancing.contract.dto.RateContractRequestDTO;
 import com.freelancing.contract.dto.CommunicationScoreDTO;
+import com.freelancing.contract.dto.ContractAiBriefingDTO;
+import com.freelancing.contract.dto.ExtraBudgetAiAnalysisDTO;
 import com.freelancing.contract.service.ChatCommunicationScoreService;
+import com.freelancing.contract.service.ContractAiBriefingService;
+import com.freelancing.contract.service.ExtraBudgetAiAnalysisService;
 import com.freelancing.contract.service.ContractFinancialService;
 import com.freelancing.contract.service.ContractHealthService;
 import com.freelancing.contract.service.ContractService;
@@ -24,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/contracts")
@@ -35,6 +42,8 @@ public class ContractController {
     private final ContractFinancialService contractFinancialService;
     private final ContractHealthService contractHealthService;
     private final ChatCommunicationScoreService chatCommunicationScoreService;
+    private final ContractAiBriefingService contractAiBriefingService;
+    private final ExtraBudgetAiAnalysisService extraBudgetAiAnalysisService;
 
     @GetMapping
     public ResponseEntity<List<ContractResponseDTO>> getAllContracts() {
@@ -100,10 +109,35 @@ public class ContractController {
         }
     }
 
+    /**
+     * Client or freelancer cancels a DRAFT or ACTIVE contract. Body must contain exactly one of
+     * {@code clientId} or {@code freelancerId}, matching the contract.
+     */
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<ContractResponseDTO> cancelContract(@PathVariable Long id) {
+    public ResponseEntity<ContractResponseDTO> cancelContract(
+            @PathVariable Long id,
+            @RequestBody ContractCancelPartyRequestDTO body) {
         try {
-            return ResponseEntity.ok(contractService.markAsCancelled(id));
+            return ResponseEntity.ok(contractService.cancelContractByParty(id, body));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * Partial update by the client (terms, budget, dates, application message) or by the freelancer
+     * (terms, application message). Only for DRAFT or ACTIVE.
+     */
+    @PatchMapping("/{id}/party-amend")
+    public ResponseEntity<ContractResponseDTO> amendContractByParty(
+            @PathVariable Long id,
+            @Valid @RequestBody ContractPartyAmendRequestDTO body) {
+        try {
+            return ResponseEntity.ok(contractService.amendContractByParty(id, body));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
@@ -119,6 +153,17 @@ public class ContractController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    /**
+     * Local Ollama analysis before sending an extra-budget proposal: need, price fit, project alignment, tips.
+     * Same body as {@link #proposeExtraBudget} — does not persist a proposal.
+     */
+    /** PUT aligns with {@link #proposeExtraBudget} and avoids rare proxy/gateway POST quirks on /api/contracts. */
+    @PutMapping("/{id}/extra-budget-ai-analysis")
+    public ResponseEntity<ExtraBudgetAiAnalysisDTO> analyzeExtraBudget(
+            @PathVariable Long id, @Valid @RequestBody ProposeExtraBudgetRequestDTO request) {
+        return ResponseEntity.ok(extraBudgetAiAnalysisService.analyze(id, request));
     }
 
     @PutMapping("/{id}/respond-extra-budget")
@@ -158,13 +203,31 @@ public class ContractController {
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> downloadContractPdf(@PathVariable Long id) {
-        byte[] pdf = contractService.generateContractPdf(id);
+    public ResponseEntity<byte[]> downloadContractPdf(
+            @PathVariable Long id,
+            @RequestParam(required = false) String signature) {
+        byte[] pdf = contractService.generateContractPdf(id, signature);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDisposition(
                 ContentDisposition.attachment()
                         .filename("contract-" + id + ".pdf")
+                        .build()
+        );
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
+    @PostMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> downloadContractPdfWithSignature(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body) {
+        String signature = body != null ? body.get("signature") : null;
+        byte[] pdf = contractService.generateContractPdf(id, signature);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(
+                ContentDisposition.attachment()
+                        .filename("contract-" + id + "-signed.pdf")
                         .build()
         );
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
@@ -195,6 +258,18 @@ public class ContractController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    /**
+     * Local Ollama AI briefing (contract + health + financial + recent messages).
+     * Query: exactly one of viewerFreelancerId or viewerClientId must match the contract party.
+     */
+    @GetMapping("/{id}/ai-briefing")
+    public ResponseEntity<ContractAiBriefingDTO> getAiBriefing(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long viewerFreelancerId,
+            @RequestParam(required = false) Long viewerClientId) {
+        return ResponseEntity.ok(contractAiBriefingService.buildBriefing(id, viewerFreelancerId, viewerClientId));
     }
 
     @DeleteMapping("/{id}")

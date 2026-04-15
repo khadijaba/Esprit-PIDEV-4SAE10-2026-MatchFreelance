@@ -1,8 +1,31 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Contract, ContractRequest } from '../models/contract.model';
-import { FinancialSummary, ContractHealth, PaymentMilestone } from '../models/contract-advanced.model';
+import {
+  FinancialSummary,
+  ContractHealth,
+  PaymentMilestone,
+  ContractAiBriefing,
+  ExtraBudgetAiAnalysis,
+} from '../models/contract-advanced.model';
+
+/** Matches contract-service ContractCancelPartyRequestDTO */
+export interface ContractCancelPartyRequest {
+  clientId?: number;
+  freelancerId?: number;
+}
+
+/** Matches contract-service ContractPartyAmendRequestDTO */
+export interface ContractPartyAmendRequest {
+  actorClientId?: number;
+  actorFreelancerId?: number;
+  terms?: string;
+  proposedBudget?: number;
+  startDate?: string;
+  endDate?: string;
+  applicationMessage?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ContractService {
@@ -38,6 +61,16 @@ export class ContractService {
     return this.http.put<Contract>(`${this.api}/${id}`, req);
   }
 
+  /** Client or freelancer cancels (body must include exactly one of clientId / freelancerId). */
+  cancelByParty(id: number, body: ContractCancelPartyRequest): Observable<Contract> {
+    return this.http.put<Contract>(`${this.api}/${id}/cancel`, body);
+  }
+
+  /** Partial update by client or freelancer (DRAFT or ACTIVE only). */
+  partyAmend(id: number, body: ContractPartyAmendRequest): Observable<Contract> {
+    return this.http.patch<Contract>(`${this.api}/${id}/party-amend`, body);
+  }
+
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/${id}`);
   }
@@ -47,6 +80,18 @@ export class ContractService {
       amount,
       reason: reason || undefined,
       freelancerId,
+    });
+  }
+
+  /** Local LLM: analyze a proposed extra amount + reason before sending to client (does not save a proposal). */
+  analyzeExtraBudget(
+    contractId: number,
+    body: { amount: number; reason: string | undefined; freelancerId: number }
+  ): Observable<ExtraBudgetAiAnalysis> {
+    return this.http.put<ExtraBudgetAiAnalysis>(`${this.api}/${contractId}/extra-budget-ai-analysis`, {
+      amount: body.amount,
+      reason: body.reason || undefined,
+      freelancerId: body.freelancerId,
     });
   }
 
@@ -66,10 +111,17 @@ export class ContractService {
     });
   }
 
-  downloadPdf(contractId: number): Observable<Blob> {
-    return this.http.get(`${this.api}/${contractId}/pdf`, {
-      responseType: 'blob',
-    });
+  downloadPdf(contractId: number, signature?: string): Observable<Blob> {
+    if (signature) {
+      // POST request with signature in body for large base64 images
+      return this.http.post(`${this.api}/${contractId}/pdf`, 
+        { signature }, 
+        { responseType: 'blob' }
+      );
+    } else {
+      // GET request without signature
+      return this.http.get(`${this.api}/${contractId}/pdf`, { responseType: 'blob' });
+    }
   }
 
   getFinancialSummary(contractId: number): Observable<FinancialSummary> {
@@ -82,5 +134,21 @@ export class ContractService {
 
   getContractHealth(contractId: number): Observable<ContractHealth> {
     return this.http.get<ContractHealth>(`${this.api}/${contractId}/health`);
+  }
+
+  /**
+   * Local LLM briefing. Pass exactly one of viewerFreelancerId or viewerClientId (must match contract party).
+   */
+  getAiBriefing(
+    contractId: number,
+    viewer: { viewerFreelancerId: number } | { viewerClientId: number }
+  ): Observable<ContractAiBriefing> {
+    let params = new HttpParams();
+    if ('viewerFreelancerId' in viewer) {
+      params = params.set('viewerFreelancerId', String(viewer.viewerFreelancerId));
+    } else {
+      params = params.set('viewerClientId', String(viewer.viewerClientId));
+    }
+    return this.http.get<ContractAiBriefing>(`${this.api}/${contractId}/ai-briefing`, { params });
   }
 }

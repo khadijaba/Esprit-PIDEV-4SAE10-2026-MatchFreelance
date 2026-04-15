@@ -1,6 +1,10 @@
 package com.freelancing.candidature.client;
 
 import lombok.Data;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -30,9 +34,29 @@ public class ContractClient {
                 org.springframework.http.HttpMethod.PUT, null, ContractResponse.class).getBody();
     }
 
-    public ContractResponse cancelContract(Long id) {
-        return restTemplate.exchange(SERVICE_URL + "/api/contracts/" + id + "/cancel",
-                org.springframework.http.HttpMethod.PUT, null, ContractResponse.class).getBody();
+    /** Client-initiated cancel (must match contract.clientId on contract-service). */
+    public ContractResponse cancelContract(Long id, Long clientId) {
+        ContractCancelPartyRequest body = new ContractCancelPartyRequest();
+        body.setClientId(clientId);
+        return exchangeCancel(id, body);
+    }
+
+    /** Freelancer-initiated cancel (must match contract.freelancerId on contract-service). */
+    public ContractResponse cancelContractAsFreelancer(Long id, Long freelancerId) {
+        ContractCancelPartyRequest body = new ContractCancelPartyRequest();
+        body.setFreelancerId(freelancerId);
+        return exchangeCancel(id, body);
+    }
+
+    private ContractResponse exchangeCancel(Long id, ContractCancelPartyRequest body) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<ContractCancelPartyRequest> entity = new HttpEntity<>(body, headers);
+        return restTemplate.exchange(
+                SERVICE_URL + "/api/contracts/" + id + "/cancel",
+                HttpMethod.PUT,
+                entity,
+                ContractResponse.class).getBody();
     }
 
     /**
@@ -62,6 +86,12 @@ public class ContractClient {
             this.score = score;
             this.messageCount = messageCount;
         }
+    }
+
+    @Data
+    public static class ContractCancelPartyRequest {
+        private Long clientId;
+        private Long freelancerId;
     }
 
     @Data

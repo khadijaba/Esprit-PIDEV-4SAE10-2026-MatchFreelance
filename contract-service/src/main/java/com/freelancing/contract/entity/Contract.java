@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
-
 @Entity
 @Table(name = "contracts", uniqueConstraints = {
     @UniqueConstraint(columnNames = "project_id")
@@ -80,6 +79,24 @@ public class Contract {
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "client_reviewed_at")
     private Date clientReviewedAt;
+
+    // Signature fields
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "client_signed_at")
+    private Date clientSignedAt;
+
+    @Lob
+    @Column(name = "client_signature_png")
+    private byte[] clientSignaturePng;
+
+    @Column(name = "client_signature_hash", length = 512)
+    private String clientSignatureHash;
+
+    @Column(name = "client_signature_ip", length = 64)
+    private String clientSignatureIp;
+
+    @Column(name = "client_signature_user_agent", length = 512)
+    private String clientSignatureUserAgent;
 
     @PrePersist
     protected void onCreate() {

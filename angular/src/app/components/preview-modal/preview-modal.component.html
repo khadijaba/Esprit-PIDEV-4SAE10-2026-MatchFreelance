@@ -1,0 +1,162 @@
+<div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 animate-fade-in">
+  <div class="bg-white rounded-2xl w-full max-w-7xl h-[90vh] flex flex-col shadow-2xl animate-slide-up">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b bg-gradient-to-r from-indigo-50 to-purple-50">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-900">🎨 Project Preview</h2>
+        <p class="text-gray-600 mt-1">AI-generated mockup • Version {{ preview().version }} • {{ preview().designStyle | titlecase }} style</p>
+      </div>
+      <button 
+        class="p-2 hover:bg-gray-100 rounded-lg transition"
+        (click)="close()"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Preview Tabs -->
+    <div class="flex border-b px-6 bg-gray-50">
+      <button 
+        class="px-6 py-3 font-medium transition relative"
+        [class.text-indigo-600]="activeTab() === 'desktop'"
+        [class.text-gray-600]="activeTab() !== 'desktop'"
+        (click)="setTab('desktop')"
+      >
+        🖥️ Desktop
+        @if (activeTab() === 'desktop') {
+          <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"></div>
+        }
+      </button>
+      <button 
+        class="px-6 py-3 font-medium transition relative"
+        [class.text-indigo-600]="activeTab() === 'mobile'"
+        [class.text-gray-600]="activeTab() !== 'mobile'"
+        (click)="setTab('mobile')"
+      >
+        📱 Mobile
+        @if (activeTab() === 'mobile') {
+          <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"></div>
+        }
+      </button>
+      <button 
+        class="px-6 py-3 font-medium transition relative"
+        [class.text-indigo-600]="activeTab() === 'code'"
+        [class.text-gray-600]="activeTab() !== 'code'"
+        (click)="setTab('code')"
+      >
+        💻 Code
+        @if (activeTab() === 'code') {
+          <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"></div>
+        }
+      </button>
+    </div>
+
+    <!-- Preview Content -->
+    <div class="flex-1 overflow-auto p-6 bg-gray-50">
+      
+      <!-- Desktop View -->
+      @if (activeTab() === 'desktop') {
+        <div class="bg-white rounded-lg shadow-2xl mx-auto border border-gray-200" style="max-width: 1400px;">
+          <div class="bg-gray-800 rounded-t-lg px-4 py-2 flex items-center gap-2">
+            <div class="flex gap-1.5">
+              <div class="w-3 h-3 rounded-full bg-red-500"></div>
+              <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div class="w-3 h-3 rounded-full bg-green-500"></div>
+            </div>
+            <div class="flex-1 text-center text-sm text-gray-400 font-mono">localhost:3000</div>
+          </div>
+          @if (loading()) {
+            <div class="w-full h-[700px] rounded-b-lg flex items-center justify-center bg-gray-50">
+              <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                <p class="mt-4 text-gray-600">Loading preview...</p>
+              </div>
+            </div>
+          } @else {
+            <div 
+              [innerHTML]="safeHtml()"
+              class="w-full min-h-[700px] rounded-b-lg overflow-auto"
+            ></div>
+          }
+        </div>
+      }
+
+      <!-- Mobile View -->
+      @if (activeTab() === 'mobile') {
+        <div class="mx-auto" style="width: 375px;">
+          <div class="bg-gray-900 rounded-[3rem] p-3 shadow-2xl">
+            <!-- Phone notch -->
+            <div class="bg-gray-900 h-6 rounded-t-[2.5rem] flex justify-center items-center">
+              <div class="w-32 h-5 bg-black rounded-full"></div>
+            </div>
+            <!-- Screen -->
+            <div class="bg-white rounded-[2rem] overflow-hidden">
+              @if (loading()) {
+                <div class="w-full h-[667px] flex items-center justify-center bg-gray-50">
+                  <div class="text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                    <p class="mt-4 text-gray-600 text-sm">Loading preview...</p>
+                  </div>
+                </div>
+              } @else {
+                <div 
+                  [innerHTML]="safeHtml()"
+                  class="w-full h-[667px] overflow-auto"
+                  style="transform: scale(0.5); transform-origin: top left; width: 200%; height: 200%;"
+                ></div>
+              }
+            </div>
+            <!-- Home indicator -->
+            <div class="h-6 flex justify-center items-center">
+              <div class="w-32 h-1 bg-gray-700 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Code View -->
+      @if (activeTab() === 'code') {
+        <div class="bg-gray-900 text-green-400 p-6 rounded-lg font-mono text-sm overflow-auto max-w-5xl mx-auto shadow-2xl">
+          @if (loading()) {
+            <div class="flex items-center justify-center py-12">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400"></div>
+              <span class="ml-3">Loading code...</span>
+            </div>
+          } @else if (htmlContent()) {
+            <pre class="whitespace-pre-wrap">{{ htmlContent() }}</pre>
+          } @else {
+            <div class="text-gray-500">Click to load HTML code...</div>
+          }
+        </div>
+      }
+
+    </div>
+
+    <!-- AI Analysis Footer -->
+    <div class="border-t p-6 bg-white">
+      <h3 class="font-semibold mb-3 text-gray-900">🤖 AI Analysis</h3>
+      <div class="grid grid-cols-4 gap-4">
+        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-gray-600 mb-1">Design Style</div>
+          <div class="font-semibold text-gray-900">{{ preview().designStyle | titlecase }}</div>
+        </div>
+        <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+          <div class="text-sm text-gray-600 mb-1">Sections</div>
+          <div class="font-semibold text-gray-900">{{ preview().featuresCount }} features</div>
+        </div>
+        <div class="bg-purple-50 p-4 rounded-lg border border-purple-100">
+          <div class="text-sm text-gray-600 mb-1">Responsive</div>
+          <div class="font-semibold text-gray-900">✓ Mobile-First</div>
+        </div>
+        <div class="bg-orange-50 p-4 rounded-lg border border-orange-100">
+          <div class="text-sm text-gray-600 mb-1">Version</div>
+          <div class="font-semibold text-gray-900">v{{ preview().version }}</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

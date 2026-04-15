@@ -114,4 +114,13 @@ public class CandidatureController {
         candidatureService.cancelContract(contractId, clientId);
         return ResponseEntity.ok().build();
     }
+
+    /** Freelancer cancels; contract-service cancel + project set OPEN and candidatures reset (same as client cancel). */
+    @PutMapping("/contract/{contractId}/cancel-freelancer")
+    public ResponseEntity<Void> cancelContractAsFreelancer(
+            @PathVariable Long contractId,
+            @RequestParam Long freelancerId) {
+        candidatureService.cancelContractAsFreelancer(contractId, freelancerId);
+        return ResponseEntity.ok().build();
+    }
 }

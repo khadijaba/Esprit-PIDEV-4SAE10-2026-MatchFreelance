@@ -1,8 +1,11 @@
 package com.freelancing.contract.service;
 
 import com.freelancing.contract.client.UserClient;
+import com.freelancing.contract.dto.ContractCancelPartyRequestDTO;
+import com.freelancing.contract.dto.ContractPartyAmendRequestDTO;
 import com.freelancing.contract.dto.ContractRequestDTO;
 import com.freelancing.contract.dto.ContractResponseDTO;
+import com.freelancing.contract.dto.ContractSignatureStatusDTO;
 import com.freelancing.contract.entity.Contract;
 import com.freelancing.contract.enums.ContractStatus;
 import com.freelancing.contract.repository.ContractRepository;
@@ -17,11 +20,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.HexFormat;
 
 @Service
 @RequiredArgsConstructor
@@ -107,15 +113,80 @@ public class ContractService {
         return toResponseDTO(contractRepository.save(c), null);
     }
 
+    /**
+     * Client or freelancer cancels the contract while it is still {@link ContractStatus#DRAFT} or {@link ContractStatus#ACTIVE}.
+     * Clears any pending extra-budget proposal.
+     */
     @Transactional
-    public ContractResponseDTO markAsCancelled(Long id) {
+    public ContractResponseDTO cancelContractByParty(Long id, ContractCancelPartyRequestDTO dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Request body is required with clientId or freelancerId");
+        }
+        boolean hasClient = dto.getClientId() != null;
+        boolean hasFreelancer = dto.getFreelancerId() != null;
+        if (hasClient == hasFreelancer) {
+            throw new IllegalArgumentException("Provide exactly one of clientId or freelancerId");
+        }
         Contract c = contractRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Contract not found with id: " + id));
-        if (c.getStatus() != ContractStatus.ACTIVE) {
-            throw new RuntimeException("Only ACTIVE contracts can be cancelled");
+        if (hasClient) {
+            if (!c.getClientId().equals(dto.getClientId())) {
+                throw new IllegalArgumentException("clientId does not match this contract's client");
+            }
+        } else {
+            if (!c.getFreelancerId().equals(dto.getFreelancerId())) {
+                throw new IllegalArgumentException("freelancerId does not match this contract's freelancer");
+            }
         }
+        if (c.getStatus() != ContractStatus.ACTIVE && c.getStatus() != ContractStatus.DRAFT) {
+            throw new IllegalArgumentException("Only DRAFT or ACTIVE contracts can be cancelled by the parties");
+        }
+        clearPendingExtra(c);
         c.setStatus(ContractStatus.CANCELLED);
         return toResponseDTO(contractRepository.save(c), null);
+    }
+
+    /**
+     * Party-scoped partial update (no status change). Allowed on DRAFT or ACTIVE only.
+     */
+    @Transactional
+    public ContractResponseDTO amendContractByParty(Long id, ContractPartyAmendRequestDTO dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Request body is required");
+        }
+        boolean actorClient = dto.getActorClientId() != null;
+        boolean actorFreelancer = dto.getActorFreelancerId() != null;
+        if (actorClient == actorFreelancer) {
+            throw new IllegalArgumentException("Provide exactly one of actorClientId or actorFreelancerId");
+        }
+        Contract c = contractRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Contract not found with id: " + id));
+        if (c.getStatus() != ContractStatus.ACTIVE && c.getStatus() != ContractStatus.DRAFT) {
+            throw new IllegalArgumentException("Only DRAFT or ACTIVE contracts can be amended by the parties");
+        }
+        if (actorClient) {
+            if (!c.getClientId().equals(dto.getActorClientId())) {
+                throw new IllegalArgumentException("actorClientId does not match this contract's client");
+            }
+            if (dto.getTerms() != null) c.setTerms(dto.getTerms());
+            if (dto.getProposedBudget() != null) c.setProposedBudget(dto.getProposedBudget());
+            if (dto.getStartDate() != null) c.setStartDate(dto.getStartDate());
+            if (dto.getEndDate() != null) c.setEndDate(dto.getEndDate());
+            if (dto.getApplicationMessage() != null) c.setApplicationMessage(dto.getApplicationMessage());
+        } else {
+            if (!c.getFreelancerId().equals(dto.getActorFreelancerId())) {
+                throw new IllegalArgumentException("actorFreelancerId does not match this contract's freelancer");
+            }
+            if (dto.getTerms() != null) c.setTerms(dto.getTerms());
+            if (dto.getApplicationMessage() != null) c.setApplicationMessage(dto.getApplicationMessage());
+        }
+        return toResponseDTO(contractRepository.save(c), null);
+    }
+
+    private static void clearPendingExtra(Contract c) {
+        c.setPendingExtraAmount(null);
+        c.setPendingExtraReason(null);
+        c.setPendingExtraRequestedAt(null);
     }
 
     @Transactional
@@ -168,6 +239,82 @@ public class ContractService {
         return toResponseDTO(contractRepository.save(c), null);
     }
 
+    @Transactional(readOnly = true)
+    public ContractSignatureStatusDTO getSignatureStatus(Long contractId) {
+        Contract c = contractRepository.findById(contractId)
+                .orElseThrow(() -> new RuntimeException("Contract not found with id: " + contractId));
+        return ContractSignatureStatusDTO.builder()
+                .contractId(c.getId())
+                .clientId(c.getClientId())
+                .clientSigned(c.getClientSignedAt() != null && c.getClientSignaturePng() != null && c.getClientSignatureHash() != null)
+                .clientSignedAt(c.getClientSignedAt())
+                .clientSignatureHash(c.getClientSignatureHash())
+                .build();
+    }
+
+    @Transactional
+    public ContractResponseDTO signAsClient(Long contractId, Long clientId, byte[] signaturePng, String ip, String userAgent) {
+        Contract c = contractRepository.findById(contractId)
+                .orElseThrow(() -> new RuntimeException("Contract not found with id: " + contractId));
+        if (!c.getClientId().equals(clientId)) {
+            throw new RuntimeException("Only the client of this contract can sign");
+        }
+        if (c.getStatus() != ContractStatus.DRAFT && c.getStatus() != ContractStatus.ACTIVE) {
+            throw new RuntimeException("Only DRAFT or ACTIVE contracts can be signed");
+        }
+        if (c.getClientSignedAt() != null || c.getClientSignaturePng() != null) {
+            throw new RuntimeException("Contract is already signed by the client");
+        }
+        if (signaturePng == null || signaturePng.length == 0) {
+            throw new RuntimeException("Signature image is required");
+        }
+        // Simple sanity check: PNG magic header 89 50 4E 47 0D 0A 1A 0A
+        if (signaturePng.length < 8
+                || (signaturePng[0] & 0xFF) != 0x89
+                || signaturePng[1] != 0x50
+                || signaturePng[2] != 0x4E
+                || signaturePng[3] != 0x47) {
+            throw new RuntimeException("Signature must be a PNG image");
+        }
+
+        Date signedAt = new Date();
+        String canonicalTerms = canonicalizeTerms(c.getTerms());
+        String hash = computeSignatureHash(c.getId(), clientId, signedAt, canonicalTerms, signaturePng);
+
+        c.setClientSignedAt(signedAt);
+        c.setClientSignaturePng(signaturePng);
+        c.setClientSignatureHash(hash);
+        c.setClientSignatureIp(ip);
+        c.setClientSignatureUserAgent(userAgent != null ? truncateUserAgent(userAgent) : null);
+
+        return toResponseDTO(contractRepository.save(c), null);
+    }
+
+    private static String canonicalizeTerms(String terms) {
+        if (terms == null) return "";
+        // normalize line endings + trim trailing whitespace
+        return terms.replace("\r\n", "\n").replace("\r", "\n").trim();
+    }
+
+    private static String truncateUserAgent(String ua) {
+        String t = ua.trim();
+        return t.length() <= 255 ? t : t.substring(0, 255);
+    }
+
+    private static String computeSignatureHash(Long contractId, Long clientId, Date signedAt, String canonicalTerms, byte[] signaturePng) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(("contractId=" + contractId + "\n").getBytes(StandardCharsets.UTF_8));
+            md.update(("clientId=" + clientId + "\n").getBytes(StandardCharsets.UTF_8));
+            md.update(("signedAt=" + signedAt.getTime() + "\n").getBytes(StandardCharsets.UTF_8));
+            md.update(("terms=" + canonicalTerms + "\n").getBytes(StandardCharsets.UTF_8));
+            md.update(signaturePng);
+            return HexFormat.of().formatHex(md.digest());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to compute signature hash", e);
+        }
+    }
+
     @Transactional
     public ContractResponseDTO updateProgress(Long contractId, Integer progressPercent, Long freelancerId) {
         Contract c = contractRepository.findById(contractId)
@@ -201,7 +348,7 @@ public class ContractService {
     }
 
     @Transactional(readOnly = true)
-    public byte[] generateContractPdf(Long contractId) {
+    public byte[] generateContractPdf(Long contractId, String signature) {
         Contract c = contractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Contract not found with id: " + contractId));
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -284,7 +431,59 @@ public class ContractService {
                 for (String line : terms.split("\\r?\\n")) {
                     content.showText(line);
                     content.newLineAtOffset(0, -leading);
+                    y -= leading;
                 }
+                content.endText();
+            }
+
+            // Add signature if provided (base64 PNG image)
+            if (signature != null && !signature.isBlank()) {
+                y -= 2 * leading;
+                content.beginText();
+                content.setFont(PDType1Font.HELVETICA_BOLD, 12);
+                content.newLineAtOffset(margin, y);
+                content.showText("Digital Signature:");
+                content.endText();
+                y -= leading;
+
+                try {
+                    // Decode base64 PNG signature
+                    String base64Data = signature;
+                    if (signature.startsWith("data:image/png;base64,")) {
+                        base64Data = signature.substring("data:image/png;base64,".length());
+                    }
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Data);
+                    
+                    // Create PDImageXObject from PNG bytes
+                    org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject pdImage = 
+                        org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject.createFromByteArray(
+                            document, imageBytes, "signature");
+                    
+                    // Calculate image dimensions (max width 200, maintain aspect ratio)
+                    float maxWidth = 200;
+                    float imageWidth = pdImage.getWidth();
+                    float imageHeight = pdImage.getHeight();
+                    float scale = Math.min(maxWidth / imageWidth, 1.0f);
+                    float scaledWidth = imageWidth * scale;
+                    float scaledHeight = imageHeight * scale;
+                    
+                    // Draw the signature image
+                    content.drawImage(pdImage, margin, y - scaledHeight, scaledWidth, scaledHeight);
+                    y -= scaledHeight + leading;
+                } catch (Exception e) {
+                    // Fallback to text if image processing fails
+                    content.beginText();
+                    content.setFont(PDType1Font.HELVETICA_OBLIQUE, 14);
+                    content.newLineAtOffset(margin, y);
+                    content.showText("[Signature image]");
+                    content.endText();
+                    y -= leading;
+                }
+
+                content.beginText();
+                content.setFont(PDType1Font.HELVETICA, 10);
+                content.newLineAtOffset(margin, y);
+                content.showText("Signed on: " + df.format(new java.util.Date()));
                 content.endText();
             }
 
