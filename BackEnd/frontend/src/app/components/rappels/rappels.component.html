@@ -1,0 +1,103 @@
+<div class="space-y-8">
+  <div>
+    <h2 class="text-2xl font-bold text-gray-800">Rappels</h2>
+    <p class="mt-2 text-sm text-gray-600">
+      Vue des rappels générés par le script Python (formations ouvertes, examens à passer, formation se termine, certificats).
+    </p>
+    <p class="mt-1 text-xs text-gray-500">
+      Mise à jour manuelle : dans le dossier <code class="rounded bg-gray-100 px-1 py-0.5">python</code>,
+      <code class="rounded bg-gray-100 px-1 py-0.5">python rappels.py --export</code> (affichage) ou
+      <code class="rounded bg-gray-100 px-1 py-0.5">python rappels.py --auto</code> (export + envoi des emails).
+    </p>
+  </div>
+
+  <!-- Rappel automatique -->
+  <div class="rounded-xl border border-teal-200 bg-teal-50/50 p-6">
+    <h3 class="text-lg font-semibold text-teal-900 flex items-center gap-2">
+      <svg class="h-5 w-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Rappel automatique
+    </h3>
+    <p class="mt-1 text-sm text-teal-800">
+      Pour envoyer les rappels (et mettre à jour cette page) automatiquement chaque jour :
+    </p>
+    <ul class="mt-3 space-y-2 text-sm text-teal-800">
+      <li class="flex items-start gap-2">
+        <span class="text-teal-500 font-bold">1.</span>
+        <span>Configurez SMTP dans <code class="rounded bg-teal-100 px-1 py-0.5 text-teal-900">python/.env</code> (SMTP_HOST, SMTP_USER, SMTP_PASSWORD, SMTP_FROM).</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <span class="text-teal-500 font-bold">2.</span>
+        <span><strong>Windows</strong> : Planificateur de tâches → Créer une tâche → Déclencheur quotidien (ex. 9h) → Action : exécuter <code class="rounded bg-teal-100 px-1 py-0.5">run_rappels_auto.bat</code> dans le dossier <code class="rounded bg-teal-100 px-1 py-0.5">python</code>.</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <span class="text-teal-500 font-bold">3.</span>
+        <span><strong>Linux / Mac</strong> : crontab <code class="rounded bg-teal-100 px-1 py-0.5">0 9 * * * cd /chemin/vers/python && python rappels.py --auto</code> (tous les jours à 9h).</span>
+      </li>
+    </ul>
+    <p class="mt-3 text-xs text-teal-700">
+      La commande <code class="rounded bg-teal-100 px-1 py-0.5">python rappels.py --auto</code> met à jour le fichier des rappels (cette page) puis envoie les emails aux freelancers. La Gateway et les microservices doivent être accessibles au moment de l’exécution.
+    </p>
+  </div>
+
+  @if (loading) {
+    <div class="flex justify-center py-12">
+      <div class="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+    </div>
+  }
+
+  @if (error) {
+    <div class="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-800">
+      <p class="font-medium">{{ error }}</p>
+    </div>
+  }
+
+  @if (data && !loading) {
+    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-800">Résumé</h3>
+      <p class="mt-1 text-sm text-gray-500">Dernière génération : {{ formatDate(data.generatedAt) }}</p>
+      <div class="mt-4 flex flex-wrap gap-6">
+        <div class="rounded-lg bg-gray-50 px-4 py-2">
+          <span class="text-2xl font-bold text-gray-900">{{ data.summary.freelancers }}</span>
+          <span class="ml-2 text-sm text-gray-600">freelancer(s)</span>
+        </div>
+        <div class="rounded-lg bg-teal-50 px-4 py-2">
+          <span class="text-2xl font-bold text-teal-800">{{ data.summary.rappels_total }}</span>
+          <span class="ml-2 text-sm text-teal-700">rappel(s) au total</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-800">Rappels par freelancer</h3>
+      <p class="mt-1 text-sm text-gray-500">Formations ouvertes, examens à passer, formation se termine, certificats.</p>
+      <div class="mt-4 space-y-4">
+        @for (fr of data.rappels; track fr.freelancer_id) {
+          <details class="rounded-lg border border-gray-200 bg-gray-50/50" [open]="fr.rappels.length > 0">
+            <summary class="cursor-pointer px-4 py-3 font-medium text-gray-800 hover:bg-gray-100 flex items-center justify-between">
+              <span>{{ fr.fullName || fr.email || 'Freelancer #' + fr.freelancer_id }}</span>
+              <span class="text-sm font-normal text-gray-500">{{ fr.rappels.length }} rappel(s)</span>
+            </summary>
+            <div class="border-t border-gray-200 px-4 py-3">
+              @if (fr.rappels.length === 0) {
+                <p class="text-sm text-gray-500">Aucun rappel pour le moment.</p>
+              } @else {
+                <ul class="space-y-2">
+                  @for (r of fr.rappels; track r.message + r.detail) {
+                    <li class="flex flex-col gap-0.5 rounded-lg border border-teal-100 bg-teal-50/30 p-3 text-sm">
+                      <span class="font-medium text-gray-900">{{ typeLabel(r.type) }} — {{ r.message }}</span>
+                      @if (r.detail) {
+                        <span class="text-gray-600">{{ r.detail }}</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </details>
+        }
+      </div>
+    </div>
+  }
+</div>
