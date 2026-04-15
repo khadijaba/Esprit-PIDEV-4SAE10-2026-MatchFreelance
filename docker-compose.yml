@@ -1,10 +1,7 @@
 # MatchFreelance — Production Ready Configuration
 # Core services: User, Project, Candidature, Contract, Analytics
-# Usage (from repo root):
-#   .\scripts\build-jars.ps1   # or: bash scripts/build-jars.sh
-#   docker compose up --build
+# Uses XAMPP MySQL on host port 3306 (no password)
 # UI: http://localhost:4200  |  Gateway: http://localhost:8081  |  Eureka: http://localhost:8761
-# MySQL root password: matchfreelance
 
 name: matchfreelance
 
@@ -13,26 +10,9 @@ x-java-common: &java-common
   SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
   SPRING_PROFILES_ACTIVE: mysql
   SPRING_DATASOURCE_USERNAME: root
-  SPRING_DATASOURCE_PASSWORD: matchfreelance
+  SPRING_DATASOURCE_PASSWORD: ""
 
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: mf-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: matchfreelance
-    ports:
-      - "3307:3306"
-    volumes:
-      - mf_mysql_data:/var/lib/mysql
-      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pmatchfreelance"]
-      interval: 5s
-      timeout: 5s
-      retries: 35
-      start_period: 30s
-
   postgres:
     image: postgres:16-alpine
     container_name: mf-postgres
@@ -91,10 +71,8 @@ services:
       <<: *java-common
       JAVA_OPTS: "-Xmx384m"
       EUREKA_INSTANCE_HOSTNAME: user-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/freelancing_users?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/freelancing_users?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     depends_on:
-      mysql:
-        condition: service_healthy
       eureka-server:
         condition: service_started
       config-server:
@@ -114,10 +92,8 @@ services:
       <<: *java-common
       JAVA_OPTS: "-Xmx384m"
       EUREKA_INSTANCE_HOSTNAME: project-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/freelancing_projects?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/freelancing_projects?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     depends_on:
-      mysql:
-        condition: service_healthy
       eureka-server:
         condition: service_started
       config-server:
@@ -137,10 +113,8 @@ services:
       <<: *java-common
       JAVA_OPTS: "-Xmx384m"
       EUREKA_INSTANCE_HOSTNAME: candidature-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/freelancing_candidatures?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/freelancing_candidatures?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     depends_on:
-      mysql:
-        condition: service_healthy
       eureka-server:
         condition: service_started
       config-server:
@@ -160,8 +134,7 @@ services:
       <<: *java-common
       JAVA_OPTS: "-Xmx384m"
       EUREKA_INSTANCE_HOSTNAME: contract-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/freelancing_contracts?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      # AI Configuration - Ollama (local LLM for contract analysis)
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/freelancing_contracts?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       CONTRACT_AI_OLLAMA_ENABLED: "true"
       CONTRACT_AI_OLLAMA_BASE_URL: "http://host.docker.internal:11434"
       CONTRACT_AI_OLLAMA_MODEL: "llama3.2:1b"
@@ -170,8 +143,6 @@ services:
       # CONTRACT_AI_CLAUDE_ENABLED: "true"
       # CLAUDE_API_KEY: "your-api-key-here"
     depends_on:
-      mysql:
-        condition: service_healthy
       eureka-server:
         condition: service_started
       config-server:
@@ -242,6 +213,3 @@ services:
       - "4200:80"
     depends_on:
       - api-gateway
-
-volumes:
-  mf_mysql_data:
