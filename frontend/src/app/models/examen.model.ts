@@ -83,6 +83,8 @@ export interface FreelancerRanking {
 export interface FreelancerProjectMatching {
   freelancerId: number;
   profileSkillTokens?: number;
+  /** Score global examens (0–100), absent si aucune tentative. */
+  freelancerExamGlobalScore?: number | null;
   projects: ProjetMarche[];
 }
 
@@ -187,6 +189,8 @@ export interface ProjetMarche {
   raison?: string;
   /** 0–100 : adéquation compétences requises / profil Skill (liste triée : meilleur score en premier). */
   scoreAlignementSkills?: number;
+  /** 0–100 : skills + performance examens (tri des recommandations ranking/matching). */
+  scoreComposite?: number;
 }
 
 export interface PassageExamen {

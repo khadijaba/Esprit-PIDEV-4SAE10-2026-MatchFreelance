@@ -78,6 +78,12 @@ def health():
     return {"status": "UP", "service": "evaluation-reports-py"}
 
 
+@app.get(f"{PREFIX}/health")
+def health_prefixed():
+    """Même réponse que /health — utile via Gateway : GET /api/evaluation-reports/health."""
+    return {"status": "UP", "service": "evaluation-reports-py"}
+
+
 @app.post(f"{PREFIX}/charts/histogram", response_class=Response)
 def post_histogram(body: HistogramRequest):
     try:

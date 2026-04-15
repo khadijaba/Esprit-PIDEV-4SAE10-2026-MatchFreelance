@@ -38,6 +38,13 @@
           class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
           Parcours Intelligent
         </a>
+        @if (auth.isLoggedIn()) {
+          <a routerLink="/classement" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            title="Classement global, top performers et projets recommandés">
+            Classement &amp; matching
+          </a>
+        }
         <a routerLink="/microservice-user" routerLinkActive="bg-teal-50 text-teal-700"
           class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
           API User
@@ -60,6 +67,17 @@
           <a routerLink="/dashboard-client" routerLinkActive="bg-teal-50 text-teal-700"
             class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
             Mon dashboard
+          </a>
+        }
+        @if (auth.isLoggedIn() && auth.getStoredUser()?.role === 'ADMIN') {
+          <a routerLink="/admin"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            Back-office
+          </a>
+          <a routerLink="/admin/rapports" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            title="Histogrammes, courbes et PDF (evaluation-reports-py)">
+            Rapports &amp; PDF
           </a>
         }
         @if (auth.isLoggedIn()) {
@@ -115,6 +133,8 @@
             <li><a routerLink="/projects" class="text-sm text-slate-600 transition hover:text-teal-600">Projets</a></li>
             <li><a routerLink="/formations" class="text-sm text-slate-600 transition hover:text-teal-600">Formations</a></li>
             <li><a routerLink="/parcours-intelligent" class="text-sm text-slate-600 transition hover:text-teal-600">Parcours Intelligent</a></li>
+            <li><a routerLink="/classement" class="text-sm text-slate-600 transition hover:text-teal-600">Classement &amp; matching projets</a></li>
+            <li><a routerLink="/admin/rapports" class="text-sm text-slate-600 transition hover:text-teal-600">Rapports &amp; graphiques (admin)</a></li>
           </ul>
         </div>
       </div>

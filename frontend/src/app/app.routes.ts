@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { LayoutComponent } from './components/layout/layout.component';
 import { FrontLayoutComponent } from './components/front-layout/front-layout.component';
-import { adminGuard } from './guards/auth.guard';
+import { adminGuard, authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   // Frontoffice (public)
@@ -103,6 +103,14 @@ export const routes: Routes = [
         path: 'mon-activite',
         loadComponent: () =>
           import('./components/mon-activite/mon-activite.component').then((m) => m.MonActiviteComponent),
+      },
+      {
+        path: 'classement',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./components/ranking-recommendation/ranking-recommendation.component').then(
+            (m) => m.RankingRecommendationComponent
+          ),
       },
       {
         path: 'microservice-user',

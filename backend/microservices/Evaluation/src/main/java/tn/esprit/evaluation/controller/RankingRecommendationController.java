@@ -12,6 +12,7 @@ import tn.esprit.evaluation.dto.FreelancerRankingDto;
 import tn.esprit.evaluation.service.RankingRecommendationService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Ranking global + top performers + recommandation projets basée score/skills.
@@ -22,6 +23,11 @@ import java.util.List;
 public class RankingRecommendationController {
 
     private final RankingRecommendationService rankingRecommendationService;
+
+    @GetMapping("/ping")
+    public ResponseEntity<Map<String, String>> ping() {
+        return ResponseEntity.ok(Map.of("ranking", "deployed", "paths", "global, top-performers, project-matching"));
+    }
 
     @GetMapping("/global")
     public ResponseEntity<List<FreelancerRankingDto>> getGlobalRanking() {

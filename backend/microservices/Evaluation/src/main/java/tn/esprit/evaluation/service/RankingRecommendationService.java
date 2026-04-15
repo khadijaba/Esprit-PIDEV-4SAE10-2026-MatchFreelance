@@ -57,19 +57,29 @@ public class RankingRecommendationService {
     public FreelancerProjectMatchingDto recommendProjects(Long freelancerId, int limit) {
         int n = Math.max(1, Math.min(limit, 30));
         Set<String> profileTokens = buildFreelancerSkillTokens(skillClient.getSkillsByFreelancer(freelancerId));
+        Integer examGlobal = resolveExamGlobalScore(freelancerId);
         List<Map<String, Object>> openProjects = projectClient.getProjetsOuverts();
         List<ProjetMarcheDto> scored = openProjects.stream()
-                .map(project -> mapProjectWithScore(project, profileTokens))
+                .map(project -> mapProjectWithScore(project, profileTokens, examGlobal))
                 .sorted(Comparator.comparingInt(
-                                (ProjetMarcheDto dto) -> dto.getScoreAlignementSkills() != null ? dto.getScoreAlignementSkills() : 0)
+                                (ProjetMarcheDto dto) -> dto.getScoreComposite() != null ? dto.getScoreComposite() : 0)
                         .reversed())
                 .limit(n)
                 .collect(Collectors.toList());
         return FreelancerProjectMatchingDto.builder()
                 .freelancerId(freelancerId)
                 .profileSkillTokens(profileTokens.size())
+                .freelancerExamGlobalScore(examGlobal)
                 .projects(scored)
                 .build();
+    }
+
+    private Integer resolveExamGlobalScore(Long freelancerId) {
+        return aggregateRankingRows().stream()
+                .filter(r -> freelancerId.equals(r.getFreelancerId()))
+                .map(FreelancerRankingDto::getGlobalScore)
+                .findFirst()
+                .orElse(null);
     }
 
     private List<FreelancerRankingDto> aggregateRankingRows() {
@@ -134,14 +144,12 @@ public class RankingRecommendationService {
         return Math.max(0, Math.min(100, rounded));
     }
 
-    private static ProjetMarcheDto mapProjectWithScore(Map<String, Object> project, Set<String> profileTokens) {
+    private static ProjetMarcheDto mapProjectWithScore(
+            Map<String, Object> project, Set<String> profileTokens, Integer freelancerExamGlobal) {
         int align = scoreAlignementProjet(project, profileTokens);
+        int composite = computeCompositeMatchingScore(align, freelancerExamGlobal);
         String title = valueAsString(project.get("title"));
-        String reason = align >= 75
-                ? "Très bonne adéquation avec vos compétences principales."
-                : align >= 45
-                ? "Adéquation partielle : projet pertinent avec montée en compétence possible."
-                : "Faible adéquation : intéressant surtout en apprentissage.";
+        String reason = buildMatchingReason(align, composite, freelancerExamGlobal);
         return ProjetMarcheDto.builder()
                 .id(toLong(project.get("id")))
                 .titre(title)
@@ -149,8 +157,34 @@ public class RankingRecommendationService {
                 .dureeJours(toInt(project.get("duration")))
                 .statut(valueAsString(project.get("status")))
                 .scoreAlignementSkills(align)
+                .scoreComposite(composite)
                 .raison(reason)
                 .build();
+    }
+
+    /**
+     * Combine adéquation skills (65 %) et score global examens (35 %) lorsque l’historique existe ;
+     * sinon le tri repose uniquement sur l’alignement compétences.
+     */
+    private static int computeCompositeMatchingScore(int alignementSkills, Integer freelancerExamGlobal) {
+        if (freelancerExamGlobal == null) {
+            return alignementSkills;
+        }
+        return (int) Math.round(alignementSkills * 0.65 + freelancerExamGlobal * 0.35);
+    }
+
+    private static String buildMatchingReason(int align, int composite, Integer examGlobal) {
+        String base = align >= 75
+                ? "Très bonne adéquation avec vos compétences principales."
+                : align >= 45
+                ? "Adéquation partielle : projet pertinent avec montée en compétence possible."
+                : "Faible adéquation : intéressant surtout en apprentissage.";
+        if (examGlobal == null) {
+            return base + " (tri : compétences uniquement — pas encore d’historique d’examens.)";
+        }
+        return base + String.format(
+                " Score combiné (skills + performance examens %d/100) : %d/100.",
+                examGlobal, composite);
     }
 
     private static Set<String> buildFreelancerSkillTokens(List<Map<String, Object>> skills) {

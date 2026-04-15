@@ -16,11 +16,21 @@ py -3 -m venv .venv
 .\.venv\Scripts\activate
 python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
-python -m uvicorn app.main:app --reload --port 8090
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8090
 ```
 
+Sous **Windows**, si vous voyez `WinError 10013` avec `--host 0.0.0.0`, utilisez **`127.0.0.1`** (c’est ce que fait `run.ps1`) ou changez de port si **8090** est déjà pris : `netstat -ano | findstr :8090`.
+
 - Swagger : `http://localhost:8090/docs`
-- Santé : `http://localhost:8090/health`
+- Santé : `http://localhost:8090/health` ou (même chemin que via Gateway) `http://localhost:8090/api/evaluation-reports/health`
+
+### Démarrage rapide (Windows)
+
+Depuis ce dossier :
+
+```powershell
+.\run.ps1
+```
 
 ### Si `pip install` échoue encore (Pillow)
 

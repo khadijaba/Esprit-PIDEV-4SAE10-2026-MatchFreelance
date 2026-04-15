@@ -71,11 +71,23 @@
       @if (matchingLoading) {
         <p class="text-sm text-gray-500">Calcul du matching...</p>
       } @else if (projectMatching?.projects?.length) {
+        @if (projectMatching?.freelancerExamGlobalScore != null) {
+          <p class="mb-2 text-xs text-gray-600">
+            Performance examens (score global plateforme) : <span class="font-semibold">{{ projectMatching?.freelancerExamGlobalScore }}/100</span>
+            — le matching pondère compétences (65 %) + ce score (35 %).
+          </p>
+        } @else {
+          <p class="mb-2 text-xs text-amber-700">
+            Pas d’historique d’examens pour ce freelancer : tri des projets sur l’alignement compétences uniquement.
+          </p>
+        }
         <div class="space-y-2">
           @for (p of projectMatching?.projects; track p.id) {
             <div class="rounded-lg border border-gray-200 p-3">
               <p class="font-medium text-gray-800">{{ p.titre || ('Projet #' + p.id) }}</p>
-              <p class="mt-1 text-xs text-gray-600">Alignement: {{ p.scoreAlignementSkills ?? 0 }}/100 · Statut: {{ p.statut || '—' }}</p>
+              <p class="mt-1 text-xs text-gray-600">
+                Composite: {{ p.scoreComposite ?? p.scoreAlignementSkills ?? 0 }}/100 · Skills: {{ p.scoreAlignementSkills ?? 0 }}/100 · Statut: {{ p.statut || '—' }}
+              </p>
               @if (p.raison) {
                 <p class="mt-1 text-xs text-gray-500">{{ p.raison }}</p>
               }

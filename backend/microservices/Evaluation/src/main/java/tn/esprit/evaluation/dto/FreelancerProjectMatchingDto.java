@@ -20,5 +20,7 @@ public class FreelancerProjectMatchingDto {
 
     private Long freelancerId;
     private Integer profileSkillTokens;
+    /** Score global examens (0–100), null si aucune tentative enregistrée. */
+    private Integer freelancerExamGlobalScore;
     private List<ProjetMarcheDto> projects;
 }

@@ -8,6 +8,7 @@ import { AuthService } from '../../services/auth.service';
 import { Project, ProjectStatus } from '../../models/project.model';
 import { Inscription } from '../../models/inscription.model';
 import { User } from '../../models/auth.model';
+import { FreelancerRanking } from '../../models/examen.model';
 
 @Component({
   selector: 'app-dashboard',
@@ -26,6 +27,10 @@ export class DashboardComponent implements OnInit {
   allUsersError: string | null = null;
   roleFilter: 'ALL' | 'ADMIN' | 'FREELANCER' | 'CLIENT' = 'ALL';
 
+  rankingPreview: FreelancerRanking[] = [];
+  rankingPreviewLoading = false;
+  rankingPreviewError: string | null = null;
+
   constructor(
     private projectService: ProjectService,
     private examenService: ExamenService,
@@ -34,6 +39,21 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.rankingPreviewLoading = true;
+    this.examenService.getGlobalRanking().subscribe({
+      next: (rows) => {
+        this.rankingPreviewLoading = false;
+        this.rankingPreview = (rows ?? []).slice(0, 5);
+        this.rankingPreviewError = null;
+      },
+      error: (err) => {
+        this.rankingPreviewLoading = false;
+        this.rankingPreview = [];
+        this.rankingPreviewError =
+          err?.error?.message ??
+          `Classement indisponible (HTTP ${err?.status ?? '—'}). Vérifiez le microservice Evaluation.`;
+      },
+    });
     this.examenService.getAll().subscribe({
       next: (data) => (this.examensCount = data.length),
       error: () => {},

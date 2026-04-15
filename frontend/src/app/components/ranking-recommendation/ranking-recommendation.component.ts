@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ExamenService } from '../../services/examen.service';
+import { AuthService } from '../../services/auth.service';
 import { FreelancerProjectMatching, FreelancerRanking } from '../../models/examen.model';
 
 @Component({
@@ -12,6 +13,7 @@ import { FreelancerProjectMatching, FreelancerRanking } from '../../models/exame
 })
 export class RankingRecommendationComponent implements OnInit {
   private readonly examenService = inject(ExamenService);
+  private readonly auth = inject(AuthService);
 
   rankings: FreelancerRanking[] = [];
   topPerformers: FreelancerRanking[] = [];
@@ -27,6 +29,10 @@ export class RankingRecommendationComponent implements OnInit {
   matchingLimit = 5;
 
   ngOnInit(): void {
+    const u = this.auth.getStoredUser();
+    if (u?.role === 'FREELANCER' && u.userId != null && u.userId > 0) {
+      this.matchingFreelancerId = u.userId;
+    }
     this.loadRanking();
     this.loadTopPerformers();
   }

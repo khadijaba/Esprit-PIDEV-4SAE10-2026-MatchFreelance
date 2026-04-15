@@ -751,7 +751,7 @@ export class PasserExamenComponent implements OnInit, OnDestroy {
 
   /** Affiche le score d’adéquation compétences (0–100) ou « — » si l’API ne l’a pas fourni. */
   projetScoreAffiche(proj: ProjetMarche): number | string {
-    const s = proj.scoreAlignementSkills;
+    const s = proj.scoreComposite ?? proj.scoreAlignementSkills;
     return s != null && !Number.isNaN(Number(s)) ? s : '—';
   }
 
