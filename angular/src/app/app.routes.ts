@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { LayoutComponent } from './components/layout/layout.component';
+import { LayoutComponent } from './components/backend/layout/layout.component';
 import { FrontLayoutComponent } from './components/front-layout/front-layout.component';
 import { ClientLayoutComponent } from './components/client-layout/client-layout.component';
 import { roleGuard } from './guards/role.guard';
@@ -63,42 +63,42 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./components/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+          import('./components/backend/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
       {
         path: 'projects',
         loadComponent: () =>
-          import('./components/project-list/project-list.component').then((m) => m.ProjectListComponent),
+          import('./components/backend/project-list/project-list.component').then((m) => m.ProjectListComponent),
       },
       {
         path: 'projects/new',
         loadComponent: () =>
-          import('./components/project-form/project-form.component').then((m) => m.ProjectFormComponent),
+          import('./components/backend/project-form/project-form.component').then((m) => m.ProjectFormComponent),
       },
       {
         path: 'projects/:id/edit',
         loadComponent: () =>
-          import('./components/project-form/project-form.component').then((m) => m.ProjectFormComponent),
+          import('./components/backend/project-form/project-form.component').then((m) => m.ProjectFormComponent),
       },
       {
         path: 'projects/:id',
         loadComponent: () =>
-          import('./components/project-details/project-details.component').then((m) => m.ProjectDetailsComponent),
+          import('./components/backend/project-details/project-details.component').then((m) => m.ProjectDetailsComponent),
       },
       {
         path: 'candidatures',
         loadComponent: () =>
-          import('./components/candidature-list/candidature-list.component').then((m) => m.CandidatureListComponent),
+          import('./components/backend/candidature-list/candidature-list.component').then((m) => m.CandidatureListComponent),
       },
       {
         path: 'contracts',
         loadComponent: () =>
-          import('./components/contract-list/contract-list.component').then((m) => m.ContractListComponent),
+          import('./components/backend/contract-list/contract-list.component').then((m) => m.ContractListComponent),
       },
       {
         path: 'contracts/:id',
         loadComponent: () =>
-          import('./components/contract-details/contract-details.component').then((m) => m.ContractDetailsComponent),
+          import('./components/backend/contract-details/contract-details.component').then((m) => m.ContractDetailsComponent),
       },
     ],
   },

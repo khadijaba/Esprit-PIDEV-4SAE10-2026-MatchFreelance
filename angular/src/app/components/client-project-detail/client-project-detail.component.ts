@@ -126,7 +126,9 @@ export class ClientProjectDetailComponent implements OnInit {
     this.contractService.getByProjectId(projectId).subscribe({
       next: (contracts) => {
         if (this.project) {
-          this.project.contracts = contracts.map((c) => ({
+          // Filter out cancelled contracts
+          const activeContracts = contracts.filter((c) => c.status !== 'CANCELLED');
+          this.project.contracts = activeContracts.map((c) => ({
             id: c.id,
             projectId: c.projectId,
             freelancerId: c.freelancerId,
