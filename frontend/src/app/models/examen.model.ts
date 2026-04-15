@@ -120,6 +120,8 @@ export interface SuccessPrediction {
   scoreMoyenHistorique?: number;
   tauxReussiteHistorique?: number;
   tempsMoyenPreparationJours?: number;
+  scoreMetierRealiste?: number;
+  explicationNaturelle?: string;
   recommandation?: string;
   modulesAvantCertifiant?: ModuleRevision[];
 }
@@ -141,6 +143,7 @@ export interface RemediationPlan {
   parcoursSuggere?: TypeParcours;
   objectifScoreCible?: number;
   estimationTotaleMinutes?: number;
+  progressionPourcent?: number;
   resume?: string;
   etapes?: RemediationStep[];
 }

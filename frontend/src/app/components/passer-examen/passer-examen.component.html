@@ -190,7 +190,13 @@
             <p class="mt-1 text-emerald-900">
               Probabilité : {{ simulation.probabiliteReussite }}% ({{ simulation.niveauConfiance || 'N/A' }})
             </p>
+            <p class="mt-1 text-emerald-900">Score métier réaliste : {{ simulation.scoreMetierRealiste ?? '—' }}/100</p>
             <p class="mt-1 text-emerald-900">{{ simulation.recommandation || '—' }}</p>
+            @if (simulation.explicationNaturelle) {
+              <p class="mt-2 rounded border border-emerald-200 bg-white/70 px-2 py-2 text-xs text-emerald-950">
+                {{ simulation.explicationNaturelle }}
+              </p>
+            }
             <p class="mt-2 text-xs text-emerald-800">
               Historique : moyenne {{ simulation.scoreMoyenHistorique ?? '—' }}% · réussite {{ simulation.tauxReussiteHistorique ?? '—' }}%
               · préparation moyenne {{ simulation.tempsMoyenPreparationJours ?? '—' }} jour(s)
@@ -219,6 +225,12 @@
               Parcours suggéré : {{ planRemediation.parcoursSuggere || 'STANDARD' }} · Objectif score :
               {{ planRemediation.objectifScoreCible ?? '—' }}% · Temps total estimé :
               {{ planRemediation.estimationTotaleMinutes ?? 0 }} min
+            </p>
+            <p class="mt-2 text-xs font-semibold text-violet-900">
+              Progression automatique: {{ remediationProgressionPourcent }}%
+              @if (prochaineEtapeRemediationSequence(); as nextSeq) {
+                <span> · prochaine étape: #{{ nextSeq }}</span>
+              }
             </p>
             @if (planRemediation.etapes?.length) {
               <ol class="mt-2 space-y-1 text-xs text-violet-950">

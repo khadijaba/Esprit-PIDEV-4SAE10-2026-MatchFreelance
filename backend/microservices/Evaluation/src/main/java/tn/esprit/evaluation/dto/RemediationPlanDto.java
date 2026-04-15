@@ -27,6 +27,8 @@ public class RemediationPlanDto {
     private TypeParcours parcoursSuggere;
     private Integer objectifScoreCible;
     private Integer estimationTotaleMinutes;
+    /** Progression suggérée initiale (0 au démarrage, puis suivie côté front). */
+    private Integer progressionPourcent;
     private String resume;
 
     @Builder.Default

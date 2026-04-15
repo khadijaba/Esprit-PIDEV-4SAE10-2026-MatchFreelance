@@ -60,6 +60,13 @@ public class ExamenLlmClient {
             "\"suggestions\" (tableau de chaînes : améliorations concrètes, peut être vide).",
             "Sois exigeant sur les QCM vagues, les distracteurs non exclusifs, ou les bonnes réponses discutables.");
 
+    /** Coach apprenant : explication naturelle courte, actionnable, sans markdown. */
+    private static final String SYSTEM_LEARNING_COACH = String.join(" ",
+            "Tu es un coach pédagogique francophone.",
+            "Explique de façon simple, concrète et motivante (3 à 5 phrases).",
+            "Donne des actions immédiates, basées sur les indicateurs fournis.",
+            "Pas de markdown, pas de JSON, pas de listes numérotées.");
+
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
@@ -142,6 +149,16 @@ public class ExamenLlmClient {
             return null;
         }
         return chatCompletion(SYSTEM_QUESTION_VALIDATOR, userPrompt.trim(), 0.22);
+    }
+
+    /**
+     * Appel LLM "coach" pour produire une explication naturelle lisible par l'apprenant.
+     */
+    public String chatCompletionCoach(String userPrompt) {
+        if (!isAvailable() || userPrompt == null || userPrompt.isBlank()) {
+            return null;
+        }
+        return chatCompletion(SYSTEM_LEARNING_COACH, userPrompt.trim(), 0.35);
     }
 
     /**

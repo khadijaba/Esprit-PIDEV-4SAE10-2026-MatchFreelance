@@ -9,7 +9,7 @@ import { FormationService } from '../../services/formation.service';
 import { UserProfile } from '../../models/auth.model';
 import { Skill } from '../../models/skill.model';
 import { Inscription } from '../../models/inscription.model';
-import { PassageExamen, Certificat } from '../../models/examen.model';
+import { PassageExamen, Certificat, SuccessPrediction, RemediationPlan } from '../../models/examen.model';
 import { Formation } from '../../models/formation.model';
 import { SKILL_CATEGORY_LABELS } from '../../models/skill.model';
 
@@ -30,6 +30,8 @@ export class DashboardFreelancerComponent implements OnInit {
   error: string | null = null;
 
   rappels: { type: string; message: string; link?: string; linkLabel?: string }[] = [];
+  simulation: SuccessPrediction | null = null;
+  remediation: RemediationPlan | null = null;
 
   constructor(
     public auth: AuthService,
@@ -90,7 +92,22 @@ export class DashboardFreelancerComponent implements OnInit {
     });
 
     this.examenService.getResultatsByFreelancer(freelancerId).subscribe({
-      next: (p) => (this.passages = p),
+      next: (p) => {
+        this.passages = p;
+        const last = [...p].sort(
+          (a, b) => new Date(b.datePassage).getTime() - new Date(a.datePassage).getTime()
+        )[0];
+        if (last?.examenId) {
+          this.examenService.getSimulationReussite(last.examenId, freelancerId).subscribe({
+            next: (s) => (this.simulation = s),
+            error: () => (this.simulation = null),
+          });
+          this.examenService.getPlanRemediation(last.examenId, freelancerId).subscribe({
+            next: (r) => (this.remediation = r),
+            error: () => (this.remediation = null),
+          });
+        }
+      },
       error: () => {},
     });
 

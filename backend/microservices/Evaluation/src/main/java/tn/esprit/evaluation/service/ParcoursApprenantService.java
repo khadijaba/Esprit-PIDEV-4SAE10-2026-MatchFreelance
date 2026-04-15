@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.evaluation.client.FormationClient;
+import tn.esprit.evaluation.client.ExamenLlmClient;
 import tn.esprit.evaluation.client.SkillClient;
 import tn.esprit.evaluation.domain.TypeParcours;
 import tn.esprit.evaluation.dto.ModuleRevisionDto;
@@ -46,6 +47,7 @@ public class ParcoursApprenantService {
     private final QuestionRepository questionRepository;
     private final FormationClient formationClient;
     private final SkillClient skillClient;
+    private final ExamenLlmClient examenLlmClient;
     private final FreelancerQuestionTraceService freelancerQuestionTraceService;
 
     @Transactional(readOnly = true)
@@ -206,6 +208,7 @@ public class ParcoursApprenantService {
         int skillReadiness = Math.max(0, 100 - (nbGaps * 12));
 
         int probabilite = clampScore((int) Math.round(avgScore * 0.55 + successRate * 0.25 + prepTempoScore * 0.10 + skillReadiness * 0.10));
+        int scoreMetier = clampScore((int) Math.round(avgScore * 0.45 + successRate * 0.25 + skillReadiness * 0.20 + prepTempoScore * 0.10));
         String niveau = probabilite >= 75 ? "FORTE" : probabilite >= 50 ? "MOYENNE" : "FAIBLE";
 
         List<ModuleRevisionDto> modules = List.of();
@@ -220,12 +223,17 @@ public class ParcoursApprenantService {
                 ? "Probabilité intermédiaire : faites 1 à 2 modules ciblés avant de passer en certifiant."
                 : "Probabilité faible : faites au moins 2 modules de remédiation puis lancez un entraînement.";
 
+        String explicationNaturelle = buildNaturalCoachExplanation(
+                freelancerId, examenId, probabilite, scoreMetier, avgScore, successRate, avgPrepDays, nbGaps, reco);
+
         return SuccessPredictionDto.builder()
                 .probabiliteReussite(probabilite)
                 .niveauConfiance(niveau)
                 .scoreMoyenHistorique(avgScore)
                 .tauxReussiteHistorique(successRate)
                 .tempsMoyenPreparationJours(avgPrepDays)
+                .scoreMetierRealiste(scoreMetier)
+                .explicationNaturelle(explicationNaturelle)
                 .recommandation(reco)
                 .modulesAvantCertifiant(modules)
                 .build();
@@ -254,11 +262,11 @@ public class ParcoursApprenantService {
             motsCles.addAll(skillClient.getParcoursIntelligent(freelancerId).getGapsDetectes());
         }
 
-        List<ModuleRevisionDto> modules = proposerModulesDepuisMotsCles(examen.getFormationId(), motsCles, 4);
+        List<ModuleRevisionDto> modules = proposerModulesDepuisMotsCles(examen.getFormationId(), motsCles, 6);
         if (modules.isEmpty()) {
             modules = formationClient.getModulesByFormation(examen.getFormationId()).stream()
                     .sorted(Comparator.comparingInt(m -> parseInt(m.get("ordre"), 0)))
-                    .limit(3)
+                    .limit(4)
                     .map(m -> toModuleDto(m, "Consolidation générale avant nouvelle tentative"))
                     .collect(Collectors.toList());
         }
@@ -294,6 +302,7 @@ public class ParcoursApprenantService {
                 .parcoursSuggere(risque.getParcoursRecommande() != null ? risque.getParcoursRecommande() : TypeParcours.STANDARD)
                 .objectifScoreCible(objectifScore)
                 .estimationTotaleMinutes(totalMinutes)
+                .progressionPourcent(0)
                 .resume(resume)
                 .etapes(etapes)
                 .build();
@@ -446,5 +455,38 @@ public class ParcoursApprenantService {
             return (int) Math.max(1, Math.round((double) days / Math.max(1, dates.size())));
         }
         return 7;
+    }
+
+    private String buildNaturalCoachExplanation(
+            Long freelancerId,
+            Long examenId,
+            int probabilite,
+            int scoreMetier,
+            int moyenne,
+            int tauxReussite,
+            int prepJours,
+            int nbGaps,
+            String recommandation) {
+        String fallback = String.format(
+                Locale.FRANCE,
+                "Votre probabilité de réussite est estimée à %d%% (score métier %d/100). " +
+                        "Historique: moyenne %d%%, réussite %d%%, préparation moyenne %d jour(s), gaps détectés: %d. %s",
+                probabilite, scoreMetier, moyenne, tauxReussite, prepJours, nbGaps, recommandation);
+        try {
+            String prompt = String.format(
+                    Locale.FRANCE,
+                    "Freelancer %d, examen %d. Probabilité %d%%, score métier %d/100, moyenne historique %d%%, " +
+                            "taux de réussite %d%%, préparation moyenne %d jours, gaps détectés %d. " +
+                            "Recommandation système: %s. Rédige une explication courte et actionnable.",
+                    freelancerId, examenId, probabilite, scoreMetier, moyenne, tauxReussite, prepJours, nbGaps, recommandation);
+            String llm = examenLlmClient.chatCompletionCoach(prompt);
+            if (llm == null || llm.isBlank()) {
+                return fallback;
+            }
+            String out = llm.trim();
+            return out.length() > 800 ? out.substring(0, 797) + "..." : out;
+        } catch (Exception ignored) {
+            return fallback;
+        }
     }
 }

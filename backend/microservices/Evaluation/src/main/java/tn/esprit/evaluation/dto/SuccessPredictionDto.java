@@ -25,6 +25,10 @@ public class SuccessPredictionDto {
     private Integer scoreMoyenHistorique;
     private Integer tauxReussiteHistorique;
     private Integer tempsMoyenPreparationJours;
+    /** Score métier enrichi (0..100) pour une lecture plus réaliste que la seule proba brute. */
+    private Integer scoreMetierRealiste;
+    /** Explication lisible en langage naturel (LLM si dispo, sinon heuristique). */
+    private String explicationNaturelle;
     private String recommandation;
 
     @Builder.Default

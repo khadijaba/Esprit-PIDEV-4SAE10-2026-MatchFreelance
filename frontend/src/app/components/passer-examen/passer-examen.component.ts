@@ -550,6 +550,18 @@ export class PasserExamenComponent implements OnInit, OnDestroy {
     this.sauvegarderEtapesRemediation();
   }
 
+  get remediationProgressionPourcent(): number {
+    const total = this.planRemediation?.etapes?.length ?? 0;
+    if (total <= 0) return 0;
+    return Math.round((this.completedRemediationSteps.size / total) * 100);
+  }
+
+  prochaineEtapeRemediationSequence(): number | null {
+    const etapes = this.planRemediation?.etapes ?? [];
+    const pending = etapes.find((e) => e.sequence != null && !this.completedRemediationSteps.has(e.sequence));
+    return pending?.sequence ?? null;
+  }
+
   onFreelancerIdChanged() {
     this.resultat = null;
     this.certificat = null;
