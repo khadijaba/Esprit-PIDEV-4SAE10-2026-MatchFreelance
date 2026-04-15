@@ -154,8 +154,9 @@ export class ClientProjectDetailComponent implements OnInit {
   loadCandidatures(projectId: number) {
     this.candidatureService.getByProjectId(projectId).subscribe({
       next: (data) => {
-        this.candidatures = data;
-        if (data.length > 0) {
+        // Filter out rejected candidatures (including cancelled freelancers)
+        this.candidatures = data.filter((c) => c.status !== 'REJECTED');
+        if (this.candidatures.length > 0) {
           this.loadRankedCandidatures(projectId);
           this.loadBudgetStats(projectId);
         } else {

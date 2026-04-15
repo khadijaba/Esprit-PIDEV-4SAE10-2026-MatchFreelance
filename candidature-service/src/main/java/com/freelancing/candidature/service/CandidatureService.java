@@ -258,9 +258,22 @@ public class CandidatureService {
     }
 
     private void reopenProjectAndResetCandidatures(Long projectId, ProjectClient.ProjectResponse project) {
-        // Delete all candidatures for this project when contract is cancelled
-        List<Candidature> allCandidatures = candidatureRepository.findByProjectId(projectId);
-        candidatureRepository.deleteAll(allCandidatures);
+        // Mark the accepted candidature as REJECTED (the freelancer who had the contract)
+        List<Candidature> accepted = candidatureRepository.findByProjectIdAndStatus(projectId, CandidatureStatus.ACCEPTED);
+        for (Candidature c : accepted) {
+            c.setStatus(CandidatureStatus.REJECTED);
+            candidatureRepository.save(c);
+        }
+        
+        // Reset other rejected candidatures back to PENDING so they can apply again
+        List<Candidature> rejected = candidatureRepository.findByProjectIdAndStatus(projectId, CandidatureStatus.REJECTED);
+        for (Candidature c : rejected) {
+            // Skip the one we just rejected (the accepted one)
+            if (!accepted.stream().anyMatch(a -> a.getId().equals(c.getId()))) {
+                c.setStatus(CandidatureStatus.PENDING);
+                candidatureRepository.save(c);
+            }
+        }
         
         // Reopen the project
         ProjectClient.ProjectUpdateRequest update = new ProjectClient.ProjectUpdateRequest();
