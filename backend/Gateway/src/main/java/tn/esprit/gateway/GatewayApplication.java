@@ -45,8 +45,14 @@ public class GatewayApplication {
                 // Rapports PDF & graphiques (Python FastAPI) — en premier pour éviter tout conflit de prédicat
                 .route("evaluation-reports", r -> r.path("/api/evaluation-reports", "/api/evaluation-reports/**")
                         .uri(evaluationReportsUrl))
-                // Auth / Utilisateurs (Freelancers, Clients, Admin) -> lb://USER
-                .route("user-api", r -> r.path("/api/users", "/api/users/**")
+                // Utilisateurs / Auth (legacy + v2) -> lb://USER
+                .route("user-users", r -> r.path("/api/users", "/api/users/**")
+                        .uri("lb://" + userServiceId))
+                .route("user-auth", r -> r.path("/api/auth", "/api/auth/**")
+                        .uri("lb://" + userServiceId))
+                .route("user-admin", r -> r.path("/api/admin", "/api/admin/**")
+                        .uri("lb://" + userServiceId))
+                .route("user-uploads", r -> r.path("/uploads", "/uploads/**")
                         .uri("lb://" + userServiceId))
                 // Examens et Certificats -> lb://EVALUATION (nom dans application.properties)
                 // Un seul motif ** évite les ambiguïtés de matching sur les sous-chemins (ex. /formation/.../auto-generate)

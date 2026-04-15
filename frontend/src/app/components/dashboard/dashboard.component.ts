@@ -66,7 +66,7 @@ export class DashboardComponent implements OnInit {
         this.allUsersLoading = false;
         this.allUsersError = err?.status === 401
           ? 'Connectez-vous pour afficher la liste.'
-          : 'Impossible de charger les utilisateurs. Vérifiez que le microservice User est démarré (port 8085).';
+          : 'Impossible de charger les utilisateurs. Démarrez le microservice USER (ex. port 8098), relancez ng serve, ou utilisez la Gateway sur 8050.';
       },
     });
   }

@@ -34,6 +34,8 @@ export class ProfileComponent implements OnInit {
   badgeData: BadgeData | null = null;
   loading = true;
   error: string | null = null;
+  deleting = false;
+  deleteError: string | null = null;
 
   constructor(
     private auth: AuthService,
@@ -87,5 +89,27 @@ export class ProfileComponent implements OnInit {
       CLIENT: 'Client',
     };
     return labels[role] ?? role;
+  }
+
+  deleteAccount(): void {
+    if (
+      !window.confirm(
+        'Supprimer définitivement votre compte ? Cette action est irréversible.'
+      )
+    ) {
+      return;
+    }
+    this.deleteError = null;
+    this.deleting = true;
+    this.auth.deleteMyAccount().subscribe({
+      next: () => {
+        this.auth.clearSession();
+        this.router.navigate(['/login']);
+      },
+      error: () => {
+        this.deleting = false;
+        this.deleteError = 'Impossible de supprimer le compte. Réessayez ou contactez le support.';
+      },
+    });
   }
 }

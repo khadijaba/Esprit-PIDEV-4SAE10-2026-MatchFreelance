@@ -152,7 +152,6 @@ Vous devriez voir **1 décrochage** et **1 prédiction de réussite**.
 
 | Action | Méthode | URL |
 |--------|--------|-----|
-| Liste des utilisateurs | GET | http://localhost:8050/api/users |
 | Liste des formations | GET | http://localhost:8050/api/formations |
 | Examens d’une formation | GET | http://localhost:8050/api/examens/formation/{formationId} |
 | Inscrire un freelancer | POST | http://localhost:8050/api/inscriptions/formation/{formationId}/freelancer/{freelancerId} |

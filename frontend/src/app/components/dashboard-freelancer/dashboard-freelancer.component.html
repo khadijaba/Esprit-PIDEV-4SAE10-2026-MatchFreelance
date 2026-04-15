@@ -46,9 +46,9 @@
         <div class="rounded-xl border border-slate-200 bg-white p-4">
           <p class="text-xs uppercase tracking-wide text-slate-500">Learning path recommandé</p>
           @if (remediation?.etapes?.length) {
-            <p class="mt-2 text-sm font-semibold text-violet-800">{{ remediation.resume }}</p>
+            <p class="mt-2 text-sm font-semibold text-violet-800">{{ remediation?.resume }}</p>
             <ul class="mt-2 space-y-1 text-xs text-slate-700">
-              @for (e of remediation?.etapes?.slice(0, 3); track e.sequence) {
+              @for (e of (remediation?.etapes ?? []).slice(0, 3); track e.sequence) {
                 <li>Étape {{ e.sequence }} · {{ e.moduleTitre }} · {{ e.dureeEstimeeMinutes }} min</li>
               }
             </ul>

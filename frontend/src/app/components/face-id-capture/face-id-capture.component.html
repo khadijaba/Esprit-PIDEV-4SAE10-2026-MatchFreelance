@@ -1,0 +1,49 @@
+<div class="space-y-3">
+  <div class="relative overflow-hidden rounded-xl bg-slate-900 aspect-[4/3] max-h-56">
+    <video
+      #videoEl
+      class="h-full w-full object-cover"
+      playsinline
+      muted
+      autoplay
+    ></video>
+    @if (!cameraOn) {
+      <div class="absolute inset-0 flex items-center justify-center bg-slate-800/90 text-center text-xs text-slate-300 px-4">
+        Camera preview appears here after you start.
+      </div>
+    }
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    @if (!cameraOn) {
+      <button
+        type="button"
+        (click)="startCamera()"
+        [disabled]="busy"
+        class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+      >
+        {{ busy ? 'Please wait…' : 'Start camera' }}
+      </button>
+    } @else {
+      <button
+        type="button"
+        (click)="capture()"
+        [disabled]="busy"
+        class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+      >
+        {{ busy ? '…' : 'Capture face' }}
+      </button>
+      <button
+        type="button"
+        (click)="stopCamera()"
+        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+      >
+        Stop camera
+      </button>
+    }
+  </div>
+
+  @if (status) {
+    <p class="text-xs text-slate-600">{{ status }}</p>
+  }
+</div>

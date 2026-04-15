@@ -55,6 +55,21 @@ export const routes: Routes = [
           import('./components/login/login.component').then((m) => m.LoginComponent),
       },
       {
+        path: 'forgot-password',
+        loadComponent: () =>
+          import('./components/forgot-password/forgot-password.component').then((m) => m.ForgotPasswordComponent),
+      },
+      {
+        path: 'reset-password',
+        loadComponent: () =>
+          import('./components/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent),
+      },
+      {
+        path: 'verify-email',
+        loadComponent: () =>
+          import('./components/verify-email/verify-email.component').then((m) => m.VerifyEmailComponent),
+      },
+      {
         path: 'register',
         loadComponent: () =>
           import('./components/register/register.component').then((m) => m.RegisterComponent),
@@ -89,6 +104,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./components/mon-activite/mon-activite.component').then((m) => m.MonActiviteComponent),
       },
+      {
+        path: 'microservice-user',
+        loadComponent: () =>
+          import('./components/pidev-user-public/pidev-user-public.component').then((m) => m.PidevUserPublicComponent),
+      },
     ],
   },
 
@@ -108,6 +128,11 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () =>
           import('./components/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+      },
+      {
+        path: 'pidev-user',
+        loadComponent: () =>
+          import('./components/admin-pidev-user/admin-pidev-user.component').then((m) => m.AdminPidevUserComponent),
       },
       {
         path: 'projects',
