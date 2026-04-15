@@ -1,0 +1,49 @@
+<div
+  class="project-swipe-card"
+  [style.transform]="cardStyle().transform"
+  [style.opacity]="cardStyle().opacity"
+  [style.transition]="cardStyle().transition"
+  (mousedown)="onMouseDown($event)"
+  (touchstart)="onTouchStart($event)"
+>
+  <div class="project-swipe-overlay project-swipe-overlay-apply" [style.opacity]="applyOpacity()">
+    Apply
+  </div>
+  <div class="project-swipe-overlay project-swipe-overlay-skip" [style.opacity]="skipOpacity()">
+    Skip
+  </div>
+
+  <div class="project-swipe-card-content">
+    <h3 class="project-swipe-card-title">{{ project.title }}</h3>
+    <p class="project-swipe-card-desc line-clamp-3">{{ project.description || '—' }}</p>
+    <p class="project-swipe-card-budget">
+      {{ project.minBudget | number:'1.0-0' }}$ – {{ project.maxBudget | number:'1.0-0' }}$
+    </p>
+    <p class="project-swipe-card-meta">{{ project.duration }} days · {{ project.createdAt | date:'mediumDate' }}</p>
+  </div>
+</div>
+
+<div class="project-swipe-actions">
+  <button
+    type="button"
+    (click)="onSkipClick()"
+    [disabled]="isFlyingOff()"
+    class="project-swipe-btn project-swipe-btn-skip"
+  >
+    <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+    </svg>
+    <span>Skip</span>
+  </button>
+  <button
+    type="button"
+    (click)="onApplyClick()"
+    [disabled]="isFlyingOff()"
+    class="project-swipe-btn project-swipe-btn-apply"
+  >
+    <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+    </svg>
+    <span>Apply</span>
+  </button>
+</div>

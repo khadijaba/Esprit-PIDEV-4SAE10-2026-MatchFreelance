@@ -1,0 +1,60 @@
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                               [2m | [22m [1mRaw size[22m[2m | [22m[1mEstimated transfer size[22m
+[32mchunk-YEVGWZDK.js[39m  [2m | [22m[2m-[22m                                   [2m | [22m[36m180.60 kB[39m[2m | [22m               [36m52.54 kB[39m
+[32mchunk-XLEX4P44.js[39m  [2m | [22m[2m-[22m                                   [2m | [22m [36m85.35 kB[39m[2m | [22m               [36m21.59 kB[39m
+[32mmain-EVVDYQSS.js[39m   [2m | [22m[2mmain[22m                                [2m | [22m [36m50.66 kB[39m[2m | [22m               [36m14.96 kB[39m
+[32mstyles-GFPFEFQP.css[39m[2m | [22m[2mstyles[22m                              [2m | [22m [36m48.91 kB[39m[2m | [22m                [36m7.25 kB[39m
+[32mchunk-KXZMLZP2.js[39m  [2m | [22m[2m-[22m                                   [2m | [22m  [36m1.18 kB[39m[2m | [22m              [36m477 bytes[39m
+[32mchunk-DTIXFCKM.js[39m  [2m | [22m[2m-[22m                                   [2m | [22m[36m492 bytes[39m[2m | [22m              [36m492 bytes[39m
+[32mchunk-R5KIWNPJ.js[39m  [2m | [22m[2m-[22m                                   [2m | [22m [36m73 bytes[39m[2m | [22m               [36m73 bytes[39m
+[32mchunk-BYXBJQAS.js[39m  [2m | [22m[2m-[22m                                   [2m | [22m  [36m0 bytes[39m[2m | [22m                [36m0 bytes[39m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m                       [2m | [22m[1m367.26 kB[22m[2m | [22m               [1m97.39 kB[22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                               [2m | [22m [1mRaw size[22m[2m | [22m[1mEstimated transfer size[22m
+[32mchunk-ZLX76VKI.js[39m  [2m | [22m[2m-[22m                                   [2m | [22m [36m47.91 kB[39m[2m | [22m                [36m9.50 kB[39m
+[32mchunk-W4CYFS3A.js[39m  [2m | [22m[2mclient-project-detail-component[22m     [2m | [22m [36m33.02 kB[39m[2m | [22m                [36m7.95 kB[39m
+[32mchunk-ZYVX5U3Y.js[39m  [2m | [22m[2mproject-swipe-component[22m             [2m | [22m [36m15.62 kB[39m[2m | [22m                [36m4.51 kB[39m
+[32mchunk-OTDJRERR.js[39m  [2m | [22m[2madmin-users-component[22m               [2m | [22m [36m13.59 kB[39m[2m | [22m                [36m3.97 kB[39m
+[32mchunk-P5UTLPSV.js[39m  [2m | [22m[2m-[22m                                   [2m | [22m [36m13.45 kB[39m[2m | [22m                [36m2.93 kB[39m
+[32mchunk-5STKWDFS.js[39m  [2m | [22m[2mfreelancer-contract-detail-component[22m[2m | [22m [36m11.75 kB[39m[2m | [22m                [36m3.40 kB[39m
+[32mchunk-Z3ASMSJQ.js[39m  [2m | [22m[2mclient-dashboard-component[22m          [2m | [22m [36m10.39 kB[39m[2m | [22m                [36m3.12 kB[39m
+[32mchunk-4WAOBRC5.js[39m  [2m | [22m[2mproject-details-component[22m           [2m | [22m [36m10.01 kB[39m[2m | [22m                [36m2.94 kB[39m
+[32mchunk-R7RTMDBG.js[39m  [2m | [22m[2mregister-component[22m                  [2m | [22m  [36m9.81 kB[39m[2m | [22m                [36m2.92 kB[39m
+[32mchunk-DFFMAUTP.js[39m  [2m | [22m[2mclient-project-form-component[22m       [2m | [22m  [36m9.53 kB[39m[2m | [22m                [36m2.53 kB[39m
+[32mchunk-WAFHYJQF.js[39m  [2m | [22m[2mdashboard-component[22m                 [2m | [22m  [36m9.00 kB[39m[2m | [22m                [36m2.59 kB[39m
+[32mchunk-5ZD7EKNF.js[39m  [2m | [22m[2mproject-list-component[22m              [2m | [22m  [36m8.85 kB[39m[2m | [22m                [36m2.80 kB[39m
+[32mchunk-6X3TK5EV.js[39m  [2m | [22m[2mcontract-details-component[22m          [2m | [22m  [36m8.47 kB[39m[2m | [22m                [36m2.65 kB[39m
+[32mchunk-R6VYEIBY.js[39m  [2m | [22m[2mproject-form-component[22m              [2m | [22m  [36m8.42 kB[39m[2m | [22m                [36m2.30 kB[39m
+[32mchunk-N5WPV2LO.js[39m  [2m | [22m[2mfront-project-detail-component[22m      [2m | [22m  [36m8.23 kB[39m[2m | [22m                [36m2.58 kB[39m
+[2m...and 12 more lazy chunks files. Use "--verbose" to show all the files.[22m
+
+Application bundle generation complete. [3.962 seconds] - 2026-03-03T01:07:35.811Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/client-dashboard/client-dashboard.component.html:95:73:
+[37m      95 │ ...ld text-slate-900">{{ [32mcandidatureCounts[project.id] ?? 0[37m }}</span>
+         ╵                          [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  Warning occurs in the template of component ClientDashboardComponent.
+
+    src/app/components/client-dashboard/client-dashboard.component.ts:19:15:
+[37m      19 │   templateUrl: [32m'./client-dashboard.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/client-dashboard/client-dashboard.component.html:98:20:
+[37m      98 │               @if (([32mpendingCounts[project.id] ?? 0[37m) > 0) {
+         ╵                     [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  Warning occurs in the template of component ClientDashboardComponent.
+
+    src/app/components/client-dashboard/client-dashboard.component.ts:19:15:
+[37m      19 │   templateUrl: [32m'./client-dashboard.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+Output location: C:\Users\jmoha\Desktop\user\angular\dist\angular
+
