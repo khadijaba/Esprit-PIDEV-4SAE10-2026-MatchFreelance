@@ -115,10 +115,10 @@ public class ContractService {
 
     /**
      * Client or freelancer cancels the contract while it is still {@link ContractStatus#DRAFT} or {@link ContractStatus#ACTIVE}.
-     * Clears any pending extra-budget proposal.
+     * Deletes the contract entirely instead of marking it as cancelled.
      */
     @Transactional
-    public ContractResponseDTO cancelContractByParty(Long id, ContractCancelPartyRequestDTO dto) {
+    public void cancelContractByParty(Long id, ContractCancelPartyRequestDTO dto) {
         if (dto == null) {
             throw new IllegalArgumentException("Request body is required with clientId or freelancerId");
         }
@@ -141,9 +141,8 @@ public class ContractService {
         if (c.getStatus() != ContractStatus.ACTIVE && c.getStatus() != ContractStatus.DRAFT) {
             throw new IllegalArgumentException("Only DRAFT or ACTIVE contracts can be cancelled by the parties");
         }
-        clearPendingExtra(c);
-        c.setStatus(ContractStatus.CANCELLED);
-        return toResponseDTO(contractRepository.save(c), null);
+        // Delete the contract entirely
+        contractRepository.deleteById(id);
     }
 
     /**

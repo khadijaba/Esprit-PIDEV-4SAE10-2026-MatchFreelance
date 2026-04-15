@@ -57,10 +57,7 @@ export class FreelancerContractListComponent implements OnInit {
     this.loadError = null;
     this.contractService.getByFreelancerId(this.freelancerId).subscribe({
       next: (data) => {
-        // Filter out cancelled contracts
-        this.contracts = (data ?? [])
-          .map((c) => normalizeContractFromApi(c))
-          .filter((c) => c.status !== 'CANCELLED');
+        this.contracts = (data ?? []).map((c) => normalizeContractFromApi(c));
         this.loading = false;
 
         const projectIds = [...new Set(this.contracts.map((c) => c.projectId))];

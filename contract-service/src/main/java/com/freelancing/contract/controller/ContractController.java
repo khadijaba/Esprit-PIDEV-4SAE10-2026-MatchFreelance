@@ -112,13 +112,15 @@ public class ContractController {
     /**
      * Client or freelancer cancels a DRAFT or ACTIVE contract. Body must contain exactly one of
      * {@code clientId} or {@code freelancerId}, matching the contract.
+     * Deletes the contract entirely.
      */
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<ContractResponseDTO> cancelContract(
+    public ResponseEntity<Void> cancelContract(
             @PathVariable Long id,
             @RequestBody ContractCancelPartyRequestDTO body) {
         try {
-            return ResponseEntity.ok(contractService.cancelContractByParty(id, body));
+            contractService.cancelContractByParty(id, body);
+            return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         } catch (RuntimeException e) {

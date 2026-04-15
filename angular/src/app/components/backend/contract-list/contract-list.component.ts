@@ -32,9 +32,8 @@ export class ContractListComponent implements OnInit {
     this.loading = true;
     this.contractService.getAll().subscribe({
       next: (data) => {
-        // Filter out cancelled contracts
-        this.contracts = data.filter((c) => c.status !== 'CANCELLED');
-        const projectIds = [...new Set(this.contracts.map((c) => c.projectId))];
+        this.contracts = data;
+        const projectIds = [...new Set(data.map((c) => c.projectId))];
         if (projectIds.length === 0) {
           this.loading = false;
           return;

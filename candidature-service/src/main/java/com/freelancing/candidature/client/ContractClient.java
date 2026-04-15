@@ -34,29 +34,29 @@ public class ContractClient {
                 org.springframework.http.HttpMethod.PUT, null, ContractResponse.class).getBody();
     }
 
-    /** Client-initiated cancel (must match contract.clientId on contract-service). */
-    public ContractResponse cancelContract(Long id, Long clientId) {
+    /** Client-initiated cancel (must match contract.clientId on contract-service). Deletes the contract. */
+    public void cancelContract(Long id, Long clientId) {
         ContractCancelPartyRequest body = new ContractCancelPartyRequest();
         body.setClientId(clientId);
-        return exchangeCancel(id, body);
+        exchangeCancel(id, body);
     }
 
-    /** Freelancer-initiated cancel (must match contract.freelancerId on contract-service). */
-    public ContractResponse cancelContractAsFreelancer(Long id, Long freelancerId) {
+    /** Freelancer-initiated cancel (must match contract.freelancerId on contract-service). Deletes the contract. */
+    public void cancelContractAsFreelancer(Long id, Long freelancerId) {
         ContractCancelPartyRequest body = new ContractCancelPartyRequest();
         body.setFreelancerId(freelancerId);
-        return exchangeCancel(id, body);
+        exchangeCancel(id, body);
     }
 
-    private ContractResponse exchangeCancel(Long id, ContractCancelPartyRequest body) {
+    private void exchangeCancel(Long id, ContractCancelPartyRequest body) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<ContractCancelPartyRequest> entity = new HttpEntity<>(body, headers);
-        return restTemplate.exchange(
+        restTemplate.exchange(
                 SERVICE_URL + "/api/contracts/" + id + "/cancel",
                 HttpMethod.PUT,
                 entity,
-                ContractResponse.class).getBody();
+                Void.class);
     }
 
     /**
