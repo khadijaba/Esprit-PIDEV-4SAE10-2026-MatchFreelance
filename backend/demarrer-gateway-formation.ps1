@@ -1,29 +1,47 @@
 # Demarrer Eureka (8761), Gateway (8050) et Formation (8081) pour Formations + Modules
-# Ouvrir 3 fenetres PowerShell : une par service.
-# Ensuite : ng serve dans frontend et aller sur http://localhost:4200/admin/formations
+# Prerequis : JDK 17 pour tout le backend (definir JAVA_HOME ou laisser la detection ci-dessous).
 
 $root = $PSScriptRoot
+
+$jdk17 = $null
+foreach ($c in @(
+        $env:JAVA_HOME,
+        "C:\Users\benay\.jdks\ms-17.0.18",
+        "C:\Program Files\Java\jdk-17"
+    )) {
+    if ($c -and (Test-Path (Join-Path $c "bin\java.exe"))) {
+        $jdk17 = $c
+        break
+    }
+}
+if (-not $jdk17) {
+    Write-Host "ERREUR : JDK 17 introuvable. Installez un JDK 17 et definissez JAVA_HOME." -ForegroundColor Red
+    exit 1
+}
+
+$envPrefix = "`$env:JAVA_HOME='$jdk17'; `$env:Path='$jdk17\bin;' + `$env:Path; "
 
 # 1) Eureka
 $eurekaDir = Join-Path $root "EurekaServer\EurekaServer"
 if (-not (Test-Path $eurekaDir)) {
     $eurekaDir = Join-Path $root "EurekaServer"
 }
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$eurekaDir'; Write-Host '=== Eureka (8761) ===' -ForegroundColor Cyan; .\mvnw.cmd spring-boot:run"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "${envPrefix}cd '$eurekaDir'; Write-Host '=== Eureka (8761) [JDK 17] ===' -ForegroundColor Cyan; .\mvnw.cmd spring-boot:run"
 
 Start-Sleep -Seconds 5
 
 # 2) Gateway
 $gatewayDir = Join-Path $root "Gateway"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$gatewayDir'; Write-Host '=== Gateway (8050) ===' -ForegroundColor Cyan; .\mvnw.cmd spring-boot:run"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "${envPrefix}cd '$gatewayDir'; Write-Host '=== Gateway (8050) [JDK 17] ===' -ForegroundColor Cyan; .\mvnw.cmd spring-boot:run"
 
 Start-Sleep -Seconds 5
 
-# 3) Formation (formulations + modules)
+# 3) Formation
 $formationDir = Join-Path $root "microservices\Formation"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$formationDir'; Write-Host '=== Formation (8081) - Formations + Modules ===' -ForegroundColor Cyan; .\mvnw.cmd spring-boot:run"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "${envPrefix}cd '$formationDir'; Write-Host '=== Formation (8081) [JDK 17] ===' -ForegroundColor Cyan; .\mvnw.cmd spring-boot:run"
 
 Write-Host ""
+Write-Host "JDK 17 utilise : $jdk17" -ForegroundColor DarkGray
 Write-Host "Trois fenetres ouvertes : Eureka, Gateway, Formation." -ForegroundColor Green
 Write-Host "Attendez que chaque service affiche 'Started ...' (environ 30-60 s)." -ForegroundColor Yellow
 Write-Host ""

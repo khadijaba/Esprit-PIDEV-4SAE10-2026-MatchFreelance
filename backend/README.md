@@ -8,7 +8,7 @@ Backend (Gateway + microservices). Le frontend Angular est à la racine du proje
 |--------------|------|------|
 | **EurekaServer** | 8761 | Découverte des services |
 | **Gateway** | 8050 | Point d'entrée unique, routage vers les microservices |
-| **User** | 8085 | Auth (JWT), utilisateurs (Admin, Freelancer, Client) |
+| **User** | 8085 | Authentification, profils, utilisateurs |
 | **Formation** | 8081 | Formations et inscriptions freelancers |
 | **Evaluation** | 8083 | Examens, passages, certificats |
 | **Skill** | 8086 | Parcours Intelligent : compétences, gaps, proposition formations |
@@ -20,7 +20,7 @@ backend/
 ├── EurekaServer/        # Discovery (port 8761)
 ├── Gateway/             # API Gateway (port 8050)
 └── microservices/
-    ├── User/            # Auth, rôles (port 8085)
+    ├── User/            # Auth, profils, utilisateurs (port 8085)
     ├── Formation/       # Formations, inscriptions (port 8081)
     ├── Evaluation/      # Examens, certificats (port 8083)
     └── Skill/           # Parcours Intelligent (port 8086)
@@ -30,7 +30,7 @@ backend/
 
 1. **Eureka** : lancer `EurekaServer` (8761).
 2. **Gateway** : lancer `Gateway` (8050).
-3. **Microservices** : lancer **User** (8085), **Formation** (8081), **Evaluation** (8083), **Skill** (8086).
+3. **Microservices** : lancer **User** (8085), **Formation** (8081), **Evaluation** (8083), **Skill** (8086), **Project** (8084).
 4. **Frontend** : dans `frontend`, exécuter `npm install` puis `npm start` (4200).
 
 Le front appelle `/api/*` ; le proxy Angular redirige vers la Gateway (8050), qui route vers les microservices.
@@ -55,11 +55,15 @@ Depuis `backend`, exécuter le script PowerShell :
 .\demarrer-parcours-intelligent.ps1
 ```
 
-Cela ouvre 3 fenêtres (Eureka, Gateway, Skill). **Le microservice Skill nécessite JDK 17** (le script définit `JAVA_HOME` vers `C:\Users\benay\.jdks\ms-17.0.18`). Si votre JDK 17 est ailleurs, éditez la variable `$jdk17` dans le script.
+Cela ouvre 3 fenêtres (Eureka, Gateway, Skill). **Tout le backend est lancé avec JDK 17** : le script cherche `JAVA_HOME`, puis `C:\Users\benay\.jdks\ms-17.0.18`, puis `C:\Program Files\Java\jdk-17`. Adaptez la liste dans `demarrer-parcours-intelligent.ps1` si besoin.
 
 À la main (dans 3 terminaux) :
 
 ```powershell
+# Dans chaque terminal : JDK 17 en premier
+$env:JAVA_HOME = "C:\Users\benay\.jdks\ms-17.0.18"   # ou votre chemin JDK 17
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+
 # Terminal 1 - Eureka
 cd backend\EurekaServer\EurekaServer
 .\mvnw.cmd spring-boot:run
@@ -68,8 +72,7 @@ cd backend\EurekaServer\EurekaServer
 cd backend\Gateway
 .\mvnw.cmd spring-boot:run
 
-# Terminal 3 - Skill (JDK 17 requis)
-$env:JAVA_HOME = "C:\Users\benay\.jdks\ms-17.0.18"
+# Terminal 3 - Skill
 cd backend\microservices\Skill
 .\mvnw.cmd spring-boot:run
 ```
@@ -78,19 +81,13 @@ cd backend\microservices\Skill
 
 | Préfixe | Service | Exemples |
 |---------|---------|----------|
-| `/api/users` | USER | `POST /api/users/auth/register`, `POST /api/users/auth/login`, `GET /api/users/me` |
+| `/api/users` | USER | `POST /api/users/auth/register`, `POST /api/users/auth/login`, `GET /api/users/me/profile`, `GET /api/users` |
 | `/api/formations` | FORMATION | `GET/POST/PUT/DELETE /api/formations`, `/api/formations/{id}` |
 | `/api/modules` | FORMATION | `GET /api/modules/formation/{id}`, `POST /api/modules` (modules courts) |
 | `/api/inscriptions` | FORMATION | `/api/inscriptions/...` |
 | `/api/examens` | EVALUATION | `/api/examens`, `/api/examens/**` |
 | `/api/certificats` | EVALUATION | `/api/certificats`, `/api/certificats/**` |
 | `/api/skills` | SKILL | `/api/skills`, `/api/skills/parcours/intelligent?freelancerId=...` |
-
-## Microservice User
-
-- **Rôle** : Authentification JWT, inscription, connexion, rôles (ADMIN, FREELANCER, CLIENT).
-- **Endpoints** : `POST /api/users/auth/register`, `POST /api/users/auth/login`, `GET /api/users/me`, `GET /api/users` (avec token).
-- **Base de données** : MySQL `user` (voir `microservices/User/src/main/resources/application.properties`).
 
 ## Microservice Formation
 

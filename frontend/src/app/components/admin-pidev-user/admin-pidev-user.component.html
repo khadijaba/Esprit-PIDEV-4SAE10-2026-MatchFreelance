@@ -1,0 +1,107 @@
+<div class="mx-auto max-w-6xl space-y-8">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <p class="text-sm font-medium text-indigo-600">Microservice User (PIDEV)</p>
+      <h1 class="mt-1 text-2xl font-bold text-gray-900">Statistiques &amp; recherche utilisateurs</h1>
+      <p class="mt-2 text-sm text-gray-600">
+        Données issues de <span class="font-mono text-xs">/api/admin/v2</span> — même backend que le projet Esprit PIDEV.
+      </p>
+    </div>
+    <a
+      routerLink="/microservice-user"
+      class="inline-flex rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+    >
+      Catalogue des routes API
+    </a>
+  </div>
+
+  @if (statsError) {
+    <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{{ statsError }}</div>
+  }
+
+  @if (stats) {
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-semibold uppercase text-gray-500">Total utilisateurs</p>
+        <p class="mt-2 text-3xl font-bold text-gray-900">{{ stats.totalUsers }}</p>
+      </div>
+      <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-semibold uppercase text-gray-500">Freelancers actifs</p>
+        <p class="mt-2 text-3xl font-bold text-teal-700">{{ stats.activeFreelancers }}</p>
+      </div>
+      <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-semibold uppercase text-gray-500">Project owners actifs</p>
+        <p class="mt-2 text-3xl font-bold text-sky-700">{{ stats.activeProjectOwners }}</p>
+      </div>
+      <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-semibold uppercase text-gray-500">Comptes actifs</p>
+        <p class="mt-2 text-3xl font-bold text-emerald-700">{{ stats.activeAccounts }}</p>
+      </div>
+      <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-semibold uppercase text-gray-500">Comptes inactifs</p>
+        <p class="mt-2 text-3xl font-bold text-orange-700">{{ stats.inactiveAccounts }}</p>
+      </div>
+      <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <p class="text-xs font-semibold uppercase text-gray-500">Administrateurs</p>
+        <p class="mt-2 text-3xl font-bold text-indigo-700">{{ stats.totalAdmins }}</p>
+      </div>
+    </div>
+  }
+
+  <section class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-bold text-gray-900">Recherche simple</h2>
+    <p class="mt-1 text-sm text-gray-600">
+      Appel <span class="font-mono text-xs">GET /api/admin/v2/search/simple?term=...</span>
+    </p>
+    <div class="mt-4 flex flex-wrap gap-3">
+      <input
+        type="search"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="runSearch()"
+        placeholder="Email ou nom…"
+        class="min-w-[200px] flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+      />
+      <button
+        type="button"
+        (click)="runSearch()"
+        [disabled]="searchLoading"
+        class="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+      >
+        @if (searchLoading) {
+          Recherche…
+        } @else {
+          Rechercher
+        }
+      </button>
+    </div>
+    @if (searchError) {
+      <p class="mt-3 text-sm text-red-600">{{ searchError }}</p>
+    }
+    @if (searchResults.length > 0) {
+      <div class="mt-6 overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead class="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500">
+            <tr>
+              <th class="px-4 py-2">ID</th>
+              <th class="px-4 py-2">Email</th>
+              <th class="px-4 py-2">Nom</th>
+              <th class="px-4 py-2">Rôle</th>
+              <th class="px-4 py-2">Actif</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (u of searchResults; track $index) {
+              <tr>
+                <td class="px-4 py-2 font-mono text-xs">{{ u.id }}</td>
+                <td class="px-4 py-2">{{ u.email }}</td>
+                <td class="px-4 py-2">{{ u.firstName }} {{ u.lastName }}</td>
+                <td class="px-4 py-2 font-mono text-xs">{{ u.role }}</td>
+                <td class="px-4 py-2">{{ u.enabled !== false ? 'oui' : 'non' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>

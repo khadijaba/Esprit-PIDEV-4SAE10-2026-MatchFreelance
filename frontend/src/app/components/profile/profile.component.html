@@ -113,6 +113,22 @@
           </a>
         </div>
       }
+      <div class="border-t border-slate-100 px-6 py-4 bg-red-50/50">
+        @if (deleteError) {
+          <p class="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{{ deleteError }}</p>
+        }
+        <p class="text-xs text-slate-500 mb-2">Zone sensible : suppression définitive de votre compte dans le service utilisateurs.</p>
+        <button
+          type="button"
+          (click)="deleteAccount()"
+          [disabled]="deleting"
+          class="inline-flex items-center gap-2 rounded-xl border border-red-300 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50 disabled:opacity-60 disabled:pointer-events-none transition">
+          @if (deleting) {
+            <span class="h-4 w-4 animate-spin rounded-full border-2 border-red-200 border-t-red-600"></span>
+          }
+          Supprimer mon compte
+        </button>
+      </div>
     }
   </div>
 </div>

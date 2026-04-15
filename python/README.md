@@ -3,14 +3,14 @@
 Ce dossier contient deux modules Python qui s’appuient sur les microservices (via la **Gateway** `http://localhost:8050`) :
 
 1. **Service de rappels** : détecte formations ouvertes, examens à passer, certificats et envoie des **emails (SMTP)** ou **webhooks**.
-2. **Pipeline ETL** : agrège User, Skill, Formation, Evaluation dans une **base SQLite** pour tableaux de bord et rapports.
+2. **Pipeline ETL** : agrège Skill, Formation, Evaluation (et utilisateurs si `/api/users` existe) dans une **base SQLite** pour tableaux de bord et rapports.
 
 ---
 
 ## Prérequis
 
 - Python 3.10+
-- Backend démarré (Eureka, Gateway, User, Formation, Evaluation, Skill) pour que les API répondent.
+- Backend démarré (Eureka, Gateway, Formation, Evaluation, Skill, etc.) pour que les API répondent.
 
 ```bash
 cd python
@@ -65,7 +65,6 @@ Charge les données des API dans une base **SQLite** (`data/analytics.db` par d�
 
 | Table         | Source API                          |
 |---------------|-------------------------------------|
-| `users`       | GET /api/users                      |
 | `formations`  | GET /api/formations                 |
 | `inscriptions`| GET /api/inscriptions/formation/{id}|
 | `examens`     | GET /api/examens/formation/{id}     |

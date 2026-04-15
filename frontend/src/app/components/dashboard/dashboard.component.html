@@ -71,8 +71,8 @@
     </div>
   </div>
 
-  <!-- Liste de tous les utilisateurs : Admin, Freelancer, Client (microservice User) -->
-  <div class="rounded-xl border-2 border-indigo-200 bg-indigo-50/50 p-6 shadow-sm">
+  <!-- Comptes : microservice USER + e-mails SendGrid (inscription classique, reset, etc.) -->
+  <div id="utilisateurs" class="scroll-mt-6 rounded-xl border-2 border-indigo-200 bg-indigo-50/50 p-6 shadow-sm">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-4">
         <div class="rounded-full bg-indigo-100 p-4">
@@ -82,7 +82,10 @@
         </div>
         <div>
           <h3 class="text-lg font-bold text-gray-800">Utilisateurs (Admin, Freelancer, Client)</h3>
-          <p class="text-sm text-gray-600">Tous les comptes inscrits sur la plateforme (microservice User).</p>
+          <p class="text-sm text-gray-600">
+            Données du microservice <strong>USER</strong> via <code class="rounded bg-white/80 px-1">GET /api/users</code>.
+            Les e-mails transactionnels passent par <strong>SendGrid</strong> (vérification, bienvenue, etc.).
+          </p>
           <p class="mt-1 text-2xl font-bold text-indigo-700">{{ allUsers.length }} utilisateur(s)</p>
         </div>
       </div>

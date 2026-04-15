@@ -12,15 +12,14 @@ MatchFreelance est une application full-stack en **architecture microservices** 
 
 ## Features
 
-- **CRUD complet** : Projets, Formations, Compétences (Skills), Examens, Utilisateurs (admin), Inscriptions, Modules.
+- **CRUD complet** : Projets, Formations, Compétences (Skills), Examens, Inscriptions, Modules.
 - **Pagination** : Liste des projets avec pagination fonctionnelle (taille de page configurable, navigation Début / Précédent / Suivant / Fin).
-- **Contrôle de saisie** : Tous les formulaires (login, register, projet, formation, compétence, examen, etc.) ont des validations (required, minLength, min, max, pattern) et affichent des messages d’erreur clairs.
+- **Contrôle de saisie** : Tous les formulaires (projet, formation, compétence, examen, etc.) ont des validations (required, minLength, min, max, pattern) et affichent des messages d’erreur clairs.
 - **Interfaces personnalisées et ergonomiques** : Dashboard admin, espaces Freelancer / Client, listes avec filtres et recherche, toasts, mise en page responsive (Tailwind CSS).
 - **Fonctionnalités avancées** (exemples) :
   - **Parcours intelligent** (microservice Skill) : analyse des compétences du freelancer, détection des gaps, proposition de formations ciblées.
   - **Examens et certificats** : passer un examen, génération de certificat.
   - **Config Server** : centralisation de la configuration des microservices (Spring Cloud Config).
-- **Authentification** : login / register, rôles (Admin, Freelancer, Client), guard et interceptor pour les routes protégées.
 
 ---
 
@@ -29,8 +28,8 @@ MatchFreelance est une application full-stack en **architecture microservices** 
 | Couche | Technologies |
 |--------|--------------|
 | **Frontend** | Angular 21, TypeScript, Tailwind CSS, standalone components |
-| **Backend** | Java 17+, Spring Boot 3.x / 4.x, Spring Cloud (Eureka, Gateway, Config Server) |
-| **Microservices** | User (auth, JWT), Formation, Evaluation (examens, certificats), Skill (compétences, parcours intelligent), Project |
+| **Backend** | Java 17, Spring Boot 3.x / 4.x, Spring Cloud (Eureka, Gateway, Config Server) |
+| **Microservices** | Formation, Evaluation (examens, certificats), Skill (compétences, parcours intelligent), Project |
 | **Infrastructure** | Netflix Eureka (découverte), Spring Cloud Gateway (routage), MySQL (bases par service) |
 | **Outils** | Maven, Node.js / npm |
 
@@ -52,8 +51,8 @@ MatchFreelance est une application full-stack en **architecture microservices** 
               ┌──────────────┼──────────────┬──────────────┬──────────────┐
               ▼              ▼              ▼              ▼              ▼
         ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
-        │  Eureka  │  │  Config  │  │   User   │  │ Formation│  │   ...    │
-        │  8761    │  │  8888    │  │  8085    │  │  8081    │  │          │
+        │  Eureka  │  │  Config  │  │ Formation│  │Evaluation│  │   ...    │
+        │  8761    │  │  8888    │  │  8081    │  │  8083    │  │          │
         └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘
                              ▲
                     Tous les microservices s’enregistrent dans Eureka
@@ -62,7 +61,7 @@ MatchFreelance est une application full-stack en **architecture microservices** 
 
 - **Eureka** : annuaire des services (obligatoire pour le routage Gateway).
 - **Config Server** : configuration centralisée (optionnel ; si absent, chaque service utilise son `application.properties` local).
-- **Gateway** : route `/api/users/**` → User, `/api/formations/**` → Formation, `/api/projects/**` → Project, etc.
+- **Gateway** : route `/api/formations/**` → Formation, `/api/projects/**` → Project, `/api/examens/**` → Evaluation, etc.
 
 ---
 
@@ -88,7 +87,7 @@ Chaque membre de l’équipe peut exécuter le projet sur sa machine en suivant 
 
 ### Prérequis
 
-- **Java 17** (ou supérieur) et **Maven**
+- **Java 17** (JDK 17 requis pour compiler et lancer le backend ; définir `JAVA_HOME` sur ce JDK) et **Maven**
 - **Node.js** (LTS recommandé) et **npm**
 - **MySQL** (port 3306, utilisateur `root`, mot de passe vide par défaut dans les configs de dev)
 
@@ -112,11 +111,10 @@ Ouvrir **plusieurs terminaux** (ou utiliser un script de démarrage) et lancer d
 | 1     | Eureka          | `backend/EurekaServer/`          | 8761 |
 | 2     | Config Server   | `backend/ConfigServer/`          | 8888 (optionnel) |
 | 3     | Gateway         | `backend/Gateway/`               | 8050 |
-| 4     | User            | `backend/microservices/User/`    | 8085 |
-| 5     | Formation       | `backend/microservices/Formation/` | 8081 |
-| 6     | Evaluation      | `backend/microservices/Evaluation/` | 8083 |
-| 7     | Skill           | `backend/microservices/Skill/`   | 8086 |
-| 8     | Project         | `backend/microservices/Project/` | 8084 |
+| 4     | Formation       | `backend/microservices/Formation/` | 8081 |
+| 5     | Evaluation      | `backend/microservices/Evaluation/` | 8083 |
+| 6     | Skill           | `backend/microservices/Skill/`   | 8086 |
+| 7     | Project         | `backend/microservices/Project/` | 8084 |
 
 Exemple (un terminal par service) :
 
@@ -125,7 +123,6 @@ cd backend/EurekaServer && mvn spring-boot:run
 # Attendre le démarrage, puis :
 cd backend/ConfigServer && mvn spring-boot:run
 cd backend/Gateway && mvn spring-boot:run
-cd backend/microservices/User && mvn spring-boot:run
 # ... idem pour Formation, Evaluation, Skill, Project
 ```
 
@@ -167,7 +164,6 @@ En mode dev, le proxy Angular envoie `/api/*` vers la Gateway (8050), sauf `/api
 │   ├── ConfigServer/         # Serveur de configuration centralisée
 │   ├── Gateway/              # API Gateway
 │   └── microservices/
-│       ├── User/             # Auth, utilisateurs
 │       ├── Formation/        # Formations, modules, inscriptions
 │       ├── Evaluation/       # Examens, certificats
 │       ├── Skill/            # Compétences, parcours intelligent
