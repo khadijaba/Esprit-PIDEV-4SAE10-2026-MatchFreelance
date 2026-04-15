@@ -166,6 +166,9 @@ services:
       CONTRACT_AI_OLLAMA_BASE_URL: "http://host.docker.internal:11434"
       CONTRACT_AI_OLLAMA_MODEL: "llama3.2:1b"
       CONTRACT_AI_OLLAMA_READ_TIMEOUT_SECONDS: "120"
+      # Optional: Claude API (uncomment and set your API key to enable)
+      # CONTRACT_AI_CLAUDE_ENABLED: "true"
+      # CLAUDE_API_KEY: "your-api-key-here"
     depends_on:
       mysql:
         condition: service_healthy
