@@ -5,6 +5,10 @@ pipeline {
         IMAGE_NAME = 'emna450/project'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
         SONAR_HOST = 'http://host.docker.internal:9000'
+<<<<<<< HEAD
+=======
+        MODULE_DIR = 'BackEnd/Microservices/Project'
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
     }
 
     stages {
@@ -16,12 +20,19 @@ pipeline {
 
         stage('Build & Test') {
             steps {
+<<<<<<< HEAD
                 sh 'mvn clean verify'
+=======
+                dir("${MODULE_DIR}") {
+                    sh 'mvn clean verify'
+                }
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
+<<<<<<< HEAD
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                     sh '''
                         mvn sonar:sonar \
@@ -29,16 +40,36 @@ pipeline {
                           -Dsonar.host.url=${SONAR_HOST} \
                           -Dsonar.login=${SONAR_TOKEN}
                     '''
+=======
+                dir("${MODULE_DIR}") {
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            mvn sonar:sonar \
+                              -Dsonar.projectKey=project \
+                              -Dsonar.host.url=${SONAR_HOST} \
+                              -Dsonar.login=${SONAR_TOKEN}
+                        '''
+                    }
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
                 }
             }
         }
 
         stage('Docker Build') {
             steps {
+<<<<<<< HEAD
                 sh '''
                     docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
                     docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
                 '''
+=======
+                dir("${MODULE_DIR}") {
+                    sh '''
+                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                    '''
+                }
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
             }
         }
 

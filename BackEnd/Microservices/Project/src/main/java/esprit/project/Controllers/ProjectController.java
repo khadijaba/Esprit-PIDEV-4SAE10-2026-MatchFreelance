@@ -1,9 +1,18 @@
 package esprit.project.Controllers;
 
 import esprit.project.Service.ProjectService;
+<<<<<<< HEAD
 import esprit.project.entities.Project;
 import esprit.project.entities.ProjectStatus;
 import org.springframework.web.bind.annotation.*;
+=======
+import esprit.project.dto.ProjectWritePayload;
+import esprit.project.entities.Project;
+import esprit.project.entities.ProjectStatus;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
 
 import java.util.List;
 
@@ -19,8 +28,17 @@ public class ProjectController {
     }
 
     @PostMapping
+<<<<<<< HEAD
     public Project createProject(@RequestBody Project project) {
         return projectService.createProject(project);
+=======
+    public Project createProject(@RequestBody ProjectWritePayload payload) {
+        try {
+            return projectService.createProject(payload.toProjectForCreate());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
     }
 
     @GetMapping
@@ -54,8 +72,19 @@ public class ProjectController {
     }
 
     @PutMapping("/{id}")
+<<<<<<< HEAD
     public Project updateProject(@PathVariable Long id, @RequestBody Project project) {
         return projectService.updateProject(id, project);
+=======
+    public Project updateProject(@PathVariable Long id, @RequestBody ProjectWritePayload payload) {
+        try {
+            Project existing = projectService.getProjectById(id);
+            Project merged = payload.toProjectForUpdateMerge(existing);
+            return projectService.updateProject(id, merged);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
     }
 
     @DeleteMapping("/{id}")

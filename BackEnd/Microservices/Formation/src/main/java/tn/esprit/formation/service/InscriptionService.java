@@ -3,6 +3,10 @@ package tn.esprit.formation.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+<<<<<<< HEAD
+=======
+import tn.esprit.formation.client.EvaluationClient;
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
 import tn.esprit.formation.dto.InscriptionDto;
 import tn.esprit.formation.entity.Formation;
 import tn.esprit.formation.entity.Inscription;
@@ -10,6 +14,10 @@ import tn.esprit.formation.repository.FormationRepository;
 import tn.esprit.formation.repository.InscriptionRepository;
 
 import java.util.List;
+<<<<<<< HEAD
+=======
+import java.util.Map;
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
 import java.util.stream.Collectors;
 
 @Service
@@ -18,6 +26,10 @@ public class InscriptionService {
 
     private final InscriptionRepository inscriptionRepository;
     private final FormationRepository formationRepository;
+<<<<<<< HEAD
+=======
+    private final EvaluationClient evaluationClient;
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
 
     @Transactional(readOnly = true)
     public List<InscriptionDto> findByFormation(Long formationId) {
@@ -52,6 +64,25 @@ public class InscriptionService {
         if (formation.getStatut() != Formation.StatutFormation.OUVERTE)
             throw new RuntimeException("Formation non ouverte aux inscriptions");
 
+<<<<<<< HEAD
+=======
+        // Condition d'accès : certificat requis (examen Y)
+        Long examenRequisId = formation.getExamenRequisId();
+        if (examenRequisId != null) {
+            List<Map<String, Object>> certificats = evaluationClient.getCertificatsByFreelancer(freelancerId);
+            boolean aLeCertificat = certificats.stream().anyMatch(c -> {
+                Object id = c.get("examenId");
+                if (id == null) return false;
+                if (id instanceof Number) return ((Number) id).longValue() == examenRequisId;
+                return id.toString().equals(examenRequisId.toString());
+            });
+            if (!aLeCertificat) {
+                String examenTitre = evaluationClient.getExamenTitre(examenRequisId);
+                throw new RuntimeException("Accès réservé aux personnes ayant le certificat : " + examenTitre + ".");
+            }
+        }
+
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
         Inscription ins = Inscription.builder()
                 .formation(formation)
                 .freelancerId(freelancerId)

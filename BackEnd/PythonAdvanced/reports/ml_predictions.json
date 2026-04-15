@@ -1,0 +1,12 @@
+{
+  "dropouts": [],
+  "project_recommendations_by_freelancer": {},
+  "formation_recommendations_by_freelancer": {},
+  "exam_success_predictions": [],
+  "meta": {
+    "jours_decrochage": 14,
+    "seuil_reussite_examen": 60,
+    "project_recommendation_note": "Aucun projet récupéré depuis l'API. Démarrez le microservice Project (port 8084) et la Gateway (8050), puis relancez le script.",
+    "projects_count": 0
+  }
+}

@@ -3,11 +3,19 @@ package tn.esprit.formation.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+<<<<<<< HEAD
+=======
+import tn.esprit.formation.client.SkillClient;
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
 import tn.esprit.formation.dto.FormationDto;
 import tn.esprit.formation.entity.Formation;
 import tn.esprit.formation.repository.FormationRepository;
 
 import java.util.List;
+<<<<<<< HEAD
+=======
+import java.util.Set;
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
 import java.util.stream.Collectors;
 
 @Service
@@ -15,6 +23,11 @@ import java.util.stream.Collectors;
 public class FormationService {
 
     private final FormationRepository formationRepository;
+<<<<<<< HEAD
+=======
+    private final SkillClient skillClient;
+    private final FormationNotificationService notificationService;
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
 
     @Transactional(readOnly = true)
     public List<FormationDto> findAll() {
@@ -41,7 +54,14 @@ public class FormationService {
     public FormationDto create(FormationDto dto) {
         Formation f = dto.toEntity();
         f.setId(null);
+<<<<<<< HEAD
         return FormationDto.fromEntity(formationRepository.save(f));
+=======
+        Formation saved = formationRepository.save(f);
+        FormationDto result = FormationDto.fromEntity(saved);
+        notificationService.notifyNewFormation(result);
+        return result;
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
     }
 
     @Transactional
@@ -56,6 +76,11 @@ public class FormationService {
         existing.setDateFin(dto.getDateFin());
         existing.setCapaciteMax(dto.getCapaciteMax());
         if (dto.getStatut() != null) existing.setStatut(dto.getStatut());
+<<<<<<< HEAD
+=======
+        existing.setNiveau(dto.getNiveau());
+        existing.setExamenRequisId(dto.getExamenRequisId());
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
         return FormationDto.fromEntity(formationRepository.save(existing));
     }
 
@@ -65,4 +90,23 @@ public class FormationService {
             throw new RuntimeException("Formation non trouvée: " + id);
         formationRepository.deleteById(id);
     }
+<<<<<<< HEAD
+=======
+
+    /**
+     * Métier avancé : recommandations de formations pour un freelancer.
+     * Retourne les formations ouvertes dont le type correspond à un "gap" du freelancer
+     * (domaines où il n'a pas encore de compétence), pour l'aider à se former.
+     */
+    @Transactional(readOnly = true)
+    public List<FormationDto> getRecommandationsForFreelancer(Long freelancerId) {
+        List<String> categoriesFreelancer = skillClient.getCategoriesByFreelancer(freelancerId);
+        Set<String> categories = Set.copyOf(categoriesFreelancer);
+        return formationRepository.findFormationsOuvertes().stream()
+                .filter(f -> f.getTypeFormation() != null
+                        && !categories.contains(f.getTypeFormation().name()))
+                .map(FormationDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
 }

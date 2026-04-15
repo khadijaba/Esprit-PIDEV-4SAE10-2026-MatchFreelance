@@ -22,6 +22,10 @@
     <properties>
         <java.version>17</java.version>
         <spring-cloud.version>2025.1.0</spring-cloud.version>
+<<<<<<< HEAD
+=======
+        <springdoc.version>3.0.2</springdoc.version>
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
     </properties>
 
     <dependencyManagement>
@@ -37,10 +41,17 @@
     </dependencyManagement>
 
     <dependencies>
+<<<<<<< HEAD
         <!-- Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+=======
+        <!-- Web (Spring Boot 4: prefer webmvc starter — inclut spring-boot-starter pour l'auto-config) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
         </dependency>
 
         <!-- JPA / Hibernate -->
@@ -103,6 +114,22 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
 
+<<<<<<< HEAD
+=======
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+
+        <!-- Inférence ML locale (modèle project-risk.onnx généré par ml/train_project_risk.py) -->
+        <dependency>
+            <groupId>com.microsoft.onnxruntime</groupId>
+            <artifactId>onnxruntime</artifactId>
+            <version>1.17.3</version>
+        </dependency>
+
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -23,4 +23,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     @Query("SELECT p FROM Project p WHERE :skill MEMBER OF p.requiredSkills")
     List<Project> findByRequiredSkillsContaining(@Param("skill") String skill);
+<<<<<<< HEAD
+=======
+
+    long countByProjectOwnerId(Long projectOwnerId);
+
+    long countByProjectOwnerIdAndStatus(Long projectOwnerId, ProjectStatus status);
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
 }

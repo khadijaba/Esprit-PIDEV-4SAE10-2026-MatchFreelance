@@ -1,0 +1,95 @@
+{
+  "dropouts": [],
+  "project_recommendations_by_freelancer": {
+    "1": [
+      {
+        "project_id": 1,
+        "title": "Developpement d'une application web de gestion des taches",
+        "match_score": 30,
+        "match_count": 1
+      },
+      {
+        "project_id": 2,
+        "title": "site e-commerce pour vente de produits cosmétiques",
+        "match_score": 30,
+        "match_count": 1
+      },
+      {
+        "project_id": 4,
+        "title": "Développement d’un tableau de bord analytique avec Power BI",
+        "match_score": 0,
+        "match_count": 0
+      },
+      {
+        "project_id": 3,
+        "title": "Développement d’une application mobile de réservation de rendez-vous",
+        "match_score": 0,
+        "match_count": 0
+      }
+    ],
+    "3": [
+      {
+        "project_id": 1,
+        "title": "Developpement d'une application web de gestion des taches",
+        "match_score": 50,
+        "match_count": 0
+      },
+      {
+        "project_id": 4,
+        "title": "Développement d’un tableau de bord analytique avec Power BI",
+        "match_score": 40,
+        "match_count": 0
+      },
+      {
+        "project_id": 3,
+        "title": "Développement d’une application mobile de réservation de rendez-vous",
+        "match_score": 30,
+        "match_count": 0
+      },
+      {
+        "project_id": 2,
+        "title": "site e-commerce pour vente de produits cosmétiques",
+        "match_score": 20,
+        "match_count": 0
+      }
+    ],
+    "4": [
+      {
+        "project_id": 1,
+        "title": "Developpement d'une application web de gestion des taches",
+        "match_score": 30,
+        "match_count": 1
+      },
+      {
+        "project_id": 2,
+        "title": "site e-commerce pour vente de produits cosmétiques",
+        "match_score": 30,
+        "match_count": 1
+      },
+      {
+        "project_id": 4,
+        "title": "Développement d’un tableau de bord analytique avec Power BI",
+        "match_score": 0,
+        "match_count": 0
+      },
+      {
+        "project_id": 3,
+        "title": "Développement d’une application mobile de réservation de rendez-vous",
+        "match_score": 0,
+        "match_count": 0
+      }
+    ]
+  },
+  "formation_recommendations_by_freelancer": {
+    "1": [],
+    "3": [],
+    "4": []
+  },
+  "exam_success_predictions": [],
+  "meta": {
+    "jours_decrochage": 14,
+    "seuil_reussite_examen": 60,
+    "project_recommendation_note": null,
+    "projects_count": 4
+  }
+}

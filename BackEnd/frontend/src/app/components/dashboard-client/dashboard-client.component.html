@@ -1,0 +1,98 @@
+<div class="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+  <h1 class="text-2xl font-bold text-slate-900">Tableau de bord Client</h1>
+  <p class="mt-1 text-slate-600">Projets et freelancers recommandés.</p>
+
+  @if (error) {
+    <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{{ error }}</div>
+    return;
+  }
+
+  <!-- Stats -->
+  <div class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p class="text-2xl font-bold text-slate-900">{{ stats.total }}</p>
+      <p class="text-xs text-slate-500">Projets</p>
+    </div>
+    <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-sm">
+      <p class="text-2xl font-bold text-emerald-700">{{ stats.open }}</p>
+      <p class="text-xs text-emerald-700">Ouverts</p>
+    </div>
+    <div class="rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm">
+      <p class="text-2xl font-bold text-amber-700">{{ stats.inProgress }}</p>
+      <p class="text-xs text-amber-700">En cours</p>
+    </div>
+    <div class="rounded-xl border border-blue-200 bg-blue-50/50 p-4 shadow-sm">
+      <p class="text-2xl font-bold text-blue-700">{{ stats.completed }}</p>
+      <p class="text-xs text-blue-700">Terminés</p>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="mt-8 flex justify-center py-12">
+      <div class="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-slate-600"></div>
+    </div>
+  } @else {
+    <!-- Mes projets -->
+    <section class="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-slate-900">Projets de la plateforme</h2>
+      <p class="text-sm text-slate-500">Liste des projets disponibles.</p>
+      @if (projects.length > 0) {
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="border-b border-slate-200 bg-slate-50">
+              <tr>
+                <th class="px-4 py-2 font-medium text-slate-600">Titre</th>
+                <th class="px-4 py-2 font-medium text-slate-600">Budget</th>
+                <th class="px-4 py-2 font-medium text-slate-600">Statut</th>
+                <th class="px-4 py-2 font-medium text-slate-600"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @for (p of projects.slice(0, 10); track p.id) {
+                <tr class="hover:bg-slate-50">
+                  <td class="px-4 py-3 font-medium text-slate-900">{{ p.title }}</td>
+                  <td class="px-4 py-3 text-slate-600">{{ p.budget | number:'1.0-0' }} $</td>
+                  <td class="px-4 py-3">
+                    <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="statusClass(p.status)">{{ p.status }}</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <a [routerLink]="['/projects', p.id]" class="text-teal-600 hover:underline">Voir</a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <a routerLink="/projects" class="mt-4 inline-block text-sm font-medium text-teal-600 hover:underline">Tous les projets</a>
+      } @else {
+        <p class="mt-4 text-sm text-slate-500">Aucun projet pour le moment.</p>
+      }
+    </section>
+
+    <!-- Freelancers recommandés -->
+    <section class="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-slate-900">Freelancers recommandés</h2>
+      <p class="text-sm text-slate-500">Par compétences et certificats (User, Skill, Evaluation).</p>
+      @if (freelancers.length > 0) {
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          @for (f of freelancers; track f.id) {
+            <div class="rounded-xl border border-slate-200 bg-slate-50/30 p-4">
+              <p class="font-semibold text-slate-900">{{ f.fullName ?? f.email }}</p>
+              <p class="text-xs text-slate-500">{{ f.email }}</p>
+              <div class="mt-2 flex flex-wrap gap-1">
+                @for (s of getSkillsFor(f.id).slice(0, 4); track s.id) {
+                  <span class="rounded bg-teal-100 px-1.5 py-0.5 text-xs text-teal-800">{{ s.name }}</span>
+                }
+                @for (c of getCertificatsFor(f.id).slice(0, 2); track c.id) {
+                  <span class="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800" title="Certificat">{{ c.examenTitre }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="mt-4 text-sm text-slate-500">Aucun freelancer inscrit.</p>
+      }
+    </section>
+  }
+</div>

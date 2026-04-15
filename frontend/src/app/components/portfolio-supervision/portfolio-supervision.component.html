@@ -1,0 +1,49 @@
+<div class="mx-auto max-w-6xl space-y-6">
+  <div class="flex items-center justify-between">
+    <h2 class="text-2xl font-bold text-gray-800">Portfolios par profil Freelancer</h2>
+  </div>
+
+  @if (loading) {
+    <div class="flex items-center justify-center py-12">
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+    </div>
+  } @else if (portfolios.length === 0) {
+    <div class="rounded-xl border border-gray-200 bg-white p-12 text-center">
+      <p class="text-gray-500">No portfolios found.</p>
+    </div>
+  } @else {
+    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <table class="w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Profil Freelancer (ID)</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Portfolio URL</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Description</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Created</th>
+            <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 bg-white">
+          @for (portfolio of portfolios; track portfolio.id) {
+            <tr class="hover:bg-gray-50">
+              <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{{ portfolio.freelancerId }}</td>
+              <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                <a [href]="portfolio.portfolioUrl" target="_blank" class="text-indigo-600 hover:text-indigo-800">
+                  {{ portfolio.portfolioUrl }}
+                </a>
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-500">
+                {{ portfolio.portfolioDescription ? (portfolio.portfolioDescription.length > 50 ? portfolio.portfolioDescription.substring(0, 50) + '...' : portfolio.portfolioDescription) : 'N/A' }}
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-500">{{ portfolio.createdAt | date:'short' }}</td>
+              <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                <button (click)="deletePortfolio(portfolio.id)"
+                  class="text-red-600 hover:text-red-900">Delete</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

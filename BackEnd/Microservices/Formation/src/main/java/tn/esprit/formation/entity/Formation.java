@@ -56,10 +56,30 @@ public class Formation {
     @Builder.Default
     private StatutFormation statut = StatutFormation.OUVERTE;
 
+<<<<<<< HEAD
+=======
+    /** Niveau de la formation (Débutant, Intermédiaire, Avancé). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "niveau", length = 20)
+    private NiveauFormation niveau;
+
+    /** Si non null : accès réservé aux freelancers ayant le certificat de cet examen (examenId côté Evaluation). */
+    @Column(name = "examen_requis_id")
+    private Long examenRequisId;
+
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
     @OneToMany(mappedBy = "formation", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Inscription> inscriptions = new ArrayList<>();
 
+<<<<<<< HEAD
+=======
+    @OneToMany(mappedBy = "formation", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("ordre ASC")
+    @Builder.Default
+    private List<Module> modules = new ArrayList<>();
+
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
     public enum StatutFormation {
         OUVERTE,
         EN_COURS,

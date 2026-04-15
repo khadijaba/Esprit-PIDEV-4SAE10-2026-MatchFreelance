@@ -1,0 +1,155 @@
+<div class="space-y-8">
+  <!-- En-tête -->
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 class="text-2xl font-bold text-slate-900">Scoring & Recommandations</h2>
+    <p class="mt-2 text-sm text-slate-600">
+      Score de complétion par freelancer, formations recommandées selon compétences et certificats, et parcours avec prérequis en chaîne.
+    </p>
+    <p class="mt-3 rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-600">
+      Pour mettre à jour les données : dans le dossier <code class="rounded bg-slate-200 px-1.5 py-0.5 font-mono">python</code>, exécuter
+      <code class="rounded bg-slate-200 px-1.5 py-0.5 font-mono">python recommendations.py</code>.
+    </p>
+  </div>
+
+  @if (loading) {
+    <div class="flex justify-center py-16">
+      <div class="h-10 w-10 animate-spin rounded-full border-4 border-teal-200 border-t-teal-600"></div>
+    </div>
+  }
+
+  @if (error) {
+    <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-800">
+      <p class="font-medium">{{ error }}</p>
+    </div>
+  }
+
+  @if (data && !loading) {
+    <!-- Scores de complétion -->
+    <section class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div class="border-b border-slate-100 bg-slate-50/80 px-6 py-4">
+        <h3 class="text-lg font-semibold text-slate-900">Score de complétion (0–100 %)</h3>
+        <p class="mt-0.5 text-sm text-slate-500">Certificats, inscriptions validées et score moyen aux examens par freelancer.</p>
+        <p class="mt-2 text-xs text-slate-500">
+          <strong>Formations validées</strong> = nombre d’<strong>inscriptions</strong> dont le statut a été passé à « Validée » par l’admin (inscription acceptée à une formation).
+        </p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Freelancer</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">Email</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Score</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Certificats</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500" title="Inscriptions dont le statut est Validée (acceptées par l'admin)">
+                Formations validées
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 bg-white">
+            @for (s of data.scores_completion; track s.freelancer_id) {
+              <tr class="hover:bg-slate-50/50 transition">
+                <td class="px-5 py-3 text-sm font-medium text-slate-900">{{ s.fullName || '—' }}</td>
+                <td class="px-5 py-3 text-sm text-slate-600">{{ s.email || '—' }}</td>
+                <td class="px-5 py-3 text-right">
+                  <span class="inline-flex rounded-full px-3 py-1 text-sm font-semibold"
+                    [ngClass]="{
+                      'bg-emerald-100 text-emerald-800': s.score_completion_pct >= 70,
+                      'bg-amber-100 text-amber-800': s.score_completion_pct >= 40 && s.score_completion_pct < 70,
+                      'bg-slate-100 text-slate-700': s.score_completion_pct < 40
+                    }">
+                    {{ s.score_completion_pct }} %
+                  </span>
+                </td>
+                <td class="px-5 py-3 text-right text-sm text-slate-600">{{ s.nb_certificats }}</td>
+                <td class="px-5 py-3 text-right text-sm text-slate-600">{{ s.nb_formations_validees }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Recommandations par freelancer -->
+    <section class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div class="border-b border-slate-100 bg-slate-50/80 px-6 py-4">
+        <h3 class="text-lg font-semibold text-slate-900">Recommandations de formations par freelancer</h3>
+        <p class="mt-0.5 text-sm text-slate-500">Formations ouvertes recommandées selon compétences et certificats.</p>
+      </div>
+      <div class="p-6">
+        <div class="space-y-3">
+          @for (fr of data.recommendations_by_freelancer; track fr.freelancer_id) {
+            <details class="group rounded-xl border border-slate-200 bg-slate-50/50 transition hover:border-teal-200">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-medium text-slate-800 hover:bg-white/60">
+                <span>{{ fr.email || 'Freelancer #' + fr.freelancer_id }}</span>
+                <span class="rounded-full bg-teal-100 px-3 py-1 text-sm font-semibold text-teal-800">
+                  {{ fr.recommendations.length }} formation{{ fr.recommendations.length !== 1 ? 's' : '' }}
+                </span>
+              </summary>
+              <ul class="border-t border-slate-200 px-5 py-4 space-y-2">
+                @for (rec of fr.recommendations; track rec.formation_id) {
+                  <li class="flex items-center gap-3 text-sm">
+                    <span class="font-medium text-slate-900">{{ rec.titre || 'Formation #' + rec.formation_id }}</span>
+                    @if (rec.match_competence) {
+                      <span class="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Match compétence</span>
+                    }
+                  </li>
+                }
+                @if (fr.recommendations.length === 0) {
+                  <li class="text-sm text-slate-500">Aucune formation à recommander pour le moment.</li>
+                }
+              </ul>
+            </details>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Parcours avec prérequis en chaîne -->
+    <section class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div class="border-b border-slate-100 bg-slate-50/80 px-6 py-4">
+        <h3 class="text-lg font-semibold text-slate-900">Parcours avec prérequis en chaîne</h3>
+        <p class="mt-0.5 text-sm text-slate-500">Pour chaque formation exigeant un certificat : chaîne des formations et examens à valider avant.</p>
+      </div>
+      <div class="p-6">
+        <div class="space-y-5">
+          @for (entry of parcoursEntries(); track entry[0]) {
+            <div class="rounded-xl border border-slate-200 bg-slate-50/30 p-5">
+              <p class="mb-3 text-sm font-semibold text-slate-700">
+                Formation cible : <a [routerLink]="['/admin/formations', entry[0]]" class="text-teal-600 hover:text-teal-700 underline">Formation #{{ entry[0] }}</a>
+              </p>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-medium uppercase text-slate-400">Prérequis</span>
+                @for (step of entry[1]; track $index) {
+                  @if ($index > 0) {
+                    <span class="text-slate-300" aria-hidden="true">→</span>
+                  }
+                  @if (step.type === 'formation') {
+                    <a [routerLink]="['/admin/formations', step.formation_id]"
+                      class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-100 px-3 py-1.5 text-sm font-medium text-indigo-800 transition hover:bg-indigo-200">
+                      {{ step.formation_titre || ('Formation #' + step.formation_id) }}
+                    </a>
+                    @if (step.examen_requis_titre != null || step.examen_requis_id) {
+                      <span class="rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-medium text-amber-800">
+                        Examen : {{ step.examen_requis_titre || ('#' + step.examen_requis_id) }}
+                      </span>
+                    }
+                  } @else {
+                    <span class="rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-medium text-amber-800">
+                      {{ step.examen_titre || ('Examen #' + (step.examen_id ?? step.examen_requis_id)) }}
+                    </span>
+                  }
+                }
+              </div>
+            </div>
+          }
+          @if (parcoursEntries().length === 0) {
+            <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-6 text-center text-sm text-slate-500">
+              Aucune formation avec prérequis (examen requis) pour le moment.
+            </p>
+          }
+        </div>
+      </div>
+    </section>
+  }
+</div>

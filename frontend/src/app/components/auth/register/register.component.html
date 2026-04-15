@@ -1,0 +1,121 @@
+<div class="min-h-[calc(100vh-8rem)] flex">
+  <div class="hidden lg:flex lg:w-1/2 flex-col justify-center px-12 xl:px-20 bg-[var(--fiverr-gray-light)] border-r border-gray-200">
+    <div class="max-w-md">
+      <h2 class="text-3xl font-bold text-[var(--fiverr-dark)] leading-tight">Rejoignez MatchFreelance</h2>
+      <p class="mt-4 text-lg text-[var(--fiverr-gray)]">
+        Créez un compte avec email et mot de passe. Le rôle <strong>Admin</strong> est réservé : création manuelle en base ou par un outil d’administration.
+      </p>
+      <ul class="mt-8 space-y-3 text-[var(--fiverr-gray)]">
+        <li class="flex items-center gap-3">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--fiverr-green-light)] text-[var(--fiverr-green)]">
+            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+          </span>
+          Freelancer : compétences et missions
+        </li>
+        <li class="flex items-center gap-3">
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--fiverr-green-light)] text-[var(--fiverr-green)]">
+            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+          </span>
+          Project Owner : publier et gérer des projets
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="w-full lg:w-1/2 flex items-center justify-center px-4 py-12 bg-white">
+    <div class="w-full max-w-[400px]">
+      <a routerLink="/" class="inline-block mb-8">
+        <img src="/logo.png" alt="MatchFreelance" class="h-10 object-contain object-left" />
+      </a>
+      <h1 class="text-2xl font-bold text-[var(--fiverr-dark)]">Créer un compte</h1>
+      <p class="mt-1 text-[var(--fiverr-gray)]">Email, mot de passe et type de profil.</p>
+
+      <form class="mt-8 space-y-4" (ngSubmit)="register()">
+        <div>
+          <label for="reg-email" class="block text-sm font-medium text-[var(--fiverr-dark)]">Email</label>
+          <input
+            id="reg-email"
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            autocomplete="email"
+            class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2.5 text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:ring-1 focus:ring-[var(--fiverr-green)]"
+          />
+        </div>
+        <div>
+          <label for="reg-name" class="block text-sm font-medium text-[var(--fiverr-dark)]">Nom affiché (optionnel)</label>
+          <input
+            id="reg-name"
+            type="text"
+            name="fullName"
+            [(ngModel)]="fullName"
+            autocomplete="name"
+            class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2.5 text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:ring-1 focus:ring-[var(--fiverr-green)]"
+          />
+        </div>
+        <div>
+          <label for="reg-password" class="block text-sm font-medium text-[var(--fiverr-dark)]">Mot de passe (min. 6 caractères)</label>
+          <input
+            id="reg-password"
+            type="password"
+            name="password"
+            [(ngModel)]="password"
+            autocomplete="new-password"
+            class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2.5 text-[var(--fiverr-dark)] focus:border-[var(--fiverr-green)] focus:ring-1 focus:ring-[var(--fiverr-green)]"
+          />
+        </div>
+
+        <p class="text-sm font-medium text-[var(--fiverr-dark)]">Je m’inscris en tant que</p>
+        <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-4 transition hover:border-[var(--fiverr-green)] has-[:checked]:border-[var(--fiverr-green)] has-[:checked]:bg-[var(--fiverr-green-light)]">
+          <input
+            type="radio"
+            name="profile"
+            [(ngModel)]="selectedProfile"
+            [value]="'FREELANCER'"
+            class="mt-1 text-[var(--fiverr-green)] focus:ring-[var(--fiverr-green)]"
+          />
+          <span>
+            <span class="font-semibold text-[var(--fiverr-dark)]">Freelancer</span>
+            <span class="mt-0.5 block text-sm text-[var(--fiverr-gray)]">Proposez vos compétences et postulez aux projets.</span>
+          </span>
+        </label>
+        <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-4 transition hover:border-[var(--fiverr-green)] has-[:checked]:border-[var(--fiverr-green)] has-[:checked]:bg-[var(--fiverr-green-light)]">
+          <input
+            type="radio"
+            name="profile"
+            [(ngModel)]="selectedProfile"
+            [value]="'PROJECT_OWNER'"
+            class="mt-1 text-[var(--fiverr-green)] focus:ring-[var(--fiverr-green)]"
+          />
+          <span>
+            <span class="font-semibold text-[var(--fiverr-dark)]">Project Owner</span>
+            <span class="mt-0.5 block text-sm text-[var(--fiverr-gray)]">Publiez des projets et recrutez des freelances.</span>
+          </span>
+        </label>
+
+        <button
+          type="submit"
+          [disabled]="loading"
+          class="mt-4 w-full rounded-md bg-[var(--fiverr-green)] py-3.5 text-base font-semibold text-white transition hover:bg-[var(--fiverr-green-hover)] focus:ring-2 focus:ring-[var(--fiverr-green)] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          @if (loading) {
+            <span class="inline-flex items-center justify-center gap-2">
+              <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Création…
+            </span>
+          } @else {
+            Créer mon compte
+          }
+        </button>
+      </form>
+
+      <p class="mt-6 text-center text-sm text-[var(--fiverr-gray)]">
+        Déjà un compte ?
+        <a routerLink="/login" class="font-semibold text-[var(--fiverr-green)] hover:underline">Se connecter</a>
+      </p>
+    </div>
+  </div>
+</div>

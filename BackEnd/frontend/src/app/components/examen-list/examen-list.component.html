@@ -1,0 +1,151 @@
+<div class="space-y-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <h2 class="text-2xl font-bold text-gray-800">Examens (Évaluations)</h2>
+    <a
+      routerLink="/admin/examens/new"
+      class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700 transition">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Nouvel examen
+    </a>
+  </div>
+
+  <div class="rounded-xl border-2 border-indigo-200 bg-indigo-50/50 p-4 text-sm text-gray-700 shadow-sm">
+    <p class="text-xs font-medium uppercase tracking-wide text-indigo-700">Admin · /admin/examens</p>
+    <p class="mt-1 font-semibold text-gray-900">Générer automatiquement un examen (depuis une formation)</p>
+    <p class="mt-1 text-gray-600">
+      Choisissez une formation : les questions générées s’affichent en <strong>prévisualisation</strong> ; validez pour enregistrer ou régénérez un autre jeu. Au moins <strong>7 questions</strong> par parcours.
+    </p>
+    <div class="mt-3 flex flex-wrap items-end gap-3">
+      <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+        <input
+          type="checkbox"
+          [(ngModel)]="useLlmForAutoGenerate"
+          name="useLlmExamenList"
+          [disabled]="generating || confirming"
+          class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+        <span>Rédaction LLM (Ollama local ou cloud si configuré)</span>
+      </label>
+      <div class="min-w-[14rem]">
+        <label class="mb-1 block text-xs font-medium text-gray-600">Formation</label>
+        <select
+          [(ngModel)]="selectedFormationId"
+          name="selectedFormationId"
+          [disabled]="formationsLoading || generating || confirming"
+          class="w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-sm">
+          <option [ngValue]="null">Choisir une formation…</option>
+          @for (f of formations; track f.id) {
+            <option [ngValue]="f.id">{{ f.titre }} (#{{ f.id }})</option>
+          }
+        </select>
+      </div>
+      <button
+        type="button"
+        (click)="generateFromFormation()"
+        [disabled]="generating || confirming"
+        class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+        {{ generating ? 'Génération…' : 'Prévisualiser la génération' }}
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="flex justify-center py-12">
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+    </div>
+  }
+
+  @if (!loading && examens.length > 0) {
+    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <table class="w-full text-left text-sm">
+        <thead class="border-b border-gray-200 bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 font-medium text-gray-500">ID</th>
+            <th class="px-6 py-3 font-medium text-gray-500">Titre</th>
+            <th class="px-6 py-3 font-medium text-gray-500">Formation ID</th>
+            <th class="px-6 py-3 font-medium text-gray-500">Seuil</th>
+            <th class="px-6 py-3 font-medium text-gray-500">Questions</th>
+            <th class="px-6 py-3 font-medium text-gray-500 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (e of examens; track e.id) {
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 text-gray-500">#{{ e.id }}</td>
+              <td class="px-6 py-4 font-medium text-gray-800">{{ e.titre }}</td>
+              <td class="px-6 py-4 text-gray-600">{{ e.formationId }}</td>
+              <td class="px-6 py-4 text-gray-600">{{ e.seuilReussi }} %</td>
+              <td class="px-6 py-4 text-gray-600">{{ (e.questions && e.questions.length) || 0 }}</td>
+              <td class="px-6 py-4 text-right">
+                <a
+                  [routerLink]="['/admin/examens', e.id]"
+                  class="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-indigo-600 transition"
+                  title="Voir / Résultats">
+                  Résultats
+                </a>
+                <a
+                  [routerLink]="['/admin/formations', e.formationId]"
+                  class="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-indigo-600 transition"
+                  title="Formation">
+                  Formation
+                </a>
+                <button
+                  type="button"
+                  (click)="onDelete(e.id!)"
+                  class="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition">
+                  Supprimer
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (!loading && examens.length === 0) {
+    <div class="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 text-center">
+      <p class="text-gray-600">Aucun examen. Créez un examen pour une formation.</p>
+      <a routerLink="/admin/examens/new" class="mt-4 inline-block text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+        Nouvel examen
+      </a>
+    </div>
+  }
+
+  @if (draftGeneratedExamen) {
+    <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-4 bg-black/50" role="dialog" aria-modal="true">
+      <div class="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl flex flex-col">
+        <div class="shrink-0 border-b border-gray-200 px-5 py-4 flex items-start justify-between gap-3 bg-indigo-50/80">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Prévisualisation</p>
+            <h3 class="text-lg font-bold text-gray-900 mt-1">{{ draftGeneratedExamen.titre }}</h3>
+            <p class="text-xs text-gray-500 mt-1">{{ draftGeneratedExamen.questions.length }} question(s)</p>
+          </div>
+          <button type="button" (click)="closeDraftPreview()" class="rounded-lg p-2 text-gray-500 hover:bg-white/80" aria-label="Fermer">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3 text-sm">
+          @for (q of draftGeneratedExamen.questions; track q.ordre) {
+            <div class="rounded-lg border border-gray-200 bg-gray-50/80 p-3">
+              <p class="font-medium text-gray-900">#{{ q.ordre + 1 }} · {{ q.enonce }}</p>
+              <ul class="mt-2 space-y-0.5 text-gray-700 text-xs">
+                <li><span class="font-semibold text-indigo-700">A</span> {{ optionLabel(q, 'A') }}</li>
+                <li><span class="font-semibold text-indigo-700">B</span> {{ optionLabel(q, 'B') }}</li>
+                <li><span class="font-semibold text-indigo-700">C</span> {{ optionLabel(q, 'C') }}</li>
+                <li><span class="font-semibold text-indigo-700">D</span> {{ optionLabel(q, 'D') }}</li>
+              </ul>
+              <p class="text-xs text-emerald-800 mt-1">Bonne réponse : {{ q.bonneReponse }}</p>
+            </div>
+          }
+        </div>
+        <div class="shrink-0 border-t border-gray-200 px-5 py-4 flex flex-wrap gap-3 justify-end bg-white">
+          <button type="button" (click)="closeDraftPreview()" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
+          <button type="button" (click)="regenerateDraft()" [disabled]="generating" class="rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-800 disabled:opacity-50">{{ generating ? '…' : 'Régénérer' }}</button>
+          <button type="button" (click)="confirmDraft()" [disabled]="confirming || generating" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">{{ confirming ? 'Enregistrement…' : 'Valider et créer' }}</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
