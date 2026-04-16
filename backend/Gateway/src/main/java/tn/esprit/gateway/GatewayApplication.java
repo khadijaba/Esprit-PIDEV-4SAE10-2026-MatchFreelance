@@ -31,9 +31,22 @@ public class GatewayApplication {
     @Value("${gateway.service.project:PROJECT}")
     private String projectServiceId;
 
+    @Value("${gateway.service.candidature:CANDIDATURE}")
+    private String candidatureServiceId;
+
+    @Value("${gateway.service.contract:CONTRACT}")
+    private String contractServiceId;
+
+    @Value("${gateway.service.interview:INTERVIEW}")
+    private String interviewServiceId;
+
     /** URL du microservice Python (rapports PDF / graphiques) — pas Eureka, load balancer direct. */
     @Value("${gateway.evaluation-reports.url:http://localhost:8090}")
     private String evaluationReportsUrl;
+
+    /** Team AI (FastAPI), hors Eureka. */
+    @Value("${gateway.team-ai.url:http://127.0.0.1:5000}")
+    private String teamAiUrl;
 
     public static void main(String[] args) {
         SpringApplication.run(GatewayApplication.class, args);
@@ -45,6 +58,26 @@ public class GatewayApplication {
                 // Rapports PDF & graphiques (Python FastAPI) — en premier pour éviter tout conflit de prédicat
                 .route("evaluation-reports", r -> r.path("/api/evaluation-reports", "/api/evaluation-reports/**")
                         .uri(evaluationReportsUrl))
+                // Ordre explicite : même prédicat que le fallback /** — priorité plus haute (défaut 0 < LOWEST_PRECEDENCE)
+                .route("team-ai", r -> r.order(-10)
+                        .path("/api/team-ai", "/api/team-ai/**")
+                        .filters(f -> f.rewritePath("/api/team-ai/(?<segment>.*)", "/api/${segment}"))
+                        .uri(teamAiUrl))
+                .route("skill-skills", r -> r.path("/api/skills", "/api/skills/**")
+                        .filters(f -> f.stripPrefix(1))
+                        .uri("lb://" + skillServiceId))
+                .route("skill-cv", r -> r.path("/api/cv", "/api/cv/**")
+                        .filters(f -> f.stripPrefix(1))
+                        .uri("lb://" + skillServiceId))
+                .route("skill-portfolio", r -> r.path("/api/portfolio", "/api/portfolio/**")
+                        .filters(f -> f.stripPrefix(1))
+                        .uri("lb://" + skillServiceId))
+                .route("skill-bio", r -> r.path("/api/bio", "/api/bio/**")
+                        .filters(f -> f.stripPrefix(1))
+                        .uri("lb://" + skillServiceId))
+                .route("project-api", r -> r.path("/api/projects", "/api/projects/**")
+                        .filters(f -> f.stripPrefix(1))
+                        .uri("lb://" + projectServiceId))
                 // Utilisateurs / Auth (legacy + v2) -> lb://USER
                 .route("user-users", r -> r.path("/api/users", "/api/users/**")
                         .uri("lb://" + userServiceId))
@@ -71,13 +104,13 @@ public class GatewayApplication {
                         .uri("lb://" + formationServiceId))
                 .route("formation-inscriptions", r -> r.path("/api/inscriptions", "/api/inscriptions/**")
                         .uri("lb://" + formationServiceId))
-                // Skills / Parcours Intelligent -> lb://SKILL
-                .route("skill-api", r -> r.path("/api/skills", "/api/skills/**")
-                        .uri("lb://" + skillServiceId))
-                // Projets (microservice Project) : /api/projects -> /projects côté service
-                .route("project-api", r -> r.path("/api/projects", "/api/projects/**")
-                        .filters(f -> f.rewritePath("/api/projects(?<segment>/?.*)", "/projects${segment}"))
-                        .uri("lb://" + projectServiceId))
+                // Match Freelance (PIDEV) : candidatures, contrats, entretiens — chemins /api/... inchangés côté MS
+                .route("candidature-api", r -> r.path("/api/candidatures", "/api/candidatures/**")
+                        .uri("lb://" + candidatureServiceId))
+                .route("contract-api", r -> r.path("/api/contracts", "/api/contracts/**")
+                        .uri("lb://" + contractServiceId))
+                .route("interview-api", r -> r.path("/api/interviews", "/api/interviews/**")
+                        .uri("lb://" + interviewServiceId))
                 // Racine : uniquement / et /api (pas /api/xxx) -> reponse JSON
                 .route("gateway-welcome", r -> r.path("/", "/api")
                         .and().method(org.springframework.http.HttpMethod.GET)

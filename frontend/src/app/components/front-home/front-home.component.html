@@ -9,14 +9,41 @@
     </h1>
     <p class="mx-auto mt-4 text-lg font-medium text-slate-300">Connecting Skills to Opportunities</p>
     <p class="mx-auto mt-6 max-w-2xl text-lg text-slate-300">
-      Projets, formations et évaluation pour connecter freelancers et opportunités.
+      Formations certifiantes et évaluation pour développer vos compétences.
     </p>
+    @if (auth.isLoggedIn() && auth.isProjectOwner()) {
+      <div
+        class="mx-auto mt-8 max-w-xl rounded-2xl border border-teal-400/40 bg-teal-500/10 px-5 py-4 text-left backdrop-blur-sm sm:text-center"
+      >
+        <p class="text-xs font-bold uppercase tracking-wide text-teal-200">Espace project owner</p>
+        <p class="mt-1 text-sm text-slate-200">Publiez un projet, consultez le matching et les candidatures.</p>
+        <div class="mt-3 flex flex-wrap justify-center gap-2">
+          <a
+            routerLink="/projets"
+            class="inline-flex rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-400"
+            >Mes projets</a
+          >
+          <a
+            routerLink="/projets/nouveau"
+            class="inline-flex rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+            >Nouveau projet</a
+          >
+        </div>
+      </div>
+    }
     <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
-      <a routerLink="/projects"
-        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-500 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-teal-500/30 transition hover:bg-teal-400 sm:w-auto">
-        Parcourir les projets
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-      </a>
+      @if (!auth.isLoggedIn()) {
+        <a
+          routerLink="/register"
+          [queryParams]="{ role: 'freelancer' }"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-violet-900/40 transition hover:from-violet-500 hover:to-indigo-500 sm:w-auto"
+        >
+          Rejoindre en tant que freelancer
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
+        </a>
+      }
       <a routerLink="/formations"
         class="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-500 bg-transparent px-8 py-4 text-base font-semibold text-white transition hover:border-teal-400 hover:bg-white/5 sm:w-auto">
         Voir les formations
@@ -35,64 +62,12 @@
 <section class="border-b border-slate-200/50 bg-slate-800/50 py-6">
   <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
     <div class="flex flex-wrap items-center justify-center gap-8 text-center text-sm text-slate-300">
-      <span class="inline-flex items-center gap-2"><span class="text-teal-400">●</span> Projets ouverts</span>
       <span class="inline-flex items-center gap-2"><span class="text-amber-400">●</span> Formations certifiantes</span>
       <span class="inline-flex items-center gap-2"><span class="text-blue-400">●</span> Parcours personnalisé</span>
-      <a routerLink="/microservice-user" class="inline-flex items-center gap-2 font-semibold text-teal-300 underline-offset-2 hover:text-white hover:underline">
-        <span class="text-emerald-400">●</span> Microservice User (PIDEV)
-      </a>
-      <a routerLink="/admin/rapports" class="inline-flex items-center gap-2 font-semibold text-violet-300 underline-offset-2 hover:text-white hover:underline">
-        <span class="text-violet-400">●</span> Rapports PDF &amp; graphiques (admin)
-      </a>
+      <span class="inline-flex items-center gap-2"><span class="text-emerald-400">●</span> Projets réels adaptés au profil</span>
+      <span class="inline-flex items-center gap-2"><span class="text-violet-400">●</span> Certificats valorisables en mission</span>
     </div>
   </div>
-</section>
-
-<!-- Projets -->
-<section class="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-  <div class="flex items-end justify-between border-b border-slate-200 pb-4">
-    <div>
-      <h2 class="text-2xl font-bold text-slate-900">Derniers projets ouverts</h2>
-      <p class="mt-1 text-sm text-slate-500">Des missions qui correspondent à vos compétences</p>
-    </div>
-    <a routerLink="/projects" class="shrink-0 text-sm font-semibold text-teal-600 transition hover:text-teal-700">
-      Voir tout
-    </a>
-  </div>
-
-  @if (loading) {
-    <div class="mt-12 flex justify-center">
-      <div class="h-10 w-10 animate-spin rounded-full border-4 border-teal-200 border-t-teal-600"></div>
-    </div>
-  }
-
-  @if (!loading && openProjects.length > 0) {
-    <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      @for (project of openProjects; track project.id) {
-        <a [routerLink]="['/projects', project.id]"
-          class="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-teal-200 hover:shadow-xl">
-          <div class="absolute left-0 top-0 h-full w-1 bg-teal-500 opacity-0 transition group-hover:opacity-100"></div>
-          <h3 class="font-bold text-slate-900 transition group-hover:text-teal-600">{{ project.title }}</h3>
-          <p class="mt-2 line-clamp-2 text-sm text-slate-600">{{ project.description }}</p>
-          <div class="mt-4 flex items-center gap-4 text-sm">
-            <span class="font-bold text-teal-600">{{ project.budget | number:'1.0-0' }} $</span>
-            <span class="text-slate-400">{{ project.duration }} jours</span>
-          </div>
-        </a>
-      }
-    </div>
-  }
-
-  @if (!loading && openProjects.length === 0) {
-    <div class="mt-12 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-12 text-center">
-      <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-      </svg>
-      <p class="mt-4 text-slate-600">Aucun projet ouvert pour le moment.</p>
-      <p class="mt-1 text-sm text-slate-500">Revenez plus tard ou renforcez votre profil avec le Parcours Intelligent.</p>
-      <a routerLink="/parcours-intelligent" class="mt-4 inline-block text-sm font-semibold text-teal-600 hover:text-teal-700">Découvrir le Parcours Intelligent</a>
-    </div>
-  }
 </section>
 
 <!-- Formations -->

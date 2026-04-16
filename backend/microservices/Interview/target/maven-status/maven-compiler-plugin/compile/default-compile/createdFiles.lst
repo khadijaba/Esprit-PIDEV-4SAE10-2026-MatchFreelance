@@ -1,0 +1,16 @@
+com\freelancing\interview\entity\Interview.class
+com\freelancing\interview\config\ForwardAuthFeignInterceptor.class
+com\freelancing\interview\config\InterviewDatabaseConfiguration.class
+com\freelancing\interview\client\CandidatureRemoteFeign.class
+com\freelancing\interview\client\dto\CandidatureSnapshotDto.class
+com\freelancing\interview\dto\InterviewMetricsDTO.class
+com\freelancing\interview\client\ProjectRemoteFeign.class
+com\freelancing\interview\InterviewServiceApplication.class
+com\freelancing\interview\client\dto\ProjectRemotePayload.class
+com\freelancing\interview\config\OpenApiConfig.class
+com\freelancing\interview\enums\InterviewStatus.class
+com\freelancing\interview\service\InterviewService.class
+com\freelancing\interview\controller\InterviewController.class
+com\freelancing\interview\dto\InterviewResponseDTO.class
+com\freelancing\interview\repository\InterviewRepository.class
+com\freelancing\interview\dto\InterviewRequestDTO.class

@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 public class WelcomeJsonFilter implements org.springframework.cloud.gateway.filter.GatewayFilter, Ordered {
 
     private static final String BODY = """
-            {"service":"Gateway","message":"Plateforme Freelancers & Project Matching - Utilisez les URLs ci-dessous.","routes":{"users":"POST /api/users/auth/register, POST /api/users/auth/login, GET /api/users/me/profile, GET /api/users","formations":"GET/POST/PUT/DELETE /api/formations et /api/formations/{id}","inscriptions":"/api/inscriptions/...","examens":"/api/examens/...","certificats":"/api/certificats/...","evaluationReports":"Python evaluation-reports-py : POST /api/evaluation-reports/charts/histogram, charts/evolution, reports/pdf, exam/auto-generate — proxy Gateway vers gateway.evaluation-reports.url (defaut localhost:8090)"}}
+            {"service":"Gateway","message":"Plateforme Freelancers — formations et évaluations.","routes":{"users":"POST /api/users/auth/register, POST /api/users/auth/login, GET /api/users/me/profile, GET /api/users","formations":"GET/POST/PUT/DELETE /api/formations et /api/formations/{id}","inscriptions":"/api/inscriptions/...","examens":"/api/examens/...","certificats":"/api/certificats/...","candidatures":"/api/candidatures/**","contracts":"/api/contracts/**","interviews":"/api/interviews/**","evaluationReports":"Python evaluation-reports-py : POST /api/evaluation-reports/charts/histogram, charts/evolution, reports/pdf, exam/auto-generate — proxy Gateway vers gateway.evaluation-reports.url (defaut localhost:8090)"}}
             """;
 
     @Override

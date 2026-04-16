@@ -5,50 +5,31 @@ import Entity.User;
 import Security.JwtUtils;
 import Service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
-    private final boolean exposeVerificationCodeInSignupResponse;
-
-    public AuthController(UserService userService, AuthenticationManager authenticationManager, JwtUtils jwtUtils,
-            @Value("${matchfreelance.verification.expose-code-in-response:true}") boolean exposeVerificationCodeInSignupResponse) {
+    public AuthController(
+            UserService userService,
+            AuthenticationManager authenticationManager,
+            JwtUtils jwtUtils) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
-        this.exposeVerificationCodeInSignupResponse = exposeVerificationCodeInSignupResponse;
-    }
-
-    /** GET dans le navigateur sur /api/auth/signin → evite 405 + Whitelabel ; la connexion reelle = POST JSON. */
-    @GetMapping("/signin")
-    public ResponseEntity<Map<String, Object>> signinHelp() {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("message", "Utilisez POST avec Content-Type application/json (pas un GET dans le navigateur).");
-        body.put("url", "POST /api/auth/signin");
-        body.put("exemple", Map.of("email", "user@example.com", "password", "votre_mot_de_passe"));
-        body.put("matchfreelance", "Front Angular : POST /api/users/auth/login");
-        return ResponseEntity.ok(body);
-    }
-
-    /** Inscription PIDEV = POST multipart /api/auth/signup ; le GET affiche l'aide. */
-    @GetMapping("/signup")
-    public ResponseEntity<Map<String, Object>> signupHelp() {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("message", "Utilisez POST multipart/form-data avec firstName, lastName, email, password, address, birthDate, role, file (optionnel).");
-        body.put("url", "POST /api/auth/signup");
-        return ResponseEntity.ok(body);
     }
 
     // ─── SIGN UP ────────────────────────────────────────────────
@@ -64,6 +45,21 @@ public class AuthController {
             @RequestParam(value = "faceDescriptor", required = false) String faceDescriptor,
             @RequestParam(value = "file", required = false) org.springframework.web.multipart.MultipartFile file) {
         try {
+            String roleRaw = role == null ? "" : role;
+            String roleNormalized = roleRaw.trim().toUpperCase(Locale.ROOT);
+            if ("CLIENT".equals(roleNormalized)) {
+                roleNormalized = "PROJECT_OWNER";
+            }
+
+            Entity.Role parsedRole;
+            try {
+                parsedRole = Entity.Role.fromSignupString(roleNormalized);
+            } catch (IllegalArgumentException ex) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "message",
+                        "Rôle invalide '" + roleRaw + "'. Utilisez FREELANCER ou PROJECT_OWNER."));
+            }
+
             SignUpRequest request = new SignUpRequest();
             request.setFirstName(firstName);
             request.setLastName(lastName);
@@ -72,19 +68,16 @@ public class AuthController {
             request.setConfirmPassword(password); // Match for service validation
             request.setAddress(address);
             request.setBirthDate(java.time.LocalDate.parse(birthDate));
-            request.setRole(Entity.Role.valueOf(role));
+            request.setRole(parsedRole);
             request.setFaceDescriptor(faceDescriptor);
 
-            RegistrationResult outcome = userService.register(request, file);
-            Map<String, Object> body = new LinkedHashMap<>();
-            body.put("message", "Compte cree avec succes pour : " + outcome.user().getEmail());
-            body.put("email", outcome.user().getEmail());
-            if (exposeVerificationCodeInSignupResponse) {
-                body.put("verificationCode", outcome.verificationCode());
-            }
-            return ResponseEntity.ok(body);
+            log.info("Signup attempt email={} roleRaw='{}' roleNormalized='{}'", email, roleRaw, roleNormalized);
+            RegistrationResult result = userService.register(request, file);
+            User user = result.user();
+            String message = "Compte créé avec succès pour : " + user.getEmail() + ". Vous pouvez vous connecter.";
+            return ResponseEntity.ok(new SignupResponse(message, user.getEmail(), null));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Erreur : " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", "Erreur : " + e.getMessage()));
         }
     }
 
@@ -92,10 +85,12 @@ public class AuthController {
     @PostMapping("/signin")
     public ResponseEntity<?> signIn(@Valid @RequestBody SignInRequest request) {
         try {
+            String email = request.getEmail() != null ? request.getEmail().trim() : "";
+            String password = request.getPassword() != null ? request.getPassword() : "";
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+                    new UsernamePasswordAuthenticationToken(email, password));
 
-            String email = authentication.getName();
+            email = authentication.getName();
             String role = authentication.getAuthorities().iterator().next().getAuthority()
                     .replace("ROLE_", "");
 
@@ -113,7 +108,7 @@ public class AuthController {
                     Entity.Role.valueOf(role), message));
 
         } catch (BadCredentialsException e) {
-            return ResponseEntity.status(401).body("Email ou mot de passe incorrect");
+            return ResponseEntity.status(401).body("Identifiants invalides.");
         } catch (DisabledException e) {
             return ResponseEntity.status(403)
                     .body("Ce compte est désactivé. Veuillez vérifier votre email pour activer votre compte.");
@@ -124,9 +119,10 @@ public class AuthController {
     @PostMapping("/signin-face")
     public ResponseEntity<?> signInWithFace(@Valid @RequestBody FaceSignInRequest request) {
         try {
-            User user = userService.signInWithFace(request.getEmail(), request.getFaceDescriptor());
+            String email = request.getEmail() != null ? request.getEmail().trim() : "";
+            User user = userService.signInWithFace(email, request.getFaceDescriptor());
 
-            String email = user.getEmail();
+            email = user.getEmail();
             String roleStr = user.getRole().name();
 
             String token = jwtUtils.generateToken(email, roleStr);
@@ -164,17 +160,6 @@ public class AuthController {
     public ResponseEntity<?> confirmPasswordReset(@Valid @RequestBody PasswordResetConfirm request) {
         try {
             String result = userService.confirmPasswordReset(request);
-            return ResponseEntity.ok(result);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    /** Réinitialisation avec le code à 6 chiffres reçu par e-mail (flux réel utilisé par le front). */
-    @PostMapping("/reset-password/complete")
-    public ResponseEntity<?> completePasswordResetWithCode(@Valid @RequestBody PasswordResetCompleteRequest request) {
-        try {
-            String result = userService.completePasswordResetWithCode(request);
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

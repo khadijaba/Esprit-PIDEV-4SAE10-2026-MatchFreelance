@@ -1,0 +1,14 @@
+{
+  "modelId": "onnx-rf-risk-v1",
+  "featureDim": 7,
+  "featureNames": [
+    "title_len_over_100",
+    "desc_words_over_200",
+    "skills_over_10",
+    "daily_rate_capped_norm",
+    "log1p_budget_over_15",
+    "duration_over_365_cap",
+    "owner_completion_rate"
+  ],
+  "trainingNote": "Synthetic labels from rule-like generator; replace with real outcomes."
+}

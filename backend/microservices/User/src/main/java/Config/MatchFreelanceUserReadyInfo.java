@@ -35,7 +35,7 @@ public class MatchFreelanceUserReadyInfo implements ApplicationListener<Applicat
         log.info("  Voir les utilisateurs dans l'interface :");
         log.info("    1) ng serve sur http://localhost:4200");
         log.info("    2) Connexion ADMIN puis http://localhost:4200/admin/dashboard");
-        log.info("  SendGrid : les logs ci-dessus = cle chargee ; mail = apres signup/reset.");
+        log.info("  E-mails : traces serveur uniquement (pas d’envoi HTTP).");
         log.info("------------------------------------------------------------------");
         log.info("");
     }

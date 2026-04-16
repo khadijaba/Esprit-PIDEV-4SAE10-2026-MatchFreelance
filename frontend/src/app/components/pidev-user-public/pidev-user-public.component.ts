@@ -52,7 +52,6 @@ export class PidevUserPublicComponent {
 
   readonly other = [
     { path: '/uploads/avatars/...', note: 'Fichiers statiques servis par le microservice User' },
-    { path: '/api/test/sendgrid, /api/test/send-test-email', note: 'Tests SendGrid (dev)' },
     { path: 'OAuth2', note: 'Optionnel : matchfreelance.oauth2.enabled dans application.properties' },
   ];
 }

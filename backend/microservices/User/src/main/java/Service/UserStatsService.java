@@ -27,7 +27,7 @@ public class UserStatsService {
                 .filter(user -> user.getRole() == Role.FREELANCER && user.isEnabled())
                 .count();
         long activeProjectOwners = allUsers.stream()
-                .filter(user -> user.getRole() == Role.PROJECT_OWNER && user.isEnabled())
+                .filter(user -> user.getRole().isProjectOwner() && user.isEnabled())
                 .count();
         long activeAccounts = allUsers.stream()
                 .filter(User::isEnabled)
@@ -61,7 +61,7 @@ public class UserStatsService {
                 .filter(user -> user.getRole() == Role.FREELANCER && user.isEnabled())
                 .count();
         long activeProjectOwners = usersInRange.stream()
-                .filter(user -> user.getRole() == Role.PROJECT_OWNER && user.isEnabled())
+                .filter(user -> user.getRole().isProjectOwner() && user.isEnabled())
                 .count();
         long activeAccounts = usersInRange.stream()
                 .filter(User::isEnabled)

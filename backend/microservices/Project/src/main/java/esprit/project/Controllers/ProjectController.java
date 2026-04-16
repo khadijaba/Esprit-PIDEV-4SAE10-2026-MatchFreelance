@@ -1,9 +1,12 @@
 package esprit.project.Controllers;
 
 import esprit.project.Service.ProjectService;
+import esprit.project.dto.ProjectWritePayload;
 import esprit.project.entities.Project;
 import esprit.project.entities.ProjectStatus;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -19,8 +22,12 @@ public class ProjectController {
     }
 
     @PostMapping
-    public Project createProject(@RequestBody Project project) {
-        return projectService.createProject(project);
+    public Project createProject(@RequestBody ProjectWritePayload payload) {
+        try {
+            return projectService.createProject(payload.toProjectForCreate());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
     @GetMapping
@@ -54,8 +61,14 @@ public class ProjectController {
     }
 
     @PutMapping("/{id}")
-    public Project updateProject(@PathVariable Long id, @RequestBody Project project) {
-        return projectService.updateProject(id, project);
+    public Project updateProject(@PathVariable Long id, @RequestBody ProjectWritePayload payload) {
+        try {
+            Project existing = projectService.getProjectById(id);
+            Project merged = payload.toProjectForUpdateMerge(existing);
+            return projectService.updateProject(id, merged);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")

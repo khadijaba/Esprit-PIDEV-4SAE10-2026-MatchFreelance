@@ -3,6 +3,7 @@ package esprit.skill.Contollers;
 import esprit.skill.Service.SkillService;
 import esprit.skill.entities.Skill;
 import esprit.skill.entities.SkillCategory;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,14 +19,8 @@ public class SkillController {
         this.skillService = skillService;
     }
 
-    /** Endpoint de diagnostic : vérifier que la Gateway route bien vers SKILL. */
-    @GetMapping("/ping")
-    public java.util.Map<String, String> ping() {
-        return java.util.Map.of("status", "UP", "service", "SKILL");
-    }
-
     @PostMapping
-    public Skill addSkill(@RequestBody Skill skill) {
+    public Skill addSkill(@RequestBody @Valid Skill skill) {
         return skillService.addSkill(skill);
     }
 
@@ -35,27 +30,28 @@ public class SkillController {
     }
 
     @GetMapping("/{id}")
-    public Skill getSkillById(@PathVariable Long id) {
+    public Skill getSkillById(@PathVariable("id") Long id) {
         return skillService.getSkillById(id);
     }
 
     @GetMapping("/freelancer/{freelancerId}")
-    public List<Skill> getSkillsByFreelancer(@PathVariable Long freelancerId) {
+    public List<Skill> getSkillsByFreelancer(@PathVariable("freelancerId") Long freelancerId) {
         return skillService.getSkillsByFreelancer(freelancerId);
     }
 
     @GetMapping("/category/{category}")
-    public List<Skill> getSkillsByCategory(@PathVariable SkillCategory category) {
+    public List<Skill> getSkillsByCategory(@PathVariable("category") SkillCategory category) {
         return skillService.getSkillsByCategory(category);
     }
 
     @PutMapping("/{id}")
-    public Skill updateSkill(@PathVariable Long id, @RequestBody Skill skill) {
+    public Skill updateSkill(@PathVariable("id") Long id, @RequestBody @Valid Skill skill) {
         return skillService.updateSkill(id, skill);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteSkill(@PathVariable Long id) {
+    public void deleteSkill(@PathVariable("id") Long id) {
         skillService.deleteSkill(id);
     }
 }
+

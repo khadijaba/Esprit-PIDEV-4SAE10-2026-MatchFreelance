@@ -1,6 +1,7 @@
 package Service;
 
 
+import Entity.Role;
 import Entity.User;
 import Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,20 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé : " + email));
+        if (email == null || email.isBlank()) {
+            throw new UsernameNotFoundException("Email vide");
+        }
+        String key = email.trim();
+        User user = userRepository.findByEmailIgnoreCase(key)
+                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé : " + key));
+
+        Role role = user.getRole();
+        if (role == null) {
+            throw new UsernameNotFoundException("Rôle utilisateur invalide pour : " + user.getEmail());
+        }
+        String authority = (role == Role.CLIENT || role == Role.PROJECT_OWNER)
+                ? "ROLE_PROJECT_OWNER"
+                : "ROLE_" + role.name();
 
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
@@ -31,7 +44,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 true, // account non expired
                 true, // credentials non expired
                 true, // account non locked
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+                List.of(new SimpleGrantedAuthority(authority))
         );
     }
 }

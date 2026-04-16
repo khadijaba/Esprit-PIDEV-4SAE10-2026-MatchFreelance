@@ -6,6 +6,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "users")
+@Access(AccessType.FIELD)
 public class User {
 
     @Id
@@ -27,14 +28,15 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    /** DEFAULT MySQL : evite l'echec DDL sur table deja remplie (dates zero / legacy). */
-    @Column(nullable = false, columnDefinition = "DATE NOT NULL DEFAULT '2000-01-01'")
+    @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
 
+    /**
+     * Schéma historique : colonne {@code role} (pas {@code user_role}).
+     */
     @Enumerated(EnumType.STRING)
-    /** Longueur explicite : PROJECT_OWNER (13 car.) — anciennes BDD avaient souvent VARCHAR trop court ou ENUM incomplet. */
-    @Column(nullable = false, length = 50)
-    private Role role;
+    @Column(name = "role", nullable = false)
+    private Role userRole;
 
     @Column(columnDefinition = "TEXT")
     private String faceDescriptor;
@@ -49,7 +51,7 @@ public class User {
     }
 
     public User(Long id, String firstName, String lastName, String address, String email, String password,
-            LocalDate birthDate, Role role, boolean enabled, String faceDescriptor, String profilePictureUrl) {
+            LocalDate birthDate, Role userRole, boolean enabled, String faceDescriptor, String profilePictureUrl) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -57,7 +59,7 @@ public class User {
         this.email = email;
         this.password = password;
         this.birthDate = birthDate;
-        this.role = role;
+        this.userRole = userRole;
         this.enabled = enabled;
         this.faceDescriptor = faceDescriptor;
         this.profilePictureUrl = profilePictureUrl;
@@ -76,7 +78,7 @@ public class User {
         private String email;
         private String password;
         private LocalDate birthDate;
-        private Role role;
+        private Role userRole;
         private String faceDescriptor;
         private String profilePictureUrl;
         private boolean enabled = true;
@@ -112,7 +114,7 @@ public class User {
         }
 
         public UserBuilder role(Role role) {
-            this.role = role;
+            this.userRole = role;
             return this;
         }
 
@@ -132,7 +134,7 @@ public class User {
         }
 
         public User build() {
-            return new User(id, firstName, lastName, address, email, password, birthDate, role, enabled,
+            return new User(id, firstName, lastName, address, email, password, birthDate, userRole, enabled,
                     faceDescriptor, profilePictureUrl);
         }
     }
@@ -195,11 +197,11 @@ public class User {
     }
 
     public Role getRole() {
-        return role;
+        return userRole;
     }
 
     public void setRole(Role role) {
-        this.role = role;
+        this.userRole = role;
     }
 
     public boolean isEnabled() {

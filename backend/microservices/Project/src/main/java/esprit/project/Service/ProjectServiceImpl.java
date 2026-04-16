@@ -3,6 +3,7 @@ package esprit.project.Service;
 import esprit.project.Repositories.ProjectRepository;
 import esprit.project.entities.Project;
 import esprit.project.entities.ProjectStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,19 +11,13 @@ import java.util.List;
 @Service
 public class ProjectServiceImpl implements ProjectService {
 
-    private final ProjectRepository projectRepository;
-
-    public ProjectServiceImpl(ProjectRepository projectRepository) {
-        this.projectRepository = projectRepository;
-    }
+    @Autowired
+    private ProjectRepository projectRepository;
 
     @Override
     public Project createProject(Project project) {
         if (project.getStatus() == null) {
             project.setStatus(ProjectStatus.OPEN);
-        }
-        if (project.getProjectOwnerId() == null) {
-            project.setProjectOwnerId(0L);
         }
         return projectRepository.save(project);
     }
@@ -72,9 +67,6 @@ public class ProjectServiceImpl implements ProjectService {
         }
         if (updatedProject.getRequiredSkills() != null) {
             project.setRequiredSkills(updatedProject.getRequiredSkills());
-        }
-        if (updatedProject.getProjectOwnerId() != null) {
-            project.setProjectOwnerId(updatedProject.getProjectOwnerId());
         }
 
         return projectRepository.save(project);

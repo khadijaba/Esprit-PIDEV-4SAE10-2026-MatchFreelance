@@ -1,25 +1,57 @@
 {
   "scores_completion": [
     {
-      "freelancer_id": 3,
-      "email": "benayedmustapha24@gmail.com",
-      "fullName": "khadija",
-      "score_completion_pct": 30.0,
-      "nb_certificats": 0,
-      "nb_formations_validees": 3
+      "freelancer_id": 6,
+      "email": "benayedkhadija5@gmail.com",
+      "fullName": null,
+      "score_completion_pct": 82.3,
+      "nb_certificats": 3,
+      "nb_formations_validees": 5
     },
     {
-      "freelancer_id": 1,
-      "email": "benayedkhadija5@gmail.com",
-      "fullName": "khadija",
-      "score_completion_pct": 28.0,
+      "freelancer_id": 8,
+      "email": "benayedmustapha24@gmail.com",
+      "fullName": null,
+      "score_completion_pct": 62.0,
+      "nb_certificats": 4,
+      "nb_formations_validees": 2
+    },
+    {
+      "freelancer_id": 12,
+      "email": "benayedkhadija82@gmail.com",
+      "fullName": "khadija ben ayed",
+      "score_completion_pct": 43.4,
+      "nb_certificats": 2,
+      "nb_formations_validees": 1
+    },
+    {
+      "freelancer_id": 5,
+      "email": "khadija.benayed@esprit.tn",
+      "fullName": null,
+      "score_completion_pct": 38.0,
       "nb_certificats": 1,
       "nb_formations_validees": 0
     },
     {
-      "freelancer_id": 4,
-      "email": "khadija.benayed@esprit.tn",
-      "fullName": "khadija",
+      "freelancer_id": 11,
+      "email": "benayedkhadija482@gmail.com",
+      "fullName": "khadija ben ayed",
+      "score_completion_pct": 15.0,
+      "nb_certificats": 0,
+      "nb_formations_validees": 0
+    },
+    {
+      "freelancer_id": 10,
+      "email": "emnad750@gmail.com",
+      "fullName": "emna dorai",
+      "score_completion_pct": 0.0,
+      "nb_certificats": 0,
+      "nb_formations_validees": 0
+    },
+    {
+      "freelancer_id": 13,
+      "email": "ebac2000@gmail.com",
+      "fullName": "ahmed ben ayed",
       "score_completion_pct": 0.0,
       "nb_certificats": 0,
       "nb_formations_validees": 0
@@ -27,7 +59,61 @@
   ],
   "recommendations_by_freelancer": [
     {
-      "freelancer_id": 1,
+      "freelancer_id": 5,
+      "email": "khadija.benayed@esprit.tn",
+      "recommendations": [
+        {
+          "formation_id": 8,
+          "titre": "Deep Learning",
+          "typeFormation": "AI",
+          "match_competence": true
+        },
+        {
+          "formation_id": 7,
+          "titre": "Feature Engineering",
+          "typeFormation": "AI",
+          "match_competence": true
+        },
+        {
+          "formation_id": 6,
+          "titre": "MLOps",
+          "typeFormation": "AI",
+          "match_competence": true
+        },
+        {
+          "formation_id": 14,
+          "titre": "intellagence e",
+          "typeFormation": "AI",
+          "match_competence": true
+        },
+        {
+          "formation_id": 4,
+          "titre": "Cloud Computing",
+          "typeFormation": "DEVOPS",
+          "match_competence": false
+        },
+        {
+          "formation_id": 13,
+          "titre": "React",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": false
+        },
+        {
+          "formation_id": 15,
+          "titre": "Spring Boot avancé",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": false
+        },
+        {
+          "formation_id": 17,
+          "titre": "dfjrfjer",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": false
+        }
+      ]
+    },
+    {
+      "freelancer_id": 6,
       "email": "benayedkhadija5@gmail.com",
       "recommendations": [
         {
@@ -43,14 +129,20 @@
           "match_competence": true
         },
         {
-          "formation_id": 6,
-          "titre": "MLOps",
-          "typeFormation": "AI",
+          "formation_id": 13,
+          "titre": "React",
+          "typeFormation": "WEB_DEVELOPMENT",
           "match_competence": true
         },
         {
-          "formation_id": 13,
-          "titre": "React",
+          "formation_id": 15,
+          "titre": "Spring Boot avancé",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": true
+        },
+        {
+          "formation_id": 17,
+          "titre": "dfjrfjer",
           "typeFormation": "WEB_DEVELOPMENT",
           "match_competence": true
         },
@@ -59,37 +151,169 @@
           "titre": "intellagence e",
           "typeFormation": "AI",
           "match_competence": true
-        },
-        {
-          "formation_id": 9,
-          "titre": "spring boot ",
-          "typeFormation": "WEB_DEVELOPMENT",
-          "match_competence": true
-        },
-        {
-          "formation_id": 4,
-          "titre": "Cloud Computing",
-          "typeFormation": "DEVOPS",
-          "match_competence": false
-        },
-        {
-          "formation_id": 5,
-          "titre": "Cybersécurité & Protection des données",
-          "typeFormation": "CYBERSECURITY",
-          "match_competence": false
         }
       ]
     },
     {
-      "freelancer_id": 3,
+      "freelancer_id": 8,
       "email": "benayedmustapha24@gmail.com",
       "recommendations": [
         {
+          "formation_id": 8,
+          "titre": "Deep Learning",
+          "typeFormation": "AI",
+          "match_competence": true
+        },
+        {
+          "formation_id": 7,
+          "titre": "Feature Engineering",
+          "typeFormation": "AI",
+          "match_competence": true
+        },
+        {
+          "formation_id": 3,
+          "titre": "Machine Learning",
+          "typeFormation": "AI",
+          "match_competence": true
+        },
+        {
+          "formation_id": 13,
+          "titre": "React",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": true
+        },
+        {
+          "formation_id": 17,
+          "titre": "dfjrfjer",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": true
+        }
+      ]
+    },
+    {
+      "freelancer_id": 10,
+      "email": "emnad750@gmail.com",
+      "recommendations": [
+        {
           "formation_id": 4,
           "titre": "Cloud Computing",
           "typeFormation": "DEVOPS",
-          "match_competence": true
+          "match_competence": false
         },
+        {
+          "formation_id": 8,
+          "titre": "Deep Learning",
+          "typeFormation": "AI",
+          "match_competence": false
+        },
+        {
+          "formation_id": 7,
+          "titre": "Feature Engineering",
+          "typeFormation": "AI",
+          "match_competence": false
+        },
+        {
+          "formation_id": 6,
+          "titre": "MLOps",
+          "typeFormation": "AI",
+          "match_competence": false
+        },
+        {
+          "formation_id": 3,
+          "titre": "Machine Learning",
+          "typeFormation": "AI",
+          "match_competence": false
+        },
+        {
+          "formation_id": 13,
+          "titre": "React",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": false
+        },
+        {
+          "formation_id": 15,
+          "titre": "Spring Boot avancé",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": false
+        },
+        {
+          "formation_id": 17,
+          "titre": "dfjrfjer",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": false
+        },
+        {
+          "formation_id": 14,
+          "titre": "intellagence e",
+          "typeFormation": "AI",
+          "match_competence": false
+        }
+      ]
+    },
+    {
+      "freelancer_id": 11,
+      "email": "benayedkhadija482@gmail.com",
+      "recommendations": [
+        {
+          "formation_id": 4,
+          "titre": "Cloud Computing",
+          "typeFormation": "DEVOPS",
+          "match_competence": false
+        },
+        {
+          "formation_id": 8,
+          "titre": "Deep Learning",
+          "typeFormation": "AI",
+          "match_competence": false
+        },
+        {
+          "formation_id": 7,
+          "titre": "Feature Engineering",
+          "typeFormation": "AI",
+          "match_competence": false
+        },
+        {
+          "formation_id": 6,
+          "titre": "MLOps",
+          "typeFormation": "AI",
+          "match_competence": false
+        },
+        {
+          "formation_id": 3,
+          "titre": "Machine Learning",
+          "typeFormation": "AI",
+          "match_competence": false
+        },
+        {
+          "formation_id": 13,
+          "titre": "React",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": false
+        },
+        {
+          "formation_id": 15,
+          "titre": "Spring Boot avancé",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": false
+        },
+        {
+          "formation_id": 17,
+          "titre": "dfjrfjer",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": false
+        },
+        {
+          "formation_id": 14,
+          "titre": "intellagence e",
+          "typeFormation": "AI",
+          "match_competence": false
+        }
+      ]
+    },
+    {
+      "freelancer_id": 12,
+      "email": "benayedkhadija82@gmail.com",
+      "recommendations": [
         {
           "formation_id": 8,
           "titre": "Deep Learning",
@@ -109,9 +333,21 @@
           "match_competence": true
         },
         {
-          "formation_id": 3,
-          "titre": "Machine Learning",
-          "typeFormation": "AI",
+          "formation_id": 13,
+          "titre": "React",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": true
+        },
+        {
+          "formation_id": 15,
+          "titre": "Spring Boot avancé",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": true
+        },
+        {
+          "formation_id": 17,
+          "titre": "dfjrfjer",
+          "typeFormation": "WEB_DEVELOPMENT",
           "match_competence": true
         },
         {
@@ -121,47 +357,17 @@
           "match_competence": true
         },
         {
-          "formation_id": 5,
-          "titre": "Cybersécurité & Protection des données",
-          "typeFormation": "CYBERSECURITY",
-          "match_competence": false
-        },
-        {
-          "formation_id": 13,
-          "titre": "React",
-          "typeFormation": "WEB_DEVELOPMENT",
-          "match_competence": false
-        },
-        {
-          "formation_id": 9,
-          "titre": "spring boot ",
-          "typeFormation": "WEB_DEVELOPMENT",
+          "formation_id": 4,
+          "titre": "Cloud Computing",
+          "typeFormation": "DEVOPS",
           "match_competence": false
         }
       ]
     },
     {
-      "freelancer_id": 4,
-      "email": "khadija.benayed@esprit.tn",
+      "freelancer_id": 13,
+      "email": "ebac2000@gmail.com",
       "recommendations": [
-        {
-          "formation_id": 5,
-          "titre": "Cybersécurité & Protection des données",
-          "typeFormation": "CYBERSECURITY",
-          "match_competence": true
-        },
-        {
-          "formation_id": 13,
-          "titre": "React",
-          "typeFormation": "WEB_DEVELOPMENT",
-          "match_competence": true
-        },
-        {
-          "formation_id": 9,
-          "titre": "spring boot ",
-          "typeFormation": "WEB_DEVELOPMENT",
-          "match_competence": true
-        },
         {
           "formation_id": 4,
           "titre": "Cloud Computing",
@@ -190,6 +396,24 @@
           "formation_id": 3,
           "titre": "Machine Learning",
           "typeFormation": "AI",
+          "match_competence": false
+        },
+        {
+          "formation_id": 13,
+          "titre": "React",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": false
+        },
+        {
+          "formation_id": 15,
+          "titre": "Spring Boot avancé",
+          "typeFormation": "WEB_DEVELOPMENT",
+          "match_competence": false
+        },
+        {
+          "formation_id": 17,
+          "titre": "dfjrfjer",
+          "typeFormation": "WEB_DEVELOPMENT",
           "match_competence": false
         },
         {
@@ -201,13 +425,5 @@
       ]
     }
   ],
-  "parcours_prerequis": {
-    "9": [
-      {
-        "type": "examen_requis",
-        "examen_id": 2,
-        "examen_titre": null
-      }
-    ]
-  }
+  "parcours_prerequis": {}
 }

@@ -7,30 +7,25 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 /**
- * DEPRECATED: Use SendGridEmailService instead
+ * DEPRECATED: use {@link LoggingEmailService} (journalisation uniquement).
  * 
  * This class is kept for reference only and is NOT registered as a service.
- * All email functionality has been migrated to SendGridEmailService which uses
- * the SendGrid Java SDK for better error handling and reliability.
+ * Les envois réels ne sont pas configurés dans ce dépôt.
  * 
  * Email Service for sending password reset emails
  * 
  * SETUP INSTRUCTIONS:
- * 1. Create SendGrid account: https://signup.sendgrid.com/
- * 2. Generate API Key: Settings > API Keys > Create API Key
- * 3. Replace YOUR_SENDGRID_API_KEY_HERE in application.properties
- * 4. Verify sender email in SendGrid dashboard
+ * (Historique SendGrid retiré du code.)
  */
-// @Service - DISABLED: Use SendGridEmailService instead
+// @Service - DISABLED
 public class EmailService {
 
-    // @Autowired - DISABLED: SendGrid SDK no longer requires JavaMailSender
+    // @Autowired - DISABLED
     private JavaMailSender mailSender;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
 
-    // Note: You need to verify your sender email in SendGrid dashboard
     // Go to: Settings > Sender Authentication > Add and verify your email
 
     public void sendPasswordResetEmail(String toEmail, String resetToken) {

@@ -12,22 +12,6 @@ import { MF_VERIFY_PENDING_KEY } from '../../verify-pending-key';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, FaceIdCaptureComponent],
   templateUrl: './login.component.html',
-  styles: [
-    `
-      .auth-pidev-bg {
-        background: linear-gradient(160deg, #f1f5f9 0%, #e0e7ff 45%, #f8fafc 100%);
-      }
-      .auth-pidev-input {
-        background: #f1f5f9;
-        border: none;
-      }
-      .auth-pidev-input:focus {
-        outline: 2px solid #818cf8;
-        outline-offset: 0;
-        background: #fff;
-      }
-    `,
-  ],
 })
 export class LoginComponent implements OnInit {
   form: FormGroup;
@@ -96,7 +80,7 @@ export class LoginComponent implements OnInit {
           (typeof body === 'object' && body != null && (body.error ?? body.message)) ||
           (typeof body === 'string' ? body : null) ||
           err?.message ||
-          'E-mail ou mot de passe incorrect.';
+          'Identifiants invalides.';
         if (typeof msg !== 'string') msg = 'Erreur de connexion.';
         if (status === 403) {
           this.showVerifyEmailCta = true;
@@ -167,7 +151,7 @@ export class LoginComponent implements OnInit {
     }
     const role = this.auth.getStoredUser()?.role;
     if (role === 'ADMIN') this.router.navigateByUrl('/admin');
-    else if (role === 'CLIENT') this.router.navigateByUrl('/dashboard-client');
+    else if (role === 'CLIENT' || role === 'PROJECT_OWNER') this.router.navigateByUrl('/projets');
     else if (role === 'FREELANCER') this.router.navigateByUrl('/dashboard-freelancer');
     else this.router.navigateByUrl('/');
   }

@@ -4,7 +4,6 @@ import DTO.RegistrationResult;
 import DTO.SignUpRequest;
 import DTO.PasswordResetRequest;
 import DTO.PasswordResetConfirm;
-import DTO.PasswordResetCompleteRequest;
 import DTO.EmailVerificationRequest;
 import DTO.ResendVerificationRequest;
 import DTO.PasswordChangeRequest;
@@ -13,22 +12,15 @@ import Entity.Role;
 import Repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Service
 public class UserService {
@@ -37,59 +29,81 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final SendGridEmailService emailService;
-    private final boolean continueOnSendFailure;
+    private final LoggingEmailService emailService;
 
+    // Store reset tokens with expiration (in a real app, use a proper cache or
+    // database)
     private final java.util.Map<String, String> resetTokens = new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.Map<String, LocalDateTime> tokenExpirations = new java.util.concurrent.ConcurrentHashMap<>();
 
+    // Store email verification codes (6-digit codes)
     private final java.util.Map<String, String> emailVerificationCodes = new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.Map<String, LocalDateTime> emailCodeExpirations = new java.util.concurrent.ConcurrentHashMap<>();
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-            SendGridEmailService emailService,
-            @Value("${matchfreelance.email.continue-on-send-failure:true}") boolean continueOnSendFailure) {
+            LoggingEmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
-        this.continueOnSendFailure = continueOnSendFailure;
     }
 
+    // Generate 6-digit verification code
     private String generateVerificationCode() {
         return String.format("%06d", (int) (Math.random() * 1000000));
     }
 
-    public RegistrationResult register(SignUpRequest request, MultipartFile multipartFile) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+    /** Email normalisé pour login, clés de cache de codes, unicité. */
+    private static String canonEmail(String email) {
+        if (email == null) {
+            return "";
+        }
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    public RegistrationResult register(SignUpRequest request, org.springframework.web.multipart.MultipartFile file) {
+
+        String emailNorm = canonEmail(request.getEmail());
+        if (emailNorm.isEmpty()) {
+            throw new RuntimeException("Email invalide");
+        }
+
+        // Vérification email déjà utilisé
+        if (userRepository.existsByEmailIgnoreCase(emailNorm)) {
             throw new RuntimeException("Cet email est déjà utilisé");
         }
+
+        // Vérification confirmation mot de passe
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new RuntimeException("Les mots de passe ne correspondent pas");
         }
 
-        String profilePictureUrl = null;
-        MultipartFile file = multipartFile;
-        if (file == null || file.isEmpty()) {
-            file = request.getFile();
+        // Empêcher la création d'un second ADMIN via signup
+        if (request.getRole() == Role.ADMIN) {
+            throw new RuntimeException("Impossible de créer un compte admin via l'inscription");
         }
+
+        String profilePictureUrl = null;
         if (file != null && !file.isEmpty()) {
             try {
-                Path uploadDir = Paths.get("uploads", "avatars");
-                if (!Files.exists(uploadDir)) {
-                    Files.createDirectories(uploadDir);
+                java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads", "avatars");
+                if (!java.nio.file.Files.exists(uploadDir)) {
+                    java.nio.file.Files.createDirectories(uploadDir);
                 }
-                String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
+                String originalFilename = org.springframework.util.StringUtils.cleanPath(file.getOriginalFilename());
                 String extension = "";
-                int dot = originalFilename.lastIndexOf('.');
-                if (dot > 0) {
-                    extension = originalFilename.substring(dot);
+                int i = originalFilename.lastIndexOf('.');
+                if (i > 0) {
+                    extension = originalFilename.substring(i);
                 }
-                String newFilename = "signup_" + UUID.randomUUID() + extension;
-                Path target = uploadDir.resolve(newFilename);
-                Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+                String newFilename = "user_reg_" + UUID.randomUUID().toString() + extension;
+                java.nio.file.Path targetLocation = uploadDir.resolve(newFilename);
+                java.nio.file.Files.copy(file.getInputStream(), targetLocation,
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 profilePictureUrl = "/uploads/avatars/" + newFilename;
-            } catch (IOException e) {
-                throw new RuntimeException("Erreur lors de l'enregistrement de l'avatar : " + e.getMessage());
+            } catch (java.io.IOException ex) {
+                // Ignore failure to strictly bind the registration flow with minor file
+                // processing errors
+                logger.error("Failed to upload avatar during registration", ex);
             }
         }
 
@@ -97,34 +111,31 @@ public class UserService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .address(request.getAddress())
-                .email(request.getEmail())
+                .email(emailNorm)
                 .password(passwordEncoder.encode(request.getPassword()))
                 .birthDate(request.getBirthDate())
                 .role(request.getRole())
                 .faceDescriptor(request.getFaceDescriptor())
                 .profilePictureUrl(profilePictureUrl)
-                .enabled(false)
+                .enabled(true)
                 .build();
 
         User savedUser = userRepository.save(user);
 
         String verificationCode = generateVerificationCode();
-        emailVerificationCodes.put(savedUser.getEmail(), verificationCode);
-        emailCodeExpirations.put(savedUser.getEmail(), LocalDateTime.now().plusHours(24));
-        logger.info("Verification code for {} : {}", savedUser.getEmail(), verificationCode);
+        String codeKey = canonEmail(savedUser.getEmail());
+        emailVerificationCodes.put(codeKey, verificationCode);
+        emailCodeExpirations.put(codeKey, LocalDateTime.now().plusHours(24));
+        logger.info(
+                "Code de verification enregistre pour {} — logs serveur ; /verify-email ou POST /api/auth/resend-verification",
+                codeKey);
+        logger.info("verificationCode={}", verificationCode);
 
         try {
             emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstName(), savedUser.getLastName());
             emailService.sendEmailVerification(savedUser.getEmail(), savedUser.getFirstName(), verificationCode);
-            logger.info("SendGrid emails sent for {}", savedUser.getEmail());
         } catch (Exception e) {
-            logger.error("SendGrid failed for {} : {}", savedUser.getEmail(), e.getMessage(), e);
-            if (!continueOnSendFailure) {
-                throw new RuntimeException(
-                        "Compte cree mais envoi email echoue. Verifiez sendgrid.api.key et l expediteur verifie. "
-                                + e.getMessage());
-            }
-            logger.warn("continue-on-send-failure=true: account kept; check logs or verificationCode in API response.");
+            logger.warn("Notification e-mail (logs uniquement): {}", e.getMessage());
         }
 
         return new RegistrationResult(savedUser, verificationCode);
@@ -147,68 +158,26 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    // Password reset methods
     public void requestPasswordReset(PasswordResetRequest request) {
-        User user = userRepository.findByEmail(request.getEmail().trim())
+        User user = userRepository.findByEmailIgnoreCase(canonEmail(request.getEmail()))
                 .orElseThrow(() -> new RuntimeException("Aucun utilisateur trouvé avec cet email"));
 
+        // Generate 6-digit verification code
         String verificationCode = generateVerificationCode();
-        emailVerificationCodes.put(user.getEmail(), verificationCode);
-        emailCodeExpirations.put(user.getEmail(), LocalDateTime.now().plusHours(24));
-        logger.info("Password reset code for {} : {}", user.getEmail(), verificationCode);
+        String ck = canonEmail(user.getEmail());
+        emailVerificationCodes.put(ck, verificationCode);
+        emailCodeExpirations.put(ck, LocalDateTime.now().plusHours(24));
 
-        try {
-            emailService.sendPasswordResetEmailWithCode(user.getEmail(), user.getFirstName(), verificationCode);
-        } catch (Exception e) {
-            logger.error("SendGrid password reset failed for {} : {}", user.getEmail(), e.getMessage(), e);
-            if (!continueOnSendFailure) {
-                emailVerificationCodes.remove(user.getEmail());
-                emailCodeExpirations.remove(user.getEmail());
-                throw new RuntimeException(
-                        "Envoi de l'e-mail échoué. Vérifiez SendGrid. " + e.getMessage());
-            }
-            logger.warn("continue-on-send-failure=true: code reset dans les logs pour {}", user.getEmail());
-        }
-    }
+        logger.info("📧 ENVOI D'EMAIL DE RESET DÉSACTIVÉ POUR TEST - Code: {}", verificationCode);
+        logger.info("🔑 DEBUG RESET CODE (offline testing): {} for email: {}", verificationCode, user.getEmail());
 
-    public String completePasswordResetWithCode(PasswordResetCompleteRequest request) {
-        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new RuntimeException("Les mots de passe ne correspondent pas");
-        }
-        String email = request.getEmail().trim();
-        String storedCode = emailVerificationCodes.get(email);
-        if (storedCode == null) {
-            throw new RuntimeException("Aucun code de réinitialisation pour cet e-mail — refaites une demande.");
-        }
-        if (!storedCode.equals(request.getVerificationCode().trim())) {
-            throw new RuntimeException("Code incorrect");
-        }
-        LocalDateTime expiration = emailCodeExpirations.get(email);
-        if (expiration == null || LocalDateTime.now().isAfter(expiration)) {
-            emailVerificationCodes.remove(email);
-            emailCodeExpirations.remove(email);
-            throw new RuntimeException("Code expiré — demandez un nouvel e-mail.");
-        }
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        user.setEnabled(true);
-        userRepository.save(user);
-
-        emailVerificationCodes.remove(email);
-        emailCodeExpirations.remove(email);
-
-        try {
-            emailService.sendPasswordResetConfirmationEmail(email);
-        } catch (Exception e) {
-            logger.warn("E-mail de confirmation après reset non envoyé : {}", e.getMessage());
-        }
-
-        return "Mot de passe réinitialisé. Vous pouvez vous connecter.";
+        // Send email with verification code
+        emailService.sendPasswordResetEmailWithCode(user.getEmail(), user.getFirstName(), verificationCode);
     }
 
     public String confirmPasswordReset(PasswordResetConfirm request) {
+        // Validate token
         String email = resetTokens.get(request.getToken());
         if (email == null) {
             throw new RuntimeException("Token de réinitialisation invalide");
@@ -221,16 +190,19 @@ public class UserService {
             throw new RuntimeException("Token de réinitialisation expiré");
         }
 
+        // Validate password confirmation
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             throw new RuntimeException("Les mots de passe ne correspondent pas");
         }
 
-        User user = userRepository.findByEmail(email)
+        // Find user and update password
+        User user = userRepository.findByEmailIgnoreCase(canonEmail(email))
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
+        // Clean up token
         resetTokens.remove(request.getToken());
         tokenExpirations.remove(request.getToken());
 
@@ -239,47 +211,57 @@ public class UserService {
         return "Mot de passe réinitialisé avec succès";
     }
 
+    // Email verification methods
     public String verifyEmail(EmailVerificationRequest request) {
-        String storedCode = emailVerificationCodes.get(request.getEmail());
+        String ck = canonEmail(request.getEmail());
+        // Validate code
+        String storedCode = emailVerificationCodes.get(ck);
         if (storedCode == null) {
             throw new RuntimeException("Aucun code de vérification trouvé pour cet email");
         }
 
+        // Check if code matches
         if (!storedCode.equals(request.getVerificationCode())) {
             throw new RuntimeException("Code de vérification incorrect");
         }
 
-        LocalDateTime exp = emailCodeExpirations.get(request.getEmail());
-        if (exp == null || LocalDateTime.now().isAfter(exp)) {
-            emailVerificationCodes.remove(request.getEmail());
-            emailCodeExpirations.remove(request.getEmail());
+        LocalDateTime expiration = emailCodeExpirations.get(ck);
+        if (expiration == null || LocalDateTime.now().isAfter(expiration)) {
+            emailVerificationCodes.remove(ck);
+            emailCodeExpirations.remove(ck);
             throw new RuntimeException("Code de vérification expiré");
         }
 
-        User user = userRepository.findByEmail(request.getEmail())
+        // Find user and enable account
+        User user = userRepository.findByEmailIgnoreCase(ck)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
         user.setEnabled(true);
         userRepository.save(user);
 
-        emailVerificationCodes.remove(request.getEmail());
-        emailCodeExpirations.remove(request.getEmail());
+        // Clean up code
+        emailVerificationCodes.remove(ck);
+        emailCodeExpirations.remove(ck);
 
         return "Email vérifié avec succès. Votre compte est maintenant activé.";
     }
 
     public String resendVerificationEmail(ResendVerificationRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailIgnoreCase(canonEmail(request.getEmail()))
                 .orElseThrow(() -> new RuntimeException("Aucun utilisateur trouvé avec cet email"));
 
         if (user.isEnabled()) {
             throw new RuntimeException("Ce compte est déjà vérifié");
         }
 
+        // Generate new verification code
         String verificationCode = generateVerificationCode();
-        emailVerificationCodes.put(user.getEmail(), verificationCode);
-        emailCodeExpirations.put(user.getEmail(), LocalDateTime.now().plusHours(24));
-        logger.info("Resend verification code for {} : {}", user.getEmail(), verificationCode);
+        String ck = canonEmail(user.getEmail());
+        emailVerificationCodes.put(ck, verificationCode);
+        emailCodeExpirations.put(ck, LocalDateTime.now().plusHours(24));
+
+        logger.info("📧 ENVOI D'EMAIL DE RENVOI DÉSACTIVÉ POUR TEST - Code: {}", verificationCode);
+        logger.info("🔑 DEBUG RESEND CODE (offline testing): {} for email: {}", verificationCode, user.getEmail());
 
         emailService.resendVerificationEmail(user.getEmail(), user.getFirstName(), verificationCode);
 
@@ -287,36 +269,43 @@ public class UserService {
     }
 
     public String changePasswordWithCode(PasswordChangeRequest request) {
-        String storedCode = emailVerificationCodes.get(request.getEmail());
+        String ck = canonEmail(request.getEmail());
+        // Validate verification code
+        String storedCode = emailVerificationCodes.get(ck);
         if (storedCode == null) {
             throw new RuntimeException("Aucun code de vérification trouvé pour cet email");
         }
 
+        // Check if code matches
         if (!storedCode.equals(request.getVerificationCode())) {
             throw new RuntimeException("Code de vérification incorrect");
         }
 
-        LocalDateTime expiration = emailCodeExpirations.get(request.getEmail());
+        LocalDateTime expiration = emailCodeExpirations.get(ck);
         if (expiration == null || LocalDateTime.now().isAfter(expiration)) {
-            emailVerificationCodes.remove(request.getEmail());
-            emailCodeExpirations.remove(request.getEmail());
+            emailVerificationCodes.remove(ck);
+            emailCodeExpirations.remove(ck);
             throw new RuntimeException("Code de vérification expiré");
         }
 
-        User user = userRepository.findByEmail(request.getEmail())
+        // Find user
+        User user = userRepository.findByEmailIgnoreCase(ck)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
+        // Verify old password
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
             throw new RuntimeException("Ancien mot de passe incorrect");
         }
 
+        // Update password
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
-        emailVerificationCodes.remove(request.getEmail());
-        emailCodeExpirations.remove(request.getEmail());
+        // Clean up verification code
+        emailVerificationCodes.remove(ck);
+        emailCodeExpirations.remove(ck);
 
-        logger.info("Password changed successfully for user: {}", request.getEmail());
+        logger.info("✓ Password changed successfully for user: {}", ck);
 
         return "Mot de passe changé avec succès";
     }
@@ -325,6 +314,7 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
+        // Prevent disabling admin users
         if (user.getRole() == Role.ADMIN && !enabled) {
             throw new RuntimeException("Impossible de désactiver un utilisateur administrateur");
         }
@@ -332,18 +322,16 @@ public class UserService {
         user.setEnabled(enabled);
         userRepository.save(user);
 
-        logger.info("User status updated: {} is now {}", user.getEmail(), enabled ? "enabled" : "disabled");
+        logger.info("✓ User status updated: {} is now {}", user.getEmail(), enabled ? "enabled" : "disabled");
     }
 
     private double calculateEuclideanDistance(String desc1, String desc2) {
-        if (desc1 == null || desc2 == null) {
+        if (desc1 == null || desc2 == null)
             return 1.0;
-        }
         String[] d1Str = desc1.split(",");
         String[] d2Str = desc2.split(",");
-        if (d1Str.length != 128 || d2Str.length != 128) {
+        if (d1Str.length != 128 || d2Str.length != 128)
             return 1.0;
-        }
 
         double sum = 0;
         for (int i = 0; i < 128; i++) {
@@ -358,7 +346,7 @@ public class UserService {
     }
 
     public User signInWithFace(String email, String loginDescriptor) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailIgnoreCase(canonEmail(email))
                 .orElseThrow(() -> new BadCredentialsException("Email ou visage incorrect"));
 
         if (!user.isEnabled()) {

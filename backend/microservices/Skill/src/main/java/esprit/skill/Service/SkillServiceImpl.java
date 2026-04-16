@@ -1,8 +1,10 @@
 package esprit.skill.Service;
 
+
 import esprit.skill.Repositories.SkillRepository;
 import esprit.skill.entities.Skill;
 import esprit.skill.entities.SkillCategory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,14 +12,12 @@ import java.util.List;
 @Service
 public class SkillServiceImpl implements SkillService {
 
-    private final SkillRepository skillRepository;
-
-    public SkillServiceImpl(SkillRepository skillRepository) {
-        this.skillRepository = skillRepository;
-    }
+    @Autowired
+    private SkillRepository skillRepository;
 
     @Override
     public Skill addSkill(Skill skill) {
+        // Vérifier si le skill existe déjà pour ce freelancer
         if (skillRepository.existsByFreelancerIdAndName(skill.getFreelancerId(), skill.getName())) {
             throw new RuntimeException("Skill already exists for this freelancer");
         }
@@ -49,10 +49,12 @@ public class SkillServiceImpl implements SkillService {
     public Skill updateSkill(Long id, Skill updatedSkill) {
         Skill skill = skillRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Skill not found"));
+
         skill.setName(updatedSkill.getName());
         skill.setCategory(updatedSkill.getCategory());
         skill.setLevel(updatedSkill.getLevel());
         skill.setYearsOfExperience(updatedSkill.getYearsOfExperience());
+
         return skillRepository.save(skill);
     }
 

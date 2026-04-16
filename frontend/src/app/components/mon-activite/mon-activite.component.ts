@@ -4,7 +4,6 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { InscriptionService } from '../../services/inscription.service';
 import { ExamenService } from '../../services/examen.service';
-import { SkillService } from '../../services/skill.service';
 import { Inscription } from '../../models/inscription.model';
 import { PassageExamen, Certificat } from '../../models/examen.model';
 import { Skill } from '../../models/skill.model';
@@ -27,8 +26,7 @@ export class MonActiviteComponent implements OnInit {
   constructor(
     public auth: AuthService,
     private inscriptionService: InscriptionService,
-    private examenService: ExamenService,
-    private skillService: SkillService
+    private examenService: ExamenService
   ) {}
 
   get freelancerId(): number | null {
@@ -61,16 +59,13 @@ export class MonActiviteComponent implements OnInit {
       error: () => {},
     });
     this.examenService.getCertificatsByFreelancer(fid).subscribe({
-      next: (d) => (this.certificats = d),
-      error: () => {},
-    });
-    this.skillService.getByFreelancer(fid).subscribe({
       next: (d) => {
-        this.skills = d;
+        this.certificats = d;
         this.loading = false;
       },
       error: () => (this.loading = false),
     });
+    this.skills = [];
   }
 
   categoryLabel(cat: string): string {

@@ -2,10 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { SkillService } from '../../services/skill.service';
 import { InscriptionService } from '../../services/inscription.service';
 import { ExamenService } from '../../services/examen.service';
 import { FormationService } from '../../services/formation.service';
+import { SkillService } from '../../services/skill.service';
 import { UserProfile } from '../../models/auth.model';
 import { Skill } from '../../models/skill.model';
 import { Inscription } from '../../models/inscription.model';
@@ -35,10 +35,10 @@ export class DashboardFreelancerComponent implements OnInit {
 
   constructor(
     public auth: AuthService,
-    private skillService: SkillService,
     private inscriptionService: InscriptionService,
     private examenService: ExamenService,
-    private formationService: FormationService
+    private formationService: FormationService,
+    private skillService: SkillService
   ) {}
 
   get freelancerId(): number | null {
@@ -69,9 +69,9 @@ export class DashboardFreelancerComponent implements OnInit {
       error: () => {},
     });
 
-    this.skillService.getByFreelancer(freelancerId).subscribe({
-      next: (s) => (this.skills = s),
-      error: () => {},
+    this.skillService.getByFreelancerId(freelancerId).subscribe({
+      next: (list) => (this.skills = list ?? []),
+      error: () => (this.skills = []),
     });
 
     this.inscriptionService.getByFreelancer(freelancerId).subscribe({

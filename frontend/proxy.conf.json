@@ -16,15 +16,6 @@
     "ws": false
   },
   {
-    "context": ["/api/projects", "/api/projects/**"],
-    "target": "http://127.0.0.1:8084",
-    "pathRewrite": { "^/api/projects": "/projects" },
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "warn",
-    "ws": false
-  },
-  {
     "context": ["/api/examens", "/api/examens/**"],
     "target": "http://127.0.0.1:8083",
     "secure": false,
@@ -39,6 +30,17 @@
     "changeOrigin": true,
     "logLevel": "warn",
     "ws": false
+  },
+  {
+    "context": ["/api/team-ai", "/api/team-ai/**"],
+    "target": "http://127.0.0.1:5000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "warn",
+    "ws": false,
+    "pathRewrite": {
+      "^/api/team-ai": "/api"
+    }
   },
   {
     "context": ["/api"],

@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   AbstractControl,
   FormBuilder,
@@ -12,7 +12,6 @@ import {
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { FaceIdCaptureComponent } from '../face-id-capture/face-id-capture.component';
-import { MF_VERIFY_PENDING_KEY } from '../../verify-pending-key';
 
 type AccountSegment = 'FREELANCER' | 'PROJECT_OWNER' | 'ADMIN';
 
@@ -21,29 +20,8 @@ type AccountSegment = 'FREELANCER' | 'PROJECT_OWNER' | 'ADMIN';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, FaceIdCaptureComponent],
   templateUrl: './register.component.html',
-  styles: [
-    `
-      .auth-pidev-bg {
-        background: linear-gradient(160deg, #f1f5f9 0%, #e0e7ff 40%, #f8fafc 100%);
-      }
-      .auth-pidev-input {
-        background: #f1f5f9;
-        border: none;
-      }
-      .auth-pidev-input:focus {
-        outline: 2px solid #818cf8;
-        outline-offset: 0;
-        background: #fff;
-      }
-      .segment-active {
-        box-shadow: 0 0 0 2px #4f46e5;
-        background: #fff;
-        color: #312e81;
-      }
-    `,
-  ],
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   form: FormGroup;
   loading = false;
   errorMessage = '';
@@ -52,10 +30,19 @@ export class RegisterComponent {
   showFaceHint = false;
   faceCaptureError = '';
 
+  passwordStrengthScore = 0;
+  passwordStrengthLabel: 'Too weak' | 'Weak' | 'Okay' | 'Strong' = 'Too weak';
+
+  readonly accountSegments: { value: Exclude<AccountSegment, 'ADMIN'>; label: string }[] = [
+    { value: 'FREELANCER', label: 'Freelancer' },
+    { value: 'PROJECT_OWNER', label: 'Project Owner' },
+  ];
+
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
     private toast: ToastService
   ) {
     this.form = this.fb.group(
@@ -72,6 +59,65 @@ export class RegisterComponent {
       },
       { validators: RegisterComponent.passwordsMatch }
     );
+  }
+
+  ngOnInit(): void {
+    const roleParam = this.route.snapshot.queryParamMap.get('role')?.toLowerCase() ?? '';
+    if (roleParam === 'freelancer' || roleParam === 'freelance') {
+      this.form.patchValue({ accountType: 'FREELANCER' });
+    } else if (
+      roleParam === 'project_owner' ||
+      roleParam === 'projectowner' ||
+      roleParam === 'client' ||
+      roleParam === 'owner'
+    ) {
+      this.form.patchValue({ accountType: 'PROJECT_OWNER' });
+    }
+
+    const pwd = this.form.get('password');
+    this.updatePasswordStrength(pwd?.value ?? '');
+    pwd?.valueChanges.subscribe((v) => this.updatePasswordStrength(v ?? ''));
+  }
+
+  get passwordStrengthBars(): number[] {
+    return [1, 2, 3, 4];
+  }
+
+  get passwordStrengthBarClass(): string {
+    if (this.passwordStrengthScore <= 1) return 'bg-red-500';
+    if (this.passwordStrengthScore === 2) return 'bg-amber-500';
+    if (this.passwordStrengthScore === 3) return 'bg-yellow-500';
+    return 'bg-emerald-500';
+  }
+
+  get faceDescriptorSaved(): boolean {
+    return String(this.form.get('faceDescriptor')?.value ?? '').trim().length > 0;
+  }
+
+  private updatePasswordStrength(password: string): void {
+    const score = RegisterComponent.calculatePasswordStrengthScore(password);
+    this.passwordStrengthScore = score;
+    this.passwordStrengthLabel = RegisterComponent.passwordStrengthLabelFor(score);
+  }
+
+  private static calculatePasswordStrengthScore(password: string): number {
+    if (!password) return 0;
+    const lengthScore = password.length >= 12 ? 2 : password.length >= 8 ? 1 : 0;
+    const hasLower = /[a-z]/.test(password);
+    const hasUpper = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSymbol = /[^A-Za-z\d]/.test(password);
+    const variety = [hasLower, hasUpper, hasNumber, hasSymbol].filter(Boolean).length;
+    const varietyScore = variety >= 3 ? 2 : variety >= 2 ? 1 : 0;
+    const raw = lengthScore + varietyScore;
+    return Math.max(0, Math.min(4, raw));
+  }
+
+  private static passwordStrengthLabelFor(score: number): 'Too weak' | 'Weak' | 'Okay' | 'Strong' {
+    if (score <= 1) return 'Too weak';
+    if (score === 2) return 'Weak';
+    if (score === 3) return 'Okay';
+    return 'Strong';
   }
 
   private static passwordsMatch(group: AbstractControl): ValidationErrors | null {
@@ -101,6 +147,23 @@ export class RegisterComponent {
     if (file && file.type.startsWith('image/')) {
       this.avatarPreview = URL.createObjectURL(file);
     }
+  }
+
+  removeAvatar(): void {
+    this.avatarFile = null;
+    if (this.avatarPreview) {
+      URL.revokeObjectURL(this.avatarPreview);
+      this.avatarPreview = null;
+    }
+  }
+
+  onFaceDescriptorReady(csv: string): void {
+    this.form.patchValue({ faceDescriptor: csv });
+    this.faceCaptureError = '';
+  }
+
+  clearFaceDescriptor(): void {
+    this.form.patchValue({ faceDescriptor: '' });
   }
 
   onSubmit(): void {
@@ -137,22 +200,11 @@ export class RegisterComponent {
 
     this.loading = true;
     this.auth.registerPidevMultipart(fd).subscribe({
-      next: (res) => {
+      next: () => {
         this.loading = false;
-        this.toast.success(
-          'Compte créé. Un code à 6 chiffres vous est envoyé par e-mail — saisissez-le à l’étape suivante, puis connectez-vous.'
-        );
-        try {
-          sessionStorage.setItem(
-            MF_VERIFY_PENDING_KEY,
-            JSON.stringify({ email: res.email, code: res.verificationCode ?? '' })
-          );
-        } catch {
-          /* ignore quota / private mode */
-        }
-        void this.router.navigate(['/verify-email'], {
-          queryParams: { email: res.email },
-          state: { verificationCode: res.verificationCode ?? '' },
+        this.toast.success('Compte créé avec succès. Connectez-vous maintenant.');
+        void this.router.navigate(['/login'], {
+          state: { registerNotice: 'Compte créé. Vous pouvez vous connecter.' },
         });
       },
       error: (err) => {

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -7,8 +7,8 @@ import { AuthService } from '../../services/auth.service';
 import { FormationService } from '../../services/formation.service';
 import { InscriptionService } from '../../services/inscription.service';
 import { ToastService } from '../../services/toast.service';
-import { ParcoursIntelligentResponse } from '../../models/parcours.model';
-import { Formation } from '../../models/formation.model';
+import { FormationProposeeDto, ParcoursIntelligentResponse } from '../../models/parcours.model';
+import { Formation, TYPE_FORMATION_LABELS, TypeFormation } from '../../models/formation.model';
 
 @Component({
   selector: 'app-parcours-intelligent',
@@ -16,9 +16,11 @@ import { Formation } from '../../models/formation.model';
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './parcours-intelligent.component.html',
 })
-export class ParcoursIntelligentComponent {
+export class ParcoursIntelligentComponent implements OnInit {
   freelancerIdInput = '';
   data: ParcoursIntelligentResponse | null = null;
+  /** Formations ouvertes (mode sans Skill) affichées avec bouton d’inscription. */
+  formationsDecouverte: FormationProposeeDto[] = [];
   formationsAllerPlusLoin: Formation[] = [];
   loading = false;
   error: string | null = null;
@@ -39,12 +41,29 @@ export class ParcoursIntelligentComponent {
     }
   }
 
+  ngOnInit(): void {
+    if (this.effectiveFreelancerId != null) {
+      this.loadParcours();
+    }
+  }
+
   /** ID utilisé pour le parcours : utilisateur connecté (front) ou champ si présent (admin/démo). */
   get effectiveFreelancerId(): number | null {
     const user = this.auth.getStoredUser();
     if (user?.role === 'FREELANCER' && user.userId) return user.userId;
     const parsed = parseInt(this.freelancerIdInput, 10);
     return Number.isNaN(parsed) || parsed < 1 ? null : parsed;
+  }
+
+  /** Formations de la section principale : gaps métier ou catalogue ouvert (mode dégradé). */
+  get formationsCibleesAffichees(): FormationProposeeDto[] {
+    const prop = this.data?.formationsProposees;
+    if (prop && prop.length > 0) return prop;
+    return this.formationsDecouverte;
+  }
+
+  get modeSansAnalyseCompetences(): boolean {
+    return this.data?.analyseCompetencesDisponible === false;
   }
 
   loadParcours() {
@@ -55,6 +74,7 @@ export class ParcoursIntelligentComponent {
     }
     this.error = null;
     this.data = null;
+    this.formationsDecouverte = [];
     this.formationsAllerPlusLoin = [];
     this.inscritFormationIds = new Set();
     this.loading = true;
@@ -62,21 +82,39 @@ export class ParcoursIntelligentComponent {
       next: (res) => {
         this.data = res;
         this.loading = false;
-        this.loadFormationsAllerPlusLoin(res.categoriesActuelles);
+        if (res.analyseCompetencesDisponible === false) {
+          this.formationService.getOuvertes().subscribe({
+            next: (list) => {
+              const ouvertes = list
+                .filter((f) => f.statut === 'OUVERTE')
+                .sort((a, b) => a.titre.localeCompare(b.titre, 'fr', { sensitivity: 'base' }));
+              this.formationsDecouverte = ouvertes.slice(0, 24).map((f) => ({
+                id: f.id,
+                titre: f.titre,
+                typeFormation: f.typeFormation ?? '',
+                description: f.description ?? undefined,
+                dureeHeures: f.dureeHeures,
+                statut: f.statut,
+              }));
+            },
+            error: () => {},
+          });
+        } else {
+          this.loadFormationsAllerPlusLoin(res.categoriesActuelles);
+          if (!res.categoriesActuelles.length) {
+            this.formationService.getOuvertes().subscribe({
+              next: (list) => {
+                this.formationsAllerPlusLoin = list.slice(0, 12);
+              },
+              error: () => {},
+            });
+          }
+        }
         this.loadInscriptions(id);
       },
       error: (err) => {
         this.loading = false;
-        const status = err?.status ?? err?.statusCode;
-        if (status === 404 || status === 503) {
-          const base = 'Le microservice Parcours Intelligent (Skill) ne répond pas';
-          const hint = status === 503
-            ? ' (503). Vérifiez qu\'Eureka et la Gateway voient SKILL, puis réessayez.'
-            : ' (404). Vérifiez que Skill est démarré et que la Gateway route /api/skills vers SKILL.';
-          this.error = base + hint + ' Test du routage : ouvrez http://localhost:8050/api/skills/ping dans le navigateur.';
-        } else {
-          this.error = err?.error?.message ?? err?.message ?? 'Impossible de charger le parcours.';
-        }
+        this.error = err?.error?.message ?? err?.message ?? 'Impossible de charger le parcours.';
       },
     });
   }
@@ -128,5 +166,14 @@ export class ParcoursIntelligentComponent {
 
   formatCategory(cat: string): string {
     return cat.replace(/_/g, ' ');
+  }
+
+  /** Libellé français pour les types connus (enum), sinon chaîne lisible. */
+  libelleTypeFormation(raw: string | undefined | null): string {
+    if (raw == null || raw === '') return '—';
+    if (Object.prototype.hasOwnProperty.call(TYPE_FORMATION_LABELS, raw)) {
+      return TYPE_FORMATION_LABELS[raw as TypeFormation];
+    }
+    return this.formatCategory(raw);
   }
 }

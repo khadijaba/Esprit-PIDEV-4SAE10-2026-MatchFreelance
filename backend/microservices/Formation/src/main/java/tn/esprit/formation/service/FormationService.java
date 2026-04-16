@@ -3,13 +3,11 @@ package tn.esprit.formation.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import tn.esprit.formation.client.SkillClient;
 import tn.esprit.formation.dto.FormationDto;
 import tn.esprit.formation.entity.Formation;
 import tn.esprit.formation.repository.FormationRepository;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,7 +15,6 @@ import java.util.stream.Collectors;
 public class FormationService {
 
     private final FormationRepository formationRepository;
-    private final SkillClient skillClient;
     private final FormationNotificationService notificationService;
 
     @Transactional(readOnly = true)
@@ -76,17 +73,14 @@ public class FormationService {
     }
 
     /**
-     * Métier avancé : recommandations de formations pour un freelancer.
-     * Retourne les formations ouvertes dont le type correspond à un "gap" du freelancer
-     * (domaines où il n'a pas encore de compétence), pour l'aider à se former.
+     * Formations ouvertes suggérées (le filtrage par compétences Skill a été retiré avec le microservice Skill).
+     *
+     * @param freelancerId conservé pour l’API REST ; non utilisé tant que Skill est absent.
      */
     @Transactional(readOnly = true)
+    @SuppressWarnings("unused")
     public List<FormationDto> getRecommandationsForFreelancer(Long freelancerId) {
-        List<String> categoriesFreelancer = skillClient.getCategoriesByFreelancer(freelancerId);
-        Set<String> categories = Set.copyOf(categoriesFreelancer);
         return formationRepository.findFormationsOuvertes().stream()
-                .filter(f -> f.getTypeFormation() != null
-                        && !categories.contains(f.getTypeFormation().name()))
                 .map(FormationDto::fromEntity)
                 .collect(Collectors.toList());
     }

@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { LayoutComponent } from './components/layout/layout.component';
 import { FrontLayoutComponent } from './components/front-layout/front-layout.component';
-import { adminGuard, authGuard } from './guards/auth.guard';
+import { adminGuard, authGuard, clientGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   // Frontoffice (public)
@@ -13,16 +13,6 @@ export const routes: Routes = [
         path: '',
         loadComponent: () =>
           import('./components/front-home/front-home.component').then((m) => m.FrontHomeComponent),
-      },
-      {
-        path: 'projects',
-        loadComponent: () =>
-          import('./components/front-project-list/front-project-list.component').then((m) => m.FrontProjectListComponent),
-      },
-      {
-        path: 'projects/:id',
-        loadComponent: () =>
-          import('./components/front-project-detail/front-project-detail.component').then((m) => m.FrontProjectDetailComponent),
       },
       {
         path: 'formations',
@@ -117,6 +107,50 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./components/pidev-user-public/pidev-user-public.component').then((m) => m.PidevUserPublicComponent),
       },
+      {
+        path: 'projets',
+        loadComponent: () =>
+          import('./components/matchfreelance-projects/matchfreelance-projects.component').then(
+            (m) => m.MatchfreelanceProjectsComponent
+          ),
+      },
+      {
+        path: 'projets/nouveau',
+        canActivate: [clientGuard],
+        loadComponent: () =>
+          import('./components/project-create-step1/project-create-step1.component').then((m) => m.ProjectCreateStep1Component),
+      },
+      {
+        path: 'projets/nouveau/verification/:id',
+        canActivate: [clientGuard],
+        loadComponent: () =>
+          import('./components/project-verify-publish/project-verify-publish.component').then(
+            (m) => m.ProjectVerifyPublishComponent
+          ),
+      },
+      {
+        path: 'projets/:id/recrutement',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./components/project-recrutement/project-recrutement.component').then(
+            (m) => m.ProjectRecrutementComponent
+          ),
+      },
+      {
+        path: 'projets/:id/supervision',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./components/project-supervision/project-supervision.component').then(
+            (m) => m.ProjectSupervisionComponent
+          ),
+      },
+      {
+        path: 'projets/:id',
+        loadComponent: () =>
+          import('./components/project-owner-detail/project-owner-detail.component').then(
+            (m) => m.ProjectOwnerDetailComponent
+          ),
+      },
     ],
   },
 
@@ -141,26 +175,6 @@ export const routes: Routes = [
         path: 'pidev-user',
         loadComponent: () =>
           import('./components/admin-pidev-user/admin-pidev-user.component').then((m) => m.AdminPidevUserComponent),
-      },
-      {
-        path: 'projects',
-        loadComponent: () =>
-          import('./components/project-list/project-list.component').then((m) => m.ProjectListComponent),
-      },
-      {
-        path: 'projects/new',
-        loadComponent: () =>
-          import('./components/project-form/project-form.component').then((m) => m.ProjectFormComponent),
-      },
-      {
-        path: 'projects/:id/edit',
-        loadComponent: () =>
-          import('./components/project-form/project-form.component').then((m) => m.ProjectFormComponent),
-      },
-      {
-        path: 'projects/:id',
-        loadComponent: () =>
-          import('./components/project-details/project-details.component').then((m) => m.ProjectDetailsComponent),
       },
       {
         path: 'formations',
@@ -196,21 +210,6 @@ export const routes: Routes = [
         path: 'examens/:id',
         loadComponent: () =>
           import('./components/examen-details/examen-details.component').then((m) => m.ExamenDetailsComponent),
-      },
-      {
-        path: 'skills',
-        loadComponent: () =>
-          import('./components/skill-list/skill-list.component').then((m) => m.SkillListComponent),
-      },
-      {
-        path: 'skills/new',
-        loadComponent: () =>
-          import('./components/skill-form/skill-form.component').then((m) => m.SkillFormComponent),
-      },
-      {
-        path: 'skills/:id/edit',
-        loadComponent: () =>
-          import('./components/skill-form/skill-form.component').then((m) => m.SkillFormComponent),
       },
       {
         path: 'rapports',

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -48,7 +49,10 @@ public class LegacyUsersController {
     }
 
     private static String apiRoleFromEntity(Role r) {
-        if (r == Role.PROJECT_OWNER) {
+        if (r == null) {
+            return "FREELANCER";
+        }
+        if (r == Role.PROJECT_OWNER || r == Role.CLIENT) {
             return "CLIENT";
         }
         return r.name();
@@ -58,8 +62,10 @@ public class LegacyUsersController {
         if (apiRole == null || apiRole.isBlank()) {
             throw new IllegalArgumentException("Le rôle est requis");
         }
-        switch (apiRole.trim().toUpperCase()) {
+        switch (apiRole.trim().toUpperCase(Locale.ROOT)) {
             case "CLIENT":
+                return Role.PROJECT_OWNER;
+            case "PROJECT_OWNER":
                 return Role.PROJECT_OWNER;
             case "FREELANCER":
                 return Role.FREELANCER;
@@ -108,9 +114,11 @@ public class LegacyUsersController {
     @PostMapping("/auth/login")
     public ResponseEntity<?> legacyLogin(@Valid @RequestBody SignInRequest request) {
         try {
+            String email = request.getEmail() != null ? request.getEmail().trim() : "";
+            String password = request.getPassword() != null ? request.getPassword() : "";
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-            User user = userRepository.findByEmail(request.getEmail())
+                    new UsernamePasswordAuthenticationToken(email, password));
+            User user = userRepository.findByEmailIgnoreCase(email)
                     .orElseThrow(() -> new BadCredentialsException("Utilisateur introuvable"));
             String token = jwtUtils.generateToken(user.getEmail(), user.getRole().name());
             return ResponseEntity.ok(new LegacyAuthResponse(token, user.getId(), user.getEmail(),
@@ -178,7 +186,7 @@ public class LegacyUsersController {
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        User user = userRepository.findByEmail(auth.getName()).orElse(null);
+        User user = userRepository.findByEmailIgnoreCase(auth.getName()).orElse(null);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
@@ -191,13 +199,16 @@ public class LegacyUsersController {
     public ResponseEntity<?> listUsers(@RequestParam(required = false) String role) {
         List<User> users;
         if (role != null && !role.isBlank()) {
-            Role filter;
             try {
-                filter = roleFromApi(role);
+                Role filter = roleFromApi(role);
+                if (filter == Role.PROJECT_OWNER) {
+                    users = userRepository.findByUserRoleIn(List.of(Role.PROJECT_OWNER, Role.CLIENT));
+                } else {
+                    users = userRepository.findByUserRole(filter);
+                }
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.badRequest().body(e.getMessage());
             }
-            users = userRepository.findByRole(filter);
         } else {
             users = userRepository.findAll();
         }
@@ -214,7 +225,7 @@ public class LegacyUsersController {
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        User user = userRepository.findByEmail(auth.getName()).orElse(null);
+        User user = userRepository.findByEmailIgnoreCase(auth.getName()).orElse(null);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }

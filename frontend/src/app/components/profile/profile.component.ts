@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
-import { SkillService } from '../../services/skill.service';
 import { ExamenService } from '../../services/examen.service';
 import { UserProfile } from '../../models/auth.model';
 import { Skill } from '../../models/skill.model';
@@ -41,7 +40,6 @@ export class ProfileComponent implements OnInit {
     private auth: AuthService,
     private router: Router,
     private http: HttpClient,
-    private skillService: SkillService,
     private examenService: ExamenService
   ) {}
 
@@ -60,7 +58,7 @@ export class ProfileComponent implements OnInit {
         this.profile = data;
         this.loading = false;
         if (data.role === 'FREELANCER' && data.userId) {
-          this.skillService.getByFreelancer(data.userId).subscribe({ next: (s) => (this.skills = s), error: () => {} });
+          this.skills = [];
           this.examenService.getCertificatsByFreelancer(data.userId).subscribe({ next: (c) => (this.certificats = c), error: () => {} });
           this.http.get<BadgesResponse>('/reports/badges.json').subscribe({
             next: (res) => {

@@ -32,3 +32,17 @@ export const adminGuard: CanActivateFn = (route, state) => {
 
   return true;
 };
+
+/** Routes réservées au porteur de projet (PROJECT_OWNER mappé en CLIENT côté front). */
+export const clientGuard: CanActivateFn = (_route, state) => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isLoggedIn()) {
+    return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+  }
+  const r = auth.getStoredUser()?.role;
+  if (r !== 'CLIENT' && r !== 'PROJECT_OWNER') {
+    return router.createUrlTree(['/']);
+  }
+  return true;
+};

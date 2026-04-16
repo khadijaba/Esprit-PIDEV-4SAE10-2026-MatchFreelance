@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="df9b8e03-a71d-4aee-9af4-4629579c5d47" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../../ConfigServer/src/main/resources/config-repo/gateway.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../../ConfigServer/src/main/resources/config-repo/gateway.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ConfigServer/src/main/resources/config-repo/project.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../../ConfigServer/src/main/resources/config-repo/project.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../ConfigServer/src/main/resources/config-repo/skill.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../../ConfigServer/src/main/resources/config-repo/skill.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Gateway/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../Gateway/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Gateway/src/main/java/tn/esprit/gateway/GatewayApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Gateway/src/main/java/tn/esprit/gateway/GatewayApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Gateway/src/main/java/tn/esprit/gateway/filter/NotFoundJsonFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Gateway/src/main/java/tn/esprit/gateway/filter/NotFoundJsonFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Gateway/src/main/java/tn/esprit/gateway/filter/WelcomeJsonFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Gateway/src/main/java/tn/esprit/gateway/filter/WelcomeJsonFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Gateway/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../../Gateway/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/client/ProjectClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/client/ProjectClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/client/SkillClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/client/SkillClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/controller/CertificatController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/controller/CertificatController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/CertificatCarriereService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/CertificatCarriereService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/ParcoursApprenantService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/ParcoursApprenantService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/RankingRecommendationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/RankingRecommendationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/EvaluationApplication.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/EvaluationApplication.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/ExamenLlmClient$QuestionGenMeta.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/ExamenLlmClient$QuestionGenMeta.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/ExamenLlmClient.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/ExamenLlmClient.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/FormationClient.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/FormationClient.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/ProjectClient$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/ProjectClient$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/ProjectClient$2.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/ProjectClient.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/ProjectClient.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/SkillClient$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/SkillClient$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/SkillClient$AttributionOutcome$Kind.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/SkillClient$AttributionOutcome.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/SkillClient$ParcoursIntelligentBrief.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/SkillClient.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/client/SkillClient.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/config/GlobalExceptionHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/config/GlobalExceptionHandler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/controller/CertificatController.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/controller/CertificatController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/controller/RankingRecommendationController.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/controller/RankingRecommendationController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AdaptatifDemarrageDto$AdaptatifDemarrageDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AdaptatifDemarrageDto$AdaptatifDemarrageDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AdaptatifEtapeReponseDto$AdaptatifEtapeReponseDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AdaptatifEtapeReponseDto$AdaptatifEtapeReponseDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AdaptatifRepondreRequest$AdaptatifRepondreRequestBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AdaptatifRepondreRequest$AdaptatifRepondreRequestBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AjouterQuestionsModeleRequest$AjouterQuestionsModeleRequestBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AjouterQuestionsModeleRequest$AjouterQuestionsModeleRequestBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AjouterQuestionsModeleRequest.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AjouterQuestionsModeleRequest.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AmenagementTempsDto$AmenagementTempsDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AmenagementTempsDto$AmenagementTempsDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AmenagementTempsDto.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AmenagementTempsDto.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AmenagementTempsUpsertRequest$AmenagementTempsUpsertRequestBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AmenagementTempsUpsertRequest$AmenagementTempsUpsertRequestBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AmenagementTempsUpsertRequest.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AmenagementTempsUpsertRequest.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AutoGenerateExamenRequest$AutoGenerateExamenRequestBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/AutoGenerateExamenRequest$AutoGenerateExamenRequestBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/CertificatDto$CertificatDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/CertificatDto$CertificatDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/CompetenceAttribueeDto$CompetenceAttribueeDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/CompetenceAttribueeDto$CompetenceAttribueeDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/CorrectionItemDto$CorrectionItemDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/CorrectionItemDto$CorrectionItemDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/DemarrerAdaptatifRequest$DemarrerAdaptatifRequestBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/DemarrerAdaptatifRequest$DemarrerAdaptatifRequestBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ExamenDto$ExamenDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ExamenDto$ExamenDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ExamenDto.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ExamenDto.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/FormationRecoDto$FormationRecoDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/FormationRecoDto$FormationRecoDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/FreelancerProjectMatchingDto$FreelancerProjectMatchingDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/FreelancerProjectMatchingDto$FreelancerProjectMatchingDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/FreelancerProjectMatchingDto.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/FreelancerProjectMatchingDto.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/FreelancerRankingDto$FreelancerRankingDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/FreelancerRankingDto$FreelancerRankingDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ModuleRevisionDto$ModuleRevisionDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ModuleRevisionDto$ModuleRevisionDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ObjectifThemeDto$ObjectifThemeDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ObjectifThemeDto$ObjectifThemeDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ObjectifThemeDto.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ObjectifThemeDto.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ObjectifThemeRequest$ObjectifThemeRequestBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ObjectifThemeRequest$ObjectifThemeRequestBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ObjectifThemeRequest.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ObjectifThemeRequest.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/PassageExamenDto$PassageExamenDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/PassageExamenDto$PassageExamenDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ProjetMarcheDto$ProjetMarcheDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ProjetMarcheDto$ProjetMarcheDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ProjetMarcheDto.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ProjetMarcheDto.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/QuestionDto$QuestionDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/QuestionDto$QuestionDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/QuestionValidationRequest$QuestionValidationRequestBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/QuestionValidationRequest$QuestionValidationRequestBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/QuestionValidationResultDto$QuestionValidationResultDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/QuestionValidationResultDto$QuestionValidationResultDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/RemediationPlanDto$RemediationPlanDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/RemediationPlanDto$RemediationPlanDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/RemediationStepDto$RemediationStepDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/RemediationStepDto$RemediationStepDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ReponseExamenRequest$ReponseExamenRequestBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/ReponseExamenRequest$ReponseExamenRequestBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/RiskEvaluationDto$RiskEvaluationDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/RiskEvaluationDto$RiskEvaluationDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/SkillScoreDto$SkillScoreDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/SkillScoreDto$SkillScoreDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/SuccessPredictionDto$SuccessPredictionDtoBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/dto/SuccessPredictionDto$SuccessPredictionDtoBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/Certificat$CertificatBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/Certificat$CertificatBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/Certificat.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/Certificat.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/Examen$ExamenBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/Examen$ExamenBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/ExamenAdaptatifEtape$ExamenAdaptatifEtapeBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/ExamenAdaptatifEtape$ExamenAdaptatifEtapeBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/ExamenAdaptatifSession$ExamenAdaptatifSessionBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/ExamenAdaptatifSession$ExamenAdaptatifSessionBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/FreelancerAmenagementTemps$FreelancerAmenagementTempsBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/FreelancerAmenagementTemps$FreelancerAmenagementTempsBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/FreelancerObjectifTheme$FreelancerObjectifThemeBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/FreelancerObjectifTheme$FreelancerObjectifThemeBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/FreelancerQuestionTrace$FreelancerQuestionTraceBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/FreelancerQuestionTrace$FreelancerQuestionTraceBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/FreelancerThemeScoreLog$FreelancerThemeScoreLogBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/FreelancerThemeScoreLog$FreelancerThemeScoreLogBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/PassageExamen$PassageExamenBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/PassageExamen$PassageExamenBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/Question$QuestionBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/entity/Question$QuestionBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/exception/ResourceNotFoundException.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/exception/ResourceNotFoundException.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/CertificatCarriereService$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/CertificatCarriereService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/CertificatCarriereService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/CertificatPdfService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/CertificatPdfService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/CertificatService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/CertificatService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ExamenAdaptatifService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ExamenAdaptatifService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ExamenGenerationService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ExamenGenerationService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ExamenQuestionRedactionUtil.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ExamenQuestionRedactionUtil.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ExamenService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ExamenService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/FreelancerAmenagementTempsService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/FreelancerAmenagementTempsService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/FreelancerObjectifThemeService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/FreelancerObjectifThemeService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/FreelancerQuestionTraceService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/FreelancerQuestionTraceService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/FreelancerThemeScoreLogService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/FreelancerThemeScoreLogService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ParcoursApprenantService$ScoredModule.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ParcoursApprenantService$ScoredModule.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ParcoursApprenantService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ParcoursApprenantService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/PassageExamenService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/PassageExamenService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/QuestionAiValidationService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/QuestionAiValidationService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/QuestionParcoursFilter.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/QuestionParcoursFilter.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/RankingRecommendationService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/RankingRecommendationService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/client/SkillClient.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/service/FormationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/service/FormationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Formation/src/test/java/tn/esprit/formation/service/FormationServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/test/java/tn/esprit/formation/service/FormationServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/esprit/project/Controllers/ProjectController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/esprit/project/Controllers/ProjectController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/esprit/project/ProjectApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/esprit/project/ProjectApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/esprit/project/Repositories/ProjectRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/esprit/project/Repositories/ProjectRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/esprit/project/Service/ProjectServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/esprit/project/Service/ProjectServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/esprit/project/config/GlobalExceptionHandler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/esprit/project/entities/Project.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/esprit/project/entities/Project.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/esprit/project/entities/ProjectStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/esprit/project/entities/ProjectStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/esprit/project/ProjectApplicationTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/esprit/project/Controllers/ProjectController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/esprit/project/Controllers/ProjectController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/esprit/project/ProjectApplication.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/esprit/project/ProjectApplication.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/esprit/project/Repositories/ProjectRepository.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/esprit/project/Repositories/ProjectRepository.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/esprit/project/Service/ProjectServiceImpl.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/esprit/project/Service/ProjectServiceImpl.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/esprit/project/config/GlobalExceptionHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/esprit/project/entities/Project.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/esprit/project/entities/Project.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/esprit/project/entities/ProjectStatus.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/esprit/project/entities/ProjectStatus.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/project-0.0.1-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/project-0.0.1-SNAPSHOT.jar.original" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/surefire-reports/TEST-esprit.project.ProjectApplicationTests.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/surefire-reports/esprit.project.ProjectApplicationTests.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/esprit/project/ProjectApplicationTests.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/.idea/encodings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/fix-skill-category-column.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Contollers/ParcoursIntelligentController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Contollers/SkillController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Contollers/SkillController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Repositories/SkillRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Repositories/SkillRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Service/ParcoursIntelligentService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Service/SkillService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Service/SkillService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Service/SkillServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Service/SkillServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/SkillApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/SkillApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/config/RestTemplateConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/dto/FormationDto.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/dto/ParcoursIntelligentResponse.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/dto/SkillDto.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/entities/Skill.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/entities/Skill.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/entities/SkillCategory.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/entities/SkillCategory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/exception/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/exception/GlobalExceptionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/test/java/esprit/skill/SkillApplicationTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/test/java/esprit/skill/SkillApplicationTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/test/resources/application-test.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Contollers/ParcoursIntelligentController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Contollers/SkillController.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Contollers/SkillController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Service/ParcoursIntelligentService$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Service/ParcoursIntelligentService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Service/SkillServiceImpl.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Service/SkillServiceImpl.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/SkillApplication.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/SkillApplication.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/config/RestTemplateConfig.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/dto/FormationDto.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/dto/ParcoursIntelligentResponse$ParcoursIntelligentResponseBuilder.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/dto/ParcoursIntelligentResponse.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/dto/SkillDto$SkillDtoBuilder.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/dto/SkillDto.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/entities/Skill.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/entities/Skill.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/entities/SkillCategory.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/entities/SkillCategory.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/exception/GlobalExceptionHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/exception/GlobalExceptionHandler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/skill-ms.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/skill-ms.jar.original" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/surefire-reports/TEST-esprit.skill.SkillApplicationTests.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/surefire-reports/esprit.skill.SkillApplicationTests.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/test-classes/application-test.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/test-classes/esprit/skill/SkillApplicationTests.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../User/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Config/DataInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Config/DataInitializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Config/GlobalErrorController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Config/GlobalErrorController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Config/MatchFreelanceUserReadyInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Config/MatchFreelanceUserReadyInfo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Config/SendGridConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Controller/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Controller/AuthController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Controller/LegacyUsersController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Controller/LegacyUsersController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Controller/SendGridTestController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Controller/UserController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/DTO/PasswordResetCompleteRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/DTO/PasswordResetCompleteRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Entity/Role.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Entity/Role.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Entity/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Entity/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Repository/UserRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Repository/UserRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Security/JwtUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Security/JwtUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Service/EmailService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Service/EmailService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Service/SendGridEmailService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Service/UserDetailsServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Service/UserDetailsServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Service/UserSearchService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Service/UserSearchService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Service/UserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Service/UserStatsService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Service/UserStatsService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/java/esprit/tn/user/UserApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/esprit/tn/user/UserApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/main/resources/banner.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/resources/banner.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/test/java/Service/SendGridEmailServiceTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../User/src/test/java/esprit/tn/user/UserApplicationTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/test/java/esprit/tn/user/UserApplicationTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../aaaa/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/proxy.conf.cjs" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/proxy.conf.cjs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/proxy.conf.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/proxy.conf.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/public/reports/graph_certificats_par_mois.png" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/public/reports/graph_certificats_par_mois.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/public/reports/graph_inscriptions_par_formation.png" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/public/reports/graph_inscriptions_par_formation.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/public/reports/indicateurs_formations.csv" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/public/reports/indicateurs_formations.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/public/reports/indicateurs_freelancers.csv" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/public/reports/indicateurs_freelancers.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/public/reports/ml_predictions.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/public/reports/ml_predictions.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/public/reports/rappels.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/public/reports/rappels.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/public/reports/recommendations.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/public/reports/recommendations.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/app.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/app.routes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-client/dashboard-client.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-client/dashboard-client.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-client/dashboard-client.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-client/dashboard-client.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-freelancer/dashboard-freelancer.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-freelancer/dashboard-freelancer.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-freelancer/dashboard-freelancer.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-freelancer/dashboard-freelancer.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard/dashboard.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard/dashboard.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard/dashboard.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard/dashboard.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-home/front-home.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/front-home/front-home.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-home/front-home.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/front-home/front-home.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-layout/front-layout.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/front-layout/front-layout.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-project-detail/front-project-detail.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-project-detail/front-project-detail.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-project-list/front-project-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-project-list/front-project-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/layout/layout.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/layout/layout.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/login/login.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/login/login.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/login/login.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/login/login.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/mes-competences/mes-competences.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/mes-competences/mes-competences.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/mes-competences/mes-competences.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/mes-competences/mes-competences.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/mon-activite/mon-activite.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/mon-activite/mon-activite.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/parcours-intelligent/parcours-intelligent.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/parcours-intelligent/parcours-intelligent.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/parcours-intelligent/parcours-intelligent.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/parcours-intelligent/parcours-intelligent.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/pidev-user-public/pidev-user-public.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/pidev-user-public/pidev-user-public.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/profile/profile.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/profile/profile.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/project-details/project-details.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/project-details/project-details.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/project-form/project-form.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/project-form/project-form.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/project-list/project-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/project-list/project-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/ranking-recommendation/ranking-recommendation.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/ranking-recommendation/ranking-recommendation.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/register/register.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/register/register.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/register/register.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/register/register.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/skill-form/skill-form.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/skill-form/skill-form.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/skill-list/skill-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/skill-list/skill-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/verify-email/verify-email.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/verify-email/verify-email.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/guards/auth.guard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/guards/auth.guard.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/models/parcours.model.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/models/parcours.model.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/models/project.model.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/models/project.model.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/models/skill.model.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/models/skill.model.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/services/auth.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/services/auth.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/services/parcours.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/services/parcours.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/services/project.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/services/project.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/services/skill.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/services/skill.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../python/data/analytics.db" beforeDir="false" afterPath="$PROJECT_DIR$/../../../python/data/analytics.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../python/reports/graph_certificats_par_mois.png" beforeDir="false" afterPath="$PROJECT_DIR$/../../../python/reports/graph_certificats_par_mois.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../python/reports/graph_inscriptions_par_formation.png" beforeDir="false" afterPath="$PROJECT_DIR$/../../../python/reports/graph_inscriptions_par_formation.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../python/reports/indicateurs_formations.csv" beforeDir="false" afterPath="$PROJECT_DIR$/../../../python/reports/indicateurs_formations.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../python/reports/indicateurs_freelancers.csv" beforeDir="false" afterPath="$PROJECT_DIR$/../../../python/reports/indicateurs_freelancers.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../python/reports/ml_predictions.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../python/reports/ml_predictions.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../python/reports/recommendations.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../python/reports/recommendations.json" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
+  <component name="KubernetesApiProvider"><![CDATA[{
+  "isMigrated": true
+}]]></component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="3CPt7RaSpGpkAQ5qivxjdTP9Nnf" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.ProjectApplication.executor": "Run",
+    "git-widget-placeholder": "tete",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/benay/Downloads/validation/backend/microservices/Project",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration name="ProjectApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="Project" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="esprit.project.ProjectApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.30387.90" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.30387.90" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="df9b8e03-a71d-4aee-9af4-4629579c5d47" name="Changes" comment="" />
+      <created>1776298865012</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1776298865012</updated>
+      <workItem from="1776298866200" duration="2598000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

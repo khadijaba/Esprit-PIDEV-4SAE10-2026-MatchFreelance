@@ -22,4 +22,9 @@ export interface ParcoursIntelligentResponse {
   categoriesActuelles: string[];
   gapsDetectes: string[];
   formationsProposees: FormationProposeeDto[];
+  /**
+   * Si false : pas d’analyse compétences / gaps (ex. microservice Skill absent) —
+   * l’UI ne doit pas interpréter des listes vides comme « tout couvert ».
+   */
+  analyseCompetencesDisponible?: boolean;
 }

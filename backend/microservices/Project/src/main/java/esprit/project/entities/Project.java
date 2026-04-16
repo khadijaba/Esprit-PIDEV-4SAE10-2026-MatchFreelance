@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "project")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -41,10 +42,10 @@ public class Project {
     private Integer duration; // in days
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(32)")
     private ProjectStatus status;
 
-    @Column(name = "project_owner_id")
+    @Column(name = "project_owner_id", nullable = false)
     private Long projectOwnerId;
 
     @ElementCollection

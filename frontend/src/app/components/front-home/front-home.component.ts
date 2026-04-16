@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { ProjectService } from '../../services/project.service';
 import { FormationService } from '../../services/formation.service';
-import { Project } from '../../models/project.model';
+import { AuthService } from '../../services/auth.service';
 import { Formation } from '../../models/formation.model';
 
 @Component({
@@ -20,25 +19,15 @@ import { Formation } from '../../models/formation.model';
   ],
 })
 export class FrontHomeComponent implements OnInit {
-  openProjects: Project[] = [];
-  loading = true;
   openFormations: Formation[] = [];
   formationsLoading = true;
 
   constructor(
-    private projectService: ProjectService,
-    private formationService: FormationService
+    private formationService: FormationService,
+    public auth: AuthService
   ) {}
 
   ngOnInit() {
-    this.projectService.getByStatus('OPEN').subscribe({
-      next: (data) => {
-        this.openProjects = data.slice(0, 6);
-        this.loading = false;
-      },
-      error: () => (this.loading = false),
-    });
-
     this.formationService.getOuvertes().subscribe({
       next: (data) => {
         this.openFormations = data.slice(0, 6);

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, switchMap, tap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthResponse, LoginRequest, RegisterRequest, User, UserProfile, UserRole } from '../models/auth.model';
 
@@ -76,24 +76,32 @@ export class AuthService {
 
   private hydrateSessionAfterPidevJwt(jwt: JwtResponseDto): Observable<AuthResponse> {
     const role = this.mapPidevRoleToFrontend(jwt.role);
+    const jwtOnlySession: AuthResponse = {
+      token: jwt.token,
+      userId: 0,
+      email: jwt.email,
+      fullName: null,
+      role,
+    };
     sessionStorage.setItem(TOKEN_KEY, jwt.token);
     sessionStorage.setItem(
       USER_KEY,
       JSON.stringify({
-        userId: 0,
-        email: jwt.email,
-        fullName: null,
-        role,
+        userId: jwtOnlySession.userId,
+        email: jwtOnlySession.email,
+        fullName: jwtOnlySession.fullName,
+        role: jwtOnlySession.role,
       })
     );
     return this.getProfile().pipe(
       tap((profile) => {
+        const role = this.mapPidevRoleToFrontend(String(profile.role));
         const res: AuthResponse = {
           token: jwt.token,
           userId: profile.userId,
           email: profile.email,
           fullName: profile.fullName,
-          role: profile.role,
+          role,
         };
         sessionStorage.setItem(TOKEN_KEY, res.token);
         sessionStorage.setItem(USER_KEY, JSON.stringify({
@@ -110,9 +118,14 @@ export class AuthService {
           userId: profile.userId,
           email: profile.email,
           fullName: profile.fullName,
-          role: profile.role,
+          role: this.mapPidevRoleToFrontend(String(profile.role)),
         })
       )
+      ,
+      // Si /api/users/me/profile échoue alors que /api/auth/signin est OK,
+      // on garde une session minimale issue du JWT pour éviter un faux
+      // "Identifiants invalides." (cas observé sur certains comptes PROJECT_OWNER).
+      catchError(() => of(jwtOnlySession))
     );
   }
 
@@ -162,6 +175,12 @@ export class AuthService {
     return !!this.getToken();
   }
 
+  /** Porteur de projet : rôle CLIENT (legacy) ou PROJECT_OWNER (PIDEV), normalisé en CLIENT après login. */
+  isProjectOwner(): boolean {
+    const r = this.getStoredUser()?.role;
+    return r === 'CLIENT' || r === 'PROJECT_OWNER';
+  }
+
   /** Vide la session sans rediriger (utile pour l'intercepteur 401). */
   clearSession(): void {
     sessionStorage.removeItem(TOKEN_KEY);
@@ -180,6 +199,53 @@ export class AuthService {
       return this.http.get<User[]>(API, { params: { role } });
     }
     return this.http.get<User[]>(API);
+  }
+
+  /**
+   * Freelancers pour le Top 5 matching (détail projet).
+   * Préfère GET /api/users/all (alias Gateway) puis retombe sur /api/users.
+   * Normalise id / userId et firstName+lastName → fullName (entité User brute).
+   */
+  getFreelancersForProjectMatching(): Observable<User[]> {
+    const params = { role: 'FREELANCER' };
+    return this.http.get<unknown[]>(`${API}/all`, { params }).pipe(
+      map((rows) => this.mapRawUsersToList(rows)),
+      catchError(() =>
+        this.http.get<unknown[]>(API, { params }).pipe(map((rows) => this.mapRawUsersToList(rows)))
+      )
+    );
+  }
+
+  private mapRawUsersToList(rows: unknown): User[] {
+    if (!Array.isArray(rows)) {
+      return [];
+    }
+    return rows
+      .map((r) => this.normalizeListUser(r as Record<string, unknown>))
+      .filter((u): u is User => u !== null);
+  }
+
+  private normalizeListUser(raw: Record<string, unknown>): User | null {
+    const id = Number(raw['id'] ?? raw['userId']);
+    if (!Number.isFinite(id) || id <= 0) {
+      return null;
+    }
+    const email = String(raw['email'] ?? '');
+    let fullName = (raw['fullName'] as string | null | undefined) ?? null;
+    if (fullName == null || fullName === '') {
+      const fn = raw['firstName'];
+      const ln = raw['lastName'];
+      const parts = [fn, ln]
+        .map((x) => (x == null ? '' : String(x).trim()))
+        .filter((p) => p.length > 0);
+      fullName = parts.length ? parts.join(' ') : null;
+    }
+    const roleRaw = raw['role'];
+    const role: UserRole =
+      roleRaw === 'ADMIN' || roleRaw === 'FREELANCER' || roleRaw === 'CLIENT'
+        ? roleRaw
+        : 'FREELANCER';
+    return { id, email, fullName, role };
   }
 
   /** Profil complet de l'utilisateur connecté (nécessite token). */

@@ -1,4 +1,4 @@
-export type ProjectStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type ProjectStatus = 'DRAFT' | 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 export interface Project {
   id: number;
@@ -6,11 +6,10 @@ export interface Project {
   description: string;
   budget: number;
   duration: number;
+  createdAt: string;
   status: ProjectStatus;
-  projectOwnerId?: number;
+  projectOwnerId: number;
   requiredSkills?: string[];
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface ProjectRequest {
@@ -19,7 +18,7 @@ export interface ProjectRequest {
   budget: number;
   duration: number;
   status?: ProjectStatus;
-  projectOwnerId?: number;
+  projectOwnerId: number;
   requiredSkills?: string[];
 }
 

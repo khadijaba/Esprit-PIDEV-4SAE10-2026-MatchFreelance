@@ -5,7 +5,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import tn.esprit.formation.client.SkillClient;
 import tn.esprit.formation.dto.FormationDto;
 import tn.esprit.formation.entity.Formation;
 import tn.esprit.formation.entity.TypeFormation;
@@ -24,34 +23,29 @@ class FormationServiceTest {
     @Mock
     private FormationRepository formationRepository;
     @Mock
-    private SkillClient skillClient;
-    @Mock
     private FormationNotificationService notificationService;
 
     @InjectMocks
     private FormationService formationService;
 
     @Test
-    void getRecommandationsForFreelancer_filtersOutExistingSkillCategories() {
+    void getRecommandationsForFreelancer_returnsAllOpenFormations() {
         Formation devops = formation("DevOps Mastery", TypeFormation.DEVOPS);
         Formation ai = formation("IA Avancee", TypeFormation.AI);
         Formation data = formation("Data Science", TypeFormation.DATA_SCIENCE);
         when(formationRepository.findFormationsOuvertes()).thenReturn(List.of(devops, ai, data));
-        when(skillClient.getCategoriesByFreelancer(7L)).thenReturn(List.of("AI", "DATA_SCIENCE"));
 
         List<FormationDto> recos = formationService.getRecommandationsForFreelancer(7L);
 
-        assertEquals(1, recos.size());
-        assertEquals("DevOps Mastery", recos.get(0).getTitre());
-        assertEquals(TypeFormation.DEVOPS, recos.get(0).getTypeFormation());
+        assertEquals(3, recos.size());
+        assertTrue(recos.stream().anyMatch(f -> "DevOps Mastery".equals(f.getTitre())));
     }
 
     @Test
-    void getRecommandationsForFreelancer_returnsAllWhenFreelancerHasNoCategories() {
+    void getRecommandationsForFreelancer_returnsAllWhenMultipleOpen() {
         Formation mobile = formation("Mobile", TypeFormation.MOBILE_DEVELOPMENT);
         Formation cyber = formation("Cyber", TypeFormation.CYBERSECURITY);
         when(formationRepository.findFormationsOuvertes()).thenReturn(List.of(mobile, cyber));
-        when(skillClient.getCategoriesByFreelancer(3L)).thenReturn(List.of());
 
         List<FormationDto> recos = formationService.getRecommandationsForFreelancer(3L);
 

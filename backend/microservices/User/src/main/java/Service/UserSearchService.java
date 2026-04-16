@@ -24,8 +24,8 @@ public class UserSearchService {
     }
 
     public Page<User> searchUsers(UserFilterRequest filter) {
-        // Build dynamic specification
-        Specification<User> spec = Specification.where(null);
+        // Base : toujours vrai (évite Specification.where(null), ambigu avec PredicateSpecification en Boot 4)
+        Specification<User> spec = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
 
         // Filter by name (first name or last name)
         if (filter.getName() != null && !filter.getName().trim().isEmpty()) {
@@ -47,7 +47,7 @@ public class UserSearchService {
         // Filter by role
         if (filter.getRole() != null) {
             spec = spec.and((root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("role"), filter.getRole())
+                criteriaBuilder.equal(root.get("userRole"), filter.getRole())
             );
         }
 
@@ -58,10 +58,14 @@ public class UserSearchService {
             );
         }
 
-        // Create sort
+        // Create sort (attribut JPA = userRole, pas role)
+        String sortBy = filter.getSortBy();
+        if (sortBy != null && sortBy.equalsIgnoreCase("role")) {
+            sortBy = "userRole";
+        }
         Sort sort = Sort.by(
             Sort.Direction.fromString(filter.getSortDir()),
-            filter.getSortBy()
+            sortBy
         );
 
         // Create pageable
@@ -76,19 +80,18 @@ public class UserSearchService {
             return new ArrayList<>();
         }
 
-        Specification<User> spec = Specification.where((root, query, criteriaBuilder) ->
+        Specification<User> spec = (root, query, criteriaBuilder) ->
             criteriaBuilder.or(
                 criteriaBuilder.like(root.get("firstName"), "%" + searchTerm + "%"),
                 criteriaBuilder.like(root.get("lastName"), "%" + searchTerm + "%"),
                 criteriaBuilder.like(root.get("email"), "%" + searchTerm + "%")
-            )
-        );
+            );
 
         return userRepository.findAll(spec);
     }
 
     public List<User> findByRole(Role role) {
-        return userRepository.findByRole(role);
+        return userRepository.findByUserRole(role);
     }
 
     public List<User> findActiveUsers() {

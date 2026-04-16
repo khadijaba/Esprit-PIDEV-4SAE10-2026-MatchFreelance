@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-/** Finalise la réinitialisation : e-mail + code reçu par SendGrid + nouveau mot de passe. */
+/** Finalise la réinitialisation : e-mail + code + nouveau mot de passe. */
 public class PasswordResetCompleteRequest {
 
     @Email(message = "Email invalide")
