@@ -1,0 +1,65 @@
+<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+  <div class="mb-4 flex items-center justify-between">
+    <h3 class="text-sm font-medium text-gray-500">Tasks</h3>
+    @if (!showForm) {
+      <button (click)="openForm()"
+        class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700">
+        Add Task
+      </button>
+    }
+  </div>
+
+  @if (showForm) {
+    <div class="mb-4 rounded-lg border border-gray-100 bg-gray-50 p-4">
+      <h4 class="mb-3 text-sm font-medium text-gray-700">{{ editingId ? 'Edit Task' : 'New Task' }}</h4>
+      <div class="space-y-3">
+        <input type="text" [(ngModel)]="formModel.title" placeholder="Task title"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+        <textarea [(ngModel)]="formModel.description" placeholder="Description (optional)" rows="2"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+        <select [(ngModel)]="formModel.status"
+          class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+          <option value="TODO">To Do</option>
+          <option value="IN_PROGRESS">In Progress</option>
+          <option value="DONE">Done</option>
+        </select>
+      </div>
+      <div class="mt-3 flex gap-2">
+        <button (click)="saveTask()" class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
+          {{ editingId ? 'Update' : 'Add' }}
+        </button>
+        <button (click)="closeForm()" class="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          Cancel
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (loading) {
+    <div class="flex justify-center py-8">
+      <div class="h-6 w-6 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600"></div>
+    </div>
+  } @else if (tasks.length === 0) {
+    <p class="text-sm text-gray-500">No tasks yet. Add one to get started.</p>
+  } @else {
+    <div class="space-y-2">
+      @for (t of tasks; track t.id) {
+        <div class="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3">
+          <div class="flex-1">
+            <p class="font-medium text-gray-800">{{ t.title }}</p>
+            @if (t.description) {
+              <p class="mt-1 text-sm text-gray-600">{{ t.description }}</p>
+            }
+            <span class="mt-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="statusClass(t.status)">
+              {{ t.status.replace('_', ' ') }}
+            </span>
+          </div>
+          <div class="flex gap-2">
+            <button (click)="editTask(t)" class="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50">Edit</button>
+            <button (click)="deleteTask(t)" class="rounded-md border border-red-300 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50">Delete</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

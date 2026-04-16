@@ -1,0 +1,121 @@
+<div class="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+  <a routerLink="/projects" class="mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900">
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    Back to projects
+  </a>
+
+  <h1 class="text-2xl font-bold text-slate-900">Swipe to match</h1>
+  <p class="mt-1 text-sm text-slate-600">Swipe right to apply, left to skip. Fill in your application when you swipe right.</p>
+
+  @if (loading) {
+    <div class="flex justify-center py-20">
+      <div class="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+    </div>
+  } @else if (stack.length === 0) {
+    <div class="mt-12 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
+      <p class="font-medium text-slate-700">No more projects to swipe</p>
+      <p class="mt-1 text-sm text-slate-500">You've applied to all open projects or there are no open projects.</p>
+      <a routerLink="/projects" class="mt-4 inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+        Browse all projects
+      </a>
+    </div>
+  } @else {
+    <div class="mt-8">
+      <div class="swipe-stack-container">
+        <div class="swipe-stack" style="perspective: 1000px;">
+          @for (p of backProjects; track p.id) {
+            <div class="swipe-stack-card swipe-stack-card-back" [style.z-index]="10 - $index">
+              <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 class="font-semibold text-slate-900">{{ p.title }}</h3>
+                <p class="mt-2 line-clamp-2 text-sm text-slate-600">{{ p.description || '—' }}</p>
+                <p class="mt-2 text-sm font-medium text-indigo-600">{{ p.minBudget | number:'1.0-0' }}$ – {{ p.maxBudget | number:'1.0-0' }}$</p>
+              </div>
+            </div>
+          }
+          @if (topProject && !selectedProject) {
+            <div class="swipe-stack-card swipe-stack-card-top" style="z-index: 20;">
+              <app-project-swipe-card
+                [project]="topProject"
+                (apply)="onApply($event)"
+                (skip)="onSkip()"
+              />
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+@if (selectedProject) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="closeModal()">
+    <div
+      class="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl"
+      (click)="$event.stopPropagation()"
+    >
+      <h3 class="text-lg font-semibold text-slate-900">Apply to {{ selectedProject.title }}</h3>
+      <p class="mt-1 text-sm text-slate-500">Budget range: {{ selectedProject.minBudget | number:'1.0-0' }}$ – {{ selectedProject.maxBudget | number:'1.0-0' }}$</p>
+
+      <div class="mt-4 space-y-4">
+        <div>
+          <label for="modalProposedBudget" class="mb-1 block text-sm font-medium text-slate-700">Your proposed budget ($) *</label>
+          <input
+            id="modalProposedBudget"
+            type="number"
+            [(ngModel)]="proposedBudget"
+            [min]="selectedProject.minBudget"
+            [max]="selectedProject.maxBudget"
+            step="0.01"
+            class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label for="modalExtraBudget" class="mb-1 block text-sm font-medium text-slate-700">Extra tasks budget ($)</label>
+          <input
+            id="modalExtraBudget"
+            type="number"
+            [(ngModel)]="extraTasksBudget"
+            min="0"
+            step="1"
+            class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+          />
+          <p class="mt-1 text-xs text-slate-500">Optional. Add budget for extra tasks on top of your proposed budget.</p>
+        </div>
+        <div>
+          <label for="modalMessage" class="mb-1 block text-sm font-medium text-slate-700">Message (optional)</label>
+          <textarea
+            id="modalMessage"
+            [(ngModel)]="applyMessage"
+            rows="3"
+            placeholder="Introduce yourself and why you're a good fit..."
+            class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="onSubmitApply()"
+          [disabled]="applying"
+          class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        >
+          @if (applying) {
+            <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+          } @else {
+            Submit application
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

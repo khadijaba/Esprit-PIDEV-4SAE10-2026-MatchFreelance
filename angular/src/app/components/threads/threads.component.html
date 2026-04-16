@@ -1,0 +1,1010 @@
+<div class="main-container">
+  <!-- Left Sidebar - Navigation -->
+  <aside class="sidebar">
+    <div class="logo">
+      <a routerLink="/" class="logo-link">Link</a><span class="logo-freelance">Freelance</span>
+    </div>
+
+    <div class="nav-section">
+      <h3 class="nav-section-title">Discover</h3>
+      <div class="nav-item" [class.active]="activeNav === 'for-you'" (click)="selectNav('for-you')">
+        <div class="dot dot-purple"></div>
+        <span>For you</span>
+      </div>
+      <div class="nav-item" [class.active]="activeNav === 'following'" (click)="selectNav('following')">
+        <div class="dot dot-green"></div>
+        <span>Following</span>
+      </div>
+      <div class="nav-item" [class.active]="activeNav === 'trending'" (click)="selectNav('trending')">
+        <div class="dot dot-orange"></div>
+        <span>Trending</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <h3 class="nav-section-title">Spaces</h3>
+      @for (cat of categories; track cat.value) {
+        <div class="nav-item" [class.active]="activeNav === cat.value" (click)="selectNav(cat.value)">
+          <div class="dot" [ngClass]="{
+            'dot-purple': cat.value === 'Freelancer hub',
+            'dot-green': cat.value === 'Project owners',
+            'dot-blue': cat.value === 'Open collab',
+            'dot-orange': cat.value === 'Skill exchange',
+            'dot-yellow': cat.value === 'jobs'
+          }"></div>
+          <span>{{ cat.label }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="profile-card">
+      <div class="avatar">{{ getInitials(currentUserName) }}</div>
+      <div class="profile-info">
+        <span class="profile-name">{{ currentUserName }}</span>
+        <span class="profile-role">{{ currentUserRole }}</span>
+      </div>
+    </div>
+
+    <button class="compose-btn" (click)="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      <span>New Thread</span>
+    </button>
+
+    <button class="groups-btn" (click)="createNewGroup()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+      <span>Create Group</span>
+    </button>
+  </aside>
+
+  <!-- Private Messages Sidebar -->
+  <aside class="messages-sidebar">
+    <div class="messages-header">
+      <h3>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Messages
+      </h3>
+      @if (unreadMessagesCount > 0) {
+        <span class="unread-badge">{{ unreadMessagesCount }}</span>
+      }
+    </div>
+
+    <div class="messages-list">
+      @if (privateChats.length === 0) {
+        <div class="empty-messages">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#71767b" stroke-width="1.5">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <p>No messages yet</p>
+        </div>
+      }
+
+      @for (chat of privateChats; track chat.id) {
+        <div class="message-item" (click)="openPrivateChat(chat.id)" [class.unread]="chat.unreadCount > 0">
+          <div class="message-avatar">
+            <span *ngIf="!chat.userAvatar">{{ getInitials(chat.userName) }}</span>
+            <img *ngIf="chat.userAvatar" [src]="chat.userAvatar" alt="">
+            <div class="online-indicator" *ngIf="chat.isOnline"></div>
+          </div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="message-user">{{ chat.userName }}</span>
+              <span class="message-time">{{ formatTime(chat.lastMessageTime) }}</span>
+            </div>
+            <div class="message-preview">{{ chat.lastMessage }}</div>
+          </div>
+          @if (chat.unreadCount > 0) {
+            <span class="message-unread-badge">{{ chat.unreadCount }}</span>
+          }
+        </div>
+      }
+    </div>
+  </aside>
+
+  <!-- Main Feed -->
+  <main class="feed">
+    <header class="feed-header">
+      <!-- Header Actions -->
+      <div class="feed-header-top">
+        <div class="header-actions">
+          <!-- Profile Button -->
+          <button class="profile-btn" (click)="toggleProfilePanel()" title="Profile">
+            <div class="profile-avatar">{{ getInitials(currentUserName) }}</div>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Friend Requests Panel -->
+    <div class="friend-requests-panel" *ngIf="showFriendRequestsPanel" (click)="$event.stopPropagation()">
+      <div class="panel-header">
+        <span class="panel-title">Friend Requests</span>
+        <button class="panel-close" (click)="showFriendRequestsPanel = false">✕</button>
+      </div>
+      <div class="friend-requests-list" *ngIf="friendRequests.length > 0">
+        <div class="friend-request-item" *ngFor="let request of friendRequests">
+          <div class="request-avatar">{{ getInitials(request.senderName) }}</div>
+          <div class="request-body">
+            <span class="request-from">{{ request.senderName }}</span>
+            <span class="request-msg" *ngIf="request.message">{{ request.message }}</span>
+            <div class="request-time">{{ formatTime(request.sentAt) }}</div>
+          </div>
+          <div class="request-actions">
+            <button class="btn-accept" (click)="acceptFriendRequest(request.id)">Accept</button>
+            <button class="btn-reject" (click)="rejectFriendRequest(request.id)">Reject</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel-empty" *ngIf="friendRequests.length === 0">
+        No pending friend requests.
+      </div>
+    </div>
+
+    <!-- Notifications Panel -->
+    <div class="notifications-panel" *ngIf="showNotificationsPanel" (click)="$event.stopPropagation()">
+      <div class="notif-panel-header">
+        <span class="notif-panel-title">Notifications</span>
+        <button class="notif-mark-all" (click)="markAllNotificationsRead()" *ngIf="unreadNotificationCount > 0">
+          Mark all read
+        </button>
+        <button class="notif-close" (click)="showNotificationsPanel = false">✕</button>
+      </div>
+      <div class="notif-list" *ngIf="notifications.length > 0">
+        <div class="notif-item" *ngFor="let n of notifications" [class.unread]="!n.isRead">
+          <div class="notif-avatar">{{ getInitials(n.fromUsername ?? 'U') }}</div>
+          <div class="notif-body">
+            <span class="notif-from">{{ n.fromUsername }}</span>
+            <span class="notif-msg"> {{ n.message }}</span>
+            <div class="notif-time">{{ formatTime(n.createdAt) }}</div>
+          </div>
+          <div class="notif-type-badge" [ngClass]="'notif-' + (n.type ?? 'reply').toLowerCase()">
+            {{ n.type }}
+          </div>
+        </div>
+      </div>
+      <div class="notif-empty" *ngIf="notifications.length === 0">
+        No notifications yet.
+      </div>
+    </div>
+
+    <div class="thread-list">
+      @for (thread of getFilteredThreads(); track trackThread($index, thread)) {
+        <div class="post-card" [class.expanded]="(thread.forumPostId && expandedForumPostId === thread.forumPostId) || (!thread.forumPostId && expandedThreadId === thread.id)">
+          <!-- Card Header -->
+          <div class="post-card-header" (click)="thread.forumPostId ? toggleForumPostExpansion(thread) : toggleThreadExpansion(thread)">
+            <div class="post-author-info">
+              <div class="post-avatar">
+                <span *ngIf="!thread.authorAvatar">{{ getInitials(thread.author) }}</span>
+                <img *ngIf="thread.authorAvatar" [src]="thread.authorAvatar" alt="">
+              </div>
+              <div class="post-author-details">
+                <div class="author-name-row">
+                  <span class="author-name">{{ thread.author }}</span>
+                  <span class="author-role-badge" [ngClass]="thread.authorRole.toLowerCase().replace(' ', '-')">
+                    {{ thread.authorRole }}
+                  </span>
+                </div>
+                <span class="post-time">{{ formatTime(thread.createdAt) }}</span>
+              </div>
+            </div>
+
+            <!-- Post Menu -->
+            <div class="post-menu" (click)="$event.stopPropagation()">
+              <button class="post-menu-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="1"></circle>
+                  <circle cx="12" cy="5" r="1"></circle>
+                  <circle cx="12" cy="19" r="1"></circle>
+                </svg>
+              </button>
+              <div class="post-menu-dropdown">
+                <button (click)="startEditPost(thread, $event)" *ngIf="thread.userId === currentUserId">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  Edit
+                </button>
+                <button (click)="deleteForumPost(thread, $event)" class="danger" *ngIf="thread.userId === currentUserId">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                  Delete
+                </button>
+                <button (click)="openReportModal(thread, $event)" class="warn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                  Report
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="post-card-body">
+            <!-- Tags -->
+            <div class="post-tags" *ngIf="thread.tags && thread.tags.length > 0">
+              @for (tag of thread.tags; track tag) {
+                <span class="post-tag" (click)="$event.stopPropagation(); filterByTag(tag)" [class.active]="selectedTag === tag">
+                  {{ tag }}
+                </span>
+              }
+            </div>
+
+            <!-- Edit mode -->
+            <div class="edit-mode" *ngIf="editingPostId === thread.forumPostId" (click)="$event.stopPropagation()">
+              <textarea class="edit-textarea" [(ngModel)]="editingContent" rows="4"></textarea>
+              <div class="edit-actions">
+                <button class="btn-save-edit" (click)="saveEdit(thread)">Save</button>
+                <button class="btn-cancel-edit" (click)="cancelEdit()">Cancel</button>
+              </div>
+            </div>
+
+            <!-- Post Content -->
+            <div class="post-content" *ngIf="editingPostId !== thread.forumPostId">
+              {{ thread.content }}
+            </div>
+
+            <!-- Post Image -->
+            <div class="post-image" *ngIf="thread.image && editingPostId !== thread.forumPostId">
+              <img [src]="thread.image" alt="Post image">
+            </div>
+
+            <!-- Edited Badge -->
+            <span class="edited-badge" *ngIf="thread.isEdited">Edited</span>
+          </div>
+
+          <!-- Card Actions -->
+          <div class="post-card-actions">
+            <button class="action-btn" 
+                    (click)="thread.forumPostId ? toggleForumPostExpansion(thread) : toggleThreadExpansion(thread); $event.stopPropagation()"
+                    [class.active]="(thread.forumPostId && expandedForumPostId === thread.forumPostId) || (!thread.forumPostId && expandedThreadId === thread.id)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>
+              </svg>
+              <span>{{ thread.postCount ?? 0 }}</span>
+            </button>
+
+            <button class="action-btn" 
+                    [class.liked]="thread.forumPostId ? isForumPostLiked(thread.forumPostId) : isLiked(thread.id)"
+                    (click)="thread.forumPostId ? toggleForumLike(thread, $event) : toggleLike(thread, $event)">
+              <svg width="18" height="18" viewBox="0 0 24 24"
+                   [attr.fill]="(thread.forumPostId ? isForumPostLiked(thread.forumPostId!) : isLiked(thread.id)) ? 'currentColor' : 'none'"
+                   stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+              </svg>
+              <span>{{ thread.likes }}</span>
+            </button>
+
+            <button class="action-btn"
+                    [class.retweeted]="thread.forumPostId ? isForumPostReposted(thread.forumPostId) : isRetweeted(thread.id)"
+                    (click)="thread.forumPostId ? toggleForumRepost(thread, $event) : toggleRetweet(thread, $event)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="17 1 21 5 17 9"></polyline>
+                <path d="M3 11V9a4 4 0 014-4h14"></path>
+                <polyline points="7 23 3 19 7 15"></polyline>
+                <path d="M21 13v2a4 4 0 01-4 4H3"></path>
+              </svg>
+              <span>{{ thread.retweets || 0 }}</span>
+            </button>
+
+            <button class="action-btn"
+                    [class.disliked]="thread.forumPostId ? isForumPostDisliked(thread.forumPostId) : isDisliked(thread.id)"
+                    (click)="thread.forumPostId ? toggleForumDislike(thread, $event) : toggleDislike(thread, $event)">
+              <svg width="18" height="18" viewBox="0 0 24 24"
+                   [attr.fill]="(thread.forumPostId ? isForumPostDisliked(thread.forumPostId!) : isDisliked(thread.id)) ? 'currentColor' : 'none'"
+                   stroke="currentColor" stroke-width="2">
+                <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
+              </svg>
+              <span>{{ thread.dislikes || 0 }}</span>
+            </button>
+          </div>
+
+            <!-- Inline Replies Section (Blog threads) -->
+            <div class="inline-replies-container"
+                 *ngIf="!thread.forumPostId && expandedThreadId === thread.id"
+                 (click)="$event.stopPropagation()">
+              <div class="replies-list" *ngIf="threadReplies[thread.id!]?.length">
+                <div class="reply-item" *ngFor="let reply of threadReplies[thread.id!]">
+                  <div class="reply-avatar">{{ getInitials(reply.author) }}</div>
+                  <div class="reply-content-wrapper">
+                    <div class="reply-meta">
+                      <span class="reply-author">{{ reply.author }}</span>
+                      <span class="reply-time">· {{ formatTime(reply.createdAt) }}</span>
+                    </div>
+                    <div class="reply-body">{{ reply.content }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="inline-reply-composer">
+                <div class="reply-avatar">{{ getInitials(currentUserName) }}</div>
+                <div class="composer-body">
+                  <textarea
+                    placeholder="Post your reply"
+                    [(ngModel)]="inlineReplyContent"
+                    (keyup.enter)="submitInlineReply(thread)"
+                  ></textarea>
+                  <div class="composer-actions">
+                    <button class="reply-btn" [disabled]="!inlineReplyContent.trim() || isCheckingContent" (click)="submitInlineReply(thread)">
+                      <span *ngIf="!isCheckingContent">Reply</span>
+                      <span *ngIf="isCheckingContent" class="btn-loader"></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inline Replies Section (Forum posts) -->
+            <div class="inline-replies-container"
+                 *ngIf="thread.forumPostId && expandedForumPostId === thread.forumPostId"
+                 (click)="$event.stopPropagation()">
+              <div class="replies-list" *ngIf="forumReplies[thread.forumPostId]?.length">
+                <div class="reply-item" *ngFor="let reply of forumReplies[thread.forumPostId]">
+                  <div class="reply-avatar">{{ getInitials(reply.author ?? 'U') }}</div>
+                  <div class="reply-content-wrapper">
+                    <div class="reply-meta">
+                      <span class="reply-author">{{ reply.author }}</span>
+                      <span class="reply-time">· {{ formatTime(reply.createdAt) }}</span>
+                    </div>
+                    <div class="reply-body">{{ reply.content }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="inline-reply-composer">
+                <div class="reply-avatar">{{ getInitials(currentUserName) }}</div>
+                <div class="composer-body">
+                  <textarea
+                    placeholder="Post your reply"
+                    [(ngModel)]="forumInlineReplyContent"
+                    (keyup.enter)="submitForumReply(thread)"
+                  ></textarea>
+                  <div class="composer-actions">
+                    <button class="reply-btn" [disabled]="!forumInlineReplyContent.trim() || isCheckingContent" (click)="submitForumReply(thread)">
+                      <span *ngIf="!isCheckingContent">Reply</span>
+                      <span *ngIf="isCheckingContent" class="btn-loader"></span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+        <!-- End of post-card -->
+      }
+      <div class="empty-state" *ngIf="getFilteredThreads().length === 0">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#71767b" stroke-width="1.5">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <p *ngIf="activeNav === 'following'">Follow someone to see their threads here.</p>
+        <p *ngIf="activeNav !== 'following'">No threads found. Be the first to create one!</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Right Sidebar - Discussion Groups -->
+  <aside class="right-sidebar">
+    <!-- My Groups Section -->
+    <div class="widget">
+      <div class="widget-header">
+        <h3 class="widget-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          My Groups
+        </h3>
+        <button class="btn-create-small" (click)="createNewGroup()" title="Create Group">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </button>
+      </div>
+
+      @if (userGroups.length === 0) {
+        <div class="empty-groups">
+          <p>No groups yet</p>
+          <button class="btn-create-group" (click)="createNewGroup()">Create your first group</button>
+        </div>
+      }
+
+      @for (group of userGroups; track group.id) {
+        <div class="group-item-card" (click)="openGroupChat(group)">
+          <div class="group-logo-small">
+            <img [src]="group.logoUrl || getDefaultGroupLogo()" alt="{{ group.name }}" />
+          </div>
+          <div class="group-info">
+            <div class="group-name">{{ group.name }}</div>
+            <div class="group-stats">
+              <span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                </svg>
+                {{ group.memberCount || 0 }}
+              </span>
+              <span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                {{ group.messageCount || 0 }}
+              </span>
+            </div>
+          </div>
+          <button class="btn-leave-group" (click)="leaveGroup(group.id!, $event)" title="Leave group">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Popular Groups Section -->
+    <div class="widget">
+      <h3 class="widget-title">🔥 Popular Groups</h3>
+      
+      @if (popularGroups.length === 0) {
+        <div class="empty-popular">
+          <p>No popular groups yet</p>
+        </div>
+      }
+
+      @for (group of popularGroups; track group.id) {
+        <div class="group-item-card" (click)="openGroupChat(group)">
+          <div class="group-logo-small">
+            <img [src]="group.logoUrl || getDefaultGroupLogo()" alt="{{ group.name }}" />
+          </div>
+          <div class="group-info">
+            <div class="group-name">{{ group.name }}</div>
+            <div class="group-topic">{{ group.topic }}</div>
+            <div class="group-stats">
+              <span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                </svg>
+                {{ group.memberCount || 0 }}
+              </span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+  </aside>
+</div>
+
+<!-- Drawer Overlay -->
+<div class="drawer-overlay" *ngIf="isDrawerOpen" (click)="closeDrawer()"></div>
+
+<!-- Create Thread Drawer -->
+<div class="thread-drawer" [class.open]="isDrawerOpen">
+  <div class="drawer-header">
+    <h2 class="drawer-title">Create Thread</h2>
+    <button class="drawer-close" (click)="closeDrawer()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <div class="drawer-body">
+    <!-- Author preview -->
+    <div class="drawer-author">
+      <div class="avatar">{{ getInitials(currentUserName) }}</div>
+      <div>
+        <div class="author-name">{{ currentUserName }}</div>
+        <span class="author-role-badge freelancer">{{ currentUserRole }}</span>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="drawer-field">
+      <label class="drawer-label">What's on your mind?</label>
+      <textarea
+        class="drawer-textarea"
+        placeholder="Share your thoughts, ask a question, or start a discussion..."
+        [(ngModel)]="newThreadBody"
+        rows="8"
+      ></textarea>
+      <button class="ai-correct-btn" type="button" (click)="correctPostContent()" [disabled]="isCorrectingText" title="AI Grammar Correction">
+        <span *ngIf="!isCorrectingText">✨ AI Correct</span>
+        <span *ngIf="isCorrectingText">🔄 Correcting...</span>
+      </button>
+    </div>
+
+    <!-- Image Upload -->
+    <div class="drawer-field">
+      <label class="drawer-label">Image (optional)</label>
+      <div class="image-upload-area" *ngIf="!newPostImage">
+        <label for="post-image-input" class="image-upload-label">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <span>Click to upload image</span>
+        </label>
+        <input id="post-image-input" type="file" accept="image/*" (change)="onImageSelected($event)" hidden>
+      </div>
+      <div class="image-preview" *ngIf="newPostImage">
+        <img [src]="newPostImage" alt="Preview" class="preview-img">
+        <button class="remove-image-btn" (click)="removeSelectedImage()">✕ Remove</button>
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="drawer-field">
+      <label class="drawer-label">Tags</label>
+      <div class="tag-input-wrapper">
+        <div class="tag-chips">
+          <span class="tag-chip" *ngFor="let tag of newThreadTags">
+            {{ tag }}
+            <button class="tag-chip-remove" (click)="removeTag(tag)">×</button>
+          </span>
+        </div>
+        <input
+          type="text"
+          class="tag-input"
+          placeholder="Add a tag..."
+          [(ngModel)]="tagInput"
+          (keydown)="addTag($event)"
+        />
+      </div>
+
+      <!-- Suggested Tags -->
+      <div class="suggested-tags-container" *ngIf="trendingTags.length > 0">
+        <span class="suggestion-label">Popular:</span>
+        <div class="suggested-tags">
+          <button
+            *ngFor="let tag of trendingTags"
+            class="suggested-tag-pill"
+            [class.active]="newThreadTags.includes(tag.name)"
+            (click)="toggleSuggestedTag(tag.name)"
+          >
+            {{ tag.name }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category / Space -->
+    <div class="drawer-field">
+      <label class="drawer-label">Space</label>
+      <div class="category-pills">
+        @for (cat of categories; track cat.value) {
+          <button
+            class="cat-pill"
+            [class.active]="newThreadCategory === cat.value"
+            (click)="newThreadCategory = cat.value"
+          >{{ cat.label }}</button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-footer">
+    <button class="btn-cancel" (click)="closeDrawer()">Cancel</button>
+    <button
+      class="btn-post"
+      [disabled]="!newThreadBody.trim() || isCheckingContent"
+      (click)="postThread()"
+    >
+      <svg *ngIf="!isCheckingContent" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+      <span *ngIf="!isCheckingContent">Post Thread</span>
+      <span *ngIf="isCheckingContent" class="btn-loader"></span>
+      <span *ngIf="isCheckingContent">AI Checking...</span>
+    </button>
+  </div>
+
+  <!-- Toxicity Warning Popup -->
+  <div class="toxicity-overlay" *ngIf="showToxicityPopup" (click)="showToxicityPopup = false">
+    <div class="toxicity-modal" (click)="$event.stopPropagation()">
+      <div class="toxicity-header">
+        <div class="warning-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <h3>Inappropriate Content Detected</h3>
+      </div>
+      <div class="toxicity-body">
+        <p>Your post contains content that violates our community guidelines regarding safe and respectful interaction.</p>
+        <p class="blocking-note">This post has been blocked by our AI moderation system. Please keep your contributions constructive and respectful.</p>
+      </div>
+      <div class="toxicity-footer">
+        <button class="btn-understand" (click)="showToxicityPopup = false">I understand</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal-overlay" *ngIf="reportingPostId !== null" (click)="closeReportModal()">
+  <div class="report-modal" (click)="$event.stopPropagation()">
+    <div class="report-modal-header">
+      <h3>Report Post</h3>
+      <button class="modal-close-btn" (click)="closeReportModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="report-modal-body">
+      <p class="report-description">Help us understand what's wrong with this post. Your report is anonymous.</p>
+
+      <!-- Report Reasons -->
+      <div class="report-reasons">
+        <label class="report-reason-item" [class.selected]="reportReason === 'spam'">
+          <input type="radio" name="reportReason" value="spam" [(ngModel)]="reportReason">
+          <div class="reason-content">
+            <div class="reason-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+              </svg>
+            </div>
+            <div class="reason-text">
+              <span class="reason-title">Spam</span>
+              <span class="reason-subtitle">Repetitive, misleading, or promotional content</span>
+            </div>
+          </div>
+        </label>
+
+        <label class="report-reason-item" [class.selected]="reportReason === 'harassment'">
+          <input type="radio" name="reportReason" value="harassment" [(ngModel)]="reportReason">
+          <div class="reason-content">
+            <div class="reason-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div class="reason-text">
+              <span class="reason-title">Harassment or Bullying</span>
+              <span class="reason-subtitle">Targeting or attacking someone</span>
+            </div>
+          </div>
+        </label>
+
+        <label class="report-reason-item" [class.selected]="reportReason === 'hate_speech'">
+          <input type="radio" name="reportReason" value="hate_speech" [(ngModel)]="reportReason">
+          <div class="reason-content">
+            <div class="reason-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+              </svg>
+            </div>
+            <div class="reason-text">
+              <span class="reason-title">Hate Speech</span>
+              <span class="reason-subtitle">Discriminatory or offensive content</span>
+            </div>
+          </div>
+        </label>
+
+        <label class="report-reason-item" [class.selected]="reportReason === 'misinformation'">
+          <input type="radio" name="reportReason" value="misinformation" [(ngModel)]="reportReason">
+          <div class="reason-content">
+            <div class="reason-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 16v-4"></path>
+                <path d="M12 8h.01"></path>
+              </svg>
+            </div>
+            <div class="reason-text">
+              <span class="reason-title">False Information</span>
+              <span class="reason-subtitle">Misleading or inaccurate content</span>
+            </div>
+          </div>
+        </label>
+
+        <label class="report-reason-item" [class.selected]="reportReason === 'inappropriate'">
+          <input type="radio" name="reportReason" value="inappropriate" [(ngModel)]="reportReason">
+          <div class="reason-content">
+            <div class="reason-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+            </div>
+            <div class="reason-text">
+              <span class="reason-title">Inappropriate Content</span>
+              <span class="reason-subtitle">Explicit, violent, or disturbing content</span>
+            </div>
+          </div>
+        </label>
+
+        <label class="report-reason-item" [class.selected]="reportReason === 'other'">
+          <input type="radio" name="reportReason" value="other" [(ngModel)]="reportReason">
+          <div class="reason-content">
+            <div class="reason-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="12" cy="5" r="1"></circle>
+                <circle cx="12" cy="19" r="1"></circle>
+              </svg>
+            </div>
+            <div class="reason-text">
+              <span class="reason-title">Other</span>
+              <span class="reason-subtitle">Something else that violates our guidelines</span>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <!-- Additional Details -->
+      <div class="report-details-section">
+        <label class="report-label">Additional Details (Optional)</label>
+        <textarea 
+          class="report-textarea" 
+          [(ngModel)]="reportDescription"
+          placeholder="Provide more context about why you're reporting this post..."
+          rows="4"
+          maxlength="500"
+        ></textarea>
+        <div class="char-counter">{{ reportDescription.length }}/500</div>
+      </div>
+    </div>
+
+    <div class="report-modal-footer">
+      <button class="btn-cancel-report" (click)="closeReportModal()">Cancel</button>
+      <button class="btn-submit-report" (click)="submitReport()" [disabled]="!reportReason">
+        Submit Report
+      </button>
+    </div>
+  </div>
+</div>
+<!-- Notification Component -->
+<app-notification></app-notification>
+
+<!-- Group Chat Modal (Facebook-style) -->
+<div class="group-chat-modal" *ngIf="showGroupChatModal && selectedGroupForChat">
+  <div class="group-chat-container">
+    <!-- Header -->
+    <div class="group-chat-header">
+      <div class="header-left">
+        <img [src]="selectedGroupForChat.logoUrl || getDefaultGroupLogo()" alt="{{ selectedGroupForChat.name }}" class="group-chat-avatar" />
+        <div class="group-chat-info">
+          <h3>{{ selectedGroupForChat.name }}</h3>
+          <span class="member-count">{{ selectedGroupForChat.memberCount }} members</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon-header" (click)="leaveGroup(selectedGroupForChat.id!, $event)" title="Leave group">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+        <button class="btn-close-chat" (click)="closeGroupChat()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="group-chat-messages">
+      @if (groupMessages.length === 0) {
+        <div class="empty-chat">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#71767b" stroke-width="1.5">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <p>No messages yet. Start the conversation!</p>
+        </div>
+      }
+
+      @for (message of groupMessages; track message.id) {
+        <div class="message-wrapper" [class.my-message]="isMyGroupMessage(message)">
+          <div class="message-bubble">
+            <!-- Avatar (for other users) -->
+            @if (!isMyGroupMessage(message)) {
+              <div class="message-avatar">
+                <div class="avatar-circle">
+                  {{ getInitials(message.senderName) }}
+                </div>
+              </div>
+            }
+
+            <!-- Message Content -->
+            <div class="message-content">
+              @if (!isMyGroupMessage(message)) {
+                <div class="message-sender">{{ message.senderName }}</div>
+              }
+              
+              <!-- Voice Message Player -->
+              @if (message.audioData) {
+                <div class="voice-message">
+                  <button class="btn-play-voice" (click)="playVoiceMessage(message.audioData)" title="Play voice message">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                  </button>
+                  <div class="voice-message-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                      <line x1="12" y1="19" x2="12" y2="23"></line>
+                      <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                  </div>
+                  <span class="voice-message-duration">{{ formatDuration(message.audioDuration || 0) }}</span>
+                </div>
+              }
+
+              <!-- Text Message -->
+              @if (!message.audioData) {
+                <div class="message-text">{{ message.content }}</div>
+              }
+
+              <!-- AI Summary -->
+              @if (message.hasSummary) {
+                <div class="ai-summary">
+                  <div class="summary-header">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M12 16v-4"></path>
+                      <path d="M12 8h.01"></path>
+                    </svg>
+                    <span>AI Summary</span>
+                  </div>
+                  <div class="summary-text">{{ message.aiSummary }}</div>
+                </div>
+              }
+
+              <div class="message-footer">
+                <span class="message-time">{{ formatTime(message.sentAt) }}</span>
+                @if (message.isEdited) {
+                  <span class="edited-badge">Edited</span>
+                }
+              </div>
+            </div>
+
+            <!-- Avatar (for my messages) -->
+            @if (isMyGroupMessage(message)) {
+              <div class="message-avatar">
+                <div class="avatar-circle my-avatar">
+                  {{ getInitials(message.senderName) }}
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Message Actions (for other users' messages) -->
+          @if (!isMyGroupMessage(message)) {
+            <button class="btn-report-message" (click)="reportGroupMessage(message.id, $event)" title="Report message">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Input Area -->
+    <div class="group-chat-input">
+      <!-- Emoji Picker -->
+      @if (showGroupEmojiPicker) {
+        <div class="emoji-picker-popup">
+          <div class="emoji-grid">
+            @for (emoji of ['😀', '😂', '😍', '🤔', '👍', '👎', '❤️', '🎉', '🔥', '💯', '✨', '🚀', '💪', '🙌', '👏', '🤝']; track emoji) {
+              <span class="emoji-item" (click)="addGroupEmoji(emoji)">{{ emoji }}</span>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Recording UI -->
+      @if (isRecording) {
+        <div class="recording-ui">
+          <div class="recording-indicator">
+            <span class="recording-dot"></span>
+            <span class="recording-time">{{ formatRecordingTime() }}</span>
+          </div>
+          <button class="btn-cancel-recording" (click)="cancelVoiceRecording()" title="Cancel">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+          <button class="btn-stop-recording" (click)="stopVoiceRecording()" title="Send">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      }
+
+      <!-- Normal Input -->
+      @if (!isRecording) {
+        <div class="input-area">
+          <button class="btn-emoji" (click)="toggleGroupEmojiPicker()" title="Emojis">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+              <line x1="9" y1="9" x2="9.01" y2="9"></line>
+              <line x1="15" y1="9" x2="15.01" y2="9"></line>
+            </svg>
+          </button>
+
+          <input 
+            type="text" 
+            [(ngModel)]="groupMessageContent" 
+            (keyup.enter)="sendGroupMessage()"
+            placeholder="Type a message..."
+            class="message-input"
+            [disabled]="sendingGroupMessage"
+          />
+
+          <button 
+            class="btn-voice-record" 
+            (click)="startVoiceRecording()"
+            [disabled]="sendingGroupMessage"
+            title="Voice message"
+            *ngIf="!groupMessageContent.trim()"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+          </button>
+
+          <button 
+            class="btn-send-message" 
+            (click)="sendGroupMessage()"
+            [disabled]="!groupMessageContent.trim() || sendingGroupMessage"
+            *ngIf="groupMessageContent.trim()"
+          >
+            @if (!sendingGroupMessage) {
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            }
+            @if (sendingGroupMessage) {
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spinner">
+                <circle cx="12" cy="12" r="10"></circle>
+              </svg>
+            }
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</div>

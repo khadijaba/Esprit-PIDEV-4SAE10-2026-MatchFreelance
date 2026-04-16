@@ -1,0 +1,98 @@
+<div class="groups-container">
+  <div class="groups-header">
+    <h1>Discussion Groups</h1>
+    <button class="btn-create" (click)="createGroup()">
+      <i class="fas fa-plus"></i> Create Group
+    </button>
+  </div>
+
+  <!-- Search and Filter -->
+  <div class="search-filter-section">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        (input)="searchGroups()"
+        placeholder="Search groups..."
+        class="search-input"
+      />
+    </div>
+
+    <div class="filter-box">
+      <label>Topic:</label>
+      <select [(ngModel)]="selectedTopic" (change)="filterByTopic()" class="topic-select">
+        <option *ngFor="let topic of topics" [value]="topic">{{ topic }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Popular Groups -->
+  <div class="popular-section" *ngIf="popularGroups.length > 0">
+    <h2>🔥 Popular Groups</h2>
+    <div class="popular-groups">
+      <div 
+        *ngFor="let group of popularGroups" 
+        class="popular-group-card"
+        (click)="viewGroup(group.id)"
+      >
+        <img [src]="group.logoUrl || getDefaultLogo()" alt="{{ group.name }}" />
+        <div class="popular-group-info">
+          <h4>{{ group.name }}</h4>
+          <span class="member-count">{{ group.memberCount }} members</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    <i class="fas fa-spinner fa-spin"></i> Loading groups...
+  </div>
+
+  <!-- Groups Grid -->
+  <div class="groups-grid" *ngIf="!loading">
+    <div 
+      *ngFor="let group of filteredGroups" 
+      class="group-card"
+      (click)="viewGroup(group.id)"
+    >
+      <div class="group-logo">
+        <img [src]="group.logoUrl || getDefaultLogo()" alt="{{ group.name }}" />
+        <span class="privacy-badge" *ngIf="group.isPrivate">
+          <i class="fas fa-lock"></i> Private
+        </span>
+      </div>
+
+      <div class="group-content">
+        <h3>{{ group.name }}</h3>
+        <p class="group-description">{{ group.description }}</p>
+        
+        <div class="group-meta">
+          <span class="topic-badge">{{ group.topic }}</span>
+          <span class="stat">
+            <i class="fas fa-users"></i> {{ group.memberCount }}
+          </span>
+          <span class="stat">
+            <i class="fas fa-comments"></i> {{ group.messageCount }}
+          </span>
+        </div>
+
+        <div class="group-footer">
+          <span class="creator">by {{ group.creatorName }}</span>
+          <span class="activity">
+            <i class="fas fa-clock"></i> {{ group.lastActivityAt | date: 'short' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredGroups.length === 0" class="empty-state">
+      <i class="fas fa-users-slash"></i>
+      <h3>No groups found</h3>
+      <p>Try adjusting your search or create a new group!</p>
+      <button class="btn-create" (click)="createGroup()">Create Group</button>
+    </div>
+  </div>
+</div>

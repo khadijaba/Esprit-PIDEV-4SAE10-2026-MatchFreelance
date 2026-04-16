@@ -1,0 +1,132 @@
+<div class="group-detail-container" *ngIf="group">
+  <!-- Header -->
+  <div class="group-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <img [src]="group.logoUrl || 'https://via.placeholder.com/50'" alt="{{ group.name }}" class="group-avatar" />
+      <div class="group-info">
+        <h2>{{ group.name }}</h2>
+        <span class="member-count">{{ group.memberCount }} members</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-icon" (click)="goToMembers()" title="Members">
+        <i class="fas fa-users"></i>
+      </button>
+      <button class="btn-icon" (click)="goToSettings()" title="Settings">
+        <i class="fas fa-cog"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages Container -->
+  <div class="messages-container">
+    <div *ngIf="messages.length === 0" class="empty-messages">
+      <i class="fas fa-comments"></i>
+      <p>No messages yet. Start the conversation!</p>
+    </div>
+
+    <div *ngFor="let message of messages" 
+         class="message-wrapper"
+         [class.my-message]="isMyMessage(message)">
+      
+      <div class="message-bubble">
+        <!-- Avatar (for other users) -->
+        <div class="message-avatar" *ngIf="!isMyMessage(message)">
+          <div class="avatar-circle">
+            {{ getUserInitials(message.senderName) }}
+          </div>
+        </div>
+
+        <!-- Message Content -->
+        <div class="message-content">
+          <div class="message-header" *ngIf="!isMyMessage(message)">
+            <span class="sender-name">{{ message.senderName }}</span>
+          </div>
+
+          <div class="message-text">
+            {{ message.content }}
+          </div>
+
+          <!-- AI Summary -->
+          <div class="ai-summary" *ngIf="message.hasSummary">
+            <div class="summary-header">
+              <i class="fas fa-robot"></i>
+              <span>AI Summary</span>
+            </div>
+            <div class="summary-text">
+              {{ message.aiSummary }}
+            </div>
+          </div>
+
+          <!-- Message Footer -->
+          <div class="message-footer">
+            <span class="message-time">{{ getMessageTime(message.sentAt) }}</span>
+            <span class="edited-badge" *ngIf="message.isEdited">
+              <i class="fas fa-pencil-alt"></i> Edited
+            </span>
+          </div>
+        </div>
+
+        <!-- Avatar (for my messages) -->
+        <div class="message-avatar" *ngIf="isMyMessage(message)">
+          <div class="avatar-circle my-avatar">
+            {{ getUserInitials(message.senderName) }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message Input -->
+  <div class="message-input-container">
+    <!-- Emoji Picker -->
+    <div class="emoji-picker" *ngIf="showEmojiPicker">
+      <div class="emoji-grid">
+        <span *ngFor="let emoji of ['😀', '😂', '😍', '🤔', '👍', '👎', '❤️', '🎉', '🔥', '💯', '✨', '🚀']" 
+              (click)="addEmoji(emoji)" 
+              class="emoji-item">
+          {{ emoji }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-area">
+      <button class="btn-icon" (click)="toggleEmojiPicker()" title="Emojis">
+        <i class="fas fa-smile"></i>
+      </button>
+
+      <button class="btn-icon" (click)="toggleGifPicker()" title="GIFs">
+        <i class="fas fa-image"></i>
+      </button>
+
+      <input 
+        type="text" 
+        [(ngModel)]="messageContent" 
+        (keyup.enter)="sendMessage()"
+        placeholder="Type a message..."
+        class="message-input"
+        [disabled]="sending"
+      />
+
+      <button 
+        class="btn-send" 
+        (click)="sendMessage()"
+        [disabled]="!messageContent.trim() || sending"
+      >
+        <i class="fas fa-paper-plane" *ngIf="!sending"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="sending"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="loading" class="loading-container">
+  <i class="fas fa-spinner fa-spin"></i>
+  <p>Loading group...</p>
+</div>
