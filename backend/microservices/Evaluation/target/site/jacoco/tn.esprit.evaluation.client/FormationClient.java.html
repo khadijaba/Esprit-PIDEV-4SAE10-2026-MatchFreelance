@@ -2,84 +2,59 @@
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Client vers le microservice Formation via Eureka (lb://FORMATION).
- * Utilisé pour renvoyer des formations recommandées après un examen (feedback).
+ * Client vers le microservice Formation via OpenFeign (service discovery Eureka).
  */
 @Component
 @RequiredArgsConstructor
-<span class="fc" id="L20">@Slf4j</span>
+<span class="fc" id="L16">@Slf4j</span>
 public class FormationClient {
 
-    private static final String FORMATION_SERVICE = &quot;http://FORMATION&quot;;
-    private final RestTemplate restTemplate;
+    private final FormationFeignApi feignApi;
 
     public List&lt;Map&lt;String, Object&gt;&gt; getRecommandationsForFreelancer(Long freelancerId) {
         try {
-<span class="nc" id="L28">            List&lt;Map&lt;String, Object&gt;&gt; data = restTemplate.exchange(</span>
-                    FORMATION_SERVICE + &quot;/api/formations/recommandations/freelancer/&quot; + freelancerId,
-                    HttpMethod.GET,
-                    null,
-<span class="nc" id="L32">                    new ParameterizedTypeReference&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt;() {}</span>
-<span class="nc" id="L33">            ).getBody();</span>
-<span class="nc bnc" id="L34" title="All 2 branches missed.">            return data != null ? data : Collections.emptyList();</span>
-<span class="nc" id="L35">        } catch (Exception e) {</span>
-<span class="nc" id="L36">            log.warn(&quot;Impossible de récupérer les formations recommandées pour freelancer {}: {}&quot;, freelancerId, e.getMessage());</span>
-<span class="nc" id="L37">            return Collections.emptyList();</span>
+<span class="nc" id="L23">            List&lt;Map&lt;String, Object&gt;&gt; data = feignApi.getRecommandationsForFreelancer(freelancerId);</span>
+<span class="nc bnc" id="L24" title="All 2 branches missed.">            return data != null ? data : Collections.emptyList();</span>
+<span class="nc" id="L25">        } catch (Exception e) {</span>
+<span class="nc" id="L26">            log.warn(&quot;Impossible de récupérer les formations recommandées pour freelancer {}: {}&quot;, freelancerId, e.getMessage());</span>
+<span class="nc" id="L27">            return Collections.emptyList();</span>
         }
     }
 
     public List&lt;Map&lt;String, Object&gt;&gt; getModulesByFormation(Long formationId) {
         try {
-<span class="nc" id="L43">            List&lt;Map&lt;String, Object&gt;&gt; data = restTemplate.exchange(</span>
-                    FORMATION_SERVICE + &quot;/api/modules/formation/&quot; + formationId,
-                    HttpMethod.GET,
-                    null,
-<span class="nc" id="L47">                    new ParameterizedTypeReference&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt;() {}</span>
-<span class="nc" id="L48">            ).getBody();</span>
-<span class="nc bnc" id="L49" title="All 2 branches missed.">            return data != null ? data : Collections.emptyList();</span>
-<span class="nc" id="L50">        } catch (Exception e) {</span>
-<span class="nc" id="L51">            log.warn(&quot;Impossible de récupérer les modules formation {}: {}&quot;, formationId, e.getMessage());</span>
-<span class="nc" id="L52">            return Collections.emptyList();</span>
+<span class="nc" id="L33">            List&lt;Map&lt;String, Object&gt;&gt; data = feignApi.getModulesByFormation(formationId);</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">            return data != null ? data : Collections.emptyList();</span>
+<span class="nc" id="L35">        } catch (Exception e) {</span>
+<span class="nc" id="L36">            log.warn(&quot;Impossible de récupérer les modules formation {}: {}&quot;, formationId, e.getMessage());</span>
+<span class="nc" id="L37">            return Collections.emptyList();</span>
         }
     }
 
     public Map&lt;String, Object&gt; getFormationById(Long formationId) {
         try {
-<span class="nc" id="L58">            Map&lt;String, Object&gt; data = restTemplate.exchange(</span>
-                    FORMATION_SERVICE + &quot;/api/formations/&quot; + formationId,
-                    HttpMethod.GET,
-                    null,
-<span class="nc" id="L62">                    new ParameterizedTypeReference&lt;Map&lt;String, Object&gt;&gt;() {}</span>
-<span class="nc" id="L63">            ).getBody();</span>
-<span class="nc bnc" id="L64" title="All 2 branches missed.">            return data != null ? data : Collections.emptyMap();</span>
-<span class="nc" id="L65">        } catch (Exception e) {</span>
-<span class="nc" id="L66">            log.warn(&quot;Impossible de récupérer la formation {}: {}&quot;, formationId, e.getMessage());</span>
-<span class="nc" id="L67">            return Collections.emptyMap();</span>
+<span class="nc" id="L43">            Map&lt;String, Object&gt; data = feignApi.getFormationById(formationId);</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">            return data != null ? data : Collections.emptyMap();</span>
+<span class="nc" id="L45">        } catch (Exception e) {</span>
+<span class="nc" id="L46">            log.warn(&quot;Impossible de récupérer la formation {}: {}&quot;, formationId, e.getMessage());</span>
+<span class="nc" id="L47">            return Collections.emptyMap();</span>
         }
     }
 
     public List&lt;Map&lt;String, Object&gt;&gt; getInscriptionsByFreelancer(Long freelancerId) {
         try {
-<span class="nc" id="L73">            List&lt;Map&lt;String, Object&gt;&gt; data = restTemplate.exchange(</span>
-                    FORMATION_SERVICE + &quot;/api/inscriptions/freelancer/&quot; + freelancerId,
-                    HttpMethod.GET,
-                    null,
-<span class="nc" id="L77">                    new ParameterizedTypeReference&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt;() {}</span>
-<span class="nc" id="L78">            ).getBody();</span>
-<span class="nc bnc" id="L79" title="All 2 branches missed.">            return data != null ? data : Collections.emptyList();</span>
-<span class="nc" id="L80">        } catch (Exception e) {</span>
-<span class="nc" id="L81">            log.warn(&quot;Impossible de récupérer les inscriptions freelancer {}: {}&quot;, freelancerId, e.getMessage());</span>
-<span class="nc" id="L82">            return Collections.emptyList();</span>
+<span class="nc" id="L53">            List&lt;Map&lt;String, Object&gt;&gt; data = feignApi.getInscriptionsByFreelancer(freelancerId);</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">            return data != null ? data : Collections.emptyList();</span>
+<span class="nc" id="L55">        } catch (Exception e) {</span>
+<span class="nc" id="L56">            log.warn(&quot;Impossible de récupérer les inscriptions freelancer {}: {}&quot;, freelancerId, e.getMessage());</span>
+<span class="nc" id="L57">            return Collections.emptyList();</span>
         }
     }
 }

@@ -12,6 +12,7 @@ import tn.esprit.evaluation.dto.FreelancerRankingDto;
 import tn.esprit.evaluation.service.RankingRecommendationService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Ranking global + top performers + recommandation projets basée score/skills.
@@ -23,22 +24,27 @@ public class RankingRecommendationController {
 
     private final RankingRecommendationService rankingRecommendationService;
 
+    @GetMapping(&quot;/ping&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; ping() {
+<span class="nc" id="L29">        return ResponseEntity.ok(Map.of(&quot;ranking&quot;, &quot;deployed&quot;, &quot;paths&quot;, &quot;global, top-performers, project-matching&quot;));</span>
+    }
+
     @GetMapping(&quot;/global&quot;)
     public ResponseEntity&lt;List&lt;FreelancerRankingDto&gt;&gt; getGlobalRanking() {
-<span class="nc" id="L28">        return ResponseEntity.ok(rankingRecommendationService.getGlobalRanking());</span>
+<span class="nc" id="L34">        return ResponseEntity.ok(rankingRecommendationService.getGlobalRanking());</span>
     }
 
     @GetMapping(&quot;/top-performers&quot;)
     public ResponseEntity&lt;List&lt;FreelancerRankingDto&gt;&gt; getTopPerformers(
             @RequestParam(name = &quot;limit&quot;, defaultValue = &quot;10&quot;) int limit) {
-<span class="nc" id="L34">        return ResponseEntity.ok(rankingRecommendationService.getTopPerformers(limit));</span>
+<span class="nc" id="L40">        return ResponseEntity.ok(rankingRecommendationService.getTopPerformers(limit));</span>
     }
 
     @GetMapping(&quot;/freelancer/{freelancerId}/project-matching&quot;)
     public ResponseEntity&lt;FreelancerProjectMatchingDto&gt; getProjectMatching(
             @PathVariable Long freelancerId,
             @RequestParam(name = &quot;limit&quot;, defaultValue = &quot;5&quot;) int limit) {
-<span class="nc" id="L41">        return ResponseEntity.ok(rankingRecommendationService.recommendProjects(freelancerId, limit));</span>
+<span class="nc" id="L47">        return ResponseEntity.ok(rankingRecommendationService.recommendProjects(freelancerId, limit));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

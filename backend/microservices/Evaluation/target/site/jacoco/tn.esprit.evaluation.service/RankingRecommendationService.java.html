@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -24,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Ranking global des freelancers + recommandations projets basées sur les scores et compétences.
+ * Ranking global des freelancers et recommandations de projets (Skill + Project via Eureka).
  */
 @Service
 @RequiredArgsConstructor
@@ -37,233 +36,177 @@ public class RankingRecommendationService {
     private final ProjectClient projectClient;
 
     public List&lt;FreelancerRankingDto&gt; getGlobalRanking() {
-<span class="nc" id="L40">        List&lt;FreelancerRankingDto&gt; rows = aggregateRankingRows();</span>
-<span class="nc" id="L41">        rows.sort(Comparator</span>
-<span class="nc" id="L42">                .comparingInt(FreelancerRankingDto::getGlobalScore).reversed()</span>
-<span class="nc" id="L43">                .thenComparingInt(FreelancerRankingDto::getCertificationsCount).reversed()</span>
-<span class="nc" id="L44">                .thenComparingInt(FreelancerRankingDto::getAverageScore).reversed()</span>
-<span class="nc" id="L45">                .thenComparing(FreelancerRankingDto::getLastAttemptAt, Comparator.nullsLast(Comparator.reverseOrder())));</span>
-<span class="nc bnc" id="L46" title="All 2 branches missed.">        for (int i = 0; i &lt; rows.size(); i++) {</span>
-<span class="nc" id="L47">            rows.get(i).setRank(i + 1);</span>
+<span class="nc" id="L39">        List&lt;FreelancerRankingDto&gt; rows = aggregateRankingRows();</span>
+<span class="nc" id="L40">        rows.sort(Comparator</span>
+<span class="nc" id="L41">                .comparingInt(FreelancerRankingDto::getGlobalScore).reversed()</span>
+<span class="nc" id="L42">                .thenComparingInt(FreelancerRankingDto::getCertificationsCount).reversed()</span>
+<span class="nc" id="L43">                .thenComparingInt(FreelancerRankingDto::getAverageScore).reversed()</span>
+<span class="nc" id="L44">                .thenComparing(FreelancerRankingDto::getLastAttemptAt, Comparator.nullsLast(Comparator.reverseOrder())));</span>
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        for (int i = 0; i &lt; rows.size(); i++) {</span>
+<span class="nc" id="L46">            rows.get(i).setRank(i + 1);</span>
         }
-<span class="nc" id="L49">        return rows;</span>
+<span class="nc" id="L48">        return rows;</span>
     }
 
     public List&lt;FreelancerRankingDto&gt; getTopPerformers(int limit) {
-<span class="nc" id="L53">        int n = Math.max(1, limit);</span>
-<span class="nc" id="L54">        return getGlobalRanking().stream().limit(n).collect(Collectors.toList());</span>
+<span class="nc" id="L52">        int n = Math.max(1, limit);</span>
+<span class="nc" id="L53">        return getGlobalRanking().stream().limit(n).collect(Collectors.toList());</span>
     }
 
     public FreelancerProjectMatchingDto recommendProjects(Long freelancerId, int limit) {
-<span class="nc" id="L58">        int n = Math.max(1, Math.min(limit, 30));</span>
-<span class="nc" id="L59">        Set&lt;String&gt; profileTokens = buildFreelancerSkillTokens(skillClient.getSkillsByFreelancer(freelancerId));</span>
-<span class="nc" id="L60">        List&lt;Map&lt;String, Object&gt;&gt; openProjects = projectClient.getProjetsOuverts();</span>
-<span class="nc" id="L61">        List&lt;ProjetMarcheDto&gt; scored = openProjects.stream()</span>
-<span class="nc" id="L62">                .map(project -&gt; mapProjectWithScore(project, profileTokens))</span>
-<span class="nc" id="L63">                .sorted(Comparator.comparingInt(</span>
-<span class="nc bnc" id="L64" title="All 2 branches missed.">                                (ProjetMarcheDto dto) -&gt; dto.getScoreAlignementSkills() != null ? dto.getScoreAlignementSkills() : 0)</span>
-<span class="nc" id="L65">                        .reversed())</span>
-<span class="nc" id="L66">                .limit(n)</span>
-<span class="nc" id="L67">                .collect(Collectors.toList());</span>
-<span class="nc" id="L68">        return FreelancerProjectMatchingDto.builder()</span>
-<span class="nc" id="L69">                .freelancerId(freelancerId)</span>
-<span class="nc" id="L70">                .profileSkillTokens(profileTokens.size())</span>
-<span class="nc" id="L71">                .projects(scored)</span>
+<span class="nc" id="L57">        Integer examGlobal = resolveExamGlobalScore(freelancerId);</span>
+<span class="nc" id="L58">        List&lt;Map&lt;String, Object&gt;&gt; profileSkills = skillClient.getSkillsByFreelancer(freelancerId);</span>
+<span class="nc" id="L59">        int tokens = profileSkills.size();</span>
+<span class="nc" id="L60">        List&lt;Map&lt;String, Object&gt;&gt; open = projectClient.getProjectsByStatus(&quot;OPEN&quot;);</span>
+<span class="nc" id="L61">        int n = Math.max(1, limit);</span>
+<span class="nc" id="L62">        List&lt;ProjetMarcheDto&gt; projects = open.stream()</span>
+<span class="nc" id="L63">                .map(p -&gt; toProjetMatch(p, profileSkills, examGlobal))</span>
+<span class="nc" id="L64">                .sorted(Comparator.comparingInt(ProjetMarcheDto::getScoreComposite).reversed())</span>
+<span class="nc" id="L65">                .limit(n)</span>
+<span class="nc" id="L66">                .collect(Collectors.toList());</span>
+<span class="nc" id="L67">        return FreelancerProjectMatchingDto.builder()</span>
+<span class="nc" id="L68">                .freelancerId(freelancerId)</span>
+<span class="nc" id="L69">                .profileSkillTokens(tokens)</span>
+<span class="nc" id="L70">                .freelancerExamGlobalScore(examGlobal)</span>
+<span class="nc" id="L71">                .projects(projects)</span>
 <span class="nc" id="L72">                .build();</span>
     }
 
+    private ProjetMarcheDto toProjetMatch(Map&lt;String, Object&gt; p, List&lt;Map&lt;String, Object&gt;&gt; freelancerSkills, Integer examGlobal) {
+<span class="nc" id="L76">        Long id = toLong(p.get(&quot;id&quot;));</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">        String title = p.get(&quot;title&quot;) != null ? p.get(&quot;title&quot;).toString() : &quot;&quot;;</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        Double budget = p.get(&quot;budget&quot;) instanceof Number nb ? nb.doubleValue() : null;</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        Integer duration = p.get(&quot;duration&quot;) instanceof Number nb ? nb.intValue() : null;</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">        String statut = p.get(&quot;status&quot;) != null ? p.get(&quot;status&quot;).toString() : &quot;&quot;;</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L82">        List&lt;String&gt; required = (List&lt;String&gt;) p.get(&quot;requiredSkills&quot;);</span>
+<span class="nc" id="L83">        int align = alignmentScore(freelancerSkills, required);</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        int composite = examGlobal != null</span>
+<span class="nc" id="L85">                ? (int) Math.round(align * 0.6 + examGlobal * 0.4)</span>
+<span class="nc" id="L86">                : align;</span>
+<span class="nc" id="L87">        return ProjetMarcheDto.builder()</span>
+<span class="nc" id="L88">                .id(id)</span>
+<span class="nc" id="L89">                .titre(title)</span>
+<span class="nc" id="L90">                .budget(budget)</span>
+<span class="nc" id="L91">                .dureeJours(duration)</span>
+<span class="nc" id="L92">                .statut(statut)</span>
+<span class="nc" id="L93">                .raison(&quot;Alignement compétences profil / exigences projet&quot;)</span>
+<span class="nc" id="L94">                .scoreAlignementSkills(align)</span>
+<span class="nc" id="L95">                .scoreComposite(composite)</span>
+<span class="nc" id="L96">                .build();</span>
+    }
+
+    private static int alignmentScore(List&lt;Map&lt;String, Object&gt;&gt; freelancerSkills, List&lt;String&gt; required) {
+<span class="nc bnc" id="L100" title="All 4 branches missed.">        if (required == null || required.isEmpty()) {</span>
+<span class="nc" id="L101">            return 50;</span>
+        }
+<span class="nc" id="L103">        Set&lt;String&gt; profile = freelancerSkills.stream()</span>
+<span class="nc" id="L104">                .map(m -&gt; normalizeToken(m.get(&quot;name&quot;)))</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">                .filter(s -&gt; !s.isEmpty())</span>
+<span class="nc" id="L106">                .collect(Collectors.toSet());</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        if (profile.isEmpty()) {</span>
+<span class="nc" id="L108">            return 0;</span>
+        }
+<span class="nc" id="L110">        int match = 0;</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        for (String req : required) {</span>
+<span class="nc" id="L112">            String n = normalizeToken(req);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">            if (n.isEmpty()) {</span>
+<span class="nc" id="L114">                continue;</span>
+            }
+<span class="nc bnc" id="L116" title="All 6 branches missed.">            boolean ok = profile.stream().anyMatch(p -&gt; p.equals(n) || p.contains(n) || n.contains(p));</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">            if (ok) {</span>
+<span class="nc" id="L118">                match++;</span>
+            }
+<span class="nc" id="L120">        }</span>
+<span class="nc" id="L121">        return (int) Math.round(100.0 * match / required.size());</span>
+    }
+
+    private static String normalizeToken(Object name) {
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        if (name == null) {</span>
+<span class="nc" id="L126">            return &quot;&quot;;</span>
+        }
+<span class="nc" id="L128">        return name.toString().toLowerCase(Locale.ROOT).trim();</span>
+    }
+
+    private static Long toLong(Object v) {
+<span class="nc bnc" id="L132" title="All 2 branches missed.">        if (v == null) {</span>
+<span class="nc" id="L133">            return null;</span>
+        }
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        if (v instanceof Number n) {</span>
+<span class="nc" id="L136">            return n.longValue();</span>
+        }
+        try {
+<span class="nc" id="L139">            return Long.parseLong(v.toString());</span>
+<span class="nc" id="L140">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L141">            return null;</span>
+        }
+    }
+
+    private Integer resolveExamGlobalScore(Long freelancerId) {
+<span class="nc" id="L146">        return aggregateRankingRows().stream()</span>
+<span class="nc" id="L147">                .filter(r -&gt; freelancerId.equals(r.getFreelancerId()))</span>
+<span class="nc" id="L148">                .map(FreelancerRankingDto::getGlobalScore)</span>
+<span class="nc" id="L149">                .findFirst()</span>
+<span class="nc" id="L150">                .orElse(null);</span>
+    }
+
     private List&lt;FreelancerRankingDto&gt; aggregateRankingRows() {
-<span class="nc" id="L76">        List&lt;PassageExamen&gt; passages = passageExamenRepository.findAll();</span>
-<span class="nc bnc" id="L77" title="All 2 branches missed.">        if (passages.isEmpty()) {</span>
-<span class="nc" id="L78">            return new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L154">        List&lt;PassageExamen&gt; passages = passageExamenRepository.findAll();</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        if (passages.isEmpty()) {</span>
+<span class="nc" id="L156">            return new ArrayList&lt;&gt;();</span>
         }
 
-<span class="nc" id="L81">        Map&lt;Long, List&lt;PassageExamen&gt;&gt; byFreelancer = passages.stream()</span>
-<span class="nc" id="L82">                .collect(Collectors.groupingBy(PassageExamen::getFreelancerId));</span>
+<span class="nc" id="L159">        Map&lt;Long, List&lt;PassageExamen&gt;&gt; byFreelancer = passages.stream()</span>
+<span class="nc" id="L160">                .collect(Collectors.groupingBy(PassageExamen::getFreelancerId));</span>
 
-<span class="nc" id="L84">        Map&lt;Long, Integer&gt; certifCountByFreelancer = new HashMap&lt;&gt;();</span>
-<span class="nc" id="L85">        certificatRepository.findAll().forEach(c -&gt; {</span>
-<span class="nc bnc" id="L86" title="All 4 branches missed.">            if (c.getPassageExamen() != null &amp;&amp; c.getPassageExamen().getFreelancerId() != null) {</span>
-<span class="nc" id="L87">                Long freelancerId = c.getPassageExamen().getFreelancerId();</span>
-<span class="nc" id="L88">                certifCountByFreelancer.merge(freelancerId, 1, Integer::sum);</span>
+<span class="nc" id="L162">        Map&lt;Long, Integer&gt; certifCountByFreelancer = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L163">        certificatRepository.findAll().forEach(c -&gt; {</span>
+<span class="nc bnc" id="L164" title="All 4 branches missed.">            if (c.getPassageExamen() != null &amp;&amp; c.getPassageExamen().getFreelancerId() != null) {</span>
+<span class="nc" id="L165">                Long freelancerId = c.getPassageExamen().getFreelancerId();</span>
+<span class="nc" id="L166">                certifCountByFreelancer.merge(freelancerId, 1, Integer::sum);</span>
             }
-<span class="nc" id="L90">        });</span>
+<span class="nc" id="L168">        });</span>
 
-<span class="nc" id="L92">        List&lt;FreelancerRankingDto&gt; rows = new ArrayList&lt;&gt;();</span>
-<span class="nc bnc" id="L93" title="All 2 branches missed.">        for (Map.Entry&lt;Long, List&lt;PassageExamen&gt;&gt; entry : byFreelancer.entrySet()) {</span>
-<span class="nc" id="L94">            Long freelancerId = entry.getKey();</span>
-<span class="nc" id="L95">            List&lt;PassageExamen&gt; attempts = entry.getValue();</span>
-<span class="nc" id="L96">            int attemptsCount = attempts.size();</span>
-<span class="nc" id="L97">            int avgScore = (int) Math.round(attempts.stream()</span>
-<span class="nc" id="L98">                    .map(PassageExamen::getScore)</span>
-<span class="nc bnc" id="L99" title="All 2 branches missed.">                    .filter(s -&gt; s != null)</span>
-<span class="nc" id="L100">                    .mapToInt(Integer::intValue)</span>
-<span class="nc" id="L101">                    .average()</span>
-<span class="nc" id="L102">                    .orElse(0.0));</span>
-<span class="nc" id="L103">            long successCount = attempts.stream()</span>
-<span class="nc bnc" id="L104" title="All 2 branches missed.">                    .filter(p -&gt; p.getResultat() == PassageExamen.ResultatExamen.REUSSI)</span>
-<span class="nc" id="L105">                    .count();</span>
-<span class="nc" id="L106">            int successRate = (int) Math.round(100.0 * successCount / Math.max(1, attemptsCount));</span>
-<span class="nc" id="L107">            int certifs = certifCountByFreelancer.getOrDefault(freelancerId, 0);</span>
-<span class="nc" id="L108">            int globalScore = computeGlobalScore(avgScore, successRate, certifs);</span>
-<span class="nc" id="L109">            LocalDateTime lastAttemptAt = attempts.stream()</span>
-<span class="nc" id="L110">                    .map(PassageExamen::getDatePassage)</span>
-<span class="nc bnc" id="L111" title="All 2 branches missed.">                    .filter(d -&gt; d != null)</span>
-<span class="nc" id="L112">                    .max(LocalDateTime::compareTo)</span>
-<span class="nc" id="L113">                    .orElse(null);</span>
-<span class="nc" id="L114">            rows.add(FreelancerRankingDto.builder()</span>
-<span class="nc" id="L115">                    .freelancerId(freelancerId)</span>
-<span class="nc" id="L116">                    .globalScore(globalScore)</span>
-<span class="nc" id="L117">                    .averageScore(avgScore)</span>
-<span class="nc" id="L118">                    .successRate(successRate)</span>
-<span class="nc" id="L119">                    .certificationsCount(certifs)</span>
-<span class="nc" id="L120">                    .attemptsCount(attemptsCount)</span>
-<span class="nc" id="L121">                    .lastAttemptAt(lastAttemptAt)</span>
-<span class="nc" id="L122">                    .build());</span>
-<span class="nc" id="L123">        }</span>
-<span class="nc" id="L124">        return rows;</span>
+<span class="nc" id="L170">        List&lt;FreelancerRankingDto&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        for (Map.Entry&lt;Long, List&lt;PassageExamen&gt;&gt; entry : byFreelancer.entrySet()) {</span>
+<span class="nc" id="L172">            Long freelancerId = entry.getKey();</span>
+<span class="nc" id="L173">            List&lt;PassageExamen&gt; attempts = entry.getValue();</span>
+<span class="nc" id="L174">            int attemptsCount = attempts.size();</span>
+<span class="nc" id="L175">            int avgScore = (int) Math.round(attempts.stream()</span>
+<span class="nc" id="L176">                    .map(PassageExamen::getScore)</span>
+<span class="nc bnc" id="L177" title="All 2 branches missed.">                    .filter(s -&gt; s != null)</span>
+<span class="nc" id="L178">                    .mapToInt(Integer::intValue)</span>
+<span class="nc" id="L179">                    .average()</span>
+<span class="nc" id="L180">                    .orElse(0.0));</span>
+<span class="nc" id="L181">            long successCount = attempts.stream()</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">                    .filter(p -&gt; p.getResultat() == PassageExamen.ResultatExamen.REUSSI)</span>
+<span class="nc" id="L183">                    .count();</span>
+<span class="nc" id="L184">            int successRate = (int) Math.round(100.0 * successCount / Math.max(1, attemptsCount));</span>
+<span class="nc" id="L185">            int certifs = certifCountByFreelancer.getOrDefault(freelancerId, 0);</span>
+<span class="nc" id="L186">            int globalScore = computeGlobalScore(avgScore, successRate, certifs);</span>
+<span class="nc" id="L187">            LocalDateTime lastAttemptAt = attempts.stream()</span>
+<span class="nc" id="L188">                    .map(PassageExamen::getDatePassage)</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">                    .filter(d -&gt; d != null)</span>
+<span class="nc" id="L190">                    .max(LocalDateTime::compareTo)</span>
+<span class="nc" id="L191">                    .orElse(null);</span>
+<span class="nc" id="L192">            rows.add(FreelancerRankingDto.builder()</span>
+<span class="nc" id="L193">                    .freelancerId(freelancerId)</span>
+<span class="nc" id="L194">                    .globalScore(globalScore)</span>
+<span class="nc" id="L195">                    .averageScore(avgScore)</span>
+<span class="nc" id="L196">                    .successRate(successRate)</span>
+<span class="nc" id="L197">                    .certificationsCount(certifs)</span>
+<span class="nc" id="L198">                    .attemptsCount(attemptsCount)</span>
+<span class="nc" id="L199">                    .lastAttemptAt(lastAttemptAt)</span>
+<span class="nc" id="L200">                    .build());</span>
+<span class="nc" id="L201">        }</span>
+<span class="nc" id="L202">        return rows;</span>
     }
 
-    /**
-     * Score global 0-100 : exam performance + régularité de réussite + bonus certifications.
-     */
     private static int computeGlobalScore(int averageScore, int successRate, int certifs) {
-<span class="nc" id="L131">        int certifBonus = Math.min(100, certifs * 20);</span>
-<span class="nc" id="L132">        double weighted = averageScore * 0.6 + successRate * 0.3 + certifBonus * 0.1;</span>
-<span class="nc" id="L133">        int rounded = (int) Math.round(weighted);</span>
-<span class="nc" id="L134">        return Math.max(0, Math.min(100, rounded));</span>
-    }
-
-    private static ProjetMarcheDto mapProjectWithScore(Map&lt;String, Object&gt; project, Set&lt;String&gt; profileTokens) {
-<span class="nc" id="L138">        int align = scoreAlignementProjet(project, profileTokens);</span>
-<span class="nc" id="L139">        String title = valueAsString(project.get(&quot;title&quot;));</span>
-<span class="nc bnc" id="L140" title="All 2 branches missed.">        String reason = align &gt;= 75</span>
-<span class="nc" id="L141">                ? &quot;Très bonne adéquation avec vos compétences principales.&quot;</span>
-<span class="nc bnc" id="L142" title="All 2 branches missed.">                : align &gt;= 45</span>
-<span class="nc" id="L143">                ? &quot;Adéquation partielle : projet pertinent avec montée en compétence possible.&quot;</span>
-<span class="nc" id="L144">                : &quot;Faible adéquation : intéressant surtout en apprentissage.&quot;;</span>
-<span class="nc" id="L145">        return ProjetMarcheDto.builder()</span>
-<span class="nc" id="L146">                .id(toLong(project.get(&quot;id&quot;)))</span>
-<span class="nc" id="L147">                .titre(title)</span>
-<span class="nc" id="L148">                .budget(toDouble(project.get(&quot;budget&quot;)))</span>
-<span class="nc" id="L149">                .dureeJours(toInt(project.get(&quot;duration&quot;)))</span>
-<span class="nc" id="L150">                .statut(valueAsString(project.get(&quot;status&quot;)))</span>
-<span class="nc" id="L151">                .scoreAlignementSkills(align)</span>
-<span class="nc" id="L152">                .raison(reason)</span>
-<span class="nc" id="L153">                .build();</span>
-    }
-
-    private static Set&lt;String&gt; buildFreelancerSkillTokens(List&lt;Map&lt;String, Object&gt;&gt; skills) {
-<span class="nc" id="L157">        Set&lt;String&gt; tokens = new HashSet&lt;&gt;();</span>
-<span class="nc bnc" id="L158" title="All 2 branches missed.">        for (Map&lt;String, Object&gt; s : skills) {</span>
-<span class="nc" id="L159">            addTokens(tokens, valueAsString(s.get(&quot;name&quot;)));</span>
-<span class="nc" id="L160">            addTokens(tokens, valueAsString(s.get(&quot;category&quot;)));</span>
-<span class="nc" id="L161">            addTokens(tokens, valueAsString(s.get(&quot;level&quot;)));</span>
-<span class="nc" id="L162">        }</span>
-<span class="nc" id="L163">        return tokens;</span>
-    }
-
-    private static void addTokens(Set&lt;String&gt; tokens, String value) {
-<span class="nc bnc" id="L167" title="All 4 branches missed.">        if (value == null || value.isBlank()) {</span>
-<span class="nc" id="L168">            return;</span>
-        }
-<span class="nc" id="L170">        String up = value.toUpperCase(Locale.ROOT);</span>
-<span class="nc" id="L171">        tokens.add(up);</span>
-<span class="nc bnc" id="L172" title="All 2 branches missed.">        for (String token : up.split(&quot;[^A-Z0-9]+&quot;)) {</span>
-<span class="nc bnc" id="L173" title="All 2 branches missed.">            if (token.length() &gt;= 2) {</span>
-<span class="nc" id="L174">                tokens.add(token);</span>
-            }
-        }
-<span class="nc" id="L177">    }</span>
-
-    /**
-     * 0-100 : part des skills requises couvertes par le profil.
-     */
-    private static int scoreAlignementProjet(Map&lt;String, Object&gt; project, Set&lt;String&gt; profileTokens) {
-<span class="nc" id="L183">        Object requiredSkills = project.get(&quot;requiredSkills&quot;);</span>
-<span class="nc bnc" id="L184" title="All 4 branches missed.">        if (!(requiredSkills instanceof List&lt;?&gt; list) || list.isEmpty()) {</span>
-<span class="nc bnc" id="L185" title="All 2 branches missed.">            return profileTokens.isEmpty() ? 0 : 20;</span>
-        }
-<span class="nc" id="L187">        int matched = 0;</span>
-<span class="nc" id="L188">        int total = 0;</span>
-<span class="nc bnc" id="L189" title="All 2 branches missed.">        for (Object req : list) {</span>
-<span class="nc" id="L190">            String reqText = extractRequiredSkillText(req);</span>
-<span class="nc bnc" id="L191" title="All 4 branches missed.">            if (reqText == null || reqText.isBlank()) {</span>
-<span class="nc" id="L192">                continue;</span>
-            }
-<span class="nc" id="L194">            total++;</span>
-<span class="nc" id="L195">            String up = reqText.toUpperCase(Locale.ROOT);</span>
-<span class="nc bnc" id="L196" title="All 4 branches missed.">            boolean ok = profileTokens.stream().anyMatch(tok -&gt; up.contains(tok) || tok.contains(up));</span>
-<span class="nc bnc" id="L197" title="All 2 branches missed.">            if (ok) {</span>
-<span class="nc" id="L198">                matched++;</span>
-            }
-<span class="nc" id="L200">        }</span>
-<span class="nc bnc" id="L201" title="All 2 branches missed.">        if (total == 0) {</span>
-<span class="nc bnc" id="L202" title="All 2 branches missed.">            return profileTokens.isEmpty() ? 0 : 20;</span>
-        }
-<span class="nc" id="L204">        return (int) Math.round(100.0 * matched / total);</span>
-    }
-
-    private static String extractRequiredSkillText(Object req) {
-<span class="nc bnc" id="L208" title="All 2 branches missed.">        if (req == null) {</span>
-<span class="nc" id="L209">            return null;</span>
-        }
-<span class="nc bnc" id="L211" title="All 2 branches missed.">        if (req instanceof Map&lt;?, ?&gt; m) {</span>
-<span class="nc bnc" id="L212" title="All 2 branches missed.">            if (m.get(&quot;name&quot;) != null) {</span>
-<span class="nc" id="L213">                return m.get(&quot;name&quot;).toString();</span>
-            }
-<span class="nc bnc" id="L215" title="All 2 branches missed.">            if (m.get(&quot;skillName&quot;) != null) {</span>
-<span class="nc" id="L216">                return m.get(&quot;skillName&quot;).toString();</span>
-            }
-<span class="nc" id="L218">            return m.toString();</span>
-        }
-<span class="nc" id="L220">        return req.toString();</span>
-    }
-
-    private static String valueAsString(Object o) {
-<span class="nc bnc" id="L224" title="All 2 branches missed.">        return o != null ? o.toString() : null;</span>
-    }
-
-    private static Long toLong(Object o) {
-<span class="nc bnc" id="L228" title="All 2 branches missed.">        if (o == null) {</span>
-<span class="nc" id="L229">            return null;</span>
-        }
-<span class="nc bnc" id="L231" title="All 2 branches missed.">        if (o instanceof Number n) {</span>
-<span class="nc" id="L232">            return n.longValue();</span>
-        }
-        try {
-<span class="nc" id="L235">            return Long.parseLong(o.toString());</span>
-<span class="nc" id="L236">        } catch (NumberFormatException e) {</span>
-<span class="nc" id="L237">            return null;</span>
-        }
-    }
-
-    private static Integer toInt(Object o) {
-<span class="nc bnc" id="L242" title="All 2 branches missed.">        if (o == null) {</span>
-<span class="nc" id="L243">            return null;</span>
-        }
-<span class="nc bnc" id="L245" title="All 2 branches missed.">        if (o instanceof Number n) {</span>
-<span class="nc" id="L246">            return n.intValue();</span>
-        }
-        try {
-<span class="nc" id="L249">            return Integer.parseInt(o.toString());</span>
-<span class="nc" id="L250">        } catch (NumberFormatException e) {</span>
-<span class="nc" id="L251">            return null;</span>
-        }
-    }
-
-    private static Double toDouble(Object o) {
-<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (o == null) {</span>
-<span class="nc" id="L257">            return null;</span>
-        }
-<span class="nc bnc" id="L259" title="All 2 branches missed.">        if (o instanceof Number n) {</span>
-<span class="nc" id="L260">            return n.doubleValue();</span>
-        }
-        try {
-<span class="nc" id="L263">            return Double.parseDouble(o.toString());</span>
-<span class="nc" id="L264">        } catch (NumberFormatException e) {</span>
-<span class="nc" id="L265">            return null;</span>
-        }
+<span class="nc" id="L206">        int certifBonus = Math.min(100, certifs * 20);</span>
+<span class="nc" id="L207">        double weighted = averageScore * 0.6 + successRate * 0.3 + certifBonus * 0.1;</span>
+<span class="nc" id="L208">        int rounded = (int) Math.round(weighted);</span>
+<span class="nc" id="L209">        return Math.max(0, Math.min(100, rounded));</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

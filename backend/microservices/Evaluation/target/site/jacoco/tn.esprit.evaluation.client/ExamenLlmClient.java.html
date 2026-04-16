@@ -60,15 +60,22 @@ public class ExamenLlmClient {
             &quot;\&quot;suggestions\&quot; (tableau de chaînes : améliorations concrètes, peut être vide).&quot;,
             &quot;Sois exigeant sur les QCM vagues, les distracteurs non exclusifs, ou les bonnes réponses discutables.&quot;);
 
+    /** Coach apprenant : explication naturelle courte, actionnable, sans markdown. */
+<span class="fc" id="L64">    private static final String SYSTEM_LEARNING_COACH = String.join(&quot; &quot;,</span>
+            &quot;Tu es un coach pédagogique francophone.&quot;,
+            &quot;Explique de façon simple, concrète et motivante (3 à 5 phrases).&quot;,
+            &quot;Donne des actions immédiates, basées sur les indicateurs fournis.&quot;,
+            &quot;Pas de markdown, pas de JSON, pas de listes numérotées.&quot;);
+
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
     public ExamenLlmClient(
             @Qualifier(&quot;externalRestTemplate&quot;) RestTemplate restTemplate,
-<span class="fc" id="L68">            ObjectMapper objectMapper) {</span>
-<span class="fc" id="L69">        this.restTemplate = restTemplate;</span>
-<span class="fc" id="L70">        this.objectMapper = objectMapper;</span>
-<span class="fc" id="L71">    }</span>
+<span class="fc" id="L75">            ObjectMapper objectMapper) {</span>
+<span class="fc" id="L76">        this.restTemplate = restTemplate;</span>
+<span class="fc" id="L77">        this.objectMapper = objectMapper;</span>
+<span class="fc" id="L78">    }</span>
 
     @Value(&quot;${app.examen.llm.enabled:false}&quot;)
     private boolean enabled;
@@ -87,17 +94,17 @@ public class ExamenLlmClient {
 
     @PostConstruct
     void logConfiguration() {
-<span class="fc" id="L90">        log.info(</span>
+<span class="fc" id="L97">        log.info(</span>
                 &quot;Examen LLM: enabled={}, useByDefault={}, availableForCalls={}, baseUrl={}, model={}, apiKeyConfigured={}&quot;,
-<span class="fc" id="L92">                enabled,</span>
-<span class="fc" id="L93">                useByDefault,</span>
-<span class="pc bpc" id="L94" title="1 of 2 branches missed.">                isAvailable(),</span>
+<span class="fc" id="L99">                enabled,</span>
+<span class="fc" id="L100">                useByDefault,</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">                isAvailable(),</span>
                 baseUrl,
                 model,
-<span class="pc bpc" id="L97" title="1 of 2 branches missed.">                apiKey != null &amp;&amp; !apiKey.isBlank());</span>
-<span class="fc" id="L98">    }</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">                apiKey != null &amp;&amp; !apiKey.isBlank());</span>
+<span class="fc" id="L105">    }</span>
 
-<span class="nc" id="L100">    public record QuestionGenMeta(</span>
+<span class="nc" id="L107">    public record QuestionGenMeta(</span>
             int ordre,
             String modTitre,
             String desc,
@@ -111,25 +118,25 @@ public class ExamenLlmClient {
      * un jeton factice {@code ollama} suffit pour les clients qui envoient {@code Authorization}.
      */
     private boolean ollamaCompatibleBaseUrl() {
-<span class="pc bpc" id="L114" title="2 of 4 branches missed.">        if (baseUrl == null || baseUrl.isBlank()) {</span>
-<span class="nc" id="L115">            return false;</span>
+<span class="pc bpc" id="L121" title="2 of 4 branches missed.">        if (baseUrl == null || baseUrl.isBlank()) {</span>
+<span class="nc" id="L122">            return false;</span>
         }
-<span class="fc" id="L117">        String u = baseUrl.toLowerCase(Locale.ROOT);</span>
-<span class="pc bpc" id="L118" title="3 of 4 branches missed.">        return u.contains(&quot;:11434&quot;) || u.contains(&quot;ollama&quot;);</span>
+<span class="fc" id="L124">        String u = baseUrl.toLowerCase(Locale.ROOT);</span>
+<span class="pc bpc" id="L125" title="3 of 4 branches missed.">        return u.contains(&quot;:11434&quot;) || u.contains(&quot;ollama&quot;);</span>
     }
 
     public boolean isAvailable() {
-<span class="pc bpc" id="L122" title="1 of 2 branches missed.">        if (!enabled) {</span>
-<span class="nc" id="L123">            return false;</span>
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">        if (!enabled) {</span>
+<span class="nc" id="L130">            return false;</span>
         }
-<span class="pc bpc" id="L125" title="2 of 4 branches missed.">        if (apiKey != null &amp;&amp; !apiKey.isBlank()) {</span>
-<span class="nc" id="L126">            return true;</span>
+<span class="pc bpc" id="L132" title="2 of 4 branches missed.">        if (apiKey != null &amp;&amp; !apiKey.isBlank()) {</span>
+<span class="nc" id="L133">            return true;</span>
         }
-<span class="fc" id="L128">        return ollamaCompatibleBaseUrl();</span>
+<span class="fc" id="L135">        return ollamaCompatibleBaseUrl();</span>
     }
 
     public boolean isUseByDefault() {
-<span class="nc" id="L132">        return useByDefault;</span>
+<span class="nc" id="L139">        return useByDefault;</span>
     }
 
     /**
@@ -138,85 +145,95 @@ public class ExamenLlmClient {
      * @return texte assistant (JSON attendu), ou {@code null} si indisponible / erreur
      */
     public String chatCompletionValidator(String userPrompt) {
-<span class="nc bnc" id="L141" title="All 6 branches missed.">        if (!isAvailable() || userPrompt == null || userPrompt.isBlank()) {</span>
-<span class="nc" id="L142">            return null;</span>
+<span class="nc bnc" id="L148" title="All 6 branches missed.">        if (!isAvailable() || userPrompt == null || userPrompt.isBlank()) {</span>
+<span class="nc" id="L149">            return null;</span>
         }
-<span class="nc" id="L144">        return chatCompletion(SYSTEM_QUESTION_VALIDATOR, userPrompt.trim(), 0.22);</span>
+<span class="nc" id="L151">        return chatCompletion(SYSTEM_QUESTION_VALIDATOR, userPrompt.trim(), 0.22);</span>
+    }
+
+    /**
+     * Appel LLM &quot;coach&quot; pour produire une explication naturelle lisible par l'apprenant.
+     */
+    public String chatCompletionCoach(String userPrompt) {
+<span class="nc bnc" id="L158" title="All 6 branches missed.">        if (!isAvailable() || userPrompt == null || userPrompt.isBlank()) {</span>
+<span class="nc" id="L159">            return null;</span>
+        }
+<span class="nc" id="L161">        return chatCompletion(SYSTEM_LEARNING_COACH, userPrompt.trim(), 0.35);</span>
     }
 
     /**
      * @return une question par meta, ou {@code null} si échec (appelant fera le repli heuristique)
      */
     public List&lt;QuestionDto&gt; generateQuestions(String titreFormation, List&lt;QuestionGenMeta&gt; metas) {
-<span class="nc bnc" id="L151" title="All 6 branches missed.">        if (!isAvailable() || metas == null || metas.isEmpty()) {</span>
-<span class="nc" id="L152">            return null;</span>
+<span class="nc bnc" id="L168" title="All 6 branches missed.">        if (!isAvailable() || metas == null || metas.isEmpty()) {</span>
+<span class="nc" id="L169">            return null;</span>
         }
-<span class="nc bnc" id="L154" title="All 2 branches missed.">        String titre = titreFormation != null ? titreFormation.trim() : &quot;&quot;;</span>
-<span class="nc bnc" id="L155" title="All 2 branches missed.">        int chunk = ollamaCompatibleBaseUrl() ? CHUNK_OLLAMA : CHUNK_CLOUD;</span>
-<span class="nc" id="L156">        log.info(&quot;LLM generateQuestions: {} meta(s), taille de lot={}, ollama={}&quot;, metas.size(), chunk, ollamaCompatibleBaseUrl());</span>
-<span class="nc" id="L157">        List&lt;QuestionDto&gt; merged = new ArrayList&lt;&gt;();</span>
-<span class="nc bnc" id="L158" title="All 2 branches missed.">        int maxAttempts = ollamaCompatibleBaseUrl() ? 3 : 1;</span>
-<span class="nc bnc" id="L159" title="All 2 branches missed.">        for (int i = 0; i &lt; metas.size(); i += chunk) {</span>
-<span class="nc" id="L160">            List&lt;QuestionGenMeta&gt; sub = metas.subList(i, Math.min(i + chunk, metas.size()));</span>
-<span class="nc" id="L161">            List&lt;QuestionDto&gt; part = null;</span>
-<span class="nc bnc" id="L162" title="All 2 branches missed.">            for (int attempt = 0; attempt &lt; maxAttempts; attempt++) {</span>
-<span class="nc bnc" id="L163" title="All 2 branches missed.">                if (attempt &gt; 0) {</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        String titre = titreFormation != null ? titreFormation.trim() : &quot;&quot;;</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        int chunk = ollamaCompatibleBaseUrl() ? CHUNK_OLLAMA : CHUNK_CLOUD;</span>
+<span class="nc" id="L173">        log.info(&quot;LLM generateQuestions: {} meta(s), taille de lot={}, ollama={}&quot;, metas.size(), chunk, ollamaCompatibleBaseUrl());</span>
+<span class="nc" id="L174">        List&lt;QuestionDto&gt; merged = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">        int maxAttempts = ollamaCompatibleBaseUrl() ? 3 : 1;</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">        for (int i = 0; i &lt; metas.size(); i += chunk) {</span>
+<span class="nc" id="L177">            List&lt;QuestionGenMeta&gt; sub = metas.subList(i, Math.min(i + chunk, metas.size()));</span>
+<span class="nc" id="L178">            List&lt;QuestionDto&gt; part = null;</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">            for (int attempt = 0; attempt &lt; maxAttempts; attempt++) {</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">                if (attempt &gt; 0) {</span>
                     try {
-<span class="nc" id="L165">                        Thread.sleep(400L * attempt);</span>
-<span class="nc" id="L166">                    } catch (InterruptedException ie) {</span>
-<span class="nc" id="L167">                        Thread.currentThread().interrupt();</span>
-<span class="nc" id="L168">                        return null;</span>
-<span class="nc" id="L169">                    }</span>
-<span class="nc" id="L170">                    log.warn(&quot;LLM: nouvel essai pour le lot meta {}–{} ({}/{})&quot;, i, i + sub.size() - 1, attempt + 1, maxAttempts);</span>
+<span class="nc" id="L182">                        Thread.sleep(400L * attempt);</span>
+<span class="nc" id="L183">                    } catch (InterruptedException ie) {</span>
+<span class="nc" id="L184">                        Thread.currentThread().interrupt();</span>
+<span class="nc" id="L185">                        return null;</span>
+<span class="nc" id="L186">                    }</span>
+<span class="nc" id="L187">                    log.warn(&quot;LLM: nouvel essai pour le lot meta {}–{} ({}/{})&quot;, i, i + sub.size() - 1, attempt + 1, maxAttempts);</span>
                 }
-<span class="nc" id="L172">                part = generateChunkOnce(titre, sub);</span>
-<span class="nc bnc" id="L173" title="All 4 branches missed.">                if (part != null &amp;&amp; part.size() == sub.size()) {</span>
-<span class="nc" id="L174">                    break;</span>
+<span class="nc" id="L189">                part = generateChunkOnce(titre, sub);</span>
+<span class="nc bnc" id="L190" title="All 4 branches missed.">                if (part != null &amp;&amp; part.size() == sub.size()) {</span>
+<span class="nc" id="L191">                    break;</span>
                 }
             }
-<span class="nc bnc" id="L177" title="All 4 branches missed.">            if (part == null || part.size() != sub.size()) {</span>
-<span class="nc" id="L178">                log.error(&quot;LLM: échec définitif du lot après {} tentative(s), meta index {}–{}&quot;, maxAttempts, i, i + sub.size() - 1);</span>
-<span class="nc" id="L179">                return null;</span>
+<span class="nc bnc" id="L194" title="All 4 branches missed.">            if (part == null || part.size() != sub.size()) {</span>
+<span class="nc" id="L195">                log.error(&quot;LLM: échec définitif du lot après {} tentative(s), meta index {}–{}&quot;, maxAttempts, i, i + sub.size() - 1);</span>
+<span class="nc" id="L196">                return null;</span>
             }
-<span class="nc" id="L181">            merged.addAll(part);</span>
+<span class="nc" id="L198">            merged.addAll(part);</span>
         }
-<span class="nc" id="L183">        return merged;</span>
+<span class="nc" id="L200">        return merged;</span>
     }
 
     private List&lt;QuestionDto&gt; generateChunkOnce(String titreFormation, List&lt;QuestionGenMeta&gt; chunk) {
-<span class="nc" id="L187">        String userPrompt = buildUserPrompt(titreFormation, chunk);</span>
-<span class="nc" id="L188">        String content = chatCompletion(SYSTEM_LLM, userPrompt, 0.42);</span>
-<span class="nc bnc" id="L189" title="All 2 branches missed.">        if (content == null) {</span>
-<span class="nc" id="L190">            log.warn(&quot;LLM: pas de texte assistant pour un lot de {} question(s)&quot;, chunk.size());</span>
-<span class="nc" id="L191">            return null;</span>
+<span class="nc" id="L204">        String userPrompt = buildUserPrompt(titreFormation, chunk);</span>
+<span class="nc" id="L205">        String content = chatCompletion(SYSTEM_LLM, userPrompt, 0.42);</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        if (content == null) {</span>
+<span class="nc" id="L207">            log.warn(&quot;LLM: pas de texte assistant pour un lot de {} question(s)&quot;, chunk.size());</span>
+<span class="nc" id="L208">            return null;</span>
         }
         JsonNode arr;
         try {
-<span class="nc" id="L195">            arr = parseQuestionArrayPayload(content, chunk.size());</span>
-<span class="nc" id="L196">        } catch (Exception e) {</span>
-<span class="nc" id="L197">            log.warn(&quot;LLM: JSON questions invalide: {} — extrait: {}&quot;, e.getMessage(), shorten(content, 800));</span>
-<span class="nc" id="L198">            return null;</span>
-<span class="nc" id="L199">        }</span>
-<span class="nc bnc" id="L200" title="All 6 branches missed.">        if (arr == null || !arr.isArray() || arr.size() != chunk.size()) {</span>
-<span class="nc" id="L201">            log.warn(</span>
+<span class="nc" id="L212">            arr = parseQuestionArrayPayload(content, chunk.size());</span>
+<span class="nc" id="L213">        } catch (Exception e) {</span>
+<span class="nc" id="L214">            log.warn(&quot;LLM: JSON questions invalide: {} — extrait: {}&quot;, e.getMessage(), shorten(content, 800));</span>
+<span class="nc" id="L215">            return null;</span>
+<span class="nc" id="L216">        }</span>
+<span class="nc bnc" id="L217" title="All 6 branches missed.">        if (arr == null || !arr.isArray() || arr.size() != chunk.size()) {</span>
+<span class="nc" id="L218">            log.warn(</span>
                     &quot;LLM: taille tableau finale attendue {}, obtenue {} (type={})&quot;,
-<span class="nc" id="L203">                    chunk.size(),</span>
-<span class="nc bnc" id="L204" title="All 2 branches missed.">                    arr == null ? -1 : arr.size(),</span>
-<span class="nc bnc" id="L205" title="All 2 branches missed.">                    arr == null ? &quot;null&quot; : arr.getNodeType().name());</span>
-<span class="nc" id="L206">            return null;</span>
+<span class="nc" id="L220">                    chunk.size(),</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">                    arr == null ? -1 : arr.size(),</span>
+<span class="nc bnc" id="L222" title="All 2 branches missed.">                    arr == null ? &quot;null&quot; : arr.getNodeType().name());</span>
+<span class="nc" id="L223">            return null;</span>
         }
-<span class="nc" id="L208">        List&lt;QuestionDto&gt; out = new ArrayList&lt;&gt;();</span>
-<span class="nc bnc" id="L209" title="All 2 branches missed.">        for (int j = 0; j &lt; chunk.size(); j++) {</span>
-<span class="nc" id="L210">            QuestionGenMeta meta = chunk.get(j);</span>
-<span class="nc" id="L211">            JsonNode raw = arr.get(j);</span>
-<span class="nc" id="L212">            QuestionDto q = normalizeQuestion(raw, meta);</span>
-<span class="nc bnc" id="L213" title="All 2 branches missed.">            if (q == null) {</span>
-<span class="nc" id="L214">                log.warn(&quot;LLM: normalisation impossible ordre={} (voir log champs ci-dessus)&quot;, meta.ordre());</span>
-<span class="nc" id="L215">                return null;</span>
+<span class="nc" id="L225">        List&lt;QuestionDto&gt; out = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L226" title="All 2 branches missed.">        for (int j = 0; j &lt; chunk.size(); j++) {</span>
+<span class="nc" id="L227">            QuestionGenMeta meta = chunk.get(j);</span>
+<span class="nc" id="L228">            JsonNode raw = arr.get(j);</span>
+<span class="nc" id="L229">            QuestionDto q = normalizeQuestion(raw, meta);</span>
+<span class="nc bnc" id="L230" title="All 2 branches missed.">            if (q == null) {</span>
+<span class="nc" id="L231">                log.warn(&quot;LLM: normalisation impossible ordre={} (voir log champs ci-dessus)&quot;, meta.ordre());</span>
+<span class="nc" id="L232">                return null;</span>
             }
-<span class="nc" id="L217">            out.add(q);</span>
+<span class="nc" id="L234">            out.add(q);</span>
         }
-<span class="nc" id="L219">        return out;</span>
+<span class="nc" id="L236">        return out;</span>
     }
 
     /**
@@ -224,160 +241,160 @@ public class ExamenLlmClient {
      * ou {@code {&quot;questions&quot;:[...]}} , ou plus d’éléments que demandé (troncature).
      */
     private JsonNode parseQuestionArrayPayload(String assistantContent, int expectedSize) throws Exception {
-<span class="nc bnc" id="L227" title="All 4 branches missed.">        if (assistantContent == null || assistantContent.isBlank()) {</span>
-<span class="nc" id="L228">            throw new IllegalArgumentException(&quot;assistant vide&quot;);</span>
+<span class="nc bnc" id="L244" title="All 4 branches missed.">        if (assistantContent == null || assistantContent.isBlank()) {</span>
+<span class="nc" id="L245">            throw new IllegalArgumentException(&quot;assistant vide&quot;);</span>
         }
-<span class="nc" id="L230">        String t = stripBom(stripMarkdownFence(assistantContent.trim()));</span>
+<span class="nc" id="L247">        String t = stripBom(stripMarkdownFence(assistantContent.trim()));</span>
         JsonNode root;
         try {
-<span class="nc" id="L233">            root = objectMapper.readTree(t);</span>
-<span class="nc" id="L234">        } catch (Exception first) {</span>
-<span class="nc" id="L235">            root = objectMapper.readTree(extractJsonArray(assistantContent));</span>
-<span class="nc" id="L236">        }</span>
-<span class="nc" id="L237">        JsonNode arr = unwrapToQuestionArray(root);</span>
-<span class="nc bnc" id="L238" title="All 4 branches missed.">        if (arr == null || !arr.isArray()) {</span>
-<span class="nc" id="L239">            throw new IllegalArgumentException(&quot;pas un tableau de questions après normalisation&quot;);</span>
+<span class="nc" id="L250">            root = objectMapper.readTree(t);</span>
+<span class="nc" id="L251">        } catch (Exception first) {</span>
+<span class="nc" id="L252">            root = objectMapper.readTree(extractJsonArray(assistantContent));</span>
+<span class="nc" id="L253">        }</span>
+<span class="nc" id="L254">        JsonNode arr = unwrapToQuestionArray(root);</span>
+<span class="nc bnc" id="L255" title="All 4 branches missed.">        if (arr == null || !arr.isArray()) {</span>
+<span class="nc" id="L256">            throw new IllegalArgumentException(&quot;pas un tableau de questions après normalisation&quot;);</span>
         }
-<span class="nc bnc" id="L241" title="All 2 branches missed.">        if (arr.size() &lt; expectedSize) {</span>
-<span class="nc" id="L242">            throw new IllegalArgumentException(&quot;trop peu d'éléments: &quot; + arr.size() + &quot; &lt; &quot; + expectedSize);</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">        if (arr.size() &lt; expectedSize) {</span>
+<span class="nc" id="L259">            throw new IllegalArgumentException(&quot;trop peu d'éléments: &quot; + arr.size() + &quot; &lt; &quot; + expectedSize);</span>
         }
-<span class="nc bnc" id="L244" title="All 2 branches missed.">        if (arr.size() &gt; expectedSize) {</span>
-<span class="nc" id="L245">            log.info(&quot;LLM: le modèle a renvoyé {} question(s), conservation des {} premières&quot;, arr.size(), expectedSize);</span>
-<span class="nc" id="L246">            ArrayNode slim = objectMapper.createArrayNode();</span>
-<span class="nc bnc" id="L247" title="All 2 branches missed.">            for (int i = 0; i &lt; expectedSize; i++) {</span>
-<span class="nc" id="L248">                slim.add(arr.get(i));</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">        if (arr.size() &gt; expectedSize) {</span>
+<span class="nc" id="L262">            log.info(&quot;LLM: le modèle a renvoyé {} question(s), conservation des {} premières&quot;, arr.size(), expectedSize);</span>
+<span class="nc" id="L263">            ArrayNode slim = objectMapper.createArrayNode();</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">            for (int i = 0; i &lt; expectedSize; i++) {</span>
+<span class="nc" id="L265">                slim.add(arr.get(i));</span>
             }
-<span class="nc" id="L250">            return slim;</span>
+<span class="nc" id="L267">            return slim;</span>
         }
-<span class="nc" id="L252">        return arr;</span>
+<span class="nc" id="L269">        return arr;</span>
     }
 
     private static String stripBom(String s) {
-<span class="nc bnc" id="L256" title="All 6 branches missed.">        if (s != null &amp;&amp; !s.isEmpty() &amp;&amp; s.charAt(0) == '\uFEFF') {</span>
-<span class="nc" id="L257">            return s.substring(1);</span>
+<span class="nc bnc" id="L273" title="All 6 branches missed.">        if (s != null &amp;&amp; !s.isEmpty() &amp;&amp; s.charAt(0) == '\uFEFF') {</span>
+<span class="nc" id="L274">            return s.substring(1);</span>
         }
-<span class="nc" id="L259">        return s;</span>
+<span class="nc" id="L276">        return s;</span>
     }
 
     private static String stripMarkdownFence(String t) {
-<span class="nc bnc" id="L263" title="All 2 branches missed.">        if (!t.startsWith(&quot;```&quot;)) {</span>
-<span class="nc" id="L264">            return t;</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">        if (!t.startsWith(&quot;```&quot;)) {</span>
+<span class="nc" id="L281">            return t;</span>
         }
-<span class="nc" id="L266">        int firstNl = t.indexOf('\n');</span>
-<span class="nc bnc" id="L267" title="All 2 branches missed.">        if (firstNl &gt; 0) {</span>
-<span class="nc" id="L268">            t = t.substring(firstNl + 1);</span>
+<span class="nc" id="L283">        int firstNl = t.indexOf('\n');</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        if (firstNl &gt; 0) {</span>
+<span class="nc" id="L285">            t = t.substring(firstNl + 1);</span>
         }
-<span class="nc" id="L270">        int fenceEnd = t.indexOf(&quot;```&quot;);</span>
-<span class="nc bnc" id="L271" title="All 2 branches missed.">        if (fenceEnd &gt;= 0) {</span>
-<span class="nc" id="L272">            t = t.substring(0, fenceEnd).trim();</span>
+<span class="nc" id="L287">        int fenceEnd = t.indexOf(&quot;```&quot;);</span>
+<span class="nc bnc" id="L288" title="All 2 branches missed.">        if (fenceEnd &gt;= 0) {</span>
+<span class="nc" id="L289">            t = t.substring(0, fenceEnd).trim();</span>
         }
-<span class="nc" id="L274">        return t.trim();</span>
+<span class="nc" id="L291">        return t.trim();</span>
     }
 
     private JsonNode unwrapToQuestionArray(JsonNode node) {
-<span class="nc bnc" id="L278" title="All 4 branches missed.">        if (node == null || node.isNull()) {</span>
-<span class="nc" id="L279">            return null;</span>
+<span class="nc bnc" id="L295" title="All 4 branches missed.">        if (node == null || node.isNull()) {</span>
+<span class="nc" id="L296">            return null;</span>
         }
-<span class="nc bnc" id="L281" title="All 2 branches missed.">        if (node.isArray()) {</span>
-<span class="nc" id="L282">            return node;</span>
+<span class="nc bnc" id="L298" title="All 2 branches missed.">        if (node.isArray()) {</span>
+<span class="nc" id="L299">            return node;</span>
         }
-<span class="nc bnc" id="L284" title="All 2 branches missed.">        if (!node.isObject()) {</span>
-<span class="nc" id="L285">            return null;</span>
+<span class="nc bnc" id="L301" title="All 2 branches missed.">        if (!node.isObject()) {</span>
+<span class="nc" id="L302">            return null;</span>
         }
-<span class="nc bnc" id="L287" title="All 2 branches missed.">        for (String key : List.of(&quot;questions&quot;, &quot;items&quot;, &quot;qcm&quot;, &quot;data&quot;, &quot;result&quot;, &quot;reponses&quot;)) {</span>
-<span class="nc" id="L288">            JsonNode inner = node.get(key);</span>
-<span class="nc bnc" id="L289" title="All 4 branches missed.">            if (inner != null &amp;&amp; inner.isArray()) {</span>
-<span class="nc" id="L290">                return inner;</span>
+<span class="nc bnc" id="L304" title="All 2 branches missed.">        for (String key : List.of(&quot;questions&quot;, &quot;items&quot;, &quot;qcm&quot;, &quot;data&quot;, &quot;result&quot;, &quot;reponses&quot;)) {</span>
+<span class="nc" id="L305">            JsonNode inner = node.get(key);</span>
+<span class="nc bnc" id="L306" title="All 4 branches missed.">            if (inner != null &amp;&amp; inner.isArray()) {</span>
+<span class="nc" id="L307">                return inner;</span>
             }
-<span class="nc" id="L292">        }</span>
-<span class="nc bnc" id="L293" title="All 2 branches missed.">        if (looksLikeQuestionObject(node)) {</span>
-<span class="nc" id="L294">            ArrayNode one = objectMapper.createArrayNode();</span>
-<span class="nc" id="L295">            one.add(node);</span>
-<span class="nc" id="L296">            return one;</span>
+<span class="nc" id="L309">        }</span>
+<span class="nc bnc" id="L310" title="All 2 branches missed.">        if (looksLikeQuestionObject(node)) {</span>
+<span class="nc" id="L311">            ArrayNode one = objectMapper.createArrayNode();</span>
+<span class="nc" id="L312">            one.add(node);</span>
+<span class="nc" id="L313">            return one;</span>
         }
-<span class="nc" id="L298">        return null;</span>
+<span class="nc" id="L315">        return null;</span>
     }
 
     private static boolean looksLikeQuestionObject(JsonNode n) {
-<span class="nc bnc" id="L302" title="All 2 branches missed.">        return n.has(&quot;enonce&quot;)</span>
-<span class="nc bnc" id="L303" title="All 2 branches missed.">                || n.has(&quot;énonce&quot;)</span>
-<span class="nc bnc" id="L304" title="All 2 branches missed.">                || n.has(&quot;question&quot;)</span>
-<span class="nc bnc" id="L305" title="All 2 branches missed.">                || n.has(&quot;optionA&quot;)</span>
-<span class="nc bnc" id="L306" title="All 2 branches missed.">                || n.has(&quot;option_a&quot;);</span>
+<span class="nc bnc" id="L319" title="All 2 branches missed.">        return n.has(&quot;enonce&quot;)</span>
+<span class="nc bnc" id="L320" title="All 2 branches missed.">                || n.has(&quot;énonce&quot;)</span>
+<span class="nc bnc" id="L321" title="All 2 branches missed.">                || n.has(&quot;question&quot;)</span>
+<span class="nc bnc" id="L322" title="All 2 branches missed.">                || n.has(&quot;optionA&quot;)</span>
+<span class="nc bnc" id="L323" title="All 2 branches missed.">                || n.has(&quot;option_a&quot;);</span>
     }
 
     private static String buildUserPrompt(String titreFormation, List&lt;QuestionGenMeta&gt; chunk) {
-<span class="nc" id="L310">        StringBuilder sb = new StringBuilder();</span>
-<span class="nc bnc" id="L311" title="All 2 branches missed.">        sb.append(&quot;Formation : &quot;).append(titreFormation.isBlank() ? &quot;—&quot; : titreFormation).append(&quot;\n\n&quot;);</span>
-<span class="nc" id="L312">        sb.append(&quot;Pour chaque bloc ci-dessous, rédige UNE question QCM en français, comme dans un vrai examen professionnalisant.\n&quot;);</span>
-<span class="nc" id="L313">        sb.append(&quot;Exigences de qualité :\n&quot;);</span>
-<span class="nc" id="L314">        sb.append(&quot;- Énoncé : une question fermée sur une notion concrète tirée du descriptif (objectif, étape, outil, règle, définition), pas une méta-question du type « quelle affirmation est cohérente avec le texte ».\n&quot;);</span>
-<span class="nc" id="L315">        sb.append(&quot;- N'inclus pas de longue citation du descriptif dans l'énoncé ; reformule pour tester la compréhension.\n&quot;);</span>
-<span class="nc" id="L316">        sb.append(&quot;- Une seule bonne réponse ; options A–D courtes, mutuellement exclusives, sans doublon sémantique.\n&quot;);</span>
-<span class="nc" id="L317">        sb.append(&quot;- Distracteurs plausibles mais faux ou contredits par le descriptif du module.\n&quot;);</span>
-<span class="nc" id="L318">        sb.append(&quot;- Varie les formulations (pourquoi, comment, lequel, dans quel cas, quelle conséquence, etc.).\n&quot;);</span>
-<span class="nc" id="L319">        sb.append(&quot;- Niveau FACILE : rappel direct dans le texte. MOYEN : mise en relation. DIFFICILE : nuance ou piège raisonnable.\n&quot;);</span>
-<span class="nc" id="L320">        sb.append(&quot;- Jamais de mention de « bloc », « consigne », « descriptif fourni » ou du processus de génération.\n\n&quot;);</span>
-<span class="nc" id="L321">        int i = 1;</span>
-<span class="nc bnc" id="L322" title="All 2 branches missed.">        for (QuestionGenMeta m : chunk) {</span>
-<span class="nc bnc" id="L323" title="All 2 branches missed.">            String desc = m.desc() != null ? m.desc().trim() : &quot;&quot;;</span>
-<span class="nc bnc" id="L324" title="All 2 branches missed.">            if (desc.length() &gt; 1800) {</span>
-<span class="nc" id="L325">                desc = desc.substring(0, 1797) + &quot;...&quot;;</span>
+<span class="nc" id="L327">        StringBuilder sb = new StringBuilder();</span>
+<span class="nc bnc" id="L328" title="All 2 branches missed.">        sb.append(&quot;Formation : &quot;).append(titreFormation.isBlank() ? &quot;—&quot; : titreFormation).append(&quot;\n\n&quot;);</span>
+<span class="nc" id="L329">        sb.append(&quot;Pour chaque bloc ci-dessous, rédige UNE question QCM en français, comme dans un vrai examen professionnalisant.\n&quot;);</span>
+<span class="nc" id="L330">        sb.append(&quot;Exigences de qualité :\n&quot;);</span>
+<span class="nc" id="L331">        sb.append(&quot;- Énoncé : une question fermée sur une notion concrète tirée du descriptif (objectif, étape, outil, règle, définition), pas une méta-question du type « quelle affirmation est cohérente avec le texte ».\n&quot;);</span>
+<span class="nc" id="L332">        sb.append(&quot;- N'inclus pas de longue citation du descriptif dans l'énoncé ; reformule pour tester la compréhension.\n&quot;);</span>
+<span class="nc" id="L333">        sb.append(&quot;- Une seule bonne réponse ; options A–D courtes, mutuellement exclusives, sans doublon sémantique.\n&quot;);</span>
+<span class="nc" id="L334">        sb.append(&quot;- Distracteurs plausibles mais faux ou contredits par le descriptif du module.\n&quot;);</span>
+<span class="nc" id="L335">        sb.append(&quot;- Varie les formulations (pourquoi, comment, lequel, dans quel cas, quelle conséquence, etc.).\n&quot;);</span>
+<span class="nc" id="L336">        sb.append(&quot;- Niveau FACILE : rappel direct dans le texte. MOYEN : mise en relation. DIFFICILE : nuance ou piège raisonnable.\n&quot;);</span>
+<span class="nc" id="L337">        sb.append(&quot;- Jamais de mention de « bloc », « consigne », « descriptif fourni » ou du processus de génération.\n\n&quot;);</span>
+<span class="nc" id="L338">        int i = 1;</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">        for (QuestionGenMeta m : chunk) {</span>
+<span class="nc bnc" id="L340" title="All 2 branches missed.">            String desc = m.desc() != null ? m.desc().trim() : &quot;&quot;;</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">            if (desc.length() &gt; 1800) {</span>
+<span class="nc" id="L342">                desc = desc.substring(0, 1797) + &quot;...&quot;;</span>
             }
-<span class="nc" id="L327">            sb.append(&quot;Bloc &quot;).append(i).append(&quot; — ordre=&quot;).append(m.ordre())</span>
-<span class="nc" id="L328">                    .append(&quot;, module=\&quot;&quot;).append(escapeQuotes(m.modTitre())).append(&quot;\&quot;, &quot;)</span>
-<span class="nc" id="L329">                    .append(&quot;lot_parcours=&quot;).append(m.inclusion())</span>
-<span class="nc" id="L330">                    .append(&quot;, difficulté=&quot;).append(m.niveauDifficulte())</span>
-<span class="nc" id="L331">                    .append(&quot;, thème=\&quot;&quot;).append(escapeQuotes(m.theme())).append(&quot;\&quot;\n&quot;);</span>
-<span class="nc bnc" id="L332" title="All 2 branches missed.">            if (desc.isBlank()) {</span>
-<span class="nc" id="L333">                sb.append(&quot;Contexte pédagogique : aucun descriptif n'est renseigné pour ce module. &quot;)</span>
-<span class="nc" id="L334">                        .append(&quot;À partir du titre « &quot;).append(escapeQuotes(m.modTitre())).append(&quot; » &quot;)</span>
-<span class="nc" id="L335">                        .append(&quot;et de la formation « &quot;)</span>
-<span class="nc bnc" id="L336" title="All 2 branches missed.">                        .append(escapeQuotes(titreFormation.isBlank() ? &quot;—&quot; : titreFormation))</span>
-<span class="nc" id="L337">                        .append(&quot; », rédige UNE question QCM réaliste sur les notions enseignées &quot;)</span>
-<span class="nc" id="L338">                        .append(&quot;habituellement sous ce thème (ex. pour le routage IP : tables de routage, masques, passerelles, protocoles). &quot;)</span>
-<span class="nc" id="L339">                        .append(&quot;Distracteurs plausibles. Ne mentionne jamais qu'il manque un descriptif.\n\n&quot;);</span>
+<span class="nc" id="L344">            sb.append(&quot;Bloc &quot;).append(i).append(&quot; — ordre=&quot;).append(m.ordre())</span>
+<span class="nc" id="L345">                    .append(&quot;, module=\&quot;&quot;).append(escapeQuotes(m.modTitre())).append(&quot;\&quot;, &quot;)</span>
+<span class="nc" id="L346">                    .append(&quot;lot_parcours=&quot;).append(m.inclusion())</span>
+<span class="nc" id="L347">                    .append(&quot;, difficulté=&quot;).append(m.niveauDifficulte())</span>
+<span class="nc" id="L348">                    .append(&quot;, thème=\&quot;&quot;).append(escapeQuotes(m.theme())).append(&quot;\&quot;\n&quot;);</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">            if (desc.isBlank()) {</span>
+<span class="nc" id="L350">                sb.append(&quot;Contexte pédagogique : aucun descriptif n'est renseigné pour ce module. &quot;)</span>
+<span class="nc" id="L351">                        .append(&quot;À partir du titre « &quot;).append(escapeQuotes(m.modTitre())).append(&quot; » &quot;)</span>
+<span class="nc" id="L352">                        .append(&quot;et de la formation « &quot;)</span>
+<span class="nc bnc" id="L353" title="All 2 branches missed.">                        .append(escapeQuotes(titreFormation.isBlank() ? &quot;—&quot; : titreFormation))</span>
+<span class="nc" id="L354">                        .append(&quot; », rédige UNE question QCM réaliste sur les notions enseignées &quot;)</span>
+<span class="nc" id="L355">                        .append(&quot;habituellement sous ce thème (ex. pour le routage IP : tables de routage, masques, passerelles, protocoles). &quot;)</span>
+<span class="nc" id="L356">                        .append(&quot;Distracteurs plausibles. Ne mentionne jamais qu'il manque un descriptif.\n\n&quot;);</span>
             } else {
-<span class="nc" id="L341">                sb.append(&quot;Descriptif module : &quot;).append(desc).append(&quot;\n\n&quot;);</span>
+<span class="nc" id="L358">                sb.append(&quot;Descriptif module : &quot;).append(desc).append(&quot;\n\n&quot;);</span>
             }
-<span class="nc" id="L343">            i++;</span>
-<span class="nc" id="L344">        }</span>
-<span class="nc" id="L345">        sb.append(&quot;Réponds UNIQUEMENT avec un tableau JSON (sans texte avant ou après) : &quot;);</span>
-<span class="nc" id="L346">        sb.append(&quot;[{\&quot;ordre\&quot;: nombre, \&quot;enonce\&quot;: \&quot;...\&quot;, \&quot;optionA\&quot;: \&quot;...\&quot;, \&quot;optionB\&quot;: \&quot;...\&quot;, &quot;);</span>
-<span class="nc" id="L347">        sb.append(&quot;\&quot;optionC\&quot;: \&quot;...\&quot;, \&quot;optionD\&quot;: \&quot;...\&quot;, \&quot;bonneReponse\&quot;: \&quot;A\&quot;|\&quot;B\&quot;|\&quot;C\&quot;|\&quot;D\&quot;, &quot;);</span>
-<span class="nc" id="L348">        sb.append(&quot;\&quot;explication\&quot;: \&quot;...\&quot;}, ...] &quot;);</span>
-<span class="nc" id="L349">        sb.append(&quot;Le tableau doit contenir exactement &quot;).append(chunk.size());</span>
-<span class="nc" id="L350">        sb.append(&quot; objets, dans le même ordre que les blocs, avec les mêmes valeurs « ordre » que dans les blocs.&quot;);</span>
-<span class="nc" id="L351">        return sb.toString();</span>
+<span class="nc" id="L360">            i++;</span>
+<span class="nc" id="L361">        }</span>
+<span class="nc" id="L362">        sb.append(&quot;Réponds UNIQUEMENT avec un tableau JSON (sans texte avant ou après) : &quot;);</span>
+<span class="nc" id="L363">        sb.append(&quot;[{\&quot;ordre\&quot;: nombre, \&quot;enonce\&quot;: \&quot;...\&quot;, \&quot;optionA\&quot;: \&quot;...\&quot;, \&quot;optionB\&quot;: \&quot;...\&quot;, &quot;);</span>
+<span class="nc" id="L364">        sb.append(&quot;\&quot;optionC\&quot;: \&quot;...\&quot;, \&quot;optionD\&quot;: \&quot;...\&quot;, \&quot;bonneReponse\&quot;: \&quot;A\&quot;|\&quot;B\&quot;|\&quot;C\&quot;|\&quot;D\&quot;, &quot;);</span>
+<span class="nc" id="L365">        sb.append(&quot;\&quot;explication\&quot;: \&quot;...\&quot;}, ...] &quot;);</span>
+<span class="nc" id="L366">        sb.append(&quot;Le tableau doit contenir exactement &quot;).append(chunk.size());</span>
+<span class="nc" id="L367">        sb.append(&quot; objets, dans le même ordre que les blocs, avec les mêmes valeurs « ordre » que dans les blocs.&quot;);</span>
+<span class="nc" id="L368">        return sb.toString();</span>
     }
 
     private static String escapeQuotes(String s) {
-<span class="nc bnc" id="L355" title="All 2 branches missed.">        if (s == null) {</span>
-<span class="nc" id="L356">            return &quot;&quot;;</span>
+<span class="nc bnc" id="L372" title="All 2 branches missed.">        if (s == null) {</span>
+<span class="nc" id="L373">            return &quot;&quot;;</span>
         }
-<span class="nc" id="L358">        return s.replace(&quot;\&quot;&quot;, &quot;'&quot;);</span>
+<span class="nc" id="L375">        return s.replace(&quot;\&quot;&quot;, &quot;'&quot;);</span>
     }
 
     private void setLlmAuthHeaders(HttpHeaders headers) {
-<span class="nc bnc" id="L362" title="All 4 branches missed.">        String token = (apiKey != null &amp;&amp; !apiKey.isBlank()) ? apiKey.trim() : null;</span>
-<span class="nc bnc" id="L363" title="All 4 branches missed.">        if (token == null &amp;&amp; ollamaCompatibleBaseUrl()) {</span>
-<span class="nc" id="L364">            token = &quot;ollama&quot;;</span>
+<span class="nc bnc" id="L379" title="All 4 branches missed.">        String token = (apiKey != null &amp;&amp; !apiKey.isBlank()) ? apiKey.trim() : null;</span>
+<span class="nc bnc" id="L380" title="All 4 branches missed.">        if (token == null &amp;&amp; ollamaCompatibleBaseUrl()) {</span>
+<span class="nc" id="L381">            token = &quot;ollama&quot;;</span>
         }
-<span class="nc bnc" id="L366" title="All 4 branches missed.">        if (token != null &amp;&amp; !token.isBlank()) {</span>
-<span class="nc" id="L367">            headers.setBearerAuth(token);</span>
+<span class="nc bnc" id="L383" title="All 4 branches missed.">        if (token != null &amp;&amp; !token.isBlank()) {</span>
+<span class="nc" id="L384">            headers.setBearerAuth(token);</span>
         }
-<span class="nc" id="L369">    }</span>
+<span class="nc" id="L386">    }</span>
 
     private Map&lt;String, Object&gt; buildChatCompletionBody(String systemContent, String userContent, double temperature) {
-<span class="nc" id="L372">        Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
-<span class="nc" id="L373">        body.put(&quot;model&quot;, model);</span>
-<span class="nc" id="L374">        body.put(&quot;temperature&quot;, temperature);</span>
-<span class="nc" id="L375">        body.put(&quot;stream&quot;, Boolean.FALSE);</span>
-<span class="nc" id="L376">        List&lt;Map&lt;String, String&gt;&gt; messages = new ArrayList&lt;&gt;();</span>
-<span class="nc" id="L377">        messages.add(Map.of(&quot;role&quot;, &quot;system&quot;, &quot;content&quot;, systemContent));</span>
-<span class="nc" id="L378">        messages.add(Map.of(&quot;role&quot;, &quot;user&quot;, &quot;content&quot;, userContent));</span>
-<span class="nc" id="L379">        body.put(&quot;messages&quot;, messages);</span>
-<span class="nc" id="L380">        return body;</span>
+<span class="nc" id="L389">        Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L390">        body.put(&quot;model&quot;, model);</span>
+<span class="nc" id="L391">        body.put(&quot;temperature&quot;, temperature);</span>
+<span class="nc" id="L392">        body.put(&quot;stream&quot;, Boolean.FALSE);</span>
+<span class="nc" id="L393">        List&lt;Map&lt;String, String&gt;&gt; messages = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L394">        messages.add(Map.of(&quot;role&quot;, &quot;system&quot;, &quot;content&quot;, systemContent));</span>
+<span class="nc" id="L395">        messages.add(Map.of(&quot;role&quot;, &quot;user&quot;, &quot;content&quot;, userContent));</span>
+<span class="nc" id="L396">        body.put(&quot;messages&quot;, messages);</span>
+<span class="nc" id="L397">        return body;</span>
     }
 
     /**
@@ -385,64 +402,64 @@ public class ExamenLlmClient {
      * Autres fournisseurs : {@link RestTemplate}.
      */
     private String chatCompletion(String systemPrompt, String userContent, double temperature) {
-<span class="nc bnc" id="L388" title="All 2 branches missed.">        String url = baseUrl.endsWith(&quot;/&quot;) ? baseUrl + &quot;chat/completions&quot; : baseUrl + &quot;/chat/completions&quot;;</span>
-<span class="nc" id="L389">        Map&lt;String, Object&gt; body = buildChatCompletionBody(systemPrompt, userContent, temperature);</span>
+<span class="nc bnc" id="L405" title="All 2 branches missed.">        String url = baseUrl.endsWith(&quot;/&quot;) ? baseUrl + &quot;chat/completions&quot; : baseUrl + &quot;/chat/completions&quot;;</span>
+<span class="nc" id="L406">        Map&lt;String, Object&gt; body = buildChatCompletionBody(systemPrompt, userContent, temperature);</span>
         try {
-<span class="nc bnc" id="L391" title="All 2 branches missed.">            if (ollamaCompatibleBaseUrl()) {</span>
-<span class="nc" id="L392">                return chatCompletionOllamaHttp(url, body);</span>
+<span class="nc bnc" id="L408" title="All 2 branches missed.">            if (ollamaCompatibleBaseUrl()) {</span>
+<span class="nc" id="L409">                return chatCompletionOllamaHttp(url, body);</span>
             }
-<span class="nc" id="L394">            HttpHeaders headers = new HttpHeaders();</span>
-<span class="nc" id="L395">            headers.setContentType(MediaType.APPLICATION_JSON);</span>
-<span class="nc" id="L396">            setLlmAuthHeaders(headers);</span>
-<span class="nc" id="L397">            HttpEntity&lt;Map&lt;String, Object&gt;&gt; entity = new HttpEntity&lt;&gt;(body, headers);</span>
-<span class="nc" id="L398">            ResponseEntity&lt;String&gt; resp = restTemplate.postForEntity(url, entity, String.class);</span>
-<span class="nc" id="L399">            String rawJson = resp.getBody();</span>
-<span class="nc bnc" id="L400" title="All 4 branches missed.">            if (rawJson == null || rawJson.isBlank()) {</span>
-<span class="nc" id="L401">                return null;</span>
+<span class="nc" id="L411">            HttpHeaders headers = new HttpHeaders();</span>
+<span class="nc" id="L412">            headers.setContentType(MediaType.APPLICATION_JSON);</span>
+<span class="nc" id="L413">            setLlmAuthHeaders(headers);</span>
+<span class="nc" id="L414">            HttpEntity&lt;Map&lt;String, Object&gt;&gt; entity = new HttpEntity&lt;&gt;(body, headers);</span>
+<span class="nc" id="L415">            ResponseEntity&lt;String&gt; resp = restTemplate.postForEntity(url, entity, String.class);</span>
+<span class="nc" id="L416">            String rawJson = resp.getBody();</span>
+<span class="nc bnc" id="L417" title="All 4 branches missed.">            if (rawJson == null || rawJson.isBlank()) {</span>
+<span class="nc" id="L418">                return null;</span>
             }
-<span class="nc" id="L403">            return parseAssistantContentFromResponseJson(rawJson);</span>
-<span class="nc" id="L404">        } catch (RestClientException e) {</span>
-<span class="nc" id="L405">            log.warn(&quot;LLM chat/completions (RestTemplate): {}&quot;, e.getMessage());</span>
-<span class="nc" id="L406">            return null;</span>
-<span class="nc" id="L407">        } catch (Exception e) {</span>
-<span class="nc" id="L408">            log.warn(&quot;LLM chat/completions: {}&quot;, e.getMessage(), e);</span>
-<span class="nc" id="L409">            return null;</span>
+<span class="nc" id="L420">            return parseAssistantContentFromResponseJson(rawJson);</span>
+<span class="nc" id="L421">        } catch (RestClientException e) {</span>
+<span class="nc" id="L422">            log.warn(&quot;LLM chat/completions (RestTemplate): {}&quot;, e.getMessage());</span>
+<span class="nc" id="L423">            return null;</span>
+<span class="nc" id="L424">        } catch (Exception e) {</span>
+<span class="nc" id="L425">            log.warn(&quot;LLM chat/completions: {}&quot;, e.getMessage(), e);</span>
+<span class="nc" id="L426">            return null;</span>
         }
     }
 
     private String chatCompletionOllamaHttp(String url, Map&lt;String, Object&gt; body) throws Exception {
-<span class="nc" id="L414">        String jsonBody = objectMapper.writeValueAsString(body);</span>
-<span class="nc" id="L415">        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(30)).build();</span>
-<span class="nc" id="L416">        HttpRequest.Builder rb = HttpRequest.newBuilder()</span>
-<span class="nc" id="L417">                .uri(URI.create(url))</span>
-<span class="nc" id="L418">                .timeout(Duration.ofMinutes(12))</span>
-<span class="nc" id="L419">                .header(&quot;Content-Type&quot;, &quot;application/json; charset=utf-8&quot;)</span>
-<span class="nc" id="L420">                .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8));</span>
-<span class="nc bnc" id="L421" title="All 4 branches missed.">        String token = (apiKey != null &amp;&amp; !apiKey.isBlank()) ? apiKey.trim() : &quot;ollama&quot;;</span>
-<span class="nc" id="L422">        rb.header(&quot;Authorization&quot;, &quot;Bearer &quot; + token);</span>
-<span class="nc" id="L423">        HttpResponse&lt;String&gt; resp = client.send(rb.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));</span>
-<span class="nc bnc" id="L424" title="All 4 branches missed.">        if (resp.statusCode() &lt; 200 || resp.statusCode() &gt;= 300) {</span>
-<span class="nc" id="L425">            log.warn(&quot;LLM Ollama HTTP {} : {}&quot;, resp.statusCode(), shorten(resp.body(), 1500));</span>
-<span class="nc" id="L426">            return null;</span>
+<span class="nc" id="L431">        String jsonBody = objectMapper.writeValueAsString(body);</span>
+<span class="nc" id="L432">        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(30)).build();</span>
+<span class="nc" id="L433">        HttpRequest.Builder rb = HttpRequest.newBuilder()</span>
+<span class="nc" id="L434">                .uri(URI.create(url))</span>
+<span class="nc" id="L435">                .timeout(Duration.ofMinutes(12))</span>
+<span class="nc" id="L436">                .header(&quot;Content-Type&quot;, &quot;application/json; charset=utf-8&quot;)</span>
+<span class="nc" id="L437">                .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8));</span>
+<span class="nc bnc" id="L438" title="All 4 branches missed.">        String token = (apiKey != null &amp;&amp; !apiKey.isBlank()) ? apiKey.trim() : &quot;ollama&quot;;</span>
+<span class="nc" id="L439">        rb.header(&quot;Authorization&quot;, &quot;Bearer &quot; + token);</span>
+<span class="nc" id="L440">        HttpResponse&lt;String&gt; resp = client.send(rb.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));</span>
+<span class="nc bnc" id="L441" title="All 4 branches missed.">        if (resp.statusCode() &lt; 200 || resp.statusCode() &gt;= 300) {</span>
+<span class="nc" id="L442">            log.warn(&quot;LLM Ollama HTTP {} : {}&quot;, resp.statusCode(), shorten(resp.body(), 1500));</span>
+<span class="nc" id="L443">            return null;</span>
         }
-<span class="nc" id="L428">        String rawJson = resp.body();</span>
-<span class="nc bnc" id="L429" title="All 4 branches missed.">        if (rawJson == null || rawJson.isBlank()) {</span>
-<span class="nc" id="L430">            log.warn(&quot;LLM Ollama: corps de réponse vide&quot;);</span>
-<span class="nc" id="L431">            return null;</span>
+<span class="nc" id="L445">        String rawJson = resp.body();</span>
+<span class="nc bnc" id="L446" title="All 4 branches missed.">        if (rawJson == null || rawJson.isBlank()) {</span>
+<span class="nc" id="L447">            log.warn(&quot;LLM Ollama: corps de réponse vide&quot;);</span>
+<span class="nc" id="L448">            return null;</span>
         }
-<span class="nc" id="L433">        return parseAssistantContentFromResponseJson(rawJson);</span>
+<span class="nc" id="L450">        return parseAssistantContentFromResponseJson(rawJson);</span>
     }
 
     private String parseAssistantContentFromResponseJson(String rawJson) throws Exception {
-<span class="nc" id="L437">        JsonNode root = objectMapper.readTree(rawJson);</span>
-<span class="nc" id="L438">        String content = extractAssistantText(root);</span>
-<span class="nc bnc" id="L439" title="All 2 branches missed.">        if (content.isBlank()) {</span>
-<span class="nc" id="L440">            log.warn(</span>
+<span class="nc" id="L454">        JsonNode root = objectMapper.readTree(rawJson);</span>
+<span class="nc" id="L455">        String content = extractAssistantText(root);</span>
+<span class="nc bnc" id="L456" title="All 2 branches missed.">        if (content.isBlank()) {</span>
+<span class="nc" id="L457">            log.warn(</span>
                     &quot;LLM: réponse sans texte assistant exploitable. Extrait brut: {}&quot;,
-<span class="nc" id="L442">                    shorten(rawJson, 1200));</span>
-<span class="nc" id="L443">            return null;</span>
+<span class="nc" id="L459">                    shorten(rawJson, 1200));</span>
+<span class="nc" id="L460">            return null;</span>
         }
-<span class="nc" id="L445">        return content;</span>
+<span class="nc" id="L462">        return content;</span>
     }
 
     /**
@@ -450,228 +467,228 @@ public class ExamenLlmClient {
      * {@code [{type,text}, ...]} — {@link JsonNode#asText()} sur un tableau renvoie vide, ce qui cassait toute la génération.
      */
     private static String extractAssistantText(JsonNode root) {
-<span class="nc" id="L453">        JsonNode choice0 = root.path(&quot;choices&quot;).path(0);</span>
-<span class="nc" id="L454">        JsonNode msg = choice0.path(&quot;message&quot;);</span>
-<span class="nc bnc" id="L455" title="All 4 branches missed.">        if (msg.isMissingNode() || msg.isNull()) {</span>
-<span class="nc" id="L456">            msg = choice0.path(&quot;delta&quot;);</span>
+<span class="nc" id="L470">        JsonNode choice0 = root.path(&quot;choices&quot;).path(0);</span>
+<span class="nc" id="L471">        JsonNode msg = choice0.path(&quot;message&quot;);</span>
+<span class="nc bnc" id="L472" title="All 4 branches missed.">        if (msg.isMissingNode() || msg.isNull()) {</span>
+<span class="nc" id="L473">            msg = choice0.path(&quot;delta&quot;);</span>
         }
-<span class="nc" id="L458">        String fromMessage = flattenMessageContent(msg.path(&quot;content&quot;));</span>
-<span class="nc bnc" id="L459" title="All 2 branches missed.">        if (!fromMessage.isBlank()) {</span>
-<span class="nc" id="L460">            return fromMessage.trim();</span>
+<span class="nc" id="L475">        String fromMessage = flattenMessageContent(msg.path(&quot;content&quot;));</span>
+<span class="nc bnc" id="L476" title="All 2 branches missed.">        if (!fromMessage.isBlank()) {</span>
+<span class="nc" id="L477">            return fromMessage.trim();</span>
         }
-<span class="nc bnc" id="L462" title="All 4 branches missed.">        if (choice0.has(&quot;text&quot;) &amp;&amp; choice0.get(&quot;text&quot;).isTextual()) {</span>
-<span class="nc" id="L463">            return choice0.get(&quot;text&quot;).asText(&quot;&quot;).trim();</span>
+<span class="nc bnc" id="L479" title="All 4 branches missed.">        if (choice0.has(&quot;text&quot;) &amp;&amp; choice0.get(&quot;text&quot;).isTextual()) {</span>
+<span class="nc" id="L480">            return choice0.get(&quot;text&quot;).asText(&quot;&quot;).trim();</span>
         }
-<span class="nc" id="L465">        return &quot;&quot;;</span>
+<span class="nc" id="L482">        return &quot;&quot;;</span>
     }
 
     private static String flattenMessageContent(JsonNode contentNode) {
-<span class="nc bnc" id="L469" title="All 6 branches missed.">        if (contentNode == null || contentNode.isNull() || contentNode.isMissingNode()) {</span>
-<span class="nc" id="L470">            return &quot;&quot;;</span>
+<span class="nc bnc" id="L486" title="All 6 branches missed.">        if (contentNode == null || contentNode.isNull() || contentNode.isMissingNode()) {</span>
+<span class="nc" id="L487">            return &quot;&quot;;</span>
         }
-<span class="nc bnc" id="L472" title="All 2 branches missed.">        if (contentNode.isTextual()) {</span>
-<span class="nc" id="L473">            return contentNode.asText(&quot;&quot;);</span>
+<span class="nc bnc" id="L489" title="All 2 branches missed.">        if (contentNode.isTextual()) {</span>
+<span class="nc" id="L490">            return contentNode.asText(&quot;&quot;);</span>
         }
-<span class="nc bnc" id="L475" title="All 2 branches missed.">        if (contentNode.isArray()) {</span>
-<span class="nc" id="L476">            StringBuilder sb = new StringBuilder();</span>
-<span class="nc bnc" id="L477" title="All 2 branches missed.">            for (JsonNode part : contentNode) {</span>
-<span class="nc bnc" id="L478" title="All 4 branches missed.">                if (part == null || part.isNull()) {</span>
-<span class="nc" id="L479">                    continue;</span>
+<span class="nc bnc" id="L492" title="All 2 branches missed.">        if (contentNode.isArray()) {</span>
+<span class="nc" id="L493">            StringBuilder sb = new StringBuilder();</span>
+<span class="nc bnc" id="L494" title="All 2 branches missed.">            for (JsonNode part : contentNode) {</span>
+<span class="nc bnc" id="L495" title="All 4 branches missed.">                if (part == null || part.isNull()) {</span>
+<span class="nc" id="L496">                    continue;</span>
                 }
-<span class="nc bnc" id="L481" title="All 2 branches missed.">                if (part.has(&quot;text&quot;)) {</span>
-<span class="nc" id="L482">                    sb.append(part.get(&quot;text&quot;).asText(&quot;&quot;));</span>
-<span class="nc bnc" id="L483" title="All 2 branches missed.">                } else if (part.isTextual()) {</span>
-<span class="nc" id="L484">                    sb.append(part.asText(&quot;&quot;));</span>
-<span class="nc bnc" id="L485" title="All 2 branches missed.">                } else if (part.has(&quot;content&quot;)) {</span>
-<span class="nc" id="L486">                    sb.append(flattenMessageContent(part.get(&quot;content&quot;)));</span>
+<span class="nc bnc" id="L498" title="All 2 branches missed.">                if (part.has(&quot;text&quot;)) {</span>
+<span class="nc" id="L499">                    sb.append(part.get(&quot;text&quot;).asText(&quot;&quot;));</span>
+<span class="nc bnc" id="L500" title="All 2 branches missed.">                } else if (part.isTextual()) {</span>
+<span class="nc" id="L501">                    sb.append(part.asText(&quot;&quot;));</span>
+<span class="nc bnc" id="L502" title="All 2 branches missed.">                } else if (part.has(&quot;content&quot;)) {</span>
+<span class="nc" id="L503">                    sb.append(flattenMessageContent(part.get(&quot;content&quot;)));</span>
                 }
-<span class="nc" id="L488">            }</span>
-<span class="nc" id="L489">            return sb.toString();</span>
+<span class="nc" id="L505">            }</span>
+<span class="nc" id="L506">            return sb.toString();</span>
         }
-<span class="nc" id="L491">        return contentNode.asText(&quot;&quot;);</span>
+<span class="nc" id="L508">        return contentNode.asText(&quot;&quot;);</span>
     }
 
     /**
      * Extrait le premier tableau JSON top-level en respectant les chaînes (un {@code ]} dans une option ne doit pas tronquer).
      */
     private static String extractJsonArray(String text) throws Exception {
-<span class="nc bnc" id="L498" title="All 4 branches missed.">        if (text == null || text.isBlank()) {</span>
-<span class="nc" id="L499">            throw new IllegalArgumentException(&quot;empty&quot;);</span>
+<span class="nc bnc" id="L515" title="All 4 branches missed.">        if (text == null || text.isBlank()) {</span>
+<span class="nc" id="L516">            throw new IllegalArgumentException(&quot;empty&quot;);</span>
         }
-<span class="nc" id="L501">        String t = text.trim();</span>
-<span class="nc bnc" id="L502" title="All 2 branches missed.">        if (t.startsWith(&quot;```&quot;)) {</span>
-<span class="nc" id="L503">            int firstNl = t.indexOf('\n');</span>
-<span class="nc bnc" id="L504" title="All 2 branches missed.">            if (firstNl &gt; 0) {</span>
-<span class="nc" id="L505">                t = t.substring(firstNl + 1);</span>
+<span class="nc" id="L518">        String t = text.trim();</span>
+<span class="nc bnc" id="L519" title="All 2 branches missed.">        if (t.startsWith(&quot;```&quot;)) {</span>
+<span class="nc" id="L520">            int firstNl = t.indexOf('\n');</span>
+<span class="nc bnc" id="L521" title="All 2 branches missed.">            if (firstNl &gt; 0) {</span>
+<span class="nc" id="L522">                t = t.substring(firstNl + 1);</span>
             }
-<span class="nc" id="L507">            int fenceEnd = t.indexOf(&quot;```&quot;);</span>
-<span class="nc bnc" id="L508" title="All 2 branches missed.">            if (fenceEnd &gt;= 0) {</span>
-<span class="nc" id="L509">                t = t.substring(0, fenceEnd).trim();</span>
+<span class="nc" id="L524">            int fenceEnd = t.indexOf(&quot;```&quot;);</span>
+<span class="nc bnc" id="L525" title="All 2 branches missed.">            if (fenceEnd &gt;= 0) {</span>
+<span class="nc" id="L526">                t = t.substring(0, fenceEnd).trim();</span>
             }
         }
-<span class="nc" id="L512">        int start = t.indexOf('[');</span>
-<span class="nc bnc" id="L513" title="All 2 branches missed.">        if (start &lt; 0) {</span>
-<span class="nc" id="L514">            throw new IllegalArgumentException(&quot;no array&quot;);</span>
+<span class="nc" id="L529">        int start = t.indexOf('[');</span>
+<span class="nc bnc" id="L530" title="All 2 branches missed.">        if (start &lt; 0) {</span>
+<span class="nc" id="L531">            throw new IllegalArgumentException(&quot;no array&quot;);</span>
         }
-<span class="nc" id="L516">        int end = indexOfMatchingTopLevelArrayEnd(t, start);</span>
-<span class="nc bnc" id="L517" title="All 2 branches missed.">        if (end &lt; 0) {</span>
-<span class="nc" id="L518">            throw new IllegalArgumentException(&quot;unbalanced&quot;);</span>
+<span class="nc" id="L533">        int end = indexOfMatchingTopLevelArrayEnd(t, start);</span>
+<span class="nc bnc" id="L534" title="All 2 branches missed.">        if (end &lt; 0) {</span>
+<span class="nc" id="L535">            throw new IllegalArgumentException(&quot;unbalanced&quot;);</span>
         }
-<span class="nc" id="L520">        return t.substring(start, end + 1);</span>
+<span class="nc" id="L537">        return t.substring(start, end + 1);</span>
     }
 
     private static int indexOfMatchingTopLevelArrayEnd(String t, int openBracketIdx) {
-<span class="nc" id="L524">        int depth = 0;</span>
-<span class="nc" id="L525">        boolean inString = false;</span>
-<span class="nc" id="L526">        boolean escape = false;</span>
-<span class="nc bnc" id="L527" title="All 2 branches missed.">        for (int i = openBracketIdx; i &lt; t.length(); i++) {</span>
-<span class="nc" id="L528">            char c = t.charAt(i);</span>
-<span class="nc bnc" id="L529" title="All 2 branches missed.">            if (escape) {</span>
-<span class="nc" id="L530">                escape = false;</span>
-<span class="nc" id="L531">                continue;</span>
+<span class="nc" id="L541">        int depth = 0;</span>
+<span class="nc" id="L542">        boolean inString = false;</span>
+<span class="nc" id="L543">        boolean escape = false;</span>
+<span class="nc bnc" id="L544" title="All 2 branches missed.">        for (int i = openBracketIdx; i &lt; t.length(); i++) {</span>
+<span class="nc" id="L545">            char c = t.charAt(i);</span>
+<span class="nc bnc" id="L546" title="All 2 branches missed.">            if (escape) {</span>
+<span class="nc" id="L547">                escape = false;</span>
+<span class="nc" id="L548">                continue;</span>
             }
-<span class="nc bnc" id="L533" title="All 2 branches missed.">            if (inString) {</span>
-<span class="nc bnc" id="L534" title="All 2 branches missed.">                if (c == '\\') {</span>
-<span class="nc" id="L535">                    escape = true;</span>
-<span class="nc bnc" id="L536" title="All 2 branches missed.">                } else if (c == '&quot;') {</span>
-<span class="nc" id="L537">                    inString = false;</span>
+<span class="nc bnc" id="L550" title="All 2 branches missed.">            if (inString) {</span>
+<span class="nc bnc" id="L551" title="All 2 branches missed.">                if (c == '\\') {</span>
+<span class="nc" id="L552">                    escape = true;</span>
+<span class="nc bnc" id="L553" title="All 2 branches missed.">                } else if (c == '&quot;') {</span>
+<span class="nc" id="L554">                    inString = false;</span>
                 }
                 continue;
             }
-<span class="nc bnc" id="L541" title="All 2 branches missed.">            if (c == '&quot;') {</span>
-<span class="nc" id="L542">                inString = true;</span>
-<span class="nc" id="L543">                continue;</span>
+<span class="nc bnc" id="L558" title="All 2 branches missed.">            if (c == '&quot;') {</span>
+<span class="nc" id="L559">                inString = true;</span>
+<span class="nc" id="L560">                continue;</span>
             }
-<span class="nc bnc" id="L545" title="All 2 branches missed.">            if (c == '[') {</span>
-<span class="nc" id="L546">                depth++;</span>
-<span class="nc bnc" id="L547" title="All 2 branches missed.">            } else if (c == ']') {</span>
-<span class="nc" id="L548">                depth--;</span>
-<span class="nc bnc" id="L549" title="All 2 branches missed.">                if (depth == 0) {</span>
-<span class="nc" id="L550">                    return i;</span>
+<span class="nc bnc" id="L562" title="All 2 branches missed.">            if (c == '[') {</span>
+<span class="nc" id="L563">                depth++;</span>
+<span class="nc bnc" id="L564" title="All 2 branches missed.">            } else if (c == ']') {</span>
+<span class="nc" id="L565">                depth--;</span>
+<span class="nc bnc" id="L566" title="All 2 branches missed.">                if (depth == 0) {</span>
+<span class="nc" id="L567">                    return i;</span>
                 }
             }
         }
-<span class="nc" id="L554">        return -1;</span>
+<span class="nc" id="L571">        return -1;</span>
     }
 
     private QuestionDto normalizeQuestion(JsonNode raw, QuestionGenMeta meta) {
-<span class="nc bnc" id="L558" title="All 4 branches missed.">        if (raw == null || raw.isNull()) {</span>
-<span class="nc" id="L559">            return null;</span>
+<span class="nc bnc" id="L575" title="All 4 branches missed.">        if (raw == null || raw.isNull()) {</span>
+<span class="nc" id="L576">            return null;</span>
         }
-<span class="nc bnc" id="L561" title="All 2 branches missed.">        if (raw.isTextual()) {</span>
+<span class="nc bnc" id="L578" title="All 2 branches missed.">        if (raw.isTextual()) {</span>
             try {
-<span class="nc" id="L563">                raw = objectMapper.readTree(raw.asText());</span>
-<span class="nc" id="L564">            } catch (Exception e) {</span>
-<span class="nc" id="L565">                return null;</span>
-<span class="nc" id="L566">            }</span>
+<span class="nc" id="L580">                raw = objectMapper.readTree(raw.asText());</span>
+<span class="nc" id="L581">            } catch (Exception e) {</span>
+<span class="nc" id="L582">                return null;</span>
+<span class="nc" id="L583">            }</span>
         }
-<span class="nc bnc" id="L568" title="All 2 branches missed.">        if (!raw.isObject()) {</span>
-<span class="nc" id="L569">            return null;</span>
+<span class="nc bnc" id="L585" title="All 2 branches missed.">        if (!raw.isObject()) {</span>
+<span class="nc" id="L586">            return null;</span>
         }
-<span class="nc" id="L571">        int ordre = meta.ordre();</span>
-<span class="nc" id="L572">        int ordreLlm = raw.path(&quot;ordre&quot;).asInt(ordre);</span>
-<span class="nc bnc" id="L573" title="All 2 branches missed.">        if (ordreLlm != ordre) {</span>
-<span class="nc" id="L574">            log.debug(&quot;LLM: ordre modèle {} corrigé en {}&quot;, ordreLlm, ordre);</span>
+<span class="nc" id="L588">        int ordre = meta.ordre();</span>
+<span class="nc" id="L589">        int ordreLlm = raw.path(&quot;ordre&quot;).asInt(ordre);</span>
+<span class="nc bnc" id="L590" title="All 2 branches missed.">        if (ordreLlm != ordre) {</span>
+<span class="nc" id="L591">            log.debug(&quot;LLM: ordre modèle {} corrigé en {}&quot;, ordreLlm, ordre);</span>
         }
-<span class="nc" id="L576">        String enonce = fieldText(raw, &quot;enonce&quot;, &quot;énonce&quot;, &quot;question&quot;, &quot;intitule&quot;, &quot;titre&quot;);</span>
-<span class="nc" id="L577">        String a = fieldText(raw, &quot;optionA&quot;, &quot;option_a&quot;, &quot;a&quot;, &quot;A&quot;);</span>
-<span class="nc" id="L578">        String b = fieldText(raw, &quot;optionB&quot;, &quot;option_b&quot;, &quot;b&quot;, &quot;B&quot;);</span>
-<span class="nc" id="L579">        String c = fieldText(raw, &quot;optionC&quot;, &quot;option_c&quot;, &quot;c&quot;, &quot;C&quot;);</span>
-<span class="nc" id="L580">        String d = fieldText(raw, &quot;optionD&quot;, &quot;option_d&quot;, &quot;d&quot;, &quot;D&quot;);</span>
-<span class="nc bnc" id="L581" title="All 10 branches missed.">        if (enonce.length() &lt; 10 || a.length() &lt; 4 || b.length() &lt; 4 || c.length() &lt; 4 || d.length() &lt; 4) {</span>
-<span class="nc" id="L582">            log.warn(</span>
+<span class="nc" id="L593">        String enonce = fieldText(raw, &quot;enonce&quot;, &quot;énonce&quot;, &quot;question&quot;, &quot;intitule&quot;, &quot;titre&quot;);</span>
+<span class="nc" id="L594">        String a = fieldText(raw, &quot;optionA&quot;, &quot;option_a&quot;, &quot;a&quot;, &quot;A&quot;);</span>
+<span class="nc" id="L595">        String b = fieldText(raw, &quot;optionB&quot;, &quot;option_b&quot;, &quot;b&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L596">        String c = fieldText(raw, &quot;optionC&quot;, &quot;option_c&quot;, &quot;c&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L597">        String d = fieldText(raw, &quot;optionD&quot;, &quot;option_d&quot;, &quot;d&quot;, &quot;D&quot;);</span>
+<span class="nc bnc" id="L598" title="All 10 branches missed.">        if (enonce.length() &lt; 10 || a.length() &lt; 4 || b.length() &lt; 4 || c.length() &lt; 4 || d.length() &lt; 4) {</span>
+<span class="nc" id="L599">            log.warn(</span>
                     &quot;LLM: champs trop courts (ordre={} len enonce={} A={} B={} C={} D={})&quot;,
-<span class="nc" id="L584">                    ordre,</span>
-<span class="nc" id="L585">                    enonce.length(),</span>
-<span class="nc" id="L586">                    a.length(),</span>
-<span class="nc" id="L587">                    b.length(),</span>
-<span class="nc" id="L588">                    c.length(),</span>
-<span class="nc" id="L589">                    d.length());</span>
-<span class="nc" id="L590">            return null;</span>
+<span class="nc" id="L601">                    ordre,</span>
+<span class="nc" id="L602">                    enonce.length(),</span>
+<span class="nc" id="L603">                    a.length(),</span>
+<span class="nc" id="L604">                    b.length(),</span>
+<span class="nc" id="L605">                    c.length(),</span>
+<span class="nc" id="L606">                    d.length());</span>
+<span class="nc" id="L607">            return null;</span>
         }
-<span class="nc" id="L592">        String brRaw = fieldText(raw, &quot;bonneReponse&quot;, &quot;bonne_reponse&quot;, &quot;reponseCorrecte&quot;, &quot;answer&quot;, &quot;correct&quot;, &quot;reponse&quot;);</span>
-<span class="nc" id="L593">        String br = normalizeBonneReponse(brRaw);</span>
-<span class="nc" id="L594">        String expl = fieldText(raw, &quot;explication&quot;, &quot;justification&quot;, &quot;feedback&quot;);</span>
-<span class="nc" id="L595">        return QuestionDto.builder()</span>
-<span class="nc" id="L596">                .ordre(ordre)</span>
-<span class="nc" id="L597">                .enonce(shorten(enonce, 1000))</span>
-<span class="nc" id="L598">                .optionA(shorten(a, 500))</span>
-<span class="nc" id="L599">                .optionB(shorten(b, 500))</span>
-<span class="nc" id="L600">                .optionC(shorten(c, 500))</span>
-<span class="nc" id="L601">                .optionD(shorten(d, 500))</span>
-<span class="nc" id="L602">                .bonneReponse(br)</span>
-<span class="nc" id="L603">                .parcoursInclusion(meta.inclusion())</span>
-<span class="nc" id="L604">                .niveauDifficulte(meta.niveauDifficulte())</span>
-<span class="nc" id="L605">                .theme(meta.theme())</span>
-<span class="nc" id="L606">                .skill(meta.theme())</span>
-<span class="nc" id="L607">                .explication(shorten(expl, 2000))</span>
-<span class="nc" id="L608">                .build();</span>
+<span class="nc" id="L609">        String brRaw = fieldText(raw, &quot;bonneReponse&quot;, &quot;bonne_reponse&quot;, &quot;reponseCorrecte&quot;, &quot;answer&quot;, &quot;correct&quot;, &quot;reponse&quot;);</span>
+<span class="nc" id="L610">        String br = normalizeBonneReponse(brRaw);</span>
+<span class="nc" id="L611">        String expl = fieldText(raw, &quot;explication&quot;, &quot;justification&quot;, &quot;feedback&quot;);</span>
+<span class="nc" id="L612">        return QuestionDto.builder()</span>
+<span class="nc" id="L613">                .ordre(ordre)</span>
+<span class="nc" id="L614">                .enonce(shorten(enonce, 1000))</span>
+<span class="nc" id="L615">                .optionA(shorten(a, 500))</span>
+<span class="nc" id="L616">                .optionB(shorten(b, 500))</span>
+<span class="nc" id="L617">                .optionC(shorten(c, 500))</span>
+<span class="nc" id="L618">                .optionD(shorten(d, 500))</span>
+<span class="nc" id="L619">                .bonneReponse(br)</span>
+<span class="nc" id="L620">                .parcoursInclusion(meta.inclusion())</span>
+<span class="nc" id="L621">                .niveauDifficulte(meta.niveauDifficulte())</span>
+<span class="nc" id="L622">                .theme(meta.theme())</span>
+<span class="nc" id="L623">                .skill(meta.theme())</span>
+<span class="nc" id="L624">                .explication(shorten(expl, 2000))</span>
+<span class="nc" id="L625">                .build();</span>
     }
 
     private static String text(JsonNode n, String field) {
-<span class="nc" id="L612">        JsonNode v = n.get(field);</span>
-<span class="nc" id="L613">        return nodeToQuizString(v);</span>
+<span class="nc" id="L629">        JsonNode v = n.get(field);</span>
+<span class="nc" id="L630">        return nodeToQuizString(v);</span>
     }
 
     private static String nodeToQuizString(JsonNode v) {
-<span class="nc bnc" id="L617" title="All 6 branches missed.">        if (v == null || v.isNull() || v.isMissingNode()) {</span>
-<span class="nc" id="L618">            return &quot;&quot;;</span>
+<span class="nc bnc" id="L634" title="All 6 branches missed.">        if (v == null || v.isNull() || v.isMissingNode()) {</span>
+<span class="nc" id="L635">            return &quot;&quot;;</span>
         }
-<span class="nc bnc" id="L620" title="All 2 branches missed.">        if (v.isTextual()) {</span>
-<span class="nc" id="L621">            return v.asText(&quot;&quot;).trim();</span>
+<span class="nc bnc" id="L637" title="All 2 branches missed.">        if (v.isTextual()) {</span>
+<span class="nc" id="L638">            return v.asText(&quot;&quot;).trim();</span>
         }
-<span class="nc bnc" id="L623" title="All 4 branches missed.">        if (v.isNumber() || v.isBoolean()) {</span>
-<span class="nc" id="L624">            return v.asText().trim();</span>
+<span class="nc bnc" id="L640" title="All 4 branches missed.">        if (v.isNumber() || v.isBoolean()) {</span>
+<span class="nc" id="L641">            return v.asText().trim();</span>
         }
-<span class="nc" id="L626">        return &quot;&quot;;</span>
+<span class="nc" id="L643">        return &quot;&quot;;</span>
     }
 
     /** Clés exactes puis correspondance sans tenir compte de la casse (OptionA, optiona…). */
     private static String fieldText(JsonNode obj, String... preferredKeys) {
-<span class="nc bnc" id="L631" title="All 4 branches missed.">        if (obj == null || !obj.isObject()) {</span>
-<span class="nc" id="L632">            return &quot;&quot;;</span>
+<span class="nc bnc" id="L648" title="All 4 branches missed.">        if (obj == null || !obj.isObject()) {</span>
+<span class="nc" id="L649">            return &quot;&quot;;</span>
         }
-<span class="nc bnc" id="L634" title="All 2 branches missed.">        for (String k : preferredKeys) {</span>
-<span class="nc bnc" id="L635" title="All 2 branches missed.">            if (obj.has(k)) {</span>
-<span class="nc" id="L636">                String s = nodeToQuizString(obj.get(k));</span>
-<span class="nc bnc" id="L637" title="All 2 branches missed.">                if (!s.isEmpty()) {</span>
-<span class="nc" id="L638">                    return s;</span>
+<span class="nc bnc" id="L651" title="All 2 branches missed.">        for (String k : preferredKeys) {</span>
+<span class="nc bnc" id="L652" title="All 2 branches missed.">            if (obj.has(k)) {</span>
+<span class="nc" id="L653">                String s = nodeToQuizString(obj.get(k));</span>
+<span class="nc bnc" id="L654" title="All 2 branches missed.">                if (!s.isEmpty()) {</span>
+<span class="nc" id="L655">                    return s;</span>
                 }
             }
         }
-<span class="nc bnc" id="L642" title="All 2 branches missed.">        for (Iterator&lt;String&gt; it = obj.fieldNames(); it.hasNext(); ) {</span>
-<span class="nc" id="L643">            String fn = it.next();</span>
-<span class="nc bnc" id="L644" title="All 2 branches missed.">            for (String k : preferredKeys) {</span>
-<span class="nc bnc" id="L645" title="All 2 branches missed.">                if (fn.equalsIgnoreCase(k)) {</span>
-<span class="nc" id="L646">                    String s = nodeToQuizString(obj.get(fn));</span>
-<span class="nc bnc" id="L647" title="All 2 branches missed.">                    if (!s.isEmpty()) {</span>
-<span class="nc" id="L648">                        return s;</span>
+<span class="nc bnc" id="L659" title="All 2 branches missed.">        for (Iterator&lt;String&gt; it = obj.fieldNames(); it.hasNext(); ) {</span>
+<span class="nc" id="L660">            String fn = it.next();</span>
+<span class="nc bnc" id="L661" title="All 2 branches missed.">            for (String k : preferredKeys) {</span>
+<span class="nc bnc" id="L662" title="All 2 branches missed.">                if (fn.equalsIgnoreCase(k)) {</span>
+<span class="nc" id="L663">                    String s = nodeToQuizString(obj.get(fn));</span>
+<span class="nc bnc" id="L664" title="All 2 branches missed.">                    if (!s.isEmpty()) {</span>
+<span class="nc" id="L665">                        return s;</span>
                     }
                 }
             }
-<span class="nc" id="L652">        }</span>
-<span class="nc" id="L653">        return &quot;&quot;;</span>
+<span class="nc" id="L669">        }</span>
+<span class="nc" id="L670">        return &quot;&quot;;</span>
     }
 
     private static String normalizeBonneReponse(String brRaw) {
-<span class="nc bnc" id="L657" title="All 4 branches missed.">        if (brRaw == null || brRaw.isBlank()) {</span>
-<span class="nc" id="L658">            return &quot;A&quot;;</span>
+<span class="nc bnc" id="L674" title="All 4 branches missed.">        if (brRaw == null || brRaw.isBlank()) {</span>
+<span class="nc" id="L675">            return &quot;A&quot;;</span>
         }
-<span class="nc" id="L660">        String u = brRaw.toUpperCase().trim();</span>
-<span class="nc bnc" id="L661" title="All 2 branches missed.">        for (int i = 0; i &lt; u.length(); i++) {</span>
-<span class="nc" id="L662">            char c = u.charAt(i);</span>
-<span class="nc bnc" id="L663" title="All 4 branches missed.">            if (c &gt;= 'A' &amp;&amp; c &lt;= 'D') {</span>
-<span class="nc" id="L664">                return String.valueOf(c);</span>
+<span class="nc" id="L677">        String u = brRaw.toUpperCase().trim();</span>
+<span class="nc bnc" id="L678" title="All 2 branches missed.">        for (int i = 0; i &lt; u.length(); i++) {</span>
+<span class="nc" id="L679">            char c = u.charAt(i);</span>
+<span class="nc bnc" id="L680" title="All 4 branches missed.">            if (c &gt;= 'A' &amp;&amp; c &lt;= 'D') {</span>
+<span class="nc" id="L681">                return String.valueOf(c);</span>
             }
         }
-<span class="nc" id="L667">        return &quot;A&quot;;</span>
+<span class="nc" id="L684">        return &quot;A&quot;;</span>
     }
 
     private static String shorten(String s, int max) {
-<span class="nc bnc" id="L671" title="All 4 branches missed.">        if (s == null || s.length() &lt;= max) {</span>
-<span class="nc bnc" id="L672" title="All 2 branches missed.">            return s != null ? s : &quot;&quot;;</span>
+<span class="nc bnc" id="L688" title="All 4 branches missed.">        if (s == null || s.length() &lt;= max) {</span>
+<span class="nc bnc" id="L689" title="All 2 branches missed.">            return s != null ? s : &quot;&quot;;</span>
         }
-<span class="nc" id="L674">        return s.substring(0, Math.max(0, max - 3)) + &quot;...&quot;;</span>
+<span class="nc" id="L691">        return s.substring(0, Math.max(0, max - 3)) + &quot;...&quot;;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -2,196 +2,30 @@
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
- * Client vers le microservice Project (Eureka PROJECT) — projets ouverts / compétences requises.
+ * Appels au microservice Project via OpenFeign.
  */
 @Component
 @RequiredArgsConstructor
-<span class="fc" id="L21">@Slf4j</span>
+<span class="fc" id="L16">@Slf4j</span>
 public class ProjectClient {
 
-    private static final String PROJECT_SERVICE = &quot;http://PROJECT&quot;;
-    private final RestTemplate restTemplate;
+    private final ProjectFeignApi feignApi;
 
-    public List&lt;Map&lt;String, Object&gt;&gt; getProjetsParCompetenceRequise(String skillToken) {
+    public List&lt;Map&lt;String, Object&gt;&gt; getProjectsByStatus(String status) {
         try {
-<span class="nc" id="L29">            List&lt;Map&lt;String, Object&gt;&gt; data = restTemplate.exchange(</span>
-                    PROJECT_SERVICE + &quot;/projects/skill/&quot; + skillToken,
-                    HttpMethod.GET,
-                    null,
-<span class="nc" id="L33">                    new ParameterizedTypeReference&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt;() {}</span>
-<span class="nc" id="L34">            ).getBody();</span>
-<span class="nc bnc" id="L35" title="All 2 branches missed.">            return data != null ? data : Collections.emptyList();</span>
-<span class="nc" id="L36">        } catch (Exception e) {</span>
-<span class="nc" id="L37">            log.warn(&quot;Project MS skill={} : {}&quot;, skillToken, e.getMessage());</span>
-<span class="nc" id="L38">            return Collections.emptyList();</span>
+<span class="nc" id="L23">            List&lt;Map&lt;String, Object&gt;&gt; body = feignApi.getProjectsByStatus(status);</span>
+<span class="nc bnc" id="L24" title="All 2 branches missed.">            return body != null ? body : Collections.emptyList();</span>
+<span class="nc" id="L25">        } catch (Exception e) {</span>
+<span class="nc" id="L26">            log.warn(&quot;Project MS statut {}: {}&quot;, status, e.getMessage());</span>
+<span class="nc" id="L27">            return Collections.emptyList();</span>
         }
-    }
-
-    public List&lt;Map&lt;String, Object&gt;&gt; getProjetsOuverts() {
-        try {
-<span class="nc" id="L44">            List&lt;Map&lt;String, Object&gt;&gt; data = restTemplate.exchange(</span>
-                    PROJECT_SERVICE + &quot;/projects/status/OPEN&quot;,
-                    HttpMethod.GET,
-                    null,
-<span class="nc" id="L48">                    new ParameterizedTypeReference&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt;() {}</span>
-<span class="nc" id="L49">            ).getBody();</span>
-<span class="nc bnc" id="L50" title="All 2 branches missed.">            return data != null ? data : Collections.emptyList();</span>
-<span class="nc" id="L51">        } catch (Exception e) {</span>
-<span class="nc" id="L52">            log.warn(&quot;Project MS OPEN: {}&quot;, e.getMessage());</span>
-<span class="nc" id="L53">            return Collections.emptyList();</span>
-        }
-    }
-
-    /** Filtre OPEN et limite. */
-    public List&lt;Map&lt;String, Object&gt;&gt; projetsOuvertsMatchingDomaine(String categorieFormation, int limit) {
-<span class="nc" id="L59">        List&lt;Map&lt;String, Object&gt;&gt; raw = getProjetsParCompetenceRequise(categorieFormation);</span>
-<span class="nc" id="L60">        List&lt;Map&lt;String, Object&gt;&gt; open = raw.stream()</span>
-<span class="nc" id="L61">                .filter(p -&gt; &quot;OPEN&quot;.equalsIgnoreCase(String.valueOf(p.get(&quot;status&quot;))))</span>
-<span class="nc" id="L62">                .limit(limit)</span>
-<span class="nc" id="L63">                .collect(Collectors.toList());</span>
-<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (open.size() &gt;= limit) {</span>
-<span class="nc" id="L65">            return open;</span>
-        }
-<span class="nc" id="L67">        int reste = limit - open.size();</span>
-<span class="nc" id="L68">        List&lt;Map&lt;String, Object&gt;&gt; fallback = getProjetsOuverts().stream()</span>
-<span class="nc" id="L69">                .filter(p -&gt; &quot;OPEN&quot;.equalsIgnoreCase(String.valueOf(p.get(&quot;status&quot;))))</span>
-<span class="nc" id="L70">                .filter(p -&gt; skillsContainsDomaine(p, categorieFormation))</span>
-<span class="nc" id="L71">                .limit(reste)</span>
-<span class="nc" id="L72">                .collect(Collectors.toList());</span>
-<span class="nc" id="L73">        open.addAll(fallback);</span>
-<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (open.size() &lt; limit) {</span>
-<span class="nc" id="L75">            getProjetsOuverts().stream()</span>
-<span class="nc" id="L76">                    .filter(p -&gt; &quot;OPEN&quot;.equalsIgnoreCase(String.valueOf(p.get(&quot;status&quot;))))</span>
-<span class="nc" id="L77">                    .filter(p -&gt; open.stream().noneMatch(o -&gt; idEq(o, p)))</span>
-<span class="nc" id="L78">                    .limit(limit - open.size())</span>
-<span class="nc" id="L79">                    .forEach(open::add);</span>
-        }
-<span class="nc" id="L81">        return open.stream().limit(limit).collect(Collectors.toList());</span>
-    }
-
-    /**
-     * Projets ouverts après certificat : pool élargi puis tri selon le domaine de formation et le niveau déduit du score.
-     */
-    public List&lt;Map&lt;String, Object&gt;&gt; projetsPourMarcheApresCertificat(String categorieFormation, String niveauScore, int limit) {
-<span class="nc" id="L88">        int maxPool = Math.max(40, limit * 5);</span>
-<span class="nc" id="L89">        List&lt;Map&lt;String, Object&gt;&gt; open = new ArrayList&lt;&gt;();</span>
-<span class="nc" id="L90">        addOpenUnique(getProjetsParCompetenceRequise(categorieFormation), open, maxPool);</span>
-<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (open.size() &lt; maxPool) {</span>
-<span class="nc" id="L92">            getProjetsOuverts().stream()</span>
-<span class="nc" id="L93">                    .filter(p -&gt; &quot;OPEN&quot;.equalsIgnoreCase(String.valueOf(p.get(&quot;status&quot;))))</span>
-<span class="nc" id="L94">                    .filter(p -&gt; skillsContainsDomaine(p, categorieFormation))</span>
-<span class="nc" id="L95">                    .filter(p -&gt; open.stream().noneMatch(o -&gt; idEq(o, p)))</span>
-<span class="nc" id="L96">                    .limit(maxPool - open.size())</span>
-<span class="nc" id="L97">                    .forEach(open::add);</span>
-        }
-<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (open.size() &lt; maxPool) {</span>
-<span class="nc" id="L100">            getProjetsOuverts().stream()</span>
-<span class="nc" id="L101">                    .filter(p -&gt; &quot;OPEN&quot;.equalsIgnoreCase(String.valueOf(p.get(&quot;status&quot;))))</span>
-<span class="nc" id="L102">                    .filter(p -&gt; open.stream().noneMatch(o -&gt; idEq(o, p)))</span>
-<span class="nc" id="L103">                    .limit(maxPool - open.size())</span>
-<span class="nc" id="L104">                    .forEach(open::add);</span>
-        }
-<span class="nc bnc" id="L106" title="All 2 branches missed.">        String niveau = niveauScore != null ? niveauScore : &quot;INTERMEDIAIRE&quot;;</span>
-<span class="nc" id="L107">        open.sort((a, b) -&gt; Double.compare(matchScoreMarche(b, categorieFormation, niveau),</span>
-<span class="nc" id="L108">                matchScoreMarche(a, categorieFormation, niveau)));</span>
-<span class="nc" id="L109">        return open.stream().limit(limit).collect(Collectors.toList());</span>
-    }
-
-    private static void addOpenUnique(List&lt;Map&lt;String, Object&gt;&gt; raw, List&lt;Map&lt;String, Object&gt;&gt; open, int maxTotal) {
-<span class="nc bnc" id="L113" title="All 2 branches missed.">        for (Map&lt;String, Object&gt; p : raw) {</span>
-<span class="nc bnc" id="L114" title="All 2 branches missed.">            if (open.size() &gt;= maxTotal) {</span>
-<span class="nc" id="L115">                break;</span>
-            }
-<span class="nc bnc" id="L117" title="All 2 branches missed.">            if (!&quot;OPEN&quot;.equalsIgnoreCase(String.valueOf(p.get(&quot;status&quot;)))) {</span>
-<span class="nc" id="L118">                continue;</span>
-            }
-<span class="nc bnc" id="L120" title="All 2 branches missed.">            if (open.stream().noneMatch(o -&gt; idEq(o, p))) {</span>
-<span class="nc" id="L121">                open.add(p);</span>
-            }
-<span class="nc" id="L123">        }</span>
-<span class="nc" id="L124">    }</span>
-
-    private static double matchScoreMarche(Map&lt;String, Object&gt; p, String categorie, String niveau) {
-<span class="nc" id="L127">        double s = 0;</span>
-<span class="nc bnc" id="L128" title="All 2 branches missed.">        if (skillsContainsDomaine(p, categorie)) {</span>
-<span class="nc" id="L129">            s += 40;</span>
-        }
-<span class="nc" id="L131">        Double budget = toDoubleObj(p.get(&quot;budget&quot;));</span>
-<span class="nc" id="L132">        Integer duration = toIntObj(p.get(&quot;duration&quot;));</span>
-<span class="nc bnc" id="L133" title="All 2 branches missed.">        if (budget != null) {</span>
-<span class="nc bnc" id="L134" title="All 3 branches missed.">            s += switch (niveau) {</span>
-<span class="nc" id="L135">                case &quot;EXPERT&quot;, &quot;AVANCE&quot; -&gt; Math.min(35, budget / 2500.0);</span>
-<span class="nc" id="L136">                case &quot;INTERMEDIAIRE_SUPERIEUR&quot; -&gt; Math.min(30, budget / 3000.0);</span>
-<span class="nc" id="L137">                default -&gt; Math.min(25, 8000.0 / (budget + 800));</span>
-            };
-        }
-<span class="nc bnc" id="L140" title="All 4 branches missed.">        if (duration != null &amp;&amp; duration &gt; 0) {</span>
-<span class="nc bnc" id="L141" title="All 2 branches missed.">            s += switch (niveau) {</span>
-<span class="nc" id="L142">                case &quot;EXPERT&quot;, &quot;AVANCE&quot; -&gt; Math.min(15, duration / 10.0);</span>
-<span class="nc" id="L143">                default -&gt; Math.min(15, 72.0 / (duration + 6));</span>
-            };
-        }
-<span class="nc" id="L146">        return s;</span>
-    }
-
-    private static Double toDoubleObj(Object o) {
-<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (o == null) {</span>
-<span class="nc" id="L151">            return null;</span>
-        }
-<span class="nc bnc" id="L153" title="All 2 branches missed.">        if (o instanceof Number n) {</span>
-<span class="nc" id="L154">            return n.doubleValue();</span>
-        }
-        try {
-<span class="nc" id="L157">            return Double.parseDouble(o.toString());</span>
-<span class="nc" id="L158">        } catch (NumberFormatException e) {</span>
-<span class="nc" id="L159">            return null;</span>
-        }
-    }
-
-    private static Integer toIntObj(Object o) {
-<span class="nc bnc" id="L164" title="All 2 branches missed.">        if (o == null) {</span>
-<span class="nc" id="L165">            return null;</span>
-        }
-<span class="nc bnc" id="L167" title="All 2 branches missed.">        if (o instanceof Number n) {</span>
-<span class="nc" id="L168">            return n.intValue();</span>
-        }
-        try {
-<span class="nc" id="L171">            return Integer.parseInt(o.toString());</span>
-<span class="nc" id="L172">        } catch (NumberFormatException e) {</span>
-<span class="nc" id="L173">            return null;</span>
-        }
-    }
-
-    private static boolean idEq(Map&lt;String, Object&gt; a, Map&lt;String, Object&gt; b) {
-<span class="nc" id="L178">        Object ida = a.get(&quot;id&quot;);</span>
-<span class="nc" id="L179">        Object idb = b.get(&quot;id&quot;);</span>
-<span class="nc bnc" id="L180" title="All 4 branches missed.">        return ida != null &amp;&amp; ida.equals(idb);</span>
-    }
-
-    @SuppressWarnings(&quot;unchecked&quot;)
-    private static boolean skillsContainsDomaine(Map&lt;String, Object&gt; project, String categorie) {
-<span class="nc" id="L185">        Object rs = project.get(&quot;requiredSkills&quot;);</span>
-<span class="nc bnc" id="L186" title="All 2 branches missed.">        if (!(rs instanceof List)) {</span>
-<span class="nc" id="L187">            return false;</span>
-        }
-<span class="nc bnc" id="L189" title="All 2 branches missed.">        for (Object o : (List&lt;?&gt;) rs) {</span>
-<span class="nc bnc" id="L190" title="All 4 branches missed.">            if (o != null &amp;&amp; o.toString().toUpperCase().contains(categorie.toUpperCase())) {</span>
-<span class="nc" id="L191">                return true;</span>
-            }
-<span class="nc" id="L193">        }</span>
-<span class="nc" id="L194">        return false;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -5,12 +5,10 @@ tn\esprit\evaluation\service\PassageExamenService.class
 tn\esprit\evaluation\entity\Question.class
 tn\esprit\evaluation\domain\NiveauDifficulteQuestion.class
 tn\esprit\evaluation\exception\ResourceNotFoundException.class
-tn\esprit\evaluation\client\SkillClient$AttributionOutcome.class
 tn\esprit\evaluation\repository\FreelancerQuestionTraceRepository.class
 tn\esprit\evaluation\util\QuestionDifficultyPonderation$1.class
 tn\esprit\evaluation\dto\ProjetMarcheDto.class
 tn\esprit\evaluation\dto\RemediationPlanDto.class
-tn\esprit\evaluation\client\FormationClient$2.class
 tn\esprit\evaluation\dto\CompetenceAttribueeDto$CompetenceAttribueeDtoBuilder.class
 tn\esprit\evaluation\dto\AmenagementTempsUpsertRequest.class
 tn\esprit\evaluation\service\FreelancerObjectifThemeService.class
@@ -19,7 +17,6 @@ tn\esprit\evaluation\controller\CertificatController.class
 tn\esprit\evaluation\entity\PassageExamen.class
 tn\esprit\evaluation\ExamenMetierConstants.class
 tn\esprit\evaluation\client\SkillClient.class
-tn\esprit\evaluation\client\ProjectClient$2.class
 tn\esprit\evaluation\dto\CorrectionItemDto$CorrectionItemDtoBuilder.class
 tn\esprit\evaluation\entity\FreelancerObjectifTheme.class
 tn\esprit\evaluation\dto\AdaptatifDemarrageDto$AdaptatifDemarrageDtoBuilder.class
@@ -49,7 +46,6 @@ tn\esprit\evaluation\dto\ObjectifThemeRequest$ObjectifThemeRequestBuilder.class
 tn\esprit\evaluation\dto\AdaptatifEtapeReponseDto$AdaptatifEtapeReponseDtoBuilder.class
 tn\esprit\evaluation\dto\ExamenDto$ExamenDtoBuilder.class
 tn\esprit\evaluation\service\ExamenService.class
-tn\esprit\evaluation\service\CertificatCarriereService$1.class
 tn\esprit\evaluation\service\QuestionAiValidationService.class
 tn\esprit\evaluation\repository\PassageExamenRepository.class
 tn\esprit\evaluation\dto\FreelancerProjectMatchingDto$FreelancerProjectMatchingDtoBuilder.class
@@ -58,10 +54,8 @@ tn\esprit\evaluation\repository\CertificatRepository.class
 tn\esprit\evaluation\dto\SkillScoreDto$SkillScoreDtoBuilder.class
 tn\esprit\evaluation\client\ExamenPythonGeneratorClient.class
 tn\esprit\evaluation\client\ExamenLlmClient$QuestionGenMeta.class
-tn\esprit\evaluation\client\FormationClient$1.class
 tn\esprit\evaluation\dto\DemarrerAdaptatifRequest.class
 tn\esprit\evaluation\service\RankingRecommendationService.class
-tn\esprit\evaluation\client\SkillClient$ParcoursIntelligentBrief.class
 tn\esprit\evaluation\repository\FreelancerThemeScoreLogRepository.class
 tn\esprit\evaluation\dto\AdaptatifDemarrageDto.class
 tn\esprit\evaluation\dto\AdaptatifEtapeReponseDto.class
@@ -87,7 +81,6 @@ tn\esprit\evaluation\config\GlobalExceptionHandler.class
 tn\esprit\evaluation\dto\PassageExamenDto$PassageExamenDtoBuilder.class
 tn\esprit\evaluation\entity\Certificat.class
 tn\esprit\evaluation\service\ExamenGenerationService.class
-tn\esprit\evaluation\client\SkillClient$1.class
 tn\esprit\evaluation\dto\ObjectifThemeDto$ObjectifThemeDtoBuilder.class
 tn\esprit\evaluation\config\RestTemplateConfig.class
 tn\esprit\evaluation\repository\FreelancerObjectifThemeRepository.class
@@ -107,7 +100,6 @@ tn\esprit\evaluation\dto\SuccessPredictionDto$SuccessPredictionDtoBuilder.class
 tn\esprit\evaluation\entity\PassageExamen$ResultatExamen.class
 tn\esprit\evaluation\entity\FreelancerAmenagementTemps.class
 tn\esprit\evaluation\dto\ExamenDto.class
-tn\esprit\evaluation\client\FormationClient$3.class
 tn\esprit\evaluation\dto\ReponseExamenRequest.class
 tn\esprit\evaluation\entity\Certificat$CertificatBuilder.class
 tn\esprit\evaluation\entity\FreelancerObjectifTheme$FreelancerObjectifThemeBuilder.class
@@ -126,12 +118,9 @@ tn\esprit\evaluation\dto\SkillScoreDto.class
 tn\esprit\evaluation\repository\QuestionRepository.class
 tn\esprit\evaluation\util\QuestionDifficultyPonderation.class
 tn\esprit\evaluation\dto\RiskEvaluationDto$RiskEvaluationDtoBuilder.class
-tn\esprit\evaluation\client\FormationClient$4.class
-tn\esprit\evaluation\client\SkillClient$AttributionOutcome$Kind.class
 tn\esprit\evaluation\dto\QuestionValidationRequest$QuestionValidationRequestBuilder.class
 tn\esprit\evaluation\service\CertificatService.class
 tn\esprit\evaluation\dto\ReponseExamenRequest$ReponseExamenRequestBuilder.class
-tn\esprit\evaluation\client\ProjectClient$1.class
 tn\esprit\evaluation\dto\ModuleRevisionDto$ModuleRevisionDtoBuilder.class
 tn\esprit\evaluation\repository\ExamenAdaptatifSessionRepository.class
 tn\esprit\evaluation\dto\ProjetMarcheDto$ProjetMarcheDtoBuilder.class

@@ -1,0 +1,3 @@
+# Created at 2026-04-16T12:32:33.212
+java.lang.BootstrapMethodError: java.lang.UnsupportedClassVersionError: org/junit/platform/launcher/TagFilter has been compiled by a more recent version of the Java Runtime (class file version 61.0), this version of the Java Runtime only recognizes class file versions up to 52.0
+

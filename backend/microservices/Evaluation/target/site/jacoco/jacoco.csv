@@ -4,8 +4,8 @@ evaluation,tn.esprit.evaluation.util,QuestionDifficultyPonderation,0,26,0,7,0,9,
 evaluation,tn.esprit.evaluation.config,GlobalExceptionHandler,75,3,8,0,15,1,9,1,5,1
 evaluation,tn.esprit.evaluation.config,RestTemplateConfig,0,22,0,0,0,6,0,3,0,3
 evaluation,tn.esprit.evaluation.exception,ResourceNotFoundException,10,0,0,0,4,0,2,0,2,0
-evaluation,tn.esprit.evaluation.controller,CertificatController,452,5,48,0,91,1,36,1,12,1
-evaluation,tn.esprit.evaluation.controller,RankingRecommendationController,18,0,0,0,3,0,3,0,3,0
+evaluation,tn.esprit.evaluation.controller,CertificatController,473,5,48,0,97,1,36,1,12,1
+evaluation,tn.esprit.evaluation.controller,RankingRecommendationController,25,0,0,0,4,0,4,0,4,0
 evaluation,tn.esprit.evaluation.controller,ExamenController,297,0,20,0,53,0,39,0,29,0
 evaluation,tn.esprit.evaluation.domain,TypeParcours,0,15,0,0,0,3,0,1,0,1
 evaluation,tn.esprit.evaluation.domain,NiveauDifficulteQuestion,0,21,0,0,0,4,0,1,0,1
@@ -14,20 +14,11 @@ evaluation,tn.esprit.evaluation.entity,ExamenAdaptatifSession,13,0,2,0,4,0,2,0,1
 evaluation,tn.esprit.evaluation.entity,Certificat,8,0,0,0,1,0,1,0,1,0
 evaluation,tn.esprit.evaluation.entity,PassageExamen.ResultatExamen,0,15,0,0,0,3,0,1,0,1
 evaluation,tn.esprit.evaluation.entity,ExamenAdaptatifSession.StatutSession,0,21,0,0,0,4,0,1,0,1
-evaluation,tn.esprit.evaluation.client,ProjectClient.new ParameterizedTypeReference() {...},6,0,0,0,1,0,1,0,1,0
-evaluation,tn.esprit.evaluation.client,ProjectClient.new ParameterizedTypeReference() {...},6,0,0,0,1,0,1,0,1,0
-evaluation,tn.esprit.evaluation.client,FormationClient,124,4,8,0,24,1,8,1,4,1
-evaluation,tn.esprit.evaluation.client,SkillClient,182,4,14,0,36,1,10,1,3,1
+evaluation,tn.esprit.evaluation.client,FormationClient,80,4,8,0,20,1,8,1,4,1
+evaluation,tn.esprit.evaluation.client,SkillClient,60,4,8,0,15,1,6,1,2,1
 evaluation,tn.esprit.evaluation.client,ExamenPythonGeneratorClient,109,10,18,0,22,4,11,2,2,2
-evaluation,tn.esprit.evaluation.client,FormationClient.new ParameterizedTypeReference() {...},6,0,0,0,1,0,1,0,1,0
-evaluation,tn.esprit.evaluation.client,FormationClient.new ParameterizedTypeReference() {...},6,0,0,0,1,0,1,0,1,0
-evaluation,tn.esprit.evaluation.client,FormationClient.new ParameterizedTypeReference() {...},6,0,0,0,1,0,1,0,1,0
-evaluation,tn.esprit.evaluation.client,FormationClient.new ParameterizedTypeReference() {...},6,0,0,0,1,0,1,0,1,0
-evaluation,tn.esprit.evaluation.client,ExamenLlmClient,1776,157,288,8,360,19,174,5,26,5
-evaluation,tn.esprit.evaluation.client,SkillClient.AttributionOutcome,9,0,0,0,4,0,1,0,1,0
-evaluation,tn.esprit.evaluation.client,ProjectClient,532,4,55,0,102,1,53,1,25,1
-evaluation,tn.esprit.evaluation.client,SkillClient.new ParameterizedTypeReference() {...},6,0,0,0,1,0,1,0,1,0
-evaluation,tn.esprit.evaluation.client,SkillClient.AttributionOutcome.Kind,21,0,0,0,1,0,1,0,1,0
+evaluation,tn.esprit.evaluation.client,ExamenLlmClient,1793,178,294,8,363,20,178,5,27,5
+evaluation,tn.esprit.evaluation.client,ProjectClient,20,4,2,0,5,1,2,1,1,1
 evaluation,tn.esprit.evaluation.client,ExamenLlmClient.QuestionGenMeta,21,0,0,0,1,0,1,0,1,0
 evaluation,tn.esprit.evaluation.service,CertificatService,119,0,8,0,28,0,13,0,9,0
 evaluation,tn.esprit.evaluation.service,QuestionAiValidationService,553,4,102,0,142,1,59,1,8,1
@@ -35,14 +26,14 @@ evaluation,tn.esprit.evaluation.service,ExamenQuestionRedactionUtil,203,0,35,0,4
 evaluation,tn.esprit.evaluation.service,ExamenGenerationService,849,7,119,0,213,2,82,1,21,1
 evaluation,tn.esprit.evaluation.service,FreelancerObjectifThemeService,163,0,22,0,38,0,17,0,6,0
 evaluation,tn.esprit.evaluation.service,CertificatPdfService,660,5,44,0,118,1,30,1,8,1
-evaluation,tn.esprit.evaluation.service,PassageExamenService,436,752,100,76,75,171,80,31,10,13
+evaluation,tn.esprit.evaluation.service,PassageExamenService,436,751,100,76,75,171,80,31,10,13
 evaluation,tn.esprit.evaluation.service,ParcoursApprenantService.ScoredModule,9,0,0,0,1,0,1,0,1,0
-evaluation,tn.esprit.evaluation.service,RankingRecommendationService,637,0,76,0,154,0,59,0,21,0
+evaluation,tn.esprit.evaluation.service,RankingRecommendationService,562,0,52,0,128,0,45,0,19,0
 evaluation,tn.esprit.evaluation.service,FreelancerThemeScoreLogService,127,0,20,0,28,0,11,0,1,0
 evaluation,tn.esprit.evaluation.service,ExamenAdaptatifService,660,0,66,0,162,0,52,0,18,0
-evaluation,tn.esprit.evaluation.service,ParcoursApprenantService,1379,0,178,0,279,0,125,0,36,0
+evaluation,tn.esprit.evaluation.service,ParcoursApprenantService,1530,0,182,0,296,0,129,0,38,0
 evaluation,tn.esprit.evaluation.service,FreelancerAmenagementTempsService,117,0,18,0,27,0,13,0,4,0
-evaluation,tn.esprit.evaluation.service,CertificatCarriereService,770,13,122,0,176,2,74,1,12,1
+evaluation,tn.esprit.evaluation.service,CertificatCarriereService,815,13,120,0,197,2,73,1,12,1
 evaluation,tn.esprit.evaluation.service,FreelancerQuestionTraceService,99,0,12,0,26,0,9,0,3,0
 evaluation,tn.esprit.evaluation.service,QuestionParcoursFilter,32,34,11,3,6,9,7,3,0,3
 evaluation,tn.esprit.evaluation.service,ExamenService,746,0,105,0,161,0,75,0,22,0

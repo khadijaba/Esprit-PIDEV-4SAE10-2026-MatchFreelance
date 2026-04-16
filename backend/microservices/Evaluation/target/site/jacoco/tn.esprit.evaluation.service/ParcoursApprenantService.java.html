@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.evaluation.client.FormationClient;
-import tn.esprit.evaluation.client.SkillClient;
+import tn.esprit.evaluation.client.ExamenLlmClient;
 import tn.esprit.evaluation.domain.TypeParcours;
 import tn.esprit.evaluation.dto.ModuleRevisionDto;
 import tn.esprit.evaluation.dto.RemediationPlanDto;
@@ -45,7 +45,7 @@ public class ParcoursApprenantService {
     private final PassageExamenRepository passageExamenRepository;
     private final QuestionRepository questionRepository;
     private final FormationClient formationClient;
-    private final SkillClient skillClient;
+    private final ExamenLlmClient examenLlmClient;
     private final FreelancerQuestionTraceService freelancerQuestionTraceService;
 
     @Transactional(readOnly = true)
@@ -67,8 +67,8 @@ public class ParcoursApprenantService {
 <span class="nc" id="L67">                .mapToInt(m -&gt; parseInt(m.get(&quot;dureeMinutes&quot;), 0))</span>
 <span class="nc" id="L68">                .sum();</span>
 
-<span class="nc" id="L70">        List&lt;String&gt; gaps = skillClient.getParcoursIntelligent(freelancerId).getGapsDetectes();</span>
-<span class="nc bnc" id="L71" title="All 2 branches missed.">        int nbGaps = gaps != null ? gaps.size() : 0;</span>
+<span class="nc" id="L70">        List&lt;String&gt; gaps = gapsDetectesSansMicroserviceSkill(freelancerId);</span>
+<span class="nc" id="L71">        int nbGaps = gaps.size();</span>
 
 <span class="nc" id="L73">        int score = 0;</span>
 <span class="nc" id="L74">        List&lt;String&gt; facteurs = new ArrayList&lt;&gt;();</span>
@@ -95,10 +95,10 @@ public class ParcoursApprenantService {
         }
 <span class="nc bnc" id="L96" title="All 2 branches missed.">        if (nbGaps &gt;= 3) {</span>
 <span class="nc" id="L97">            score += 12;</span>
-<span class="nc" id="L98">            facteurs.add(&quot;Plusieurs gaps de compétences détectés (service Skill).&quot;);</span>
+<span class="nc" id="L98">            facteurs.add(&quot;Plusieurs signaux de préparation à renforcer (sans annuaire Skill).&quot;);</span>
 <span class="nc bnc" id="L99" title="All 2 branches missed.">        } else if (nbGaps &gt;= 1) {</span>
 <span class="nc" id="L100">            score += 5;</span>
-<span class="nc" id="L101">            facteurs.add(&quot;Gaps de compétences à combler avant l'examen.&quot;);</span>
+<span class="nc" id="L101">            facteurs.add(&quot;Axes de révision à consolider avant l'examen.&quot;);</span>
         }
 
 <span class="nc" id="L104">        score = Math.min(100, score);</span>
@@ -202,250 +202,296 @@ public class ParcoursApprenantService {
 
 <span class="nc" id="L203">        int avgPrepDays = computeAvgPrepDays(historique, resolveDateInscription(freelancerId, formationId));</span>
 <span class="nc" id="L204">        int prepTempoScore = Math.max(20, Math.min(100, avgPrepDays * 8));</span>
-<span class="nc" id="L205">        int nbGaps = skillClient.getParcoursIntelligent(freelancerId).getGapsDetectes().size();</span>
+<span class="nc" id="L205">        int nbGaps = gapsDetectesSansMicroserviceSkill(freelancerId).size();</span>
 <span class="nc" id="L206">        int skillReadiness = Math.max(0, 100 - (nbGaps * 12));</span>
 
 <span class="nc" id="L208">        int probabilite = clampScore((int) Math.round(avgScore * 0.55 + successRate * 0.25 + prepTempoScore * 0.10 + skillReadiness * 0.10));</span>
-<span class="nc bnc" id="L209" title="All 4 branches missed.">        String niveau = probabilite &gt;= 75 ? &quot;FORTE&quot; : probabilite &gt;= 50 ? &quot;MOYENNE&quot; : &quot;FAIBLE&quot;;</span>
+<span class="nc" id="L209">        int scoreMetier = clampScore((int) Math.round(avgScore * 0.45 + successRate * 0.25 + skillReadiness * 0.20 + prepTempoScore * 0.10));</span>
+<span class="nc bnc" id="L210" title="All 4 branches missed.">        String niveau = probabilite &gt;= 75 ? &quot;FORTE&quot; : probabilite &gt;= 50 ? &quot;MOYENNE&quot; : &quot;FAIBLE&quot;;</span>
 
-<span class="nc" id="L211">        List&lt;ModuleRevisionDto&gt; modules = List.of();</span>
-<span class="nc bnc" id="L212" title="All 2 branches missed.">        if (probabilite &lt; 75) {</span>
-<span class="nc" id="L213">            List&lt;String&gt; motsCles = new ArrayList&lt;&gt;(skillClient.getParcoursIntelligent(freelancerId).getGapsDetectes());</span>
-<span class="nc" id="L214">            modules = proposerModulesDepuisMotsCles(formationId, motsCles, 2);</span>
+<span class="nc" id="L212">        List&lt;ModuleRevisionDto&gt; modules = List.of();</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">        if (probabilite &lt; 75) {</span>
+<span class="nc" id="L214">            List&lt;String&gt; motsCles = new ArrayList&lt;&gt;(gapsDetectesSansMicroserviceSkill(freelancerId));</span>
+<span class="nc" id="L215">            modules = proposerModulesDepuisMotsCles(formationId, motsCles, 2);</span>
         }
 
-<span class="nc bnc" id="L217" title="All 2 branches missed.">        String reco = probabilite &gt;= 75</span>
-<span class="nc" id="L218">                ? &quot;Vous pouvez tenter le passage certifiant. Faites une révision légère avant l'examen.&quot;</span>
-<span class="nc bnc" id="L219" title="All 2 branches missed.">                : probabilite &gt;= 50</span>
-<span class="nc" id="L220">                ? &quot;Probabilité intermédiaire : faites 1 à 2 modules ciblés avant de passer en certifiant.&quot;</span>
-<span class="nc" id="L221">                : &quot;Probabilité faible : faites au moins 2 modules de remédiation puis lancez un entraînement.&quot;;</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">        String reco = probabilite &gt;= 75</span>
+<span class="nc" id="L219">                ? &quot;Vous pouvez tenter le passage certifiant. Faites une révision légère avant l'examen.&quot;</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">                : probabilite &gt;= 50</span>
+<span class="nc" id="L221">                ? &quot;Probabilité intermédiaire : faites 1 à 2 modules ciblés avant de passer en certifiant.&quot;</span>
+<span class="nc" id="L222">                : &quot;Probabilité faible : faites au moins 2 modules de remédiation puis lancez un entraînement.&quot;;</span>
 
-<span class="nc" id="L223">        return SuccessPredictionDto.builder()</span>
-<span class="nc" id="L224">                .probabiliteReussite(probabilite)</span>
-<span class="nc" id="L225">                .niveauConfiance(niveau)</span>
-<span class="nc" id="L226">                .scoreMoyenHistorique(avgScore)</span>
-<span class="nc" id="L227">                .tauxReussiteHistorique(successRate)</span>
-<span class="nc" id="L228">                .tempsMoyenPreparationJours(avgPrepDays)</span>
-<span class="nc" id="L229">                .recommandation(reco)</span>
-<span class="nc" id="L230">                .modulesAvantCertifiant(modules)</span>
-<span class="nc" id="L231">                .build();</span>
+<span class="nc" id="L224">        String explicationNaturelle = buildNaturalCoachExplanation(</span>
+                freelancerId, examenId, probabilite, scoreMetier, avgScore, successRate, avgPrepDays, nbGaps, reco);
+
+<span class="nc" id="L227">        return SuccessPredictionDto.builder()</span>
+<span class="nc" id="L228">                .probabiliteReussite(probabilite)</span>
+<span class="nc" id="L229">                .niveauConfiance(niveau)</span>
+<span class="nc" id="L230">                .scoreMoyenHistorique(avgScore)</span>
+<span class="nc" id="L231">                .tauxReussiteHistorique(successRate)</span>
+<span class="nc" id="L232">                .tempsMoyenPreparationJours(avgPrepDays)</span>
+<span class="nc" id="L233">                .scoreMetierRealiste(scoreMetier)</span>
+<span class="nc" id="L234">                .explicationNaturelle(explicationNaturelle)</span>
+<span class="nc" id="L235">                .recommandation(reco)</span>
+<span class="nc" id="L236">                .modulesAvantCertifiant(modules)</span>
+<span class="nc" id="L237">                .build();</span>
     }
 
     @Transactional(readOnly = true)
     public RemediationPlanDto construirePlanRemediation(Long freelancerId, Long examenId) {
-<span class="nc" id="L236">        Examen examen = examenRepository.findById(examenId)</span>
-<span class="nc" id="L237">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Examen&quot;, examenId));</span>
-<span class="nc" id="L238">        RiskEvaluationDto risque = evaluerRisque(freelancerId, examenId);</span>
+<span class="nc" id="L242">        Examen examen = examenRepository.findById(examenId)</span>
+<span class="nc" id="L243">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Examen&quot;, examenId));</span>
+<span class="nc" id="L244">        RiskEvaluationDto risque = evaluerRisque(freelancerId, examenId);</span>
 
-<span class="nc" id="L240">        Set&lt;Long&gt; questionIdsRatees = new HashSet&lt;&gt;(freelancerQuestionTraceService</span>
-<span class="nc" id="L241">                .listerQuestionIdsRatéesHistoriquement(freelancerId, examenId));</span>
-<span class="nc" id="L242">        List&lt;Question&gt; questions = questionRepository.findByExamenIdOrderByOrdreAsc(examenId);</span>
-<span class="nc" id="L243">        List&lt;String&gt; themesFaibles = questions.stream()</span>
-<span class="nc bnc" id="L244" title="All 4 branches missed.">                .filter(q -&gt; q.getId() != null &amp;&amp; questionIdsRatees.contains(q.getId()))</span>
-<span class="nc" id="L245">                .map(Question::getTheme)</span>
-<span class="nc bnc" id="L246" title="All 4 branches missed.">                .filter(t -&gt; t != null &amp;&amp; !t.isBlank())</span>
-<span class="nc" id="L247">                .map(String::trim)</span>
-<span class="nc" id="L248">                .distinct()</span>
-<span class="nc" id="L249">                .limit(8)</span>
-<span class="nc" id="L250">                .collect(Collectors.toList());</span>
+<span class="nc" id="L246">        Set&lt;Long&gt; questionIdsRatees = new HashSet&lt;&gt;(freelancerQuestionTraceService</span>
+<span class="nc" id="L247">                .listerQuestionIdsRatéesHistoriquement(freelancerId, examenId));</span>
+<span class="nc" id="L248">        List&lt;Question&gt; questions = questionRepository.findByExamenIdOrderByOrdreAsc(examenId);</span>
+<span class="nc" id="L249">        List&lt;String&gt; themesFaibles = questions.stream()</span>
+<span class="nc bnc" id="L250" title="All 4 branches missed.">                .filter(q -&gt; q.getId() != null &amp;&amp; questionIdsRatees.contains(q.getId()))</span>
+<span class="nc" id="L251">                .map(Question::getTheme)</span>
+<span class="nc bnc" id="L252" title="All 4 branches missed.">                .filter(t -&gt; t != null &amp;&amp; !t.isBlank())</span>
+<span class="nc" id="L253">                .map(String::trim)</span>
+<span class="nc" id="L254">                .distinct()</span>
+<span class="nc" id="L255">                .limit(8)</span>
+<span class="nc" id="L256">                .collect(Collectors.toList());</span>
 
-<span class="nc" id="L252">        List&lt;String&gt; motsCles = new ArrayList&lt;&gt;(themesFaibles);</span>
-<span class="nc bnc" id="L253" title="All 2 branches missed.">        if (motsCles.isEmpty()) {</span>
-<span class="nc" id="L254">            motsCles.addAll(skillClient.getParcoursIntelligent(freelancerId).getGapsDetectes());</span>
+<span class="nc" id="L258">        List&lt;String&gt; motsCles = new ArrayList&lt;&gt;(themesFaibles);</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">        if (motsCles.isEmpty()) {</span>
+<span class="nc" id="L260">            motsCles.addAll(gapsDetectesSansMicroserviceSkill(freelancerId));</span>
         }
 
-<span class="nc" id="L257">        List&lt;ModuleRevisionDto&gt; modules = proposerModulesDepuisMotsCles(examen.getFormationId(), motsCles, 4);</span>
-<span class="nc bnc" id="L258" title="All 2 branches missed.">        if (modules.isEmpty()) {</span>
-<span class="nc" id="L259">            modules = formationClient.getModulesByFormation(examen.getFormationId()).stream()</span>
-<span class="nc" id="L260">                    .sorted(Comparator.comparingInt(m -&gt; parseInt(m.get(&quot;ordre&quot;), 0)))</span>
-<span class="nc" id="L261">                    .limit(3)</span>
-<span class="nc" id="L262">                    .map(m -&gt; toModuleDto(m, &quot;Consolidation générale avant nouvelle tentative&quot;))</span>
-<span class="nc" id="L263">                    .collect(Collectors.toList());</span>
+<span class="nc" id="L263">        List&lt;ModuleRevisionDto&gt; modules = proposerModulesDepuisMotsCles(examen.getFormationId(), motsCles, 6);</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">        if (modules.isEmpty()) {</span>
+<span class="nc" id="L265">            modules = formationClient.getModulesByFormation(examen.getFormationId()).stream()</span>
+<span class="nc" id="L266">                    .sorted(Comparator.comparingInt(m -&gt; parseInt(m.get(&quot;ordre&quot;), 0)))</span>
+<span class="nc" id="L267">                    .limit(4)</span>
+<span class="nc" id="L268">                    .map(m -&gt; toModuleDto(m, &quot;Consolidation générale avant nouvelle tentative&quot;))</span>
+<span class="nc" id="L269">                    .collect(Collectors.toList());</span>
         }
 
-<span class="nc bnc" id="L266" title="All 4 branches missed.">        int objectifScore = risque.getScoreRisque() &gt;= 70 ? 80 : risque.getScoreRisque() &gt;= 40 ? 75 : 70;</span>
-<span class="nc" id="L267">        List&lt;RemediationStepDto&gt; etapes = new ArrayList&lt;&gt;();</span>
-<span class="nc" id="L268">        int totalMinutes = 0;</span>
-<span class="nc" id="L269">        LocalDateTime now = LocalDateTime.now();</span>
-<span class="nc bnc" id="L270" title="All 2 branches missed.">        for (int i = 0; i &lt; modules.size(); i++) {</span>
-<span class="nc" id="L271">            ModuleRevisionDto m = modules.get(i);</span>
-<span class="nc bnc" id="L272" title="All 4 branches missed.">            int duree = m.getDureeMinutes() != null &amp;&amp; m.getDureeMinutes() &gt; 0 ? m.getDureeMinutes() : 45;</span>
-<span class="nc" id="L273">            totalMinutes += duree;</span>
-<span class="nc" id="L274">            etapes.add(RemediationStepDto.builder()</span>
-<span class="nc" id="L275">                    .sequence(i + 1)</span>
-<span class="nc" id="L276">                    .moduleId(m.getId())</span>
-<span class="nc" id="L277">                    .moduleTitre(m.getTitre())</span>
-<span class="nc" id="L278">                    .dureeEstimeeMinutes(duree)</span>
-<span class="nc" id="L279">                    .dateCible(now.toLocalDate().plusDays((long) i * 2L + 1))</span>
-<span class="nc" id="L280">                    .objectifScoreTheme(objectifScore)</span>
-<span class="nc" id="L281">                    .raison(m.getRaison())</span>
-<span class="nc" id="L282">                    .build());</span>
+<span class="nc bnc" id="L272" title="All 4 branches missed.">        int objectifScore = risque.getScoreRisque() &gt;= 70 ? 80 : risque.getScoreRisque() &gt;= 40 ? 75 : 70;</span>
+<span class="nc" id="L273">        List&lt;RemediationStepDto&gt; etapes = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L274">        int totalMinutes = 0;</span>
+<span class="nc" id="L275">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">        for (int i = 0; i &lt; modules.size(); i++) {</span>
+<span class="nc" id="L277">            ModuleRevisionDto m = modules.get(i);</span>
+<span class="nc bnc" id="L278" title="All 4 branches missed.">            int duree = m.getDureeMinutes() != null &amp;&amp; m.getDureeMinutes() &gt; 0 ? m.getDureeMinutes() : 45;</span>
+<span class="nc" id="L279">            totalMinutes += duree;</span>
+<span class="nc" id="L280">            etapes.add(RemediationStepDto.builder()</span>
+<span class="nc" id="L281">                    .sequence(i + 1)</span>
+<span class="nc" id="L282">                    .moduleId(m.getId())</span>
+<span class="nc" id="L283">                    .moduleTitre(m.getTitre())</span>
+<span class="nc" id="L284">                    .dureeEstimeeMinutes(duree)</span>
+<span class="nc" id="L285">                    .dateCible(now.toLocalDate().plusDays((long) i * 2L + 1))</span>
+<span class="nc" id="L286">                    .objectifScoreTheme(objectifScore)</span>
+<span class="nc" id="L287">                    .raison(m.getRaison())</span>
+<span class="nc" id="L288">                    .build());</span>
         }
 
-<span class="nc" id="L285">        String resume = String.format(</span>
+<span class="nc" id="L291">        String resume = String.format(</span>
                 Locale.FRANCE,
                 &quot;Learning path personnalisé : %d étape(s), environ %d min de révision. Parcours conseillé : %s.&quot;,
-<span class="nc bnc" id="L288" title="All 2 branches missed.">                etapes.size(), totalMinutes, risque.getParcoursRecommande() != null ? risque.getParcoursRecommande() : TypeParcours.STANDARD);</span>
+<span class="nc bnc" id="L294" title="All 2 branches missed.">                etapes.size(), totalMinutes, risque.getParcoursRecommande() != null ? risque.getParcoursRecommande() : TypeParcours.STANDARD);</span>
 
-<span class="nc" id="L290">        return RemediationPlanDto.builder()</span>
-<span class="nc" id="L291">                .freelancerId(freelancerId)</span>
-<span class="nc" id="L292">                .examenId(examenId)</span>
-<span class="nc" id="L293">                .generatedAt(now)</span>
-<span class="nc bnc" id="L294" title="All 2 branches missed.">                .parcoursSuggere(risque.getParcoursRecommande() != null ? risque.getParcoursRecommande() : TypeParcours.STANDARD)</span>
-<span class="nc" id="L295">                .objectifScoreCible(objectifScore)</span>
-<span class="nc" id="L296">                .estimationTotaleMinutes(totalMinutes)</span>
-<span class="nc" id="L297">                .resume(resume)</span>
-<span class="nc" id="L298">                .etapes(etapes)</span>
-<span class="nc" id="L299">                .build();</span>
+<span class="nc" id="L296">        return RemediationPlanDto.builder()</span>
+<span class="nc" id="L297">                .freelancerId(freelancerId)</span>
+<span class="nc" id="L298">                .examenId(examenId)</span>
+<span class="nc" id="L299">                .generatedAt(now)</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">                .parcoursSuggere(risque.getParcoursRecommande() != null ? risque.getParcoursRecommande() : TypeParcours.STANDARD)</span>
+<span class="nc" id="L301">                .objectifScoreCible(objectifScore)</span>
+<span class="nc" id="L302">                .estimationTotaleMinutes(totalMinutes)</span>
+<span class="nc" id="L303">                .progressionPourcent(0)</span>
+<span class="nc" id="L304">                .resume(resume)</span>
+<span class="nc" id="L305">                .etapes(etapes)</span>
+<span class="nc" id="L306">                .build();</span>
     }
 
-<span class="nc" id="L302">    private record ScoredModule(ModuleRevisionDto dto, int score) {</span>
+<span class="nc" id="L309">    private record ScoredModule(ModuleRevisionDto dto, int score) {</span>
     }
 
     private static int scoreModulePourTheme(Map&lt;String, Object&gt; m, String themeLower) {
-<span class="nc" id="L306">        String titre = str(m.get(&quot;titre&quot;)).toLowerCase(Locale.FRANCE);</span>
-<span class="nc" id="L307">        String desc = str(m.get(&quot;description&quot;)).toLowerCase(Locale.FRANCE);</span>
-<span class="nc" id="L308">        int s = 0;</span>
-<span class="nc bnc" id="L309" title="All 2 branches missed.">        if (titre.contains(themeLower)) s += 3;</span>
-<span class="nc bnc" id="L310" title="All 2 branches missed.">        if (desc.contains(themeLower)) s += 2;</span>
-<span class="nc bnc" id="L311" title="All 2 branches missed.">        for (String part : themeLower.split(&quot;[\\s,;/]+&quot;)) {</span>
-<span class="nc bnc" id="L312" title="All 2 branches missed.">            if (part.length() &lt; 3) continue;</span>
-<span class="nc bnc" id="L313" title="All 2 branches missed.">            if (titre.contains(part)) s += 2;</span>
-<span class="nc bnc" id="L314" title="All 2 branches missed.">            if (desc.contains(part)) s += 1;</span>
+<span class="nc" id="L313">        String titre = str(m.get(&quot;titre&quot;)).toLowerCase(Locale.FRANCE);</span>
+<span class="nc" id="L314">        String desc = str(m.get(&quot;description&quot;)).toLowerCase(Locale.FRANCE);</span>
+<span class="nc" id="L315">        int s = 0;</span>
+<span class="nc bnc" id="L316" title="All 2 branches missed.">        if (titre.contains(themeLower)) s += 3;</span>
+<span class="nc bnc" id="L317" title="All 2 branches missed.">        if (desc.contains(themeLower)) s += 2;</span>
+<span class="nc bnc" id="L318" title="All 2 branches missed.">        for (String part : themeLower.split(&quot;[\\s,;/]+&quot;)) {</span>
+<span class="nc bnc" id="L319" title="All 2 branches missed.">            if (part.length() &lt; 3) continue;</span>
+<span class="nc bnc" id="L320" title="All 2 branches missed.">            if (titre.contains(part)) s += 2;</span>
+<span class="nc bnc" id="L321" title="All 2 branches missed.">            if (desc.contains(part)) s += 1;</span>
         }
-<span class="nc" id="L316">        return s;</span>
+<span class="nc" id="L323">        return s;</span>
     }
 
     private ModuleRevisionDto toModuleDto(Map&lt;String, Object&gt; m, String raison) {
-<span class="nc" id="L320">        return ModuleRevisionDto.builder()</span>
-<span class="nc" id="L321">                .id(parseLong(m.get(&quot;id&quot;)))</span>
-<span class="nc" id="L322">                .titre(str(m.get(&quot;titre&quot;)))</span>
-<span class="nc" id="L323">                .description(shorten(str(m.get(&quot;description&quot;)), 200))</span>
-<span class="nc" id="L324">                .ordre(parseInt(m.get(&quot;ordre&quot;), 0))</span>
-<span class="nc" id="L325">                .dureeMinutes(parseInt(m.get(&quot;dureeMinutes&quot;), 0))</span>
-<span class="nc" id="L326">                .raison(raison)</span>
-<span class="nc" id="L327">                .build();</span>
+<span class="nc" id="L327">        return ModuleRevisionDto.builder()</span>
+<span class="nc" id="L328">                .id(parseLong(m.get(&quot;id&quot;)))</span>
+<span class="nc" id="L329">                .titre(str(m.get(&quot;titre&quot;)))</span>
+<span class="nc" id="L330">                .description(shorten(str(m.get(&quot;description&quot;)), 200))</span>
+<span class="nc" id="L331">                .ordre(parseInt(m.get(&quot;ordre&quot;), 0))</span>
+<span class="nc" id="L332">                .dureeMinutes(parseInt(m.get(&quot;dureeMinutes&quot;), 0))</span>
+<span class="nc" id="L333">                .raison(raison)</span>
+<span class="nc" id="L334">                .build();</span>
     }
 
     private List&lt;ModuleRevisionDto&gt; proposerModulesDepuisMotsCles(Long formationId, List&lt;String&gt; motsCles, int limit) {
-<span class="nc" id="L331">        List&lt;Map&lt;String, Object&gt;&gt; modules = formationClient.getModulesByFormation(formationId);</span>
-<span class="nc bnc" id="L332" title="All 2 branches missed.">        if (modules.isEmpty()) {</span>
-<span class="nc" id="L333">            return List.of();</span>
+<span class="nc" id="L338">        List&lt;Map&lt;String, Object&gt;&gt; modules = formationClient.getModulesByFormation(formationId);</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">        if (modules.isEmpty()) {</span>
+<span class="nc" id="L340">            return List.of();</span>
         }
-<span class="nc bnc" id="L335" title="All 4 branches missed.">        if (motsCles == null || motsCles.isEmpty()) {</span>
-<span class="nc" id="L336">            return modules.stream()</span>
-<span class="nc" id="L337">                    .sorted(Comparator.comparingInt(m -&gt; parseInt(m.get(&quot;ordre&quot;), 0)))</span>
-<span class="nc" id="L338">                    .limit(Math.max(1, limit))</span>
-<span class="nc" id="L339">                    .map(m -&gt; toModuleDto(m, &quot;Révision conseillée avant passage&quot;))</span>
-<span class="nc" id="L340">                    .collect(Collectors.toList());</span>
+<span class="nc bnc" id="L342" title="All 4 branches missed.">        if (motsCles == null || motsCles.isEmpty()) {</span>
+<span class="nc" id="L343">            return modules.stream()</span>
+<span class="nc" id="L344">                    .sorted(Comparator.comparingInt(m -&gt; parseInt(m.get(&quot;ordre&quot;), 0)))</span>
+<span class="nc" id="L345">                    .limit(Math.max(1, limit))</span>
+<span class="nc" id="L346">                    .map(m -&gt; toModuleDto(m, &quot;Révision conseillée avant passage&quot;))</span>
+<span class="nc" id="L347">                    .collect(Collectors.toList());</span>
         }
-<span class="nc" id="L342">        Map&lt;Long, ScoredModule&gt; best = new LinkedHashMap&lt;&gt;();</span>
-<span class="nc bnc" id="L343" title="All 6 branches missed.">        for (String kw : motsCles.stream().filter(s -&gt; s != null &amp;&amp; !s.isBlank()).map(String::trim).distinct().toList()) {</span>
-<span class="nc" id="L344">            String lower = kw.toLowerCase(Locale.FRANCE);</span>
-<span class="nc bnc" id="L345" title="All 2 branches missed.">            for (Map&lt;String, Object&gt; m : modules) {</span>
-<span class="nc" id="L346">                int score = scoreModulePourTheme(m, lower);</span>
-<span class="nc bnc" id="L347" title="All 2 branches missed.">                if (score &lt;= 0) {</span>
-<span class="nc" id="L348">                    continue;</span>
+<span class="nc" id="L349">        Map&lt;Long, ScoredModule&gt; best = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L350" title="All 6 branches missed.">        for (String kw : motsCles.stream().filter(s -&gt; s != null &amp;&amp; !s.isBlank()).map(String::trim).distinct().toList()) {</span>
+<span class="nc" id="L351">            String lower = kw.toLowerCase(Locale.FRANCE);</span>
+<span class="nc bnc" id="L352" title="All 2 branches missed.">            for (Map&lt;String, Object&gt; m : modules) {</span>
+<span class="nc" id="L353">                int score = scoreModulePourTheme(m, lower);</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">                if (score &lt;= 0) {</span>
+<span class="nc" id="L355">                    continue;</span>
                 }
-<span class="nc" id="L350">                Long id = parseLong(m.get(&quot;id&quot;));</span>
-<span class="nc bnc" id="L351" title="All 2 branches missed.">                if (id == null) {</span>
-<span class="nc" id="L352">                    continue;</span>
+<span class="nc" id="L357">                Long id = parseLong(m.get(&quot;id&quot;));</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">                if (id == null) {</span>
+<span class="nc" id="L359">                    continue;</span>
                 }
-<span class="nc" id="L354">                ModuleRevisionDto dto = toModuleDto(m, &quot;Lacune détectée : &quot; + kw);</span>
-<span class="nc" id="L355">                ScoredModule existing = best.get(id);</span>
-<span class="nc bnc" id="L356" title="All 4 branches missed.">                if (existing == null || score &gt; existing.score) {</span>
-<span class="nc" id="L357">                    best.put(id, new ScoredModule(dto, score));</span>
+<span class="nc" id="L361">                ModuleRevisionDto dto = toModuleDto(m, &quot;Lacune détectée : &quot; + kw);</span>
+<span class="nc" id="L362">                ScoredModule existing = best.get(id);</span>
+<span class="nc bnc" id="L363" title="All 4 branches missed.">                if (existing == null || score &gt; existing.score) {</span>
+<span class="nc" id="L364">                    best.put(id, new ScoredModule(dto, score));</span>
                 }
-<span class="nc" id="L359">            }</span>
-<span class="nc" id="L360">        }</span>
-<span class="nc bnc" id="L361" title="All 2 branches missed.">        if (best.isEmpty()) {</span>
-<span class="nc" id="L362">            return modules.stream()</span>
-<span class="nc" id="L363">                    .sorted(Comparator.comparingInt(m -&gt; parseInt(m.get(&quot;ordre&quot;), 0)))</span>
-<span class="nc" id="L364">                    .limit(Math.max(1, limit))</span>
-<span class="nc" id="L365">                    .map(m -&gt; toModuleDto(m, &quot;Consolidation recommandée&quot;))</span>
-<span class="nc" id="L366">                    .collect(Collectors.toList());</span>
+<span class="nc" id="L366">            }</span>
+<span class="nc" id="L367">        }</span>
+<span class="nc bnc" id="L368" title="All 2 branches missed.">        if (best.isEmpty()) {</span>
+<span class="nc" id="L369">            return modules.stream()</span>
+<span class="nc" id="L370">                    .sorted(Comparator.comparingInt(m -&gt; parseInt(m.get(&quot;ordre&quot;), 0)))</span>
+<span class="nc" id="L371">                    .limit(Math.max(1, limit))</span>
+<span class="nc" id="L372">                    .map(m -&gt; toModuleDto(m, &quot;Consolidation recommandée&quot;))</span>
+<span class="nc" id="L373">                    .collect(Collectors.toList());</span>
         }
-<span class="nc" id="L368">        return best.values().stream()</span>
-<span class="nc" id="L369">                .sorted(Comparator.comparingInt((ScoredModule sm) -&gt; sm.score).reversed())</span>
-<span class="nc" id="L370">                .limit(Math.max(1, limit))</span>
-<span class="nc" id="L371">                .map(sm -&gt; sm.dto)</span>
-<span class="nc" id="L372">                .collect(Collectors.toList());</span>
+<span class="nc" id="L375">        return best.values().stream()</span>
+<span class="nc" id="L376">                .sorted(Comparator.comparingInt((ScoredModule sm) -&gt; sm.score).reversed())</span>
+<span class="nc" id="L377">                .limit(Math.max(1, limit))</span>
+<span class="nc" id="L378">                .map(sm -&gt; sm.dto)</span>
+<span class="nc" id="L379">                .collect(Collectors.toList());</span>
     }
 
     private LocalDateTime resolveDateInscription(Long freelancerId, Long formationId) {
-<span class="nc bnc" id="L376" title="All 2 branches missed.">        for (Map&lt;String, Object&gt; row : formationClient.getInscriptionsByFreelancer(freelancerId)) {</span>
-<span class="nc" id="L377">            Object fid = row.get(&quot;formationId&quot;);</span>
-<span class="nc bnc" id="L378" title="All 4 branches missed.">            if (fid != null &amp;&amp; formationId.equals(Long.valueOf(fid.toString()))) {</span>
-<span class="nc" id="L379">                Object d = row.get(&quot;dateInscription&quot;);</span>
-<span class="nc bnc" id="L380" title="All 2 branches missed.">                if (d != null) {</span>
+<span class="nc bnc" id="L383" title="All 2 branches missed.">        for (Map&lt;String, Object&gt; row : formationClient.getInscriptionsByFreelancer(freelancerId)) {</span>
+<span class="nc" id="L384">            Object fid = row.get(&quot;formationId&quot;);</span>
+<span class="nc bnc" id="L385" title="All 4 branches missed.">            if (fid != null &amp;&amp; formationId.equals(Long.valueOf(fid.toString()))) {</span>
+<span class="nc" id="L386">                Object d = row.get(&quot;dateInscription&quot;);</span>
+<span class="nc bnc" id="L387" title="All 2 branches missed.">                if (d != null) {</span>
                     try {
-<span class="nc" id="L382">                        return LocalDateTime.parse(d.toString().replace(&quot; &quot;, &quot;T&quot;));</span>
-<span class="nc" id="L383">                    } catch (Exception ignored) {</span>
-<span class="nc" id="L384">                        return null;</span>
+<span class="nc" id="L389">                        return LocalDateTime.parse(d.toString().replace(&quot; &quot;, &quot;T&quot;));</span>
+<span class="nc" id="L390">                    } catch (Exception ignored) {</span>
+<span class="nc" id="L391">                        return null;</span>
                     }
                 }
             }
-<span class="nc" id="L388">        }</span>
-<span class="nc" id="L389">        return null;</span>
+<span class="nc" id="L395">        }</span>
+<span class="nc" id="L396">        return null;</span>
     }
 
     private static String str(Object o) {
-<span class="nc bnc" id="L393" title="All 2 branches missed.">        return o != null ? o.toString() : &quot;&quot;;</span>
+<span class="nc bnc" id="L400" title="All 2 branches missed.">        return o != null ? o.toString() : &quot;&quot;;</span>
     }
 
     private static int parseInt(Object o, int def) {
-<span class="nc bnc" id="L397" title="All 2 branches missed.">        if (o == null) return def;</span>
+<span class="nc bnc" id="L404" title="All 2 branches missed.">        if (o == null) return def;</span>
         try {
-<span class="nc" id="L399">            return Integer.parseInt(o.toString());</span>
-<span class="nc" id="L400">        } catch (NumberFormatException e) {</span>
-<span class="nc" id="L401">            return def;</span>
+<span class="nc" id="L406">            return Integer.parseInt(o.toString());</span>
+<span class="nc" id="L407">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L408">            return def;</span>
         }
     }
 
     private static Long parseLong(Object o) {
-<span class="nc bnc" id="L406" title="All 2 branches missed.">        if (o == null) return null;</span>
+<span class="nc bnc" id="L413" title="All 2 branches missed.">        if (o == null) return null;</span>
         try {
-<span class="nc" id="L408">            return Long.valueOf(o.toString());</span>
-<span class="nc" id="L409">        } catch (NumberFormatException e) {</span>
-<span class="nc" id="L410">            return null;</span>
+<span class="nc" id="L415">            return Long.valueOf(o.toString());</span>
+<span class="nc" id="L416">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L417">            return null;</span>
         }
     }
 
     private static String shorten(String s, int max) {
-<span class="nc bnc" id="L415" title="All 4 branches missed.">        if (s == null || s.length() &lt;= max) return s;</span>
-<span class="nc" id="L416">        return s.substring(0, max - 1) + &quot;…&quot;;</span>
+<span class="nc bnc" id="L422" title="All 4 branches missed.">        if (s == null || s.length() &lt;= max) return s;</span>
+<span class="nc" id="L423">        return s.substring(0, max - 1) + &quot;…&quot;;</span>
     }
 
     private static int clampScore(int s) {
-<span class="nc" id="L420">        return Math.max(0, Math.min(100, s));</span>
+<span class="nc" id="L427">        return Math.max(0, Math.min(100, s));</span>
     }
 
     private static int computeAvgPrepDays(List&lt;PassageExamen&gt; historique, LocalDateTime dateInscription) {
-<span class="nc bnc" id="L424" title="All 4 branches missed.">        if (historique == null || historique.isEmpty()) {</span>
-<span class="nc" id="L425">            return 7;</span>
+<span class="nc bnc" id="L431" title="All 4 branches missed.">        if (historique == null || historique.isEmpty()) {</span>
+<span class="nc" id="L432">            return 7;</span>
         }
-<span class="nc" id="L427">        List&lt;LocalDateTime&gt; dates = historique.stream()</span>
-<span class="nc" id="L428">                .map(PassageExamen::getDatePassage)</span>
-<span class="nc bnc" id="L429" title="All 2 branches missed.">                .filter(d -&gt; d != null)</span>
-<span class="nc" id="L430">                .sorted()</span>
-<span class="nc" id="L431">                .collect(Collectors.toList());</span>
-<span class="nc bnc" id="L432" title="All 2 branches missed.">        if (dates.size() &gt;= 2) {</span>
-<span class="nc" id="L433">            long sum = 0;</span>
-<span class="nc" id="L434">            int n = 0;</span>
-<span class="nc bnc" id="L435" title="All 2 branches missed.">            for (int i = 1; i &lt; dates.size(); i++) {</span>
-<span class="nc" id="L436">                long days = Math.max(0, ChronoUnit.DAYS.between(dates.get(i - 1), dates.get(i)));</span>
-<span class="nc" id="L437">                sum += days;</span>
-<span class="nc" id="L438">                n++;</span>
+<span class="nc" id="L434">        List&lt;LocalDateTime&gt; dates = historique.stream()</span>
+<span class="nc" id="L435">                .map(PassageExamen::getDatePassage)</span>
+<span class="nc bnc" id="L436" title="All 2 branches missed.">                .filter(d -&gt; d != null)</span>
+<span class="nc" id="L437">                .sorted()</span>
+<span class="nc" id="L438">                .collect(Collectors.toList());</span>
+<span class="nc bnc" id="L439" title="All 2 branches missed.">        if (dates.size() &gt;= 2) {</span>
+<span class="nc" id="L440">            long sum = 0;</span>
+<span class="nc" id="L441">            int n = 0;</span>
+<span class="nc bnc" id="L442" title="All 2 branches missed.">            for (int i = 1; i &lt; dates.size(); i++) {</span>
+<span class="nc" id="L443">                long days = Math.max(0, ChronoUnit.DAYS.between(dates.get(i - 1), dates.get(i)));</span>
+<span class="nc" id="L444">                sum += days;</span>
+<span class="nc" id="L445">                n++;</span>
             }
-<span class="nc bnc" id="L440" title="All 2 branches missed.">            if (n &gt; 0) {</span>
-<span class="nc" id="L441">                return (int) Math.max(1, Math.round((double) sum / n));</span>
+<span class="nc bnc" id="L447" title="All 2 branches missed.">            if (n &gt; 0) {</span>
+<span class="nc" id="L448">                return (int) Math.max(1, Math.round((double) sum / n));</span>
             }
         }
-<span class="nc bnc" id="L444" title="All 2 branches missed.">        if (dateInscription != null) {</span>
-<span class="nc" id="L445">            long days = Math.max(1, ChronoUnit.DAYS.between(dateInscription, LocalDateTime.now()));</span>
-<span class="nc" id="L446">            return (int) Math.max(1, Math.round((double) days / Math.max(1, dates.size())));</span>
+<span class="nc bnc" id="L451" title="All 2 branches missed.">        if (dateInscription != null) {</span>
+<span class="nc" id="L452">            long days = Math.max(1, ChronoUnit.DAYS.between(dateInscription, LocalDateTime.now()));</span>
+<span class="nc" id="L453">            return (int) Math.max(1, Math.round((double) days / Math.max(1, dates.size())));</span>
         }
-<span class="nc" id="L448">        return 7;</span>
+<span class="nc" id="L455">        return 7;</span>
+    }
+
+    private String buildNaturalCoachExplanation(
+            Long freelancerId,
+            Long examenId,
+            int probabilite,
+            int scoreMetier,
+            int moyenne,
+            int tauxReussite,
+            int prepJours,
+            int nbGaps,
+            String recommandation) {
+<span class="nc" id="L468">        String fallback = String.format(</span>
+                Locale.FRANCE,
+                &quot;Votre probabilité de réussite est estimée à %d%% (score métier %d/100). &quot; +
+                        &quot;Historique: moyenne %d%%, réussite %d%%, préparation moyenne %d jour(s), gaps détectés: %d. %s&quot;,
+<span class="nc" id="L472">                probabilite, scoreMetier, moyenne, tauxReussite, prepJours, nbGaps, recommandation);</span>
+        try {
+<span class="nc" id="L474">            String prompt = String.format(</span>
+                    Locale.FRANCE,
+                    &quot;Freelancer %d, examen %d. Probabilité %d%%, score métier %d/100, moyenne historique %d%%, &quot; +
+                            &quot;taux de réussite %d%%, préparation moyenne %d jours, gaps détectés %d. &quot; +
+                            &quot;Recommandation système: %s. Rédige une explication courte et actionnable.&quot;,
+<span class="nc" id="L479">                    freelancerId, examenId, probabilite, scoreMetier, moyenne, tauxReussite, prepJours, nbGaps, recommandation);</span>
+<span class="nc" id="L480">            String llm = examenLlmClient.chatCompletionCoach(prompt);</span>
+<span class="nc bnc" id="L481" title="All 4 branches missed.">            if (llm == null || llm.isBlank()) {</span>
+<span class="nc" id="L482">                return fallback;</span>
+            }
+<span class="nc" id="L484">            String out = llm.trim();</span>
+<span class="nc bnc" id="L485" title="All 2 branches missed.">            return out.length() &gt; 800 ? out.substring(0, 797) + &quot;...&quot; : out;</span>
+<span class="nc" id="L486">        } catch (Exception ignored) {</span>
+<span class="nc" id="L487">            return fallback;</span>
+        }
+    }
+
+    /** Ancien flux Skill / parcours intelligent : microservice retiré. */
+    @SuppressWarnings(&quot;unused&quot;)
+    private List&lt;String&gt; gapsDetectesSansMicroserviceSkill(Long freelancerId) {
+<span class="nc" id="L494">        return List.of();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

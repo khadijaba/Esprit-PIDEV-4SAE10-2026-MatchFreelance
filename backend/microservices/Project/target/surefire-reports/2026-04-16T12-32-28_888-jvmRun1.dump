@@ -1,0 +1,34 @@
+# Created at 2026-04-16T12:32:33.191
+org.apache.maven.surefire.api.util.SurefireReflectionException: java.lang.BootstrapMethodError: java.lang.UnsupportedClassVersionError: org/junit/platform/launcher/TagFilter has been compiled by a more recent version of the Java Runtime (class file version 61.0), this version of the Java Runtime only recognizes class file versions up to 52.0
+	at org.apache.maven.surefire.api.util.ReflectionUtils.instantiateOneArg(ReflectionUtils.java:107)
+	at org.apache.maven.surefire.booter.ForkedBooter.createProviderInCurrentClassloader(ForkedBooter.java:449)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+Caused by: java.lang.BootstrapMethodError: java.lang.UnsupportedClassVersionError: org/junit/platform/launcher/TagFilter has been compiled by a more recent version of the Java Runtime (class file version 61.0), this version of the Java Runtime only recognizes class file versions up to 52.0
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.newFilters(JUnitPlatformProvider.java:229)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.<init>(JUnitPlatformProvider.java:104)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.<init>(JUnitPlatformProvider.java:98)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at org.apache.maven.surefire.api.util.ReflectionUtils.instantiateOneArg(ReflectionUtils.java:105)
+	... 5 more
+Caused by: java.lang.UnsupportedClassVersionError: org/junit/platform/launcher/TagFilter has been compiled by a more recent version of the Java Runtime (class file version 61.0), this version of the Java Runtime only recognizes class file versions up to 52.0
+	at java.lang.ClassLoader.defineClass1(Native Method)
+	at java.lang.ClassLoader.defineClass(ClassLoader.java:756)
+	at java.security.SecureClassLoader.defineClass(SecureClassLoader.java:142)
+	at java.net.URLClassLoader.defineClass(URLClassLoader.java:473)
+	at java.net.URLClassLoader.access$100(URLClassLoader.java:74)
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:369)
+	at java.net.URLClassLoader$1.run(URLClassLoader.java:363)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.net.URLClassLoader.findClass(URLClassLoader.java:362)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:418)
+	at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:352)
+	at java.lang.ClassLoader.loadClass(ClassLoader.java:351)
+	... 13 more
+
+

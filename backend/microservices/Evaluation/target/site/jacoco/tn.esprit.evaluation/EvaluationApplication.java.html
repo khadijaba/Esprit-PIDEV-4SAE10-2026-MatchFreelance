@@ -6,24 +6,26 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 
 @EnableDiscoveryClient
+@EnableFeignClients
 @SpringBootApplication
-<span class="fc" id="L13">public class EvaluationApplication {</span>
+<span class="fc" id="L15">public class EvaluationApplication {</span>
 
-<span class="fc" id="L15">    private static final Logger log = LoggerFactory.getLogger(EvaluationApplication.class);</span>
+<span class="fc" id="L17">    private static final Logger log = LoggerFactory.getLogger(EvaluationApplication.class);</span>
 
     public static void main(String[] args) {
-<span class="nc" id="L18">        SpringApplication.run(EvaluationApplication.class, args);</span>
-<span class="nc" id="L19">    }</span>
+<span class="nc" id="L20">        SpringApplication.run(EvaluationApplication.class, args);</span>
+<span class="nc" id="L21">    }</span>
 
     /**
      * Repère visible dans la console : si ce message n’apparaît pas après redémarrage, ce n’est pas ce JAR / ce module qui tourne.
      */
     @Bean
     ApplicationRunner logQuestionAiRoutesRegistered() {
-<span class="fc" id="L26">        return args -&gt; log.info(</span>
+<span class="fc" id="L28">        return args -&gt; log.info(</span>
                 &quot;EVALUATION démarré — validation IA : POST /api/examens/validate-question-ai | contrôle GET .../validate-question-ai/ping&quot;);
     }
 }

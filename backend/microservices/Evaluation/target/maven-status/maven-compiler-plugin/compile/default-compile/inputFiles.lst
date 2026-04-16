@@ -1,8 +1,11 @@
 C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\main\java\tn\esprit\evaluation\client\ExamenLlmClient.java
 C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\main\java\tn\esprit\evaluation\client\ExamenPythonGeneratorClient.java
 C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\main\java\tn\esprit\evaluation\client\FormationClient.java
+C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\main\java\tn\esprit\evaluation\client\FormationFeignApi.java
 C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\main\java\tn\esprit\evaluation\client\ProjectClient.java
+C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\main\java\tn\esprit\evaluation\client\ProjectFeignApi.java
 C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\main\java\tn\esprit\evaluation\client\SkillClient.java
+C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\main\java\tn\esprit\evaluation\client\SkillFeignApi.java
 C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\main\java\tn\esprit\evaluation\config\GlobalExceptionHandler.java
 C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\main\java\tn\esprit\evaluation\config\RestTemplateConfig.java
 C:\Users\benay\Downloads\validation\backend\microservices\Evaluation\src\main\java\tn\esprit\evaluation\controller\CertificatController.java
