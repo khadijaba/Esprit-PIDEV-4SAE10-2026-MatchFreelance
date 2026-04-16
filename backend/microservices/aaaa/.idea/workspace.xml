@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="41caa5ca-2838-4d93-9035-1f0036f40721" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../../ConfigServer/src/main/resources/config-repo/gateway.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../../ConfigServer/src/main/resources/config-repo/gateway.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Gateway/src/main/java/tn/esprit/gateway/GatewayApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Gateway/src/main/java/tn/esprit/gateway/GatewayApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Gateway/src/main/java/tn/esprit/gateway/filter/WelcomeJsonFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Gateway/src/main/java/tn/esprit/gateway/filter/WelcomeJsonFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Gateway/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../../Gateway/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/client/ProjectClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/client/ProjectClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/client/SkillClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/client/SkillClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/CertificatCarriereService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/CertificatCarriereService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/ParcoursApprenantService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/ParcoursApprenantService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/RankingRecommendationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/RankingRecommendationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/client/SkillClient.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/service/FormationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/service/FormationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Formation/src/test/java/tn/esprit/formation/service/FormationServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/test/java/tn/esprit/formation/service/FormationServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Project/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/.idea/encodings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/.idea/jarRepositories.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Project/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/Controllers/ProjectController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/Controllers/ProjectController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/ProjectApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/ProjectApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/Repositories/ProjectRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/Repositories/ProjectRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/Service/ProjectServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/Service/ProjectServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/config/GlobalExceptionHandler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/entities/Project.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/entities/Project.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/entities/ProjectStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Project/src/main/java/esprit/project/entities/ProjectStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../Project/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/src/test/java/esprit/project/ProjectApplicationTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/classes/application.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/classes/esprit/project/Controllers/ProjectController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/classes/esprit/project/ProjectApplication.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/classes/esprit/project/Repositories/ProjectRepository.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/classes/esprit/project/Service/ProjectService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/classes/esprit/project/Service/ProjectServiceImpl.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/classes/esprit/project/config/GlobalExceptionHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/classes/esprit/project/entities/Project.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/classes/esprit/project/entities/ProjectStatus.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/project-0.0.1-SNAPSHOT.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/project-0.0.1-SNAPSHOT.jar.original" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/surefire-reports/TEST-esprit.project.ProjectApplicationTests.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/surefire-reports/esprit.project.ProjectApplicationTests.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Project/target/test-classes/esprit/project/ProjectApplicationTests.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/.idea/encodings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/.idea/jarRepositories.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/fix-skill-category-column.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Contollers/ParcoursIntelligentController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Contollers/SkillController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Contollers/SkillController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Repositories/SkillRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Repositories/SkillRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Service/ParcoursIntelligentService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Service/SkillService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Service/SkillService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Service/SkillServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/Service/SkillServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/SkillApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/SkillApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/config/RestTemplateConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/dto/FormationDto.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/dto/ParcoursIntelligentResponse.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/dto/SkillDto.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/entities/Skill.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/entities/Skill.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/entities/SkillCategory.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/entities/SkillCategory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/exception/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/exception/GlobalExceptionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/test/java/esprit/skill/SkillApplicationTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/test/java/esprit/skill/SkillApplicationTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/src/test/resources/application-test.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Contollers/ParcoursIntelligentController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Contollers/SkillController.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Contollers/SkillController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Service/ParcoursIntelligentService$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Service/ParcoursIntelligentService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Service/SkillServiceImpl.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/Service/SkillServiceImpl.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/SkillApplication.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/SkillApplication.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/config/RestTemplateConfig.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/dto/FormationDto.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/dto/ParcoursIntelligentResponse$ParcoursIntelligentResponseBuilder.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/dto/ParcoursIntelligentResponse.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/dto/SkillDto$SkillDtoBuilder.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/dto/SkillDto.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/entities/Skill.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/entities/Skill.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/entities/SkillCategory.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/entities/SkillCategory.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/exception/GlobalExceptionHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/classes/esprit/skill/exception/GlobalExceptionHandler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/maven-archiver/pom.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/skill-ms.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/skill-ms.jar.original" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/surefire-reports/TEST-esprit.skill.SkillApplicationTests.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/surefire-reports/esprit.skill.SkillApplicationTests.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/test-classes/application-test.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Skill/target/test-classes/esprit/skill/SkillApplicationTests.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/target/test-classes/esprit/skill/SkillApplicationTests.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/proxy.conf.cjs" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/proxy.conf.cjs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/proxy.conf.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/proxy.conf.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/app.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/app.routes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-client/dashboard-client.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-client/dashboard-client.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-client/dashboard-client.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-client/dashboard-client.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-freelancer/dashboard-freelancer.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-freelancer/dashboard-freelancer.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard/dashboard.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard/dashboard.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard/dashboard.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard/dashboard.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-home/front-home.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/front-home/front-home.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-home/front-home.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/front-home/front-home.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-layout/front-layout.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/front-layout/front-layout.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-project-detail/front-project-detail.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-project-detail/front-project-detail.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-project-list/front-project-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-project-list/front-project-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/layout/layout.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/layout/layout.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/mes-competences/mes-competences.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/mes-competences/mes-competences.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/mes-competences/mes-competences.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/mes-competences/mes-competences.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/mon-activite/mon-activite.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/mon-activite/mon-activite.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/parcours-intelligent/parcours-intelligent.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/parcours-intelligent/parcours-intelligent.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/parcours-intelligent/parcours-intelligent.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/parcours-intelligent/parcours-intelligent.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/profile/profile.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/profile/profile.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/project-details/project-details.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/project-details/project-details.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/project-form/project-form.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/project-form/project-form.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/project-list/project-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/project-list/project-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/ranking-recommendation/ranking-recommendation.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/ranking-recommendation/ranking-recommendation.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/skill-form/skill-form.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/skill-form/skill-form.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/skill-list/skill-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/skill-list/skill-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/models/project.model.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/models/project.model.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/models/skill.model.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/models/skill.model.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/services/parcours.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/services/parcours.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/services/project.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/services/project.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/services/skill.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/services/skill.service.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5
+}</component>
+  <component name="ProjectId" id="3AAJcGvgiRNo4onSSomiVZFpboA" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Docker.DockerConfig.executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Skill [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Skill [install].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Skill [package].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;Spring Boot.SkillApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;tete&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/benay/Downloads/validation/backend/microservices/Skill&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RunManager">
+    <configuration default="true" type="GroovyScriptRunConfiguration" factoryName="Groovy">
+      <setting name="path" value="" />
+      <setting name="vmparams" value="" />
+      <setting name="params" value="" />
+      <setting name="workDir" value="file://$PROJECT_DIR$" />
+      <setting name="debug" value="false" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SkillApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="ALTERNATIVE_JRE_PATH" value="17" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+      <module name="aaaa" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="esprit.skill.SkillApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.30387.90" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.30387.90" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="41caa5ca-2838-4d93-9035-1f0036f40721" name="Changes" comment="" />
+      <created>1772029519011</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1772029519011</updated>
+      <workItem from="1772029520085" duration="8759000" />
+      <workItem from="1772548865641" duration="12538000" />
+      <workItem from="1775243376551" duration="15927000" />
+      <workItem from="1776281755528" duration="3634000" />
+      <workItem from="1776295976632" duration="1557000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/example/Main.java</url>
+          <line>13</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>
