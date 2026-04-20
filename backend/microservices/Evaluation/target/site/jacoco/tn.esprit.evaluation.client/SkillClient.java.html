@@ -20,29 +20,29 @@ public class SkillClient {
 
     public List&lt;Map&lt;String, Object&gt;&gt; getSkillsByFreelancer(Long freelancerId) {
         try {
-<span class="nc" id="L23">            List&lt;Map&lt;String, Object&gt;&gt; body = feignApi.getSkillsByFreelancer(freelancerId);</span>
-<span class="nc bnc" id="L24" title="All 2 branches missed.">            return body != null ? body : Collections.emptyList();</span>
-<span class="nc" id="L25">        } catch (Exception e) {</span>
-<span class="nc" id="L26">            log.warn(&quot;Skill MS indisponible pour freelancer {}: {}&quot;, freelancerId, e.getMessage());</span>
-<span class="nc" id="L27">            return Collections.emptyList();</span>
+<span class="fc" id="L23">            List&lt;Map&lt;String, Object&gt;&gt; body = feignApi.getSkillsByFreelancer(freelancerId);</span>
+<span class="pc bpc" id="L24" title="1 of 2 branches missed.">            return body != null ? body : Collections.emptyList();</span>
+<span class="fc" id="L25">        } catch (Exception e) {</span>
+<span class="fc" id="L26">            log.warn(&quot;Skill MS indisponible pour freelancer {}: {}&quot;, freelancerId, e.getMessage());</span>
+<span class="fc" id="L27">            return Collections.emptyList();</span>
         }
     }
 
     /** Crée une compétence (POST /skills). Retourne l'id créé ou null. */
     public Long createSkill(Map&lt;String, Object&gt; skillPayload) {
         try {
-<span class="nc" id="L34">            Map&lt;String, Object&gt; body = feignApi.createSkill(skillPayload);</span>
-<span class="nc bnc" id="L35" title="All 4 branches missed.">            if (body == null || body.get(&quot;id&quot;) == null) {</span>
-<span class="nc" id="L36">                return null;</span>
+<span class="fc" id="L34">            Map&lt;String, Object&gt; body = feignApi.createSkill(skillPayload);</span>
+<span class="pc bpc" id="L35" title="1 of 4 branches missed.">            if (body == null || body.get(&quot;id&quot;) == null) {</span>
+<span class="fc" id="L36">                return null;</span>
             }
-<span class="nc" id="L38">            Object id = body.get(&quot;id&quot;);</span>
-<span class="nc bnc" id="L39" title="All 2 branches missed.">            if (id instanceof Number n) {</span>
-<span class="nc" id="L40">                return n.longValue();</span>
+<span class="fc" id="L38">            Object id = body.get(&quot;id&quot;);</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">            if (id instanceof Number n) {</span>
+<span class="fc" id="L40">                return n.longValue();</span>
             }
-<span class="nc" id="L42">            return Long.parseLong(id.toString());</span>
-<span class="nc" id="L43">        } catch (Exception e) {</span>
-<span class="nc" id="L44">            log.warn(&quot;Création skill échouée: {}&quot;, e.getMessage());</span>
-<span class="nc" id="L45">            return null;</span>
+<span class="fc" id="L42">            return Long.parseLong(id.toString());</span>
+<span class="fc" id="L43">        } catch (Exception e) {</span>
+<span class="fc" id="L44">            log.warn(&quot;Création skill échouée: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L45">            return null;</span>
         }
     }
 }

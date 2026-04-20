@@ -8,6 +8,13 @@
 const opts = { secure: false, changeOrigin: true, logLevel: 'warn', ws: false };
 
 module.exports = [
+  // Blog UI (Angular blog app) via /blog/** on frontend 4200.
+  {
+    context: ['/blog', '/blog/**'],
+    target: 'http://127.0.0.1:4201',
+    rewrite: (path) => path.replace(/^\/blog/, ''),
+    ...opts,
+  },
   // Team AI (FastAPI) — exception locale, avant le catch-all /api -> Gateway.
   {
     context: ['/api/team-ai', '/api/team-ai/**'],

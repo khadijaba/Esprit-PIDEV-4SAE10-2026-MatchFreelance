@@ -1,4 +1,4 @@
-package tn.esprit.gateway.filter;
+package tn.esprit.gateway;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.io.buffer.DataBuffer;

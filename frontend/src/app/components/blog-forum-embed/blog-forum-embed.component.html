@@ -1,0 +1,113 @@
+<div class="main-container">
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-link">Link</span><span class="logo-freelance">Freelance</span>
+    </div>
+
+    <div class="nav-section">
+      <h3 class="nav-section-title">Discover</h3>
+      <div
+        class="nav-item"
+        *ngFor="let cat of categories"
+        [class.active]="activeNav === cat.value"
+        (click)="selectNav(cat.value)"
+      >
+        <div class="dot" [class]="'dot dot-' + cat.color"></div>
+        <span>{{ cat.label }}</span>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="avatar">{{ getInitials(currentUserName) }}</div>
+      <div class="profile-info">
+        <span class="profile-name">{{ currentUserName }}</span>
+        <span class="profile-role">{{ currentUserRole }}</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="feed">
+    <header class="feed-header">
+      <h2>Blog &amp; Forum</h2>
+    </header>
+    <div class="external-open-row">
+      <a
+        class="external-open-btn"
+        href="http://localhost:4201/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Ouvrir le Blog complet (4201)
+      </a>
+    </div>
+
+    <section class="composer-card">
+      <textarea
+        rows="4"
+        [(ngModel)]="newPostContent"
+        placeholder="What's happening in your freelance world?"
+      ></textarea>
+      <button type="button" (click)="createPost()" [disabled]="creating || !newPostContent.trim()">
+        {{ creating ? 'Posting...' : 'Post' }}
+      </button>
+    </section>
+
+    <div class="state" *ngIf="loading">Loading posts...</div>
+    <div class="state" *ngIf="!loading && posts.length === 0">No posts yet.</div>
+
+    <section class="thread-list" *ngIf="!loading && posts.length > 0">
+      <article class="post-card" *ngFor="let post of posts">
+        <div class="post-card-header">
+          <div class="post-author-info">
+            <div class="post-avatar">{{ getInitials(post.author || post.username || 'U') }}</div>
+            <div class="post-author-details">
+              <strong>{{ post.author || post.username || 'Utilisateur' }}</strong>
+              <span>{{ asDate(post.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="post-card-body">
+          <p>{{ post.content }}</p>
+        </div>
+
+        <div class="post-actions">
+          <button type="button" (click)="like(post)">Like ({{ post.likes ?? 0 }})</button>
+          <button type="button" (click)="toggleReplies(post)">
+            Replies ({{ repliesByPostId[post.id!]?.length ?? post.comments ?? 0 }})
+          </button>
+        </div>
+
+        <div class="reply-box" *ngIf="post.id && repliesByPostId[post.id]">
+          <div class="reply" *ngFor="let r of repliesByPostId[post.id]">
+            <strong>{{ r.author || r.username || 'Utilisateur' }}:</strong>
+            {{ r.content }}
+          </div>
+          <div class="reply-form">
+            <input
+              type="text"
+              [(ngModel)]="replyContentByPostId[post.id]"
+              placeholder="Write a reply..."
+            />
+            <button type="button" (click)="submitReply(post)">Reply</button>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <aside class="right-rail">
+    <div class="rail-card">
+      <h4>Trending</h4>
+      <p>#FreelanceTips</p>
+      <p>#RemoteWork</p>
+      <p>#ProjectOwner</p>
+    </div>
+    <div class="rail-card">
+      <h4>Who to follow</h4>
+      <p>Developers community</p>
+      <p>UI/UX experts</p>
+      <p>PM hub</p>
+    </div>
+  </aside>
+</div>

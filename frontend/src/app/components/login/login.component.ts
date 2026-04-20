@@ -76,12 +76,31 @@ export class LoginComponent implements OnInit {
         this.showVerifyEmailCta = false;
         const status = err?.status as number | undefined;
         const body = err?.error;
-        let msg =
-          (typeof body === 'object' && body != null && (body.error ?? body.message)) ||
-          (typeof body === 'string' ? body : null) ||
-          err?.message ||
-          'Identifiants invalides.';
-        if (typeof msg !== 'string') msg = 'Erreur de connexion.';
+
+        let msg: string;
+        if (typeof ProgressEvent !== 'undefined' && body instanceof ProgressEvent) {
+          msg =
+            status === 0
+              ? 'Impossible de joindre le serveur (réseau ou proxy). Lancez le backend / la gateway et « ng serve » pour le proxy /api.'
+              : 'Erreur réseau lors de la connexion.';
+        } else if (status === 0) {
+          msg =
+            'Serveur injoignable. Vérifiez que le microservice User et la gateway tournent, et que vous utilisez bien l’URL du front avec proxy (ex. http://localhost:4200).';
+        } else {
+          const extracted =
+            (typeof body === 'object' &&
+              body != null &&
+              !Array.isArray(body) &&
+              (typeof (body as { error?: string }).error === 'string'
+                ? (body as { error: string }).error
+                : typeof (body as { message?: string }).message === 'string'
+                  ? (body as { message: string }).message
+                  : null)) ||
+            (typeof body === 'string' ? body : null) ||
+            (typeof err?.message === 'string' ? err.message : null) ||
+            'Identifiants invalides.';
+          msg = typeof extracted === 'string' ? extracted : 'Erreur de connexion.';
+        }
         if (status === 403) {
           this.showVerifyEmailCta = true;
           const e = (email as string)?.trim();

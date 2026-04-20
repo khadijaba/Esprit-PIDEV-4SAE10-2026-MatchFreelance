@@ -8,8 +8,6 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
-import tn.esprit.gateway.filter.NotFoundJsonFilter;
-import tn.esprit.gateway.filter.WelcomeJsonFilter;
 
 
 @EnableDiscoveryClient
@@ -40,6 +38,13 @@ public class GatewayApplication {
     @Value("${gateway.service.interview:INTERVIEW}")
     private String interviewServiceId;
 
+    @Value("${gateway.service.blog:BLOG}")
+    private String blogServiceId;
+
+    /** UI blog Angular (hors Eureka), proxifiee via /blog/** */
+    @Value("${gateway.blog-web.url:http://localhost:4201}")
+    private String blogWebUrl;
+
     /** URL du microservice Python (rapports PDF / graphiques) — pas Eureka, load balancer direct. */
     @Value("${gateway.evaluation-reports.url:http://localhost:8090}")
     private String evaluationReportsUrl;
@@ -63,6 +68,25 @@ public class GatewayApplication {
                         .path("/api/team-ai", "/api/team-ai/**")
                         .filters(f -> f.rewritePath("/api/team-ai/(?<segment>.*)", "/api/${segment}"))
                         .uri(teamAiUrl))
+                // Blog web app (frontend Angular) exposee via Gateway
+                .route("blog-web-ui", r -> r.path("/blog", "/blog/**")
+                        .filters(f -> f.rewritePath("/blog/?(?<segment>.*)", "/${segment}"))
+                        .uri(blogWebUrl))
+                // Blog/forum endpoints
+                .route("blog-forums", r -> r.path("/api/forums", "/api/forums/**")
+                        .uri("lb://" + blogServiceId))
+                .route("blog-groups", r -> r.path("/api/groups", "/api/groups/**")
+                        .uri("lb://" + blogServiceId))
+                .route("blog-private-messages", r -> r.path("/api/messages/private", "/api/messages/private/**")
+                        .uri("lb://" + blogServiceId))
+                .route("blog-threads", r -> r.path("/api/threads", "/api/threads/**")
+                        .uri("lb://" + blogServiceId))
+                .route("blog-toxicity", r -> r.path("/api/toxicity", "/api/toxicity/**")
+                        .uri("lb://" + blogServiceId))
+                .route("blog-ai", r -> r.path("/api/ai", "/api/ai/**")
+                        .uri("lb://" + blogServiceId))
+                .route("blog-friends", r -> r.path("/api/friends", "/api/friends/**")
+                        .uri("lb://" + blogServiceId))
                 .route("skill-skills", r -> r.path("/api/skills", "/api/skills/**")
                         .filters(f -> f.stripPrefix(1))
                         .uri("lb://" + skillServiceId))

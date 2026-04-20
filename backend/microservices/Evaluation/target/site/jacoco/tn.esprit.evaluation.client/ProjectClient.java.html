@@ -20,11 +20,11 @@ public class ProjectClient {
 
     public List&lt;Map&lt;String, Object&gt;&gt; getProjectsByStatus(String status) {
         try {
-<span class="nc" id="L23">            List&lt;Map&lt;String, Object&gt;&gt; body = feignApi.getProjectsByStatus(status);</span>
-<span class="nc bnc" id="L24" title="All 2 branches missed.">            return body != null ? body : Collections.emptyList();</span>
-<span class="nc" id="L25">        } catch (Exception e) {</span>
-<span class="nc" id="L26">            log.warn(&quot;Project MS statut {}: {}&quot;, status, e.getMessage());</span>
-<span class="nc" id="L27">            return Collections.emptyList();</span>
+<span class="fc" id="L23">            List&lt;Map&lt;String, Object&gt;&gt; body = feignApi.getProjectsByStatus(status);</span>
+<span class="fc bfc" id="L24" title="All 2 branches covered.">            return body != null ? body : Collections.emptyList();</span>
+<span class="fc" id="L25">        } catch (Exception e) {</span>
+<span class="fc" id="L26">            log.warn(&quot;Project MS statut {}: {}&quot;, status, e.getMessage());</span>
+<span class="fc" id="L27">            return Collections.emptyList();</span>
         }
     }
 }

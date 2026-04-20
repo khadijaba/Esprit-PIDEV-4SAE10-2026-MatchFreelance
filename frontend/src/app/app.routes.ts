@@ -103,6 +103,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'communaute',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./components/blog-forum-embed/blog-forum-embed.component').then(
+            (m) => m.BlogForumEmbedComponent
+          ),
+      },
+      {
         path: 'microservice-user',
         loadComponent: () =>
           import('./components/pidev-user-public/pidev-user-public.component').then((m) => m.PidevUserPublicComponent),

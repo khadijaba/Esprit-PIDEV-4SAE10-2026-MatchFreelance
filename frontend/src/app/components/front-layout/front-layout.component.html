@@ -34,6 +34,13 @@
           class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
           Formations
         </a>
+        @if (auth.isLoggedIn()) {
+          <a routerLink="/communaute" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            title="Forum et blog (application MatchFreelance-blog)">
+            Communauté
+          </a>
+        }
         <a routerLink="/parcours-intelligent"
           class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
           Parcours Intelligent
@@ -129,6 +136,7 @@
             <li><a routerLink="/formations" class="text-sm text-slate-600 transition hover:text-teal-600">Formations</a></li>
             <li><a routerLink="/parcours-intelligent" class="text-sm text-slate-600 transition hover:text-teal-600">Parcours Intelligent</a></li>
             <li><a routerLink="/projets" class="text-sm text-slate-600 transition hover:text-teal-600">Projets</a></li>
+            <li><a routerLink="/communaute" class="text-sm text-slate-600 transition hover:text-teal-600">Communauté &amp; forum</a></li>
             <li><a routerLink="/admin/rapports" class="text-sm text-slate-600 transition hover:text-teal-600">Rapports &amp; graphiques (admin)</a></li>
           </ul>
         </div>
