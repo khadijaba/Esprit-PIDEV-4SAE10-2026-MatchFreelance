@@ -1,0 +1,50 @@
+export type ProjectStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+
+export interface ContractSummary {
+  id: number;
+  projectId: number;
+  freelancerId: number;
+  clientId: number;
+  freelancerName?: string;
+  clientName?: string;
+  terms: string;
+  proposedBudget?: number;
+  extraTasksBudget?: number;
+  applicationMessage?: string;
+  status: string;
+  startDate?: string;
+  endDate?: string;
+  createdAt: string;
+  progressPercent?: number;
+  pendingExtraAmount?: number;
+  pendingExtraReason?: string;
+  pendingExtraRequestedAt?: string;
+  clientRating?: number;
+  clientReview?: string;
+  clientReviewedAt?: string;
+}
+
+export interface Project {
+  id: number;
+  title: string;
+  description: string;
+  minBudget: number;
+  maxBudget: number;
+  duration: number;
+  createdAt: string;
+  status: ProjectStatus;
+  clientId?: number;
+  clientName?: string;
+  contracts?: ContractSummary[];
+}
+
+export interface ProjectRequest {
+  title: string;
+  description: string;
+  minBudget: number;
+  maxBudget: number;
+  duration: number;
+  status?: ProjectStatus;
+  clientId?: number;
+}
+

@@ -1,0 +1,70 @@
+<div class="space-y-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <h2 class="text-2xl font-bold text-gray-800">Contracts</h2>
+  </div>
+
+  @if (loading) {
+    <div class="flex justify-center py-12">
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+    </div>
+  }
+
+  @if (!loading) {
+    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-gray-200 bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 font-medium text-gray-500">ID</th>
+              <th class="px-6 py-3 font-medium text-gray-500">Project</th>
+              <th class="px-6 py-3 font-medium text-gray-500">Freelancer</th>
+              <th class="px-6 py-3 font-medium text-gray-500">Client</th>
+              <th class="px-6 py-3 font-medium text-gray-500">Status</th>
+              <th class="px-6 py-3 font-medium text-gray-500">Start</th>
+              <th class="px-6 py-3 font-medium text-gray-500">End</th>
+              <th class="px-6 py-3 font-medium text-gray-500 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (c of contracts; track c.id) {
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 text-gray-500">#{{ c.id }}</td>
+                <td class="px-6 py-4">
+                  <a [routerLink]="['/admin/projects', c.projectId]" class="font-medium text-indigo-600 hover:text-indigo-800">
+                    {{ projectTitles[c.projectId] || ('Project #' + c.projectId) }}
+                  </a>
+                </td>
+                <td class="px-6 py-4 text-gray-600">{{ c.freelancerName || ('#' + c.freelancerId) }}</td>
+                <td class="px-6 py-4 text-gray-600">{{ c.clientName || ('#' + c.clientId) }}</td>
+                <td class="px-6 py-4">
+                  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                    [class]="statusClass(c.status)">
+                    {{ formatStatus(c.status) }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-gray-500">{{ c.startDate | date:'shortDate' }}</td>
+                <td class="px-6 py-4 text-gray-500">{{ c.endDate | date:'shortDate' }}</td>
+                <td class="px-6 py-4 text-right">
+                  <a [routerLink]="['/admin/contracts', c.id]" class="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-indigo-600" title="View contract & chat">
+                    View
+                  </a>
+                  <button (click)="onDelete(c.id)" class="ml-2 rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600" title="Delete">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="px-6 py-16 text-center text-gray-500">
+                  No contracts yet.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

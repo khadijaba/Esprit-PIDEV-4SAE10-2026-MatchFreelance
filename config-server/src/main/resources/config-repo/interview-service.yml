@@ -1,0 +1,20 @@
+# interview-service — explicit Eureka + app id (same pattern as shared application.yml)
+spring:
+  application:
+    name: interview-service
+  cloud:
+    discovery:
+      enabled: true
+  # Datasource: interview-service uses application-mysql.properties + SPRING_DATASOURCE_* from Docker Compose
+
+server:
+  port: 8086
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true

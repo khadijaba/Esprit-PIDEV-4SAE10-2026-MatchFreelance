@@ -1,0 +1,164 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white">
+  <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+    <h1 class="mb-2 text-2xl font-bold">Pitch Analyzer</h1>
+    <p class="mb-8 text-slate-400">See how well your pitch matches a project. No API — analysis runs in your browser.</p>
+
+    <div class="grid gap-8 lg:grid-cols-2">
+      <!-- Left: project + pitch -->
+      <div class="space-y-6">
+        <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+          <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">Select project</h2>
+          @for (job of jobs; track job.id) {
+            <button
+              type="button"
+              (click)="selectJob(job)"
+              class="mb-2 block w-full rounded-lg border p-3 text-left transition"
+              [class.border-indigo-500]="selectedJob().id === job.id"
+              [class.bg-indigo-500/20]="selectedJob().id === job.id"
+              [class.border-white/10]="selectedJob().id !== job.id"
+            >
+              <span class="font-semibold">{{ job.title }}</span>
+              <span class="mt-1 block text-sm text-slate-400">{{ job.company }} · {{ fmt(job.budget.min) }}–{{ fmt(job.budget.max) }} · {{ job.duration }}d</span>
+            </button>
+          }
+        </div>
+
+        <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+          <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">Your pitch</h2>
+          <textarea
+            [ngModel]="pitch()"
+            (ngModelChange)="onPitchInput($event)"
+            rows="8"
+            placeholder="Paste or write your pitch here. Mention skills, experience, and why you're a fit..."
+            class="w-full resize-none rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          ></textarea>
+          <p class="mt-2 text-sm text-slate-500">{{ charCount() }} chars · {{ charCount() >= 50 ? 'Ready to analyze' : 'Add at least 50 characters' }}</p>
+
+          <!-- PRIMARY BUTTON - impossible to miss -->
+          <button
+            type="button"
+            (click)="analyze()"
+            [disabled]="loading() || pitch().trim().length < 10"
+            class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-4 text-lg font-bold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+          >
+            @if (loading()) {
+              <span class="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
+              <span>Analyzing…</span>
+            } @else {
+              <span>Analyze Match</span>
+            }
+          </button>
+
+          @if (error()) {
+            <p class="mt-3 rounded-lg bg-red-500/20 p-3 text-sm text-red-300">{{ error() }}</p>
+          }
+        </div>
+      </div>
+
+      <!-- Right: results -->
+      <div class="rounded-xl border border-white/10 bg-white/5 p-6">
+        @if (!result() && !loading()) {
+          <div class="flex flex-col items-center justify-center py-16 text-center text-slate-500">
+            <span class="mb-4 text-5xl">Pitch</span>
+            <p class="max-w-xs">Write your pitch on the left, then click <strong class="text-indigo-400">Analyze Match</strong> to see how it scores against the project.</p>
+          </div>
+        }
+        @if (loading()) {
+          <div class="flex flex-col items-center justify-center py-16">
+            <span class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-indigo-500/30 border-t-indigo-400"></span>
+            <p class="text-slate-400">Analyzing your pitch…</p>
+          </div>
+        }
+        @if (result(); as r) {
+          <div class="space-y-6">
+            <div class="flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-4" [style.borderColor]="scoreColor(r.overallScore) + '40'">
+              <div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-full text-2xl font-black" [style.color]="scoreColor(r.overallScore)">{{ r.overallScore }}</div>
+              <div class="min-w-0 flex-1">
+                <p class="font-bold" [style.color]="scoreColor(r.overallScore)">{{ scoreLabel(r.overallScore) }}</p>
+                <p class="text-sm text-slate-400">{{ r.verdict }}</p>
+                <p class="mt-1 text-xs text-slate-500">Hiring: {{ r.hiringLikelihood }} · Tone: {{ r.toneAnalysis }} · {{ r.wordCount }} words</p>
+                @if (r.recommendedBid != null || r.winProbability != null) {
+                  <p class="mt-2 flex flex-wrap gap-2 text-xs">
+                    @if (r.recommendedBid != null) {
+                      <span class="rounded-full bg-indigo-500/20 px-2 py-0.5 font-semibold text-indigo-300">Suggested bid: {{ fmt(r.recommendedBid) }}</span>
+                    }
+                    @if (r.winProbability != null) {
+                      <span class="rounded-full px-2 py-0.5 font-semibold" [style.background]="scoreColor(r.winProbability) + '30'" [style.color]="scoreColor(r.winProbability)">Win chance: {{ r.winProbability }}%</span>
+                    }
+                  </p>
+                }
+              </div>
+            </div>
+            <div>
+              <h3 class="mb-3 text-sm font-semibold uppercase text-slate-400">Dimensions</h3>
+              @for (d of r.dimensions; track d.name) {
+                <div class="mb-4">
+                  <div class="mb-1 flex justify-between text-sm">
+                    <span>{{ d.name }}</span>
+                    <span [style.color]="scoreColor(d.score)">{{ d.score }}</span>
+                  </div>
+                  <div class="h-2 overflow-hidden rounded-full bg-white/10">
+                    <div class="h-full rounded-full transition-all duration-500" [style.width.%]="d.score" [style.background]="scoreColor(d.score)"></div>
+                  </div>
+                  <p class="mt-1 text-xs text-slate-500">{{ d.explanation }}</p>
+                </div>
+              }
+            </div>
+            @if (selectedJob().skills.length && r.skillsMatched != null) {
+              <div class="rounded-lg border border-white/10 bg-white/5 p-3">
+                <h4 class="mb-2 text-xs font-bold uppercase text-slate-400">Skills coverage</h4>
+                <div class="flex flex-wrap gap-2">
+                  @for (s of selectedJob().skills; track s) {
+                    @let matched = r.skillsMatched.includes(s);
+                    <span
+                      class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                      [class.bg-emerald-500/20]="matched"
+                      [class.text-emerald-300]="matched"
+                      [class.bg-red-500/20]="!matched"
+                      [class.text-red-300]="!matched"
+                    >
+                      {{ matched ? '✓' : '✗' }} {{ s }}
+                    </span>
+                  }
+                </div>
+                <p class="mt-2 text-xs text-slate-500">{{ r.skillsMatched.length }}/{{ selectedJob().skills.length }} required skills mentioned</p>
+              </div>
+            }
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div class="rounded-lg bg-emerald-500/10 p-3">
+                <h4 class="mb-2 text-xs font-bold uppercase text-emerald-400">Key matches</h4>
+                <ul class="list-inside list-disc text-sm text-slate-300">
+                  @for (m of r.keyMatches; track m) { <li>{{ m }}</li> }
+                </ul>
+              </div>
+              <div class="rounded-lg bg-amber-500/10 p-3">
+                <h4 class="mb-2 text-xs font-bold uppercase text-amber-400">Gaps</h4>
+                <ul class="list-inside list-disc text-sm text-slate-300">
+                  @for (g of r.keyGaps; track g) { <li>{{ g }}</li> }
+                </ul>
+              </div>
+            </div>
+            @if (r.redFlags?.length) {
+              <div class="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+                <h4 class="mb-2 text-xs font-bold uppercase text-red-300">Red flags</h4>
+                <ul class="list-inside list-disc text-sm text-slate-300">
+                  @for (f of r.redFlags; track f) { <li>{{ f }}</li> }
+                </ul>
+              </div>
+            }
+            <div class="rounded-lg border border-indigo-500/30 bg-indigo-500/10 p-4">
+              <h4 class="mb-2 text-xs font-bold uppercase text-indigo-300">How to improve</h4>
+              @if (r.improvements.length) {
+                <ol class="list-inside list-decimal space-y-1 text-sm text-slate-300">
+                  @for (imp of r.improvements; track imp) { <li>{{ imp }}</li> }
+                </ol>
+              } @else {
+                <p class="text-sm text-slate-300">{{ r.improvement }}</p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

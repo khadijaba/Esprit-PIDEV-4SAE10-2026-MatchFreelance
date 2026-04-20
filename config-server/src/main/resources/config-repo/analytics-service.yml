@@ -1,0 +1,6 @@
+# Analytics: R2DBC PostgreSQL — override with SPRING_R2DBC_* in Docker / local
+spring:
+  r2dbc:
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5432/matchfreelance_analytics}
+    username: ${SPRING_R2DBC_USERNAME:postgres}
+    password: ${SPRING_R2DBC_PASSWORD:postgres}

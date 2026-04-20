@@ -1,0 +1,215 @@
+# MatchFreelance — Production Ready Configuration
+# Core services: User, Project, Candidature, Contract, Analytics
+# Uses XAMPP MySQL on host port 3306 (no password)
+# UI: http://localhost:4200  |  Gateway: http://localhost:8081  |  Eureka: http://localhost:8761
+
+name: matchfreelance
+
+x-java-common: &java-common
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+  SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+  SPRING_PROFILES_ACTIVE: mysql
+  SPRING_DATASOURCE_USERNAME: root
+  SPRING_DATASOURCE_PASSWORD: ""
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mf-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: matchfreelance_analytics
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
+
+  eureka-server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        MODULE_DIR: eureka-server
+        JAR_FILE: eureka-server-1.0.0.jar
+    container_name: mf-eureka
+    ports:
+      - "8761:8761"
+    environment:
+      JAVA_OPTS: "-Xmx256m"
+      SERVER_PORT: "8761"
+
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: ../docker/Dockerfile.atelier
+      args:
+        JAR_FILE: config-server-1.0.0.jar
+        EXPOSE_PORT: "8888"
+    container_name: mf-config
+    ports:
+      - "8888:8888"
+    environment:
+      JAVA_OPTS: "-Xmx256m"
+      SERVER_PORT: "8888"
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: ../docker/Dockerfile.atelier
+      args:
+        JAR_FILE: user-service-1.0.0.jar
+        EXPOSE_PORT: "8085"
+    container_name: mf-user
+    ports:
+      - "8085:8085"
+    environment:
+      <<: *java-common
+      JAVA_OPTS: "-Xmx384m"
+      EUREKA_INSTANCE_HOSTNAME: user-service
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/freelancing_users?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    depends_on:
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+
+  project-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.service
+      args:
+        MODULE_DIR: project-service
+        JAR_FILE: project-service-1.0.0.jar
+    container_name: mf-project
+    ports:
+      - "8082:8082"
+    environment:
+      <<: *java-common
+      JAVA_OPTS: "-Xmx384m"
+      EUREKA_INSTANCE_HOSTNAME: project-service
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/freelancing_projects?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    depends_on:
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+
+  candidature-service:
+    build:
+      context: ./candidature-service
+      dockerfile: ../docker/Dockerfile.atelier
+      args:
+        JAR_FILE: candidature-service-1.0.0.jar
+        EXPOSE_PORT: "8083"
+    container_name: mf-candidature
+    ports:
+      - "8083:8083"
+    environment:
+      <<: *java-common
+      JAVA_OPTS: "-Xmx384m"
+      EUREKA_INSTANCE_HOSTNAME: candidature-service
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/freelancing_candidatures?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    depends_on:
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+
+  contract-service:
+    build:
+      context: ./contract-service
+      dockerfile: ../docker/Dockerfile.atelier
+      args:
+        JAR_FILE: contract-service-1.0.0.jar
+        EXPOSE_PORT: "8084"
+    container_name: mf-contract
+    ports:
+      - "8084:8084"
+    environment:
+      <<: *java-common
+      JAVA_OPTS: "-Xmx384m"
+      EUREKA_INSTANCE_HOSTNAME: contract-service
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/freelancing_contracts?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      CONTRACT_AI_OLLAMA_ENABLED: "true"
+      CONTRACT_AI_OLLAMA_BASE_URL: "http://host.docker.internal:11434"
+      CONTRACT_AI_OLLAMA_MODEL: "llama3.2:1b"
+      CONTRACT_AI_OLLAMA_READ_TIMEOUT_SECONDS: "120"
+      # Optional: Claude API (uncomment and set your API key to enable)
+      # CONTRACT_AI_CLAUDE_ENABLED: "true"
+      # CLAUDE_API_KEY: "your-api-key-here"
+    depends_on:
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+
+  analytics-service:
+    build:
+      context: ./analytics-service
+      dockerfile: ../docker/Dockerfile.atelier
+      args:
+        JAR_FILE: analytics-service-1.0.0.jar
+        EXPOSE_PORT: "8095"
+    container_name: mf-analytics
+    ports:
+      - "8095:8095"
+    environment:
+      JAVA_OPTS: "-Xmx384m"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_INSTANCE_HOSTNAME: analytics-service
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/matchfreelance_analytics
+      SPRING_R2DBC_USERNAME: postgres
+      SPRING_R2DBC_PASSWORD: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: ../docker/Dockerfile.atelier
+      args:
+        JAR_FILE: api-gateway-1.0.0.jar
+        EXPOSE_PORT: "8081"
+    container_name: mf-gateway
+    ports:
+      - "8081:8081"
+    environment:
+      JAVA_OPTS: "-Xmx384m"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_INSTANCE_HOSTNAME: api-gateway
+      SERVER_PORT: "8081"
+    depends_on:
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      user-service:
+        condition: service_started
+      project-service:
+        condition: service_started
+      candidature-service:
+        condition: service_started
+      contract-service:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./angular
+      dockerfile: Dockerfile
+    container_name: mf-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway

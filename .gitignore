@@ -1,0 +1,24 @@
+target/
+**/target/
+*.log
+
+node_modules/
+dist/
+angular/.angular/
+
+.idea/
+.vscode/
+*.iml
+
+.DS_Store
+Thumbs.db
+
+.cursor/
+
+_tmp_interview/
+_interview_zip/
+*.zip
+
+
+Atelier - Dockerisation d'un MS.pdf
+
