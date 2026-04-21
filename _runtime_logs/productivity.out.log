@@ -1,0 +1,139 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------< com.freelancing:productivity-service >----------------
+[INFO] Building Productivity Service 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.2.2:run (default-cli) > test-compile @ productivity-service >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ productivity-service ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ productivity-service ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ productivity-service ---
+[INFO] skip non existing resourceDirectory D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\productivity-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ productivity-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] <<< spring-boot:3.2.2:run (default-cli) < test-compile @ productivity-service <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.2.2:run (default-cli) @ productivity-service ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.2)
+
+2026-04-15T19:08:08.626+01:00  INFO 23976 --- [productivity-service] [           main] c.f.p.ProductivityServiceApplication     : Starting ProductivityServiceApplication using Java 17.0.12 with PID 23976 (D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\productivity-service\target\classes started by gamemaker in D:\study\4SAE\Semestre 2\PIDEV\spring-task-planning\productivity-service)
+2026-04-15T19:08:08.629+01:00  INFO 23976 --- [productivity-service] [           main] c.f.p.ProductivityServiceApplication     : The following 1 profile is active: "mysql"
+2026-04-15T19:08:09.276+01:00  INFO 23976 --- [productivity-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-15T19:08:09.415+01:00  INFO 23976 --- [productivity-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 133 ms. Found 6 JPA repository interfaces.
+2026-04-15T19:08:09.607+01:00  INFO 23976 --- [productivity-service] [           main] o.s.cloud.context.scope.GenericScope     : BeanFactory id=786cb9d2-dc5d-3204-958e-3ad577285d9c
+2026-04-15T19:08:09.742+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.cloud.client.loadbalancer.LoadBalancerAutoConfiguration$LoadBalancerInterceptorConfig' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerAutoConfiguration$LoadBalancerInterceptorConfig] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [lbRestClientPostProcessor] is declared through a non-static factory method on that class; consider declaring it as static instead.
+2026-04-15T19:08:09.743+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.cloud.loadbalancer.config.BlockingLoadBalancerClientAutoConfiguration' of type [org.springframework.cloud.loadbalancer.config.BlockingLoadBalancerClientAutoConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.744+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.cloud.loadbalancer.config.LoadBalancerAutoConfiguration' of type [org.springframework.cloud.loadbalancer.config.LoadBalancerAutoConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.750+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.cloud.commons.config.CommonsConfigAutoConfiguration' of type [org.springframework.cloud.commons.config.CommonsConfigAutoConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.752+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.753+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'loadBalancerClientsDefaultsMappingsProvider' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration$$Lambda$605/0x000001a98d41d590] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.753+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'defaultsBindHandlerAdvisor' of type [org.springframework.cloud.commons.config.DefaultsBindHandlerAdvisor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.758+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'spring.cloud.loadbalancer-org.springframework.cloud.client.loadbalancer.LoadBalancerClientsProperties' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerClientsProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.762+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'default.org.springframework.cloud.loadbalancer.config.LoadBalancerAutoConfiguration.LoadBalancerClientSpecification' of type [org.springframework.cloud.loadbalancer.annotation.LoadBalancerClientSpecification] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.763+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'default.org.springframework.cloud.loadbalancer.config.BlockingLoadBalancerClientAutoConfiguration.LoadBalancerClientSpecification' of type [org.springframework.cloud.loadbalancer.annotation.LoadBalancerClientSpecification] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.763+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'default.org.springframework.cloud.netflix.eureka.loadbalancer.LoadBalancerEurekaAutoConfiguration.LoadBalancerClientSpecification' of type [org.springframework.cloud.loadbalancer.annotation.LoadBalancerClientSpecification] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.764+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'loadBalancerClientFactory' of type [org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.767+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'blockingLoadBalancerClient' of type [org.springframework.cloud.loadbalancer.blocking.client.BlockingLoadBalancerClient] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.773+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'loadBalancerServiceInstanceCookieTransformer' of type [org.springframework.cloud.loadbalancer.core.LoadBalancerServiceInstanceCookieTransformer] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.775+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'xForwarderHeadersTransformer' of type [org.springframework.cloud.loadbalancer.blocking.XForwardedHeadersTransformer] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.775+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.cloud.client.loadbalancer.LoadBalancerAutoConfiguration' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerAutoConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.777+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'loadBalancerRequestFactory' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerRequestFactory] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:09.777+01:00  WARN 23976 --- [productivity-service] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'loadBalancerInterceptor' of type [org.springframework.cloud.client.loadbalancer.LoadBalancerInterceptor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [lbRestClientPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-04-15T19:08:10.001+01:00  INFO 23976 --- [productivity-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8087 (http)
+2026-04-15T19:08:10.010+01:00  INFO 23976 --- [productivity-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-15T19:08:10.011+01:00  INFO 23976 --- [productivity-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.18]
+2026-04-15T19:08:10.073+01:00  INFO 23976 --- [productivity-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-15T19:08:10.074+01:00  INFO 23976 --- [productivity-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1399 ms
+2026-04-15T19:08:10.104+01:00  INFO 23976 --- [productivity-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-15T19:08:10.245+01:00  INFO 23976 --- [productivity-service] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@740b9a50
+2026-04-15T19:08:10.247+01:00  INFO 23976 --- [productivity-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-15T19:08:10.254+01:00  INFO 23976 --- [productivity-service] [           main] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available at '/h2-console'. Database available at 'jdbc:mysql://localhost:3306/freelancing_productivity?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC'
+2026-04-15T19:08:10.358+01:00  INFO 23976 --- [productivity-service] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-15T19:08:10.407+01:00  INFO 23976 --- [productivity-service] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.4.1.Final
+2026-04-15T19:08:10.447+01:00  INFO 23976 --- [productivity-service] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-15T19:08:10.636+01:00  INFO 23976 --- [productivity-service] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-15T19:08:10.685+01:00  WARN 23976 --- [productivity-service] [           main] org.hibernate.dialect.Dialect            : HHH000511: The 5.5.0 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2026-04-15T19:08:10.688+01:00  WARN 23976 --- [productivity-service] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-15T19:08:11.503+01:00  INFO 23976 --- [productivity-service] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-15T19:08:11.565+01:00  INFO 23976 --- [productivity-service] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-15T19:08:12.045+01:00  WARN 23976 --- [productivity-service] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-04-15T19:08:12.476+01:00  INFO 23976 --- [productivity-service] [           main] DiscoveryClientOptionalArgsConfiguration : Eureka HTTP Client uses RestTemplate.
+2026-04-15T19:08:12.639+01:00  WARN 23976 --- [productivity-service] [           main] iguration$LoadBalancerCaffeineWarnLogger : Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2026-04-15T19:08:12.655+01:00  INFO 23976 --- [productivity-service] [           main] o.s.c.n.eureka.InstanceInfoFactory       : Setting initial instance status as: STARTING
+2026-04-15T19:08:12.703+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Initializing Eureka in region us-east-1
+2026-04-15T19:08:12.706+01:00  INFO 23976 --- [productivity-service] [           main] c.n.d.s.r.aws.ConfigClusterResolver      : Resolving eureka endpoints via configuration
+2026-04-15T19:08:12.720+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Disable delta property : false
+2026-04-15T19:08:12.720+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Single vip registry refresh property : null
+2026-04-15T19:08:12.720+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Force full registry fetch : false
+2026-04-15T19:08:12.720+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Application is null : false
+2026-04-15T19:08:12.720+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Registered Applications size is zero : true
+2026-04-15T19:08:12.720+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Application version is -1: true
+2026-04-15T19:08:12.720+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Getting all instance registry info from the eureka server
+2026-04-15T19:08:12.959+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : The response status is 200
+2026-04-15T19:08:12.961+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Starting heartbeat executor: renew interval is: 30
+2026-04-15T19:08:12.963+01:00  INFO 23976 --- [productivity-service] [           main] c.n.discovery.InstanceInfoReplicator     : InstanceInfoReplicator onDemand update allowed rate per min is 4
+2026-04-15T19:08:12.966+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Discovery Client initialized at timestamp 1776276492965 with initial instances count: 7
+2026-04-15T19:08:12.967+01:00  INFO 23976 --- [productivity-service] [           main] o.s.c.n.e.s.EurekaServiceRegistry        : Registering application PRODUCTIVITY-SERVICE with eureka with status UP
+2026-04-15T19:08:12.968+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1776276492968, current=UP, previous=STARTING]
+2026-04-15T19:08:12.969+01:00  INFO 23976 --- [productivity-service] [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_PRODUCTIVITY-SERVICE/DESKTOP-QF5ORSM:productivity-service:8087: registering service...
+2026-04-15T19:08:12.973+01:00  INFO 23976 --- [productivity-service] [           main] o.s.c.n.e.s.EurekaServiceRegistry        : Unregistering application PRODUCTIVITY-SERVICE with eureka with status DOWN
+2026-04-15T19:08:12.973+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Saw local status change event StatusChangeEvent [timestamp=1776276492973, current=DOWN, previous=UP]
+2026-04-15T19:08:12.973+01:00  WARN 23976 --- [productivity-service] [           main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2026-04-15T19:08:12.975+01:00  INFO 23976 --- [productivity-service] [           main] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-04-15T19:08:12.977+01:00  INFO 23976 --- [productivity-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-04-15T19:08:12.980+01:00  INFO 23976 --- [productivity-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-04-15T19:08:12.981+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Shutting down DiscoveryClient ...
+2026-04-15T19:08:12.993+01:00  INFO 23976 --- [productivity-service] [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_PRODUCTIVITY-SERVICE/DESKTOP-QF5ORSM:productivity-service:8087 - registration status: 204
+2026-04-15T19:08:12.993+01:00  INFO 23976 --- [productivity-service] [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_PRODUCTIVITY-SERVICE/DESKTOP-QF5ORSM:productivity-service:8087: registering service...
+2026-04-15T19:08:12.996+01:00  INFO 23976 --- [productivity-service] [nfoReplicator-0] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_PRODUCTIVITY-SERVICE/DESKTOP-QF5ORSM:productivity-service:8087 - registration status: 204
+2026-04-15T19:08:12.997+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Unregistering ...
+2026-04-15T19:08:12.999+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : DiscoveryClient_PRODUCTIVITY-SERVICE/DESKTOP-QF5ORSM:productivity-service:8087 - deregister  status: 200
+2026-04-15T19:08:13.003+01:00  INFO 23976 --- [productivity-service] [           main] com.netflix.discovery.DiscoveryClient    : Completed shut down of DiscoveryClient
+2026-04-15T19:08:13.013+01:00  INFO 23976 --- [productivity-service] [           main] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-04-15T19:08:13.024+01:00 ERROR 23976 --- [productivity-service] [           main] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8087 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8087 or configure this application to listen on another port.
+
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  10.282 s
+[INFO] Finished at: 2026-04-15T19:08:13+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.2.2:run (default-cli) on project productivity-service: Process terminated with exit code: 1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

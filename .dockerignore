@@ -1,0 +1,6 @@
+.git
+.idea
+.qodo
+**/target
+**/node_modules
+**/.angular

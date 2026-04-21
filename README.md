@@ -21,6 +21,7 @@ It is a full-stack freelancing platform that connects freelancers with clients: 
   - **iCalendar:** Download .ics from list or interview detail.
   - **Advanced:** Alternative slot suggestions, reliability index (freelancer/owner), workload classification, top N freelancers (reliability + review score).
 - **Users:** Login, roles (user microservice).
+- **Personal Productivity:** task planning, to-do lists, calendar export (.ics), progress tracking, smart daily planning suggestions (productivity microservice).
 
 ## Tech Stack
 
@@ -44,7 +45,7 @@ It is a full-stack freelancing platform that connects freelancers with clients: 
 - **Eureka Server** (port 8761): service discovery; all microservices register here.
 - **API Gateway** (port 8081): single entry point; routes `/api/*` to the appropriate microservice.
 - **Microservices:**  
-  project-service (8082), candidature-service (8083), contract-service (8084), **interview-service** (8085), user-service (8086).  
+  project-service (8082), candidature-service (8083), contract-service (8084), **interview-service** (8085), user-service (8086), productivity-service (8087).  
   Each can use its own database (e.g. `freelancing_interview` for interview-service).
 - **Angular** (port 4200): SPA; consumes APIs via the gateway.
 
@@ -62,6 +63,23 @@ Developed at **Esprit School of Engineering – Tunisia**.
 ## Getting Started
 
 **Prerequisites:** Java 17+, Maven, Node.js/npm, MySQL (e.g. XAMPP).
+
+### Dockerized startup
+
+If you want the full platform in containers, use the root `docker-compose.yml`:
+
+1. Copy `.env.example` to `.env` if you want to override the default MySQL root password or Jitsi URL.
+2. From the project root, run:
+
+```powershell
+docker compose up --build
+```
+
+Main URLs after startup:
+
+- Angular frontend: `http://localhost:4200`
+- API Gateway: `http://localhost:8081`
+- Eureka: `http://localhost:8761`
 
 Start services **in this order** (each in its own terminal, from project root):
 
@@ -83,7 +101,10 @@ Start services **in this order** (each in its own terminal, from project root):
 6. **User service** (8086, if used)  
    `cd user-service && mvn -q -DskipTests spring-boot:run`
 
-7. **Angular** (4200)  
+7. **Productivity service** (8087)  
+   `cd productivity-service && mvn -q -DskipTests spring-boot:run`
+
+8. **Angular** (4200)  
    `cd angular && npx ng serve --open`
 
 Then open **http://localhost:4200**. Use **http://localhost:8081** for direct API calls (gateway).

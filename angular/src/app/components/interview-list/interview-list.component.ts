@@ -6,6 +6,7 @@ import { forkJoin } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { InterviewService } from '../../services/interview.service';
 import { ToastService } from '../../services/toast.service';
+import { UserService } from '../../services/user.service';
 import { Interview, InterviewStatus, MeetingMode, PageResponse } from '../../models/interview.model';
 
 export type InterviewListRole = 'admin' | 'client' | 'freelancer';
@@ -31,20 +32,34 @@ export class InterviewListComponent implements OnInit {
   ownerIdFilter: number | null = null;
   fromDate = '';
   toDate = '';
+  /** Client view: filter by freelancer name. Freelancer view: filter by client name. (client-side) */
+  nameFilter = '';
+  /** Min reliability 0-100 (client/freelancer view). null = any. (client-side) */
+  minFiabilityFilter: number | null = null;
 
   statusOptions: InterviewStatus[] = ['PROPOSED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW'];
   modeOptions: MeetingMode[] = ['ONLINE', 'FACE_TO_FACE'];
+  fiabilityOptions: { value: number | null; label: string }[] = [
+    { value: null, label: 'Tous' },
+    { value: 25, label: '25 % et plus' },
+    { value: 50, label: '50 % et plus' },
+    { value: 75, label: '75 % et plus' },
+    { value: 100, label: '100 %' },
+  ];
 
   /** freelancerId -> score 0-100 (client view) */
   reliabilityByFreelancerId: Record<number, number> = {};
   /** ownerId -> score 0-100 (freelancer view) */
   reliabilityByOwnerId: Record<number, number> = {};
   workloadLabel?: string;
+  /** userId -> display name (for freelancer column in client view, client column in freelancer view) */
+  displayNamesByUserId: Record<number, string> = {};
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private interviewService: InterviewService,
+    private userService: UserService,
     private toast: ToastService,
     private auth: AuthService
   ) {}
@@ -76,6 +91,30 @@ export class InterviewListComponent implements OnInit {
     return 'My interviews';
   }
 
+  /** Interviews after client-side name + fiability filter (client/freelancer only). */
+  get filteredInterviews(): Interview[] {
+    let list = this.interviews;
+    if (this.role !== 'client' && this.role !== 'freelancer') return list;
+    const nameTrim = this.nameFilter.trim().toLowerCase();
+    if (nameTrim) {
+      list = list.filter((i) => {
+        const id = this.role === 'client' ? i.freelancerId : i.ownerId;
+        const name = this.displayNamesByUserId[id] ?? '';
+        return name.toLowerCase().includes(nameTrim);
+      });
+    }
+    if (this.minFiabilityFilter != null) {
+      list = list.filter((i) => {
+        const score =
+          this.role === 'client'
+            ? this.reliabilityByFreelancerId[i.freelancerId]
+            : this.reliabilityByOwnerId[i.ownerId];
+        return score != null && score >= this.minFiabilityFilter!;
+      });
+    }
+    return list;
+  }
+
   load() {
     this.loading = true;
     const params: Record<string, unknown> = {
@@ -96,12 +135,27 @@ export class InterviewListComponent implements OnInit {
         this.page = p;
         this.interviews = p.content;
         this.loading = false;
+        this.loadDisplayNames();
         this.loadReliability();
       },
       error: () => {
         this.loading = false;
         this.toast.error('Failed to load interviews');
       },
+    });
+  }
+
+  private loadDisplayNames() {
+    this.displayNamesByUserId = {};
+    const ids: number[] =
+      this.role === 'client'
+        ? Array.from(new Set(this.interviews.map((i) => i.freelancerId)))
+        : this.role === 'freelancer'
+          ? Array.from(new Set(this.interviews.map((i) => i.ownerId)))
+          : [];
+    if (ids.length === 0) return;
+    this.userService.getDisplayNamesMap(ids).subscribe({
+      next: (map) => (this.displayNamesByUserId = map),
     });
   }
 
@@ -277,13 +331,51 @@ export class InterviewListComponent implements OnInit {
     return mode === 'FACE_TO_FACE' ? 'Face to face' : 'Online';
   }
 
-  /** For freelancer view: distance from their location to FACE_TO_FACE interview location (km). */
+  /** Tunisian state/city name -> [lat, lng] (approximate center) for distance between states. */
+  private static readonly STATE_COORDS: Record<string, [number, number]> = {
+    tunis: [36.8065, 10.1815],
+    sfax: [34.7406, 10.7603],
+    sousse: [35.8256, 10.6346],
+    nabeul: [36.4561, 10.7376],
+    bizerte: [37.2744, 9.8739],
+    monastir: [35.777, 10.8261],
+    gabes: [33.8815, 10.0982],
+    kairouan: [35.6781, 10.0963],
+    gafsa: [34.425, 8.7842],
+    medenine: [33.3549, 10.5055],
+    beja: [36.7256, 9.1817],
+    kef: [36.1822, 8.7148],
+    siliana: [36.0889, 9.3644],
+    kasserine: [35.1673, 8.8361],
+    sidi: [35.6673, 10.8907],
+    mahdia: [35.5047, 11.0447],
+    zaghouan: [36.4029, 10.1429],
+    manouba: [36.8081, 10.0972],
+    ariana: [36.8625, 10.1934],
+    'ben arous': [36.7533, 10.2189],
+    kebili: [33.7072, 8.9711],
+    tatouine: [32.9297, 10.4511],
+    'sidi bouzid': [35.0381, 9.4842],
+    jendouba: [36.5011, 8.7803],
+  };
+
+  private static coordsFromCityOrState(text: string | null | undefined): [number, number] | null {
+    if (!text || !text.trim()) return null;
+    const lower = text.toLowerCase().trim();
+    for (const [key, coords] of Object.entries(InterviewListComponent.STATE_COORDS)) {
+      if (lower.includes(key)) return coords;
+    }
+    return null;
+  }
+
+  /** For freelancer view: distance from their state/city to FACE_TO_FACE interview state/city (km). */
   distanceLabel(i: Interview): string {
     if (i.mode !== 'FACE_TO_FACE') return '—';
     const user = this.auth.currentUser();
-    if (user?.lat == null || user?.lng == null) return '—';
-    if (i.lat == null || i.lng == null) return '—';
-    const km = this.haversineKm(user.lat!, user.lng!, i.lat, i.lng);
+    const userCoords = InterviewListComponent.coordsFromCityOrState(user?.city);
+    const interviewCoords = InterviewListComponent.coordsFromCityOrState(i.city) ?? InterviewListComponent.coordsFromCityOrState(i.addressLine);
+    if (!userCoords || !interviewCoords) return '—';
+    const km = this.haversineKm(userCoords[0], userCoords[1], interviewCoords[0], interviewCoords[1]);
     return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
   }
 

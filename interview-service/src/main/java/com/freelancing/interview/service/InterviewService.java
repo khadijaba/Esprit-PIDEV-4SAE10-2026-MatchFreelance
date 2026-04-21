@@ -147,6 +147,13 @@ public class InterviewService {
         interview.setCity(trimToNull(req.getCity()));
         interview.setLat(req.getLat());
         interview.setLng(req.getLng());
+        if (mode == MeetingMode.FACE_TO_FACE && (interview.getLat() == null || interview.getLng() == null) && trimToNull(req.getCity()) != null) {
+            double[] coords = cityToDefaultCoords(req.getCity().trim());
+            if (coords != null) {
+                interview.setLat(coords[0]);
+                interview.setLng(coords[1]);
+            }
+        }
         interview.setNotes(trimToNull(req.getNotes()));
         interview.setStatus(InterviewStatus.PROPOSED);
 
@@ -281,6 +288,13 @@ public class InterviewService {
         if (req.getCity() != null) interview.setCity(trimToNull(req.getCity()));
         if (req.getLat() != null) interview.setLat(req.getLat());
         if (req.getLng() != null) interview.setLng(req.getLng());
+        if (interview.getMode() == MeetingMode.FACE_TO_FACE && (interview.getLat() == null || interview.getLng() == null) && trimToNull(interview.getCity()) != null) {
+            double[] coords = cityToDefaultCoords(interview.getCity().trim());
+            if (coords != null) {
+                interview.setLat(coords[0]);
+                interview.setLng(coords[1]);
+            }
+        }
 
         validateMeetingFields(interview.getMode(), interview.getMeetingUrl(), interview.getAddressLine(), interview.getCity());
 
@@ -806,6 +820,19 @@ public class InterviewService {
         if (s == null) return null;
         String t = s.trim();
         return t.isEmpty() ? null : t;
+    }
+
+    /** Default coordinates for known cities (so distance can be computed when client does not send lat/lng). */
+    private static double[] cityToDefaultCoords(String city) {
+        if (city == null || city.isEmpty()) return null;
+        String lower = city.toLowerCase();
+        if (lower.contains("tunis")) return new double[]{36.8065, 10.1815};
+        if (lower.contains("sfax")) return new double[]{34.7406, 10.7603};
+        if (lower.contains("sousse")) return new double[]{35.8256, 10.6346};
+        if (lower.contains("nabeul")) return new double[]{36.4561, 10.7376};
+        if (lower.contains("bizerte")) return new double[]{37.2744, 9.8739};
+        if (lower.contains("monastir")) return new double[]{35.7770, 10.8261};
+        return null;
     }
 
     private InterviewResponseDTO toDto(Interview i) {

@@ -290,7 +290,7 @@ Scenario B - Trigger alternative suggestions:
 2.12 Click one suggestion:
     - The form is auto-filled with suggested date/time and mode.
     - Click "Créer l'entretien" again.
-2.13 Highlight:
+2.13 Highlight: 
     - The system automatically searches the next 14 days, filters by availability and existing interviews, and proposes the best alternatives.
     - Great for UX: Client is guided instead of manually trying random times.
 

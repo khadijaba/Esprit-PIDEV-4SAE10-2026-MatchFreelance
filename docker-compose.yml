@@ -1,0 +1,134 @@
+name: matchfreelance
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: mf-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+  eureka-server:
+    build:
+      context: ./eureka-server
+    container_name: mf-eureka
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: mf-api-gateway
+    restart: unless-stopped
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+    ports:
+      - "8081:8081"
+  project-service:
+    build:
+      context: ./project-service
+    container_name: mf-project-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/freelancing_projects?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      CONTRACT_SERVICE_URL: http://contract-service:8084
+    depends_on:
+      - eureka-server
+      - mysql
+    ports:
+      - "8082:8082"
+  candidature-service:
+    build:
+      context: ./candidature-service
+    container_name: mf-candidature-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/freelancing_candidatures?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    depends_on:
+      - eureka-server
+      - mysql
+    ports:
+      - "8083:8083"
+  contract-service:
+    build:
+      context: ./contract-service
+    container_name: mf-contract-service
+    restart: unless-stopped
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+    ports:
+      - "8084:8084"
+  interview-service:
+    build:
+      context: ./interview-service
+    container_name: mf-interview-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/freelancing_interviews?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      JITSI_BASE_URL: ${JITSI_BASE_URL:-https://meet.jit.si}
+    depends_on:
+      - eureka-server
+      - mysql
+    ports:
+      - "8085:8085"
+  user-service:
+    build:
+      context: ./user-service
+    container_name: mf-user-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/freelancing_users?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    depends_on:
+      - eureka-server
+      - mysql
+    ports:
+      - "8086:8086"
+  productivity-service:
+    build:
+      context: ./productivity-service
+    container_name: mf-productivity-service
+    restart: unless-stopped
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      PRODUCTIVITY_AI_OLLAMA_ENABLED: ${PRODUCTIVITY_AI_OLLAMA_ENABLED:-false}
+      PRODUCTIVITY_AI_OLLAMA_BASE_URL: ${PRODUCTIVITY_AI_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      PRODUCTIVITY_AI_OLLAMA_MODEL: ${PRODUCTIVITY_AI_OLLAMA_MODEL:-llama3.2}
+      PRODUCTIVITY_AI_OLLAMA_TEMPERATURE: ${PRODUCTIVITY_AI_OLLAMA_TEMPERATURE:-0.2}
+      PRODUCTIVITY_AI_OLLAMA_FALLBACK_ENABLED: ${PRODUCTIVITY_AI_OLLAMA_FALLBACK_ENABLED:-true}
+    depends_on:
+      - eureka-server
+    ports:
+      - "8087:8087"
+  angular:
+    build:
+      context: ./angular
+    container_name: mf-angular
+    restart: unless-stopped
+    depends_on:
+      - api-gateway
+    ports:
+      - "4200:80"
+volumes:
+  mysql_data:
