@@ -1,0 +1,327 @@
+<div
+  class="mx-auto px-4 sm:px-6 lg:px-8"
+  [class.max-w-6xl]="!embedMode"
+  [class.py-12]="!embedMode"
+  [class.py-0]="embedMode"
+>
+  @if (!embedMode) {
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900">Mes candidatures</h1>
+        <p class="mt-2 text-slate-600">Gérez vos candidatures (vue tableau ou cartes).</p>
+      </div>
+      <div class="flex rounded-lg border border-slate-200 bg-slate-50 p-1 text-sm font-medium shadow-inner">
+        <button
+          type="button"
+          (click)="setLayout('table')"
+          class="rounded-md px-3 py-1.5 transition"
+          [class.bg-white]="layout === 'table'"
+          [class.shadow-sm]="layout === 'table'"
+        >
+          Tableau
+        </button>
+        <button
+          type="button"
+          (click)="setLayout('cards')"
+          class="rounded-md px-3 py-1.5 transition"
+          [class.bg-emerald-100]="layout === 'cards'"
+          [class.text-emerald-900]="layout === 'cards'"
+          [class.shadow-sm]="layout === 'cards'"
+        >
+          Cartes
+        </button>
+      </div>
+    </div>
+  } @else if (!hideEmbeddedHeader) {
+    <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">Mes candidatures</h2>
+        <p class="mt-0.5 text-sm text-slate-600">Aperçu de vos dernières candidatures</p>
+      </div>
+      <a routerLink="/mes-candidatures" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline">
+        Tout voir →
+      </a>
+    </div>
+  }
+
+  @if (loading) {
+    <div class="mt-10 flex flex-col items-center gap-3 py-16">
+      <div class="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+      <p class="text-sm text-slate-600">Chargement des candidatures...</p>
+    </div>
+  }
+
+  @if (!loading && candidatures.length === 0) {
+    <div class="mt-10 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
+      <p class="font-medium text-slate-700">Aucune candidature pour le moment</p>
+      <p class="mt-2 text-sm text-slate-500">Parcourez les projets et postulez.</p>
+      <a
+        routerLink="/projets"
+        class="mt-6 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+      >
+        Voir projets
+      </a>
+    </div>
+  }
+
+  @if (!loading && candidatures.length > 0 && (embedMode || layout === 'table')) {
+    <div
+      class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+      [class.mt-8]="!embedMode"
+      [class.mt-4]="embedMode"
+    >
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[640px] text-left text-sm">
+          <thead class="border-b border-slate-200 bg-slate-50">
+            <tr>
+              <th class="px-4 py-3 font-medium text-slate-500">Projet</th>
+              <th class="px-4 py-3 font-medium text-slate-500">Budget</th>
+              <th class="px-4 py-3 font-medium text-slate-500">Statut</th>
+              <th class="px-4 py-3 font-medium text-slate-500">Message</th>
+              @if (!embedMode) {
+                <th class="px-4 py-3 font-medium text-slate-500">Date</th>
+              }
+              <th class="px-4 py-3 text-right font-medium text-slate-500">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (c of candidatures; track c.id) {
+              <tr class="align-top hover:bg-slate-50/80">
+                <td class="px-4 py-3">
+                  <a [routerLink]="['/projets', c.projectId, 'postuler']" class="font-medium text-indigo-600 hover:text-indigo-800">
+                    {{ projectLabel(c) }}
+                  </a>
+                </td>
+                <td class="whitespace-nowrap px-4 py-3 text-slate-700">{{ c.proposedBudget | number: '1.0-0' }} TND</td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="statusClass(c.status)">
+                    {{ c.status }}
+                  </span>
+                </td>
+                <td class="max-w-[220px] px-4 py-3 text-slate-600 sm:max-w-xs">
+                  <span class="line-clamp-2">{{ c.message || '—' }}</span>
+                </td>
+                @if (!embedMode) {
+                  <td class="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{{ appliedAtLabel(c) }}</td>
+                }
+                <td class="px-4 py-3 text-right">
+                  @if (canEdit(c)) {
+                    <div class="flex justify-end gap-1">
+                      <button
+                        type="button"
+                        (click)="startEdit(c)"
+                        class="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
+                        title="Modifier"
+                      >
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="revoke(c)"
+                        class="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-red-600"
+                        title="Retirer"
+                      >
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  } @else {
+                    <span class="text-slate-300">—</span>
+                  }
+                </td>
+              </tr>
+              @if (editingId === c.id) {
+                <tr class="bg-indigo-50/40">
+                  <td [attr.colspan]="tableColspan" class="px-4 py-3">
+                    <p class="text-xs font-medium text-slate-600">Modifier le message</p>
+                    <textarea
+                      [(ngModel)]="editMessage"
+                      rows="3"
+                      class="mt-2 w-full max-w-2xl rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    ></textarea>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        (click)="saveEdit(c)"
+                        [disabled]="saving"
+                        class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                      >
+                        Enregistrer
+                      </button>
+                      <button
+                        type="button"
+                        (click)="cancelEdit()"
+                        [disabled]="saving"
+                        class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  @if (!loading && candidatures.length > 0 && !embedMode && layout === 'cards') {
+    <div class="mt-8 space-y-4">
+      @for (c of candidatures; track c.id) {
+        <article class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300">
+          <div class="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
+            <div class="min-w-0 flex-1 space-y-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <a [routerLink]="['/projets', c.projectId, 'postuler']" class="text-lg font-semibold text-indigo-600 hover:text-indigo-800">
+                  {{ projectLabel(c) }}
+                </a>
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="statusClass(c.status)">
+                  {{ c.status }}
+                </span>
+              </div>
+              <p class="text-xs text-slate-500">
+                Candidature envoyée le <span class="font-medium text-slate-700">{{ appliedAtLabel(c) }}</span>
+              </p>
+              <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
+                <span
+                  >Budget proposé :
+                  <strong class="text-slate-900">{{ c.proposedBudget | number: '1.0-0' }} TND</strong></span
+                >
+                <span
+                  >Entretiens :
+                  <strong class="text-slate-900">{{ interviewCountLabel(c) }}</strong></span
+                >
+              </div>
+              @if (showPendingInterviewHint(c)) {
+                <p class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  Le client doit marquer au moins un entretien comme terminé avant de pouvoir vous accepter.
+                </p>
+              }
+            </div>
+            <div class="flex shrink-0 flex-col gap-2 sm:items-end">
+              <button
+                type="button"
+                (click)="toggleInterviews(c)"
+                class="inline-flex items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-100"
+              >
+                {{ expandedCandidatureId === c.id ? 'Masquer entretiens' : 'Gérer entretiens' }}
+              </button>
+              @if (canEdit(c) && editingId !== c.id) {
+                <div class="flex gap-2 sm:justify-end">
+                  <button
+                    type="button"
+                    (click)="startEdit(c)"
+                    class="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-indigo-600"
+                    title="Modifier"
+                  >
+                    <span class="sr-only">Modifier</span>
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="revoke(c)"
+                    class="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-red-600"
+                    title="Retirer"
+                  >
+                    <span class="sr-only">Retirer</span>
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+          <div class="border-t border-slate-100 bg-slate-50/80 px-5 py-4">
+            <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Message</p>
+            @if (editingId === c.id) {
+              <textarea
+                [(ngModel)]="editMessage"
+                rows="3"
+                class="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              ></textarea>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  (click)="saveEdit(c)"
+                  [disabled]="saving"
+                  class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  Enregistrer
+                </button>
+                <button
+                  type="button"
+                  (click)="cancelEdit()"
+                  [disabled]="saving"
+                  class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-white disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+              </div>
+            } @else {
+              <p class="mt-1 text-sm text-slate-700">{{ c.message || 'Sans message' }}</p>
+            }
+          </div>
+          @if (expandedCandidatureId === c.id) {
+            <div class="border-t border-slate-200 bg-white px-5 py-4">
+              <h3 class="text-sm font-semibold text-slate-900">Vos entretiens (lecture seule)</h3>
+              <p class="mt-1 text-xs text-slate-500">
+                Seul le client peut planifier ou modifier les entretiens. Vous voyez ici le planning et les statuts.
+              </p>
+              @if (interviewsLoading[c.id]) {
+                <div class="mt-4 flex items-center gap-2 text-sm text-slate-600">
+                  <div class="h-5 w-5 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600"></div>
+                  Chargement…
+                </div>
+              } @else if (interviewsFor(c).length === 0) {
+                <p class="mt-4 text-sm text-slate-600">Aucun entretien planifié pour l’instant.</p>
+              } @else {
+                <ul class="mt-4 space-y-2">
+                  @for (iv of interviewsFor(c); track iv.id) {
+                    <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm">
+                      <span class="font-medium text-slate-800">{{ formatInterviewWhen(iv.scheduledAt) }}</span>
+                      <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium" [class]="interviewStatusClass(iv.status)">
+                        {{ iv.status }}
+                      </span>
+                    </li>
+                    @if (iv.notes) {
+                      <p class="-mt-1 ml-3 text-xs text-slate-600">{{ iv.notes }}</p>
+                    }
+                  }
+                </ul>
+              }
+            </div>
+          }
+        </article>
+      }
+    </div>
+  }
+
+</div>

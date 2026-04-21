@@ -15,3 +15,11 @@ export interface CandidatureResponse {
   interviewCount: number | null;
   eligibleForAcceptance: boolean | null;
 }
+
+export interface CandidatureRequest {
+  projectId: number;
+  freelancerId: number;
+  message?: string;
+  proposedBudget: number;
+  extraTasksBudget?: number;
+}

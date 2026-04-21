@@ -70,6 +70,24 @@ public class InterviewController {
         }
     }
 
+    @GetMapping("/candidature/{candidatureId}/freelancer")
+    public ResponseEntity<?> getInterviewsForFreelancer(
+            @PathVariable Long candidatureId,
+            @RequestParam Long freelancerId) {
+        try {
+            List<InterviewResponseDTO> list = interviewService.getInterviewsForFreelancer(candidatureId, freelancerId);
+            return ResponseEntity.ok(list);
+        } catch (RuntimeException e) {
+            log.debug("getInterviewsForFreelancer: {}", e.toString());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("message", safeMessage(e)));
+        } catch (Exception e) {
+            log.error("getInterviewsForFreelancer failed", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("message", safeMessage(e)));
+        }
+    }
+
     @PostMapping("/candidature/{candidatureId}")
     public ResponseEntity<?> scheduleInterview(
             @PathVariable Long candidatureId,

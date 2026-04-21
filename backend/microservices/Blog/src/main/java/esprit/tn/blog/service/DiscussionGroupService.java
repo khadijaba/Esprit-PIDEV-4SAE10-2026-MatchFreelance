@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -105,10 +106,15 @@ public class DiscussionGroupService {
      */
     public List<DiscussionGroup> getUserGroups(Long userId) {
         List<GroupMember> memberships = memberRepository.findByUserIdAndIsActiveTrueOrderByJoinedAtDesc(userId);
-        return memberships.stream()
-                .map(GroupMember::getGroup)
-                .filter(DiscussionGroup::getIsActive)
+        List<Long> groupIds = memberships.stream()
+                .map(GroupMember::getGroupId)
+                .filter(Objects::nonNull)
+                .distinct()
                 .toList();
+        if (groupIds.isEmpty()) {
+            return List.of();
+        }
+        return groupRepository.findByIdInAndIsActiveTrueOrderByLastActivityAtDesc(groupIds);
     }
 
     /**

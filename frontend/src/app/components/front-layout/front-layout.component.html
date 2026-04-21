@@ -58,9 +58,17 @@
             class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
             Mon activité
           </a>
+          <a routerLink="/mes-candidatures" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            Mes candidatures
+          </a>
+          <a routerLink="/mes-contrats" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            Mes contrats
+          </a>
         }
         @if (auth.isLoggedIn() && auth.isProjectOwner()) {
-          <a routerLink="/projets" routerLinkActive="bg-teal-50 text-teal-700"
+          <a routerLink="/client" routerLinkActive="bg-teal-50 text-teal-700"
             class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
             title="Projets MatchFreelance (microservices Project, Candidature, Contract)">
             Mes projets

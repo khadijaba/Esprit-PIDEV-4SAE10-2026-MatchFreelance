@@ -86,6 +86,13 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard-client',
+        canActivate: [clientGuard],
+        loadComponent: () =>
+          import('./components/dashboard-client/dashboard-client.component').then((m) => m.DashboardClientComponent),
+      },
+      {
+        path: 'client',
+        canActivate: [clientGuard],
         loadComponent: () =>
           import('./components/dashboard-client/dashboard-client.component').then((m) => m.DashboardClientComponent),
       },
@@ -123,6 +130,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'projets/:id/postuler',
+        loadComponent: () =>
+          import('./components/project-apply-detail/project-apply-detail.component').then(
+            (m) => m.ProjectApplyDetailComponent
+          ),
+      },
+      {
         path: 'projets/nouveau',
         canActivate: [clientGuard],
         loadComponent: () =>
@@ -157,6 +171,30 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./components/project-owner-detail/project-owner-detail.component').then(
             (m) => m.ProjectOwnerDetailComponent
+          ),
+      },
+      {
+        path: 'mes-contrats/:contractId',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./components/freelancer-contract-detail/freelancer-contract-detail.component').then(
+            (m) => m.FreelancerContractDetailComponent
+          ),
+      },
+      {
+        path: 'mes-contrats',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./components/freelancer-contracts/freelancer-contracts.component').then(
+            (m) => m.FreelancerContractsComponent
+          ),
+      },
+      {
+        path: 'mes-candidatures',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./components/freelancer-applications/freelancer-applications.component').then(
+            (m) => m.FreelancerApplicationsComponent
           ),
       },
     ],

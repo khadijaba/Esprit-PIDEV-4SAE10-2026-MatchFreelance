@@ -54,6 +54,21 @@ public class InterviewService {
                 .collect(Collectors.toList());
     }
 
+    /** Freelancer read-only: liste des entretiens de sa propre candidature. */
+    @Transactional(readOnly = true)
+    public List<InterviewResponseDTO> getInterviewsForFreelancer(Long candidatureId, Long freelancerId) {
+        if (freelancerId == null) {
+            throw new RuntimeException("freelancerId is required");
+        }
+        CandidatureSnapshotDto cand = loadCandidature(candidatureId);
+        if (cand.getFreelancerId() == null || !cand.getFreelancerId().equals(freelancerId)) {
+            throw new RuntimeException("Not authorized to view interviews for this candidature");
+        }
+        return interviewRepository.findByCandidatureId(candidatureId).stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public InterviewResponseDTO scheduleInterview(Long candidatureId, Long clientId, InterviewRequestDTO requestDTO) {
         assertProjectOwnerForCandidature(candidatureId, clientId);

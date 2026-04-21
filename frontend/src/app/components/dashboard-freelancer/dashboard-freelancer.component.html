@@ -4,11 +4,10 @@
 
   @if (error) {
     <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{{ error }}</div>
-    return;
   }
 
   <!-- Rappels -->
-  @if (rappels.length > 0) {
+  @if (!error && rappels.length > 0) {
     <section class="mt-6 rounded-xl border border-teal-200 bg-teal-50/50 p-4">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-teal-800">Rappels</h2>
       <ul class="mt-3 space-y-2">
@@ -24,20 +23,83 @@
     </section>
   }
 
-  @if (loading) {
+  @if (!error && loading) {
     <div class="mt-8 flex justify-center py-12">
       <div class="h-10 w-10 animate-spin rounded-full border-4 border-teal-200 border-t-teal-600"></div>
     </div>
-  } @else {
-    <section class="mt-6 rounded-xl border border-amber-200 bg-amber-50/60 p-4 shadow-sm">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-amber-900">Performance &amp; opportunités</h2>
-      <p class="mt-1 text-sm text-amber-950/80">
-        Comparez votre classement aux autres freelances et recevez des projets alignés sur vos compétences et vos scores d’examens.
-      </p>
-      <a routerLink="/classement"
-        class="mt-3 inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-amber-700">
-        Ouvrir le classement &amp; matching
-      </a>
+  }
+  @if (!error && !loading) {
+    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-2xl font-bold text-slate-900">Mes candidatures</h2>
+      <p class="mt-1 text-sm text-slate-600">Gérez vos candidatures envoyées aux clients.</p>
+      <app-freelancer-applications [embedMode]="true" [maxEmbedItems]="12" [hideEmbeddedHeader]="true" />
+    </section>
+
+    <section class="mt-6 rounded-2xl border border-teal-200 bg-white p-6 shadow-sm">
+      <app-freelancer-contracts [embedMode]="true" [maxEmbedItems]="3" />
+    </section>
+
+    <section class="mt-6 rounded-xl border-2 border-amber-300/80 bg-gradient-to-br from-amber-50 to-orange-50/80 p-6 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">Classement freelances &amp; matching projets</h2>
+          <p class="mt-1 text-sm text-gray-700">
+            Top 5 (aperçu) — scores issus des examens et certifications. Page complète : top performers + matching.
+          </p>
+        </div>
+        <a
+          routerLink="/classement"
+          class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-amber-700 transition"
+        >
+          Ouvrir le classement complet
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </a>
+      </div>
+      @if (rankingPreviewLoading) {
+        <p class="mt-4 text-sm text-gray-600">Chargement du classement…</p>
+      } @else if (rankingPreviewError) {
+        <p class="mt-4 rounded-lg border border-amber-200 bg-white/80 px-4 py-3 text-sm text-amber-900">{{ rankingPreviewError }}</p>
+      } @else if (rankingPreview.length === 0) {
+        <p class="mt-4 text-sm text-gray-600">
+          Aucun passage d’examen en base — le classement apparaîtra après des tentatives.
+        </p>
+      } @else {
+        <div class="mt-4 overflow-x-auto rounded-lg border border-amber-200/60 bg-white">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b bg-amber-100/50 text-left text-xs font-semibold uppercase tracking-wide text-amber-900">
+                <th class="px-3 py-2">Rang</th>
+                <th class="px-3 py-2">Freelancer</th>
+                <th class="px-3 py-2">Score global</th>
+                <th class="px-3 py-2">Moyenne</th>
+                <th class="px-3 py-2">Réussite</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of rankingPreview; track r.freelancerId) {
+                <tr
+                  class="border-b border-gray-100"
+                  [class.bg-teal-50]="isMyRankingRow(r)"
+                  [class.font-semibold]="isMyRankingRow(r)"
+                >
+                  <td class="px-3 py-2 text-gray-900">#{{ r.rank }}</td>
+                  <td class="px-3 py-2 text-gray-800">
+                    {{ r.freelancerId }}
+                    @if (isMyRankingRow(r)) {
+                      <span class="ml-2 rounded-full bg-teal-200 px-2 py-0.5 text-xs text-teal-900">Vous</span>
+                    }
+                  </td>
+                  <td class="px-3 py-2 font-medium text-amber-800">{{ r.globalScore }}</td>
+                  <td class="px-3 py-2 text-gray-700">{{ r.averageScore }}%</td>
+                  <td class="px-3 py-2 text-gray-700">{{ r.successRate }}%</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </section>
 
     <section class="mt-8 rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-6 shadow-sm">

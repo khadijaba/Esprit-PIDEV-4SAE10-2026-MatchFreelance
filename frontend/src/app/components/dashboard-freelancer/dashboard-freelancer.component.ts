@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FreelancerApplicationsComponent } from '../freelancer-applications/freelancer-applications.component';
+import { FreelancerContractsComponent } from '../freelancer-contracts/freelancer-contracts.component';
 import { AuthService } from '../../services/auth.service';
 import { InscriptionService } from '../../services/inscription.service';
 import { ExamenService } from '../../services/examen.service';
@@ -9,14 +11,20 @@ import { SkillService } from '../../services/skill.service';
 import { UserProfile } from '../../models/auth.model';
 import { Skill } from '../../models/skill.model';
 import { Inscription } from '../../models/inscription.model';
-import { PassageExamen, Certificat, SuccessPrediction, RemediationPlan } from '../../models/examen.model';
+import {
+  PassageExamen,
+  Certificat,
+  SuccessPrediction,
+  RemediationPlan,
+  FreelancerRanking,
+} from '../../models/examen.model';
 import { Formation } from '../../models/formation.model';
 import { SKILL_CATEGORY_LABELS } from '../../models/skill.model';
 
 @Component({
   selector: 'app-dashboard-freelancer',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FreelancerApplicationsComponent, FreelancerContractsComponent],
   templateUrl: './dashboard-freelancer.component.html',
 })
 export class DashboardFreelancerComponent implements OnInit {
@@ -32,6 +40,10 @@ export class DashboardFreelancerComponent implements OnInit {
   rappels: { type: string; message: string; link?: string; linkLabel?: string }[] = [];
   simulation: SuccessPrediction | null = null;
   remediation: RemediationPlan | null = null;
+
+  rankingPreview: FreelancerRanking[] = [];
+  rankingPreviewLoading = false;
+  rankingPreviewError: string | null = null;
 
   constructor(
     public auth: AuthService,
@@ -63,6 +75,23 @@ export class DashboardFreelancerComponent implements OnInit {
   loadAll(freelancerId: number) {
     this.loading = true;
     this.rappels = [];
+
+    this.rankingPreviewLoading = true;
+    this.rankingPreviewError = null;
+    this.examenService.getGlobalRanking().subscribe({
+      next: (rows) => {
+        this.rankingPreviewLoading = false;
+        this.rankingPreview = (rows ?? []).slice(0, 5);
+        this.rankingPreviewError = null;
+      },
+      error: (err) => {
+        this.rankingPreviewLoading = false;
+        this.rankingPreview = [];
+        this.rankingPreviewError =
+          err?.error?.message ??
+          `Classement indisponible (HTTP ${err?.status ?? '—'}). Vérifiez le microservice Evaluation.`;
+      },
+    });
 
     this.auth.getProfile().subscribe({
       next: (p) => (this.profile = p),
@@ -144,6 +173,11 @@ export class DashboardFreelancerComponent implements OnInit {
 
   categoryLabel(cat: string): string {
     return (SKILL_CATEGORY_LABELS as Record<string, string>)[cat] ?? cat?.replace(/_/g, ' ') ?? '';
+  }
+
+  isMyRankingRow(row: FreelancerRanking): boolean {
+    const id = this.freelancerId;
+    return id != null && row.freelancerId === id;
   }
 
   statutInscriptionLabel(s: string): string {
