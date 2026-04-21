@@ -85,6 +85,12 @@ export const routes: Routes = [
           import('./components/dashboard-freelancer/dashboard-freelancer.component').then((m) => m.DashboardFreelancerComponent),
       },
       {
+        path: 'freelancer/productivity',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./components/productivity-board/productivity-board.component').then((m) => m.ProductivityBoardComponent),
+      },
+      {
         path: 'dashboard-client',
         canActivate: [clientGuard],
         loadComponent: () =>

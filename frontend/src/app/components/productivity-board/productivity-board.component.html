@@ -1,0 +1,597 @@
+<div class="mx-auto max-w-7xl space-y-6">
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Personal Productivity</h1>
+        <p class="text-sm text-slate-500">Plan tasks, align them to goals, track progress, and export your calendar.</p>
+      </div>
+      <button
+        (click)="downloadCalendar()"
+        class="rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+      >
+        Export .ics calendar
+      </button>
+    </div>
+  </div>
+
+  @if (summary) {
+    <div class="grid gap-4 md:grid-cols-4">
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Completion</p>
+        <p class="mt-1 text-2xl font-bold text-emerald-600">{{ percent(summary.completionRate) }}</p>
+        <p class="text-xs text-slate-500">{{ summary.doneTasks }} / {{ summary.totalTasks }} tasks done</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">In progress</p>
+        <p class="mt-1 text-2xl font-bold text-blue-600">{{ summary.inProgressTasks }}</p>
+        <p class="text-xs text-slate-500">Active execution right now</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Goal aligned</p>
+        <p class="mt-1 text-2xl font-bold text-violet-600">{{ percent(goalAlignmentRate()) }}</p>
+        <p class="text-xs text-slate-500">{{ goalAlignedTasksCount() }} aligned · {{ unassignedTaskCount() }} unassigned</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p class="text-xs uppercase tracking-wide text-slate-500">Automation (7d)</p>
+        <p class="mt-1 text-2xl font-bold text-indigo-600">{{ automatedDecisionCount() }}</p>
+        <p class="text-xs text-slate-500">Auto decisions logged in background</p>
+      </div>
+    </div>
+  }
+
+  <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold text-slate-900">Unified Workspace</h2>
+        <p class="text-sm text-slate-500">Switch views: board drag-and-drop, list editing, and hierarchy tracking.</p>
+      </div>
+      <div class="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
+        <button (click)="setWorkspaceView('board')" class="rounded-md px-3 py-1.5"
+          [class.bg-indigo-600]="workspaceView === 'board'" [class.text-white]="workspaceView === 'board'">Board</button>
+        <button (click)="setWorkspaceView('list')" class="rounded-md px-3 py-1.5"
+          [class.bg-indigo-600]="workspaceView === 'list'" [class.text-white]="workspaceView === 'list'">Detailed list</button>
+        <button (click)="setWorkspaceView('hierarchy')" class="rounded-md px-3 py-1.5"
+          [class.bg-indigo-600]="workspaceView === 'hierarchy'" [class.text-white]="workspaceView === 'hierarchy'">Hierarchy</button>
+        <button (click)="setWorkspaceView('automation')" class="rounded-md px-3 py-1.5"
+          [class.bg-indigo-600]="workspaceView === 'automation'" [class.text-white]="workspaceView === 'automation'">Automation hub</button>
+      </div>
+    </div>
+  </section>
+
+  @if (workspaceView === 'board') {
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="mb-3 text-lg font-semibold text-slate-900">Board</h2>
+      <p class="mb-4 text-sm text-slate-500">GitHub-style board flow: add cards inside lanes, drag cards across lanes, and optionally nest cards up to depth 2.</p>
+
+      <div class="mb-5 grid gap-3 lg:grid-cols-3">
+        @for (status of boardStatuses; track status) {
+          <div class="relative rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <div class="mb-2 flex items-center justify-between">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">{{ boardStatusLabel(status) }}</p>
+              <span class="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] text-slate-700">{{ boardTasks(status).length }}</span>
+            </div>
+
+            @if (boardComposerOpen[status]) {
+              <div class="mb-3 space-y-2 rounded-md border border-dashed border-slate-300 bg-white p-2">
+                <input
+                  [(ngModel)]="boardDraftTitle[status]"
+                  type="text"
+                  placeholder="Task title"
+                  class="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                />
+                <div class="grid grid-cols-2 gap-2">
+                  <select [(ngModel)]="boardDraftPriority[status]" class="w-full rounded border border-slate-300 px-2 py-1.5 text-xs">
+                    @for (priority of priorities; track priority) {
+                      <option [value]="priority">{{ priority }}</option>
+                    }
+                  </select>
+                  <input [(ngModel)]="boardDraftDueAt[status]" type="datetime-local" class="w-full rounded border border-slate-300 px-2 py-1.5 text-xs" />
+                </div>
+                <button (click)="toggleBoardParent(status)" class="w-full rounded border border-slate-300 px-2 py-1.5 text-xs text-slate-700">
+                  {{ boardComposerShowParent[status] ? 'Remove parent link' : 'Nest under parent (optional)' }}
+                </button>
+                @if (boardComposerShowParent[status]) {
+                  <select [(ngModel)]="boardDraftParentId[status]" class="w-full rounded border border-slate-300 px-2 py-1.5 text-xs">
+                    <option value="">No parent</option>
+                    @for (parent of boardParentCandidates(status); track parent.id) {
+                      <option [ngValue]="parent.id">#{{ parent.id }} {{ parent.title }}</option>
+                    }
+                  </select>
+                }
+                <div class="flex gap-2">
+                  <button (click)="addBoardTask(status)" class="flex-1 rounded border border-indigo-300 bg-indigo-50 px-2 py-1.5 text-xs text-indigo-700">Add item</button>
+                  <button (click)="toggleBoardComposer(status)" class="rounded border border-slate-300 px-2 py-1.5 text-xs text-slate-700">Cancel</button>
+                </div>
+              </div>
+            }
+
+            <div
+              cdkDropList
+              [id]="boardDropListId(status)"
+              [cdkDropListData]="boardTasks(status)"
+              [cdkDropListConnectedTo]="boardDropListIds()"
+              class="min-h-28 space-y-2"
+              (cdkDropListDropped)="onTaskBoardDrop(status, $event)">
+              @for (task of boardTasks(status); track task.id) {
+                <article cdkDrag cdkDragPreviewClass="board-drag-preview" [cdkDragData]="task" class="cursor-move rounded-md border border-slate-200 bg-white p-2">
+                  <p class="text-sm font-medium text-slate-900">{{ nestedPrefix(task.id) }}#{{ task.id }} {{ task.title }}</p>
+                  <p class="text-xs text-slate-500">{{ task.priority }} · {{ task.dueAt ? (task.dueAt | date:'short') : 'No due date' }}</p>
+                  <div class="mt-1 flex gap-1 text-[11px]">
+                    @if (taskDepth(task.id) > 0) {
+                      <span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">nested L{{ taskDepth(task.id) }}</span>
+                    }
+                    @if (hasDependency(task.id)) {
+                      <span class="rounded bg-violet-100 px-1.5 py-0.5 text-violet-700">deps</span>
+                    }
+                    @if (taskDecisionCount(task.id) > 0) {
+                      <span class="rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-700">{{ taskDecisionCount(task.id) }} decisions</span>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+
+            <button
+              (click)="toggleBoardComposer(status)"
+              class="absolute bottom-3 right-3 h-8 w-8 rounded-full border border-indigo-300 bg-white text-lg leading-none text-indigo-700 shadow-sm hover:bg-indigo-50"
+              [title]="boardComposerOpen[status] ? 'Close quick add' : 'Add item'"
+            >
+              {{ boardComposerOpen[status] ? '×' : '+' }}
+            </button>
+          </div>
+        }
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-3">
+        <aside class="rounded-lg border border-slate-200 p-3 lg:col-span-2">
+          <p class="mb-2 text-sm font-semibold text-slate-800">Dependency map</p>
+          @if (dependencies.length === 0) {
+            <p class="text-sm text-slate-500">No dependencies yet. Create nested links directly while adding board items.</p>
+          } @else {
+            <div class="grid gap-2 md:grid-cols-2">
+              @for (dep of dependencies; track dep.id) {
+                <p class="rounded border border-slate-200 px-2 py-1 text-xs text-slate-700">#{{ dep.predecessorTaskId }} -> #{{ dep.successorTaskId }}</p>
+              }
+            </div>
+          }
+        </aside>
+
+        <aside class="rounded-lg border border-slate-200 p-3">
+          <p class="mb-2 text-sm font-semibold text-slate-800">Goal context</p>
+          <div class="space-y-2 text-xs">
+            @for (goal of goals; track goal.id) {
+              <p class="rounded border border-slate-200 p-2 text-slate-700">{{ goal.title }} · {{ goal.doneTasks }}/{{ goal.totalTasks }} done</p>
+            }
+          </div>
+        </aside>
+      </div>
+
+      <div class="mt-4 rounded-lg border border-slate-200 p-3">
+        <p class="text-xs text-slate-500">Goals are now your primary grouping model; tasks stay unified across views.</p>
+      </div>
+    </section>
+  } @else if (workspaceView === 'hierarchy') {
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="mb-3 text-lg font-semibold text-slate-900">Dependency tree</h2>
+      <p class="mb-4 text-sm text-slate-500">Drag any task card onto another task to nest it. Drop a nested task into the root zone to unnest it.</p>
+      <div class="grid gap-4">
+        <div class="rounded-lg border border-slate-200 p-3">
+          <p class="mb-2 text-sm font-semibold text-slate-800">Graphical tree</p>
+          <div
+            cdkDropList
+            [id]="dependencyUnnestDropListId"
+            [cdkDropListData]="dependencyRootTasks()"
+            [cdkDropListConnectedTo]="dependencyDropListIds()"
+            class="mb-3 rounded-md border border-dashed border-slate-300 bg-slate-50 p-2 text-xs text-slate-600"
+            (cdkDropListDropped)="onDependencyUnnestDrop($event)">
+            Root zone (drop here to remove parent link)
+          </div>
+
+          <div class="space-y-2">
+            @for (root of dependencyRootTasks(); track root.id) {
+              <div
+                cdkDropList
+                [id]="dependencyDropListId(root.id)"
+                [cdkDropListData]="dependencyChildren(root.id)"
+                [cdkDropListConnectedTo]="dependencyDropListIds()"
+                (cdkDropListDropped)="onDependencyTaskDrop(root.id, $event)"
+                class="rounded-md border border-slate-200 p-2">
+                <div cdkDrag [cdkDragData]="root" class="cursor-move rounded bg-white px-2 py-1 text-sm text-slate-800">
+                  <div class="flex items-center justify-between gap-2">
+                    <span>#{{ root.id }} {{ root.title }}</span>
+                    <span class="rounded bg-indigo-50 px-1.5 py-0.5 text-[11px] text-indigo-700">{{ findGoalTitle(root.goalId) }}</span>
+                  </div>
+                </div>
+
+                @for (child of dependencyChildren(root.id); track child.id) {
+                  <div
+                    cdkDropList
+                    [id]="dependencyDropListId(child.id)"
+                    [cdkDropListData]="dependencyChildren(child.id)"
+                    [cdkDropListConnectedTo]="dependencyDropListIds()"
+                    (cdkDropListDropped)="onDependencyTaskDrop(child.id, $event)"
+                    class="ml-5 mt-2 rounded-md border border-slate-200 bg-slate-50 p-2">
+                    <div cdkDrag [cdkDragData]="child" class="cursor-move rounded bg-white px-2 py-1 text-sm text-slate-800">
+                      <div class="flex items-center justify-between gap-2">
+                        <span>↳ #{{ child.id }} {{ child.title }}</span>
+                        <button (click)="removeParentDependency(child.id)" class="rounded border border-rose-200 px-2 py-0.5 text-[11px] text-rose-700">Detach</button>
+                      </div>
+                    </div>
+
+                    @for (grandChild of dependencyChildren(child.id); track grandChild.id) {
+                      <div cdkDrag [cdkDragData]="grandChild" class="ml-5 mt-2 cursor-move rounded border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700">
+                        <div class="flex items-center justify-between gap-2">
+                          <span>↳↳ #{{ grandChild.id }} {{ grandChild.title }}</span>
+                          <button (click)="removeParentDependency(grandChild.id)" class="rounded border border-rose-200 px-2 py-0.5 text-[11px] text-rose-700">Detach</button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+            @if (dependencyRootTasks().length === 0) {
+              <p class="text-sm text-slate-500">No tasks available yet.</p>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+  } @else if (workspaceView === 'automation') {
+    <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-blue-50 to-white p-5">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-semibold text-slate-900">Automation Hub</h2>
+            <p class="mt-1 text-sm text-slate-600">Professional control center for AI planning, conflict resolution, and decision intelligence.</p>
+          </div>
+          <span class="rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs font-medium text-indigo-700">Live Assistant Workspace</span>
+        </div>
+
+        <div class="mt-4 grid gap-3 sm:grid-cols-3">
+          <div class="hub-metric hub-metric--log rounded-lg border border-slate-200 bg-white p-3">
+            <p class="text-xs uppercase tracking-wide text-slate-500">Auto decisions (7d)</p>
+            <p class="mt-1 text-2xl font-semibold text-slate-900">{{ automatedDecisionCount() }}</p>
+          </div>
+          <div class="hub-metric hub-metric--context rounded-lg border border-slate-200 bg-white p-3">
+            <p class="text-xs uppercase tracking-wide text-slate-500">Context signals</p>
+            <p class="mt-1 text-2xl font-semibold text-slate-900">{{ contextSuggestions.length }}</p>
+          </div>
+          <div class="hub-metric hub-metric--planning rounded-lg border border-slate-200 bg-white p-3">
+            <p class="text-xs uppercase tracking-wide text-slate-500">Weekly allocations</p>
+            <p class="mt-1 text-2xl font-semibold text-slate-900">{{ adaptivePlan?.allocations?.length || 0 }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-5 grid gap-5 xl:grid-cols-3">
+        <article class="hub-card hub-card--planning rounded-xl border border-slate-200 bg-white p-4 xl:col-span-2">
+          <div class="mb-3 flex items-center justify-between">
+            <h3 class="flex items-center gap-2 text-base font-semibold text-slate-900"><span class="hub-icon hub-icon--planning">AI</span>AI Task Decomposition</h3>
+            @if (decomposition) {
+              <span class="hub-badge hub-badge--planning rounded-full px-2.5 py-1 text-xs font-medium"
+                [class.bg-violet-100]="isOllamaSource(decomposition.aiSource)"
+                [class.text-violet-700]="isOllamaSource(decomposition.aiSource)"
+                [class.bg-slate-100]="!isOllamaSource(decomposition.aiSource)"
+                [class.text-slate-700]="!isOllamaSource(decomposition.aiSource)">
+                {{ aiSourceLabel(decomposition.aiSource) }}
+              </span>
+            }
+          </div>
+
+          <div class="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+            <input [(ngModel)]="aiGoalText" type="text" placeholder="Describe a goal to decompose"
+              class="min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+            <input [(ngModel)]="aiMaxSteps" min="2" max="12" type="number"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:w-24" />
+            <button (click)="decomposeGoal()" [disabled]="decompositionBusy"
+              class="rounded-lg border border-indigo-300 bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
+              Decompose
+            </button>
+          </div>
+
+          @if (decomposition) {
+            <p class="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">{{ decomposition.rationale }}</p>
+            <div class="mt-3 max-h-56 space-y-2 overflow-y-auto rounded-lg border border-slate-200 p-2">
+              @for (row of decompositionDraft; track row.text) {
+                <label class="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm">
+                  <input type="checkbox" [(ngModel)]="row.selected" />
+                  <input [(ngModel)]="row.text" class="flex-1 rounded border border-slate-300 px-2 py-1" />
+                </label>
+              }
+            </div>
+
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button (click)="applyDecompositionAsTasks()" [disabled]="decompositionBusy"
+                class="rounded-lg border border-emerald-300 bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
+                Add selected as tasks
+              </button>
+              <button (click)="redoDecomposition()" [disabled]="decompositionBusy"
+                class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+                Redo
+              </button>
+              <button (click)="scratchDecomposition()" [disabled]="decompositionBusy"
+                class="rounded-lg border border-rose-300 px-3 py-2 text-sm text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60">
+                Clear
+              </button>
+            </div>
+          }
+        </article>
+
+        <article class="hub-card hub-card--context rounded-xl border border-slate-200 bg-white p-4">
+          <h3 class="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900"><span class="hub-icon hub-icon--context">CTX</span>Context Suggestions</h3>
+          <div class="max-h-72 space-y-2 overflow-y-auto">
+            @for (tip of contextSuggestions; track tip.message) {
+              <div class="rounded-lg border border-slate-200 bg-slate-50 p-2">
+                <p class="text-sm text-slate-700">{{ tip.message }}</p>
+                <p class="mt-1 text-[11px] text-slate-500">Confidence {{ (tip.confidence * 100) | number:'1.0-0' }}%</p>
+              </div>
+            }
+            @if (contextSuggestions.length === 0) {
+              <p class="text-sm text-slate-500">No context suggestions available yet.</p>
+            }
+          </div>
+        </article>
+
+        <article class="hub-card hub-card--conflict rounded-xl border border-slate-200 bg-white p-4 xl:col-span-2">
+          <div class="mb-3 flex items-center justify-between">
+            <h3 class="flex items-center gap-2 text-base font-semibold text-slate-900"><span class="hub-icon hub-icon--conflict">!</span>Conflict Resolution</h3>
+            <span class="hub-badge hub-badge--conflict rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600">Manual trigger</span>
+          </div>
+          <p class="text-xs text-slate-500">Run this only when you want an immediate recommendation and auto-application.</p>
+          <div class="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            @if (conflictResult) {
+              <p class="text-sm text-slate-800">Focus <strong>#{{ conflictResult.recommendedTaskId }}</strong>, defer <strong>#{{ conflictResult.deferredTaskId }}</strong></p>
+              <p class="mt-1 text-xs text-slate-600">{{ conflictResult.rationale }}</p>
+            } @else {
+              <p class="text-sm text-slate-500">No conflict recommendation generated yet.</p>
+            }
+          </div>
+          <button (click)="refreshAutoConflictSuggestion()"
+            class="mt-3 rounded-lg border border-indigo-300 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100">
+            Resolve conflict now
+          </button>
+        </article>
+
+        <article class="hub-card hub-card--analytics rounded-xl border border-slate-200 bg-white p-4">
+          <h3 class="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900"><span class="hub-icon hub-icon--analytics">AN</span>Analytics Snapshot</h3>
+          @if (insights) {
+            <div class="space-y-2 text-sm">
+              <p class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">Estimation accuracy <strong>{{ insights.estimationAccuracyScore | number:'1.0-1' }}%</strong></p>
+              <p class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">Completion rate <strong>{{ insights.completionRate | number:'1.0-1' }}%</strong></p>
+              <p class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">Best hour <strong>{{ insights.bestPerformanceHour }}:00</strong></p>
+              <p class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">Worst hour <strong>{{ insights.worstPerformanceHour }}:00</strong></p>
+            </div>
+          } @else {
+            <p class="text-sm text-slate-500">Analytics are loading.</p>
+          }
+        </article>
+
+        <article class="hub-card hub-card--planning rounded-xl border border-slate-200 bg-white p-4 xl:col-span-2">
+          <h3 class="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900"><span class="hub-icon hub-icon--planning">PLN</span>Adaptive Weekly Plan</h3>
+          <div class="flex flex-wrap gap-2">
+            <input [(ngModel)]="adaptiveWeekStart" type="date" class="rounded-lg border border-slate-300 px-2 py-2 text-sm" />
+            <input [(ngModel)]="adaptiveDailyCapacityMinutes" type="number" min="60" max="720" class="w-32 rounded-lg border border-slate-300 px-2 py-2 text-sm" />
+            <button (click)="refreshAutoAdaptiveSuggestion()" class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100">Refresh AI plan</button>
+          </div>
+          @if (adaptivePlan) {
+            <div class="mt-3 max-h-44 space-y-1 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
+              @for (a of adaptivePlan.allocations; track a.taskId + '-' + a.scheduledDate + '-' + a.allocatedMinutes) {
+                <p>{{ a.scheduledDate }} -> #{{ a.taskId }} {{ a.title }} ({{ a.allocatedMinutes }}m)</p>
+              }
+            </div>
+          }
+        </article>
+
+        <article class="hub-card hub-card--log rounded-xl border border-slate-200 bg-white p-4 xl:col-span-3">
+          <h3 class="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900"><span class="hub-icon hub-icon--log">LOG</span>Decision Log</h3>
+          <div class="max-h-44 space-y-2 overflow-y-auto">
+            @for (d of decisions; track d.id) {
+              <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                <p><strong>{{ d.decisionType }}</strong> · task {{ d.taskId || '-' }}</p>
+                <p class="mt-1 text-slate-600">{{ d.reason }}</p>
+              </div>
+            }
+            @if (decisions.length === 0) {
+              <p class="text-sm text-slate-500">No automated events recorded yet.</p>
+            }
+          </div>
+        </article>
+      </div>
+    </section>
+  } @else {
+  <div class="space-y-6">
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="mb-3 text-lg font-semibold text-slate-900">Task planning</h2>
+
+      <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <input [(ngModel)]="newTaskTitle" type="text" placeholder="Task title"
+          class="w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        <input [(ngModel)]="newTaskDueAt" type="datetime-local"
+          class="w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        <textarea [(ngModel)]="newTaskDescription" rows="2" placeholder="Description (optional)"
+          class="w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm sm:col-span-2"></textarea>
+        <select [(ngModel)]="newTaskPriority" class="w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          @for (p of priorities; track p) {
+            <option [value]="p">{{ p }}</option>
+          }
+        </select>
+        <input [(ngModel)]="newTaskPlannedMinutes" min="5" max="720" type="number" placeholder="Planned minutes"
+          class="w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        <input [(ngModel)]="newTaskActualMinutes" min="0" max="1440" type="number" placeholder="Actual minutes (optional)"
+          class="w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        <select [(ngModel)]="newTaskGoalId" class="w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <option value="">No goal alignment</option>
+          @for (goal of goals; track goal.id) {
+            <option [ngValue]="goal.id">{{ goal.title }}</option>
+          }
+        </select>
+        <select [(ngModel)]="newTaskAfterTaskId" class="w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <option [ngValue]="''">No sequential predecessor</option>
+          @for (task of allTasks; track task.id) {
+            <option [ngValue]="task.id">After #{{ task.id }} {{ task.title }}</option>
+          }
+        </select>
+      </div>
+
+      <button (click)="createTask()" class="mb-5 w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 sm:w-auto">
+        Add task
+      </button>
+
+      <div class="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-6">
+        <input [(ngModel)]="taskQuery" (ngModelChange)="onTaskFiltersChanged()" type="text" placeholder="Search title/description"
+          class="w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm sm:col-span-2 xl:col-span-2" />
+        <select [(ngModel)]="taskStatusFilter" (ngModelChange)="onTaskFiltersChanged()" class="w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <option value="">All statuses</option>
+          @for (status of statuses; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+        <select [(ngModel)]="taskPriorityFilter" (ngModelChange)="onTaskFiltersChanged()" class="w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+          <option value="">All priorities</option>
+          @for (priority of priorities; track priority) {
+            <option [value]="priority">{{ priority }}</option>
+          }
+        </select>
+        <div class="grid grid-cols-1 gap-2 sm:col-span-2 sm:grid-cols-2 xl:col-span-2">
+          <input [(ngModel)]="taskDueFrom" (change)="onTaskFiltersChanged()" type="datetime-local" title="Due from"
+            class="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-2 text-xs" />
+          <input [(ngModel)]="taskDueTo" (change)="onTaskFiltersChanged()" type="datetime-local" title="Due to"
+            class="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-2 text-xs" />
+        </div>
+      </div>
+
+      @if (tasks.length === 0) {
+        <p class="text-sm text-slate-500">No tasks yet.</p>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="border-b border-slate-200 text-slate-500">
+              <tr>
+                <th class="py-2 pr-3">Title</th>
+                <th class="py-2 px-2">Priority</th>
+                <th class="py-2 px-2">Due</th>
+                <th class="py-2 px-2">Goal</th>
+                <th class="py-2 px-2">Status</th>
+                <th class="py-2 pl-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @for (task of tasks; track task.id) {
+                <tr>
+                  <td class="py-3 pr-3 align-top">
+                    <p class="font-medium text-slate-900">{{ task.title }}</p>
+                    @if (task.description) {
+                      <p class="max-w-md truncate text-xs text-slate-500">{{ task.description }}</p>
+                    }
+                  </td>
+                  <td class="py-3 px-2 align-top">
+                    <span class="rounded-full px-2.5 py-1 text-xs font-medium"
+                      [class.bg-slate-100]="task.priority === 'LOW'"
+                      [class.text-slate-700]="task.priority === 'LOW'"
+                      [class.bg-blue-100]="task.priority === 'MEDIUM'"
+                      [class.text-blue-700]="task.priority === 'MEDIUM'"
+                      [class.bg-amber-100]="task.priority === 'HIGH'"
+                      [class.text-amber-700]="task.priority === 'HIGH'"
+                      [class.bg-rose-100]="task.priority === 'URGENT'"
+                      [class.text-rose-700]="task.priority === 'URGENT'"
+                    >
+                      {{ task.priority }}
+                    </span>
+                  </td>
+                  <td class="whitespace-nowrap py-3 px-2 align-top">{{ task.dueAt ? (task.dueAt | date:'medium') : '—' }}</td>
+                  <td class="py-3 px-2 align-top">
+                    <select [ngModel]="task.goalId ?? ''" (ngModelChange)="assignTaskGoal(task, $event)" class="rounded border border-slate-300 px-2 py-1 text-xs">
+                      <option [ngValue]="''">Unassigned</option>
+                      @for (goal of goals; track goal.id) {
+                        <option [ngValue]="goal.id">{{ goal.title }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td class="py-3 px-2 align-top">
+                    <span class="rounded-full px-2.5 py-1 text-xs font-medium"
+                      [class.bg-slate-100]="task.status === 'TODO'"
+                      [class.text-slate-700]="task.status === 'TODO'"
+                      [class.bg-blue-100]="task.status === 'IN_PROGRESS'"
+                      [class.text-blue-700]="task.status === 'IN_PROGRESS'"
+                      [class.bg-emerald-100]="task.status === 'DONE'"
+                      [class.text-emerald-700]="task.status === 'DONE'"
+                    >
+                      {{ task.status }}
+                    </span>
+                  </td>
+                  <td class="py-3 pl-3 text-right align-top">
+                    <div class="flex justify-end gap-1.5 whitespace-nowrap">
+                      <button (click)="setTaskStatus(task, 'TODO')" class="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700">To do</button>
+                      <button (click)="setTaskStatus(task, 'DONE')" class="rounded border border-emerald-200 px-2 py-1 text-xs text-emerald-700">Done</button>
+                      <button (click)="deleteTask(task.id)" class="rounded border border-rose-200 px-2 py-1 text-xs text-rose-700">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <div class="mt-4 flex items-center justify-between text-sm text-slate-600">
+        <span>Page {{ taskPage + 1 }} / {{ taskTotalPages || 1 }}</span>
+        <div class="flex gap-2">
+          <button (click)="previousTaskPage()" [disabled]="taskPage === 0" class="rounded border border-slate-300 px-3 py-1 disabled:opacity-50">Previous</button>
+          <button (click)="nextTaskPage()" [disabled]="taskPage + 1 >= taskTotalPages" class="rounded border border-slate-300 px-3 py-1 disabled:opacity-50">Next</button>
+        </div>
+      </div>
+
+      <div class="mt-6 rounded-lg border border-slate-200 p-4">
+        <div class="mb-3 flex items-center justify-between">
+          <p class="text-sm font-semibold text-slate-800">Goals & assignment</p>
+          <p class="text-xs text-slate-500">Manage goals and assign tasks without leaving task planning.</p>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-3">
+          <input [(ngModel)]="newGoalTitle" placeholder="Goal title" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input [(ngModel)]="newGoalTargetDate" type="date" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <button (click)="createGoal()" class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white">Create goal</button>
+        </div>
+        <textarea [(ngModel)]="newGoalDescription" rows="2" placeholder="Goal description" class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea>
+
+        <div class="mt-4 grid gap-3 lg:grid-cols-2">
+          @for (goal of goals; track goal.id) {
+            <div class="rounded border border-slate-200 p-3">
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-medium text-slate-900">{{ goal.title }}</p>
+                <button (click)="deleteGoal(goal.id)" class="rounded border border-rose-200 px-2 py-1 text-xs text-rose-700">Delete</button>
+              </div>
+              <p class="text-xs text-slate-500">{{ goal.doneTasks }}/{{ goal.totalTasks }} done • velocity {{ goal.weeklyVelocity | number:'1.1-1' }}/week</p>
+
+              <div class="mt-2 flex gap-2">
+                <select [(ngModel)]="goalTaskSelection[goal.id]" class="min-w-0 flex-1 rounded border border-slate-300 px-2 py-1 text-xs">
+                  <option [ngValue]="''">Assign an unassigned task...</option>
+                  @for (task of unassignedTasks(); track task.id) {
+                    <option [ngValue]="task.id">#{{ task.id }} {{ task.title }}</option>
+                  }
+                </select>
+                <button (click)="assignSelectedTaskToGoal(goal.id)" class="rounded border border-indigo-300 px-2 py-1 text-xs text-indigo-700">Assign</button>
+              </div>
+
+              <div class="mt-2 space-y-1">
+                @for (task of tasksForGoal(goal.id); track task.id) {
+                  <div class="flex items-center justify-between rounded bg-slate-50 px-2 py-1 text-xs text-slate-700">
+                    <span>{{ task.title }}</span>
+                    <button (click)="assignTaskGoal(task, '')" class="rounded border border-slate-300 px-1.5 py-0.5 text-[11px] text-slate-600">Unassign</button>
+                  </div>
+                }
+                @if (tasksForGoal(goal.id).length === 0) {
+                  <p class="text-xs text-slate-400">No tasks yet for this goal.</p>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+
+  }
+</div>
+
