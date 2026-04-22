@@ -2,18 +2,7 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK17'
         maven 'Maven3'
-    }
-
-    environment {
-        MODULE_DIR = 'backend/microservices/Formation' 
-        IMAGE_NAME = 'khadijabenayed/formation'
-        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-
-        // IMPORTANT: nom du container SonarQube dans Docker
-        SONAR_HOST = 'http://sonarqube:9000'
-        SONAR_CREDENTIALS_ID = 'sonar-token'
     }
 
     stages {
@@ -25,60 +14,30 @@ pipeline {
             }
         }
 
-        stage('Build & Test') {
+        stage('Build') {
             steps {
-                dir("${MODULE_DIR}") {
-                    sh 'mvn clean verify'
-                }
+                sh 'mvn clean install'
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('SonarQube') {
             steps {
-                dir("${MODULE_DIR}") {
-                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            mvn sonar:sonar \
-                              -Dsonar.projectKey=formation \
-                              -Dsonar.host.url=${SONAR_HOST} \
-                              -Dsonar.login=${SONAR_TOKEN}
-                        '''
-                    }
+                withSonarQubeEnv('sonar') {
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
 
         stage('Docker Build') {
             steps {
-                dir("${MODULE_DIR}") {
-                    sh '''
-                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                    '''
-                }
+                sh 'docker build -t formation-app .'
             }
         }
 
-        stage('Docker Push') {
+        stage('Docker Run') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-hub-credentials',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker push ${IMAGE_NAME}:latest
-                    '''
-                }
+                sh 'docker run -d -p 8081:8080 formation-app'
             }
-        }
-    }
-
-    post {
-        always {
-            cleanWs()
         }
     }
 }
