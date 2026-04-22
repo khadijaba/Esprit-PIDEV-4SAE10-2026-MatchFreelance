@@ -43,7 +43,13 @@ public class UserClient {
         UserResponse r = new UserResponse();
         r.setId(u.getId());
         r.setEmail(u.getEmail());
-        r.setName(u.getFullName());
+        String name = u.getFullName();
+        if (name == null || name.isBlank()) {
+            String fn = u.getFirstName() != null ? u.getFirstName() : "";
+            String ln = u.getLastName() != null ? u.getLastName() : "";
+            name = (fn + " " + ln).trim();
+        }
+        r.setName(name.isBlank() ? null : name);
         r.setRole(u.getRole());
         return r;
     }

@@ -94,14 +94,26 @@ public class CandidatureService {
         if (project == null) {
             throw new RuntimeException("Project not found with id: " + dto.getProjectId());
         }
-        if (!"OPEN".equals(project.getStatus())) {
+        String projectStatus = project.getStatus() != null ? project.getStatus().trim().toUpperCase() : "";
+        if (!"OPEN".equals(projectStatus)) {
             throw new RuntimeException("Project is not open for applications");
         }
         if (candidatureRepository.existsByProjectIdAndFreelancerId(dto.getProjectId(), dto.getFreelancerId())) {
             throw new RuntimeException("You have already applied to this project");
         }
-        if (dto.getProposedBudget() == null || dto.getProposedBudget() < project.getMinBudget() || dto.getProposedBudget() > project.getMaxBudget()) {
-            throw new RuntimeException("Proposed budget must be between " + project.getMinBudget() + " and " + project.getMaxBudget());
+        Double minB = project.getMinBudget();
+        Double maxB = project.getMaxBudget();
+        if (minB == null && maxB == null) {
+            throw new RuntimeException("Budget du projet indisponible ou non défini — vérifiez le microservice Project.");
+        }
+        if (minB == null) {
+            minB = maxB;
+        }
+        if (maxB == null) {
+            maxB = minB;
+        }
+        if (dto.getProposedBudget() == null || dto.getProposedBudget() < minB || dto.getProposedBudget() > maxB) {
+            throw new RuntimeException("Proposed budget must be between " + minB + " and " + maxB);
         }
 
         Candidature c = new Candidature();

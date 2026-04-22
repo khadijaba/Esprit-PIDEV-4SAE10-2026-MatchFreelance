@@ -23,7 +23,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         // Créer l'admin uniquement s'il n'existe pas
-        if (!userRepository.existsByRole(Role.ADMIN)) {
+        if (!userRepository.existsByUserRole(Role.ADMIN)) {
             User admin = User.builder()
                     .firstName("Admin")
                     .lastName("System")

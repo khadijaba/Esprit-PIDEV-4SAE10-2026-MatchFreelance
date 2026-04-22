@@ -10,7 +10,8 @@ import java.util.List;
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
-    boolean existsByRole(Role role);
-    List<User> findByRole(Role role);
+    boolean existsByUserRole(Role userRole);
+
+    List<User> findByUserRole(Role userRole);
     List<User> findByEnabled(boolean enabled);
 }

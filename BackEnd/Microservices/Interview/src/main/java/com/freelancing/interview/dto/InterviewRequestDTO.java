@@ -7,15 +7,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class InterviewRequestDTO {
 
+    /** ISO-8601 depuis le front (ex. {@code 2026-04-15T10:00:00.000Z}). */
     @NotNull(message = "Scheduled date/time is required")
-    private Date scheduledAt;
+    private Instant scheduledAt;
 
     private InterviewStatus status;
 

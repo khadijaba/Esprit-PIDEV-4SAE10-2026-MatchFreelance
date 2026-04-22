@@ -47,7 +47,7 @@ public class UserSearchService {
         // Filter by role
         if (filter.getRole() != null) {
             spec = spec.and((root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("role"), filter.getRole())
+                criteriaBuilder.equal(root.get("userRole"), filter.getRole())
             );
         }
 
@@ -58,10 +58,14 @@ public class UserSearchService {
             );
         }
 
-        // Create sort
+        // Create sort (attribut JPA = userRole, pas role)
+        String sortBy = filter.getSortBy();
+        if (sortBy != null && sortBy.equalsIgnoreCase("role")) {
+            sortBy = "userRole";
+        }
         Sort sort = Sort.by(
             Sort.Direction.fromString(filter.getSortDir()),
-            filter.getSortBy()
+            sortBy
         );
 
         // Create pageable
@@ -88,7 +92,7 @@ public class UserSearchService {
     }
 
     public List<User> findByRole(Role role) {
-        return userRepository.findByRole(role);
+        return userRepository.findByUserRole(role);
     }
 
     public List<User> findActiveUsers() {

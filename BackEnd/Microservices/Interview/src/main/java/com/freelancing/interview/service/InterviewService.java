@@ -10,6 +10,7 @@ import com.freelancing.interview.dto.InterviewResponseDTO;
 import com.freelancing.interview.entity.Interview;
 import com.freelancing.interview.enums.InterviewStatus;
 import com.freelancing.interview.repository.InterviewRepository;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +40,8 @@ public class InterviewService {
         CandidatureSnapshotDto cand = loadCandidature(candidatureId);
         assertViewerAuthorized(cand, requestingUserId);
         long count = interviewRepository.countByCandidatureId(candidatureId);
-        boolean eligible = "PENDING".equalsIgnoreCase(cand.getStatus())
+        boolean eligible = cand.getStatus() != null
+                && "PENDING".equalsIgnoreCase(cand.getStatus())
                 && interviewRepository.existsByCandidatureIdAndStatusIn(candidatureId, ELIGIBLE_FOR_ACCEPTANCE);
         return new InterviewMetricsDTO((int) Math.min(count, Integer.MAX_VALUE), eligible);
     }
@@ -56,7 +58,7 @@ public class InterviewService {
     public InterviewResponseDTO scheduleInterview(Long candidatureId, Long clientId, InterviewRequestDTO requestDTO) {
         assertProjectOwnerForCandidature(candidatureId, clientId);
         CandidatureSnapshotDto cand = loadCandidature(candidatureId);
-        if (!"PENDING".equalsIgnoreCase(cand.getStatus())) {
+        if (cand.getStatus() == null || !"PENDING".equalsIgnoreCase(cand.getStatus())) {
             throw new RuntimeException("Can only schedule interviews for pending candidatures");
         }
         Interview interview = new Interview();
@@ -100,15 +102,24 @@ public class InterviewService {
     }
 
     private CandidatureSnapshotDto loadCandidature(Long candidatureId) {
-        CandidatureSnapshotDto cand = candidatureRemoteFeign.getById(candidatureId);
-        if (cand == null || cand.getId() == null) {
-            throw new RuntimeException("Candidature not found with id: " + candidatureId);
+        try {
+            CandidatureSnapshotDto cand = candidatureRemoteFeign.getById(candidatureId);
+            if (cand == null || cand.getId() == null) {
+                throw new RuntimeException("Candidature not found with id: " + candidatureId);
+            }
+            return cand;
+        } catch (FeignException e) {
+            int st = e.status();
+            if (st == 404) {
+                throw new RuntimeException("Candidature not found with id: " + candidatureId);
+            }
+            throw new RuntimeException(
+                    "Service Candidature indisponible ou erreur (" + st + "). Vérifiez Eureka et le microservice CANDIDATURE.");
         }
-        return cand;
     }
 
     private void assertViewerAuthorized(CandidatureSnapshotDto cand, Long requestingUserId) {
-        ProjectRemotePayload project = projectRemoteFeign.getById(cand.getProjectId());
+        ProjectRemotePayload project = loadProject(cand.getProjectId());
         if (project == null) {
             throw new RuntimeException("Project not found");
         }
@@ -124,12 +135,28 @@ public class InterviewService {
             throw new RuntimeException("clientId is required");
         }
         CandidatureSnapshotDto cand = loadCandidature(candidatureId);
-        ProjectRemotePayload project = projectRemoteFeign.getById(cand.getProjectId());
+        ProjectRemotePayload project = loadProject(cand.getProjectId());
         if (project == null) {
             throw new RuntimeException("Project not found");
         }
         if (project.getProjectOwnerId() == null || !project.getProjectOwnerId().equals(clientId)) {
             throw new RuntimeException("Only the project owner can manage interviews for this candidature");
+        }
+    }
+
+    private ProjectRemotePayload loadProject(Long projectId) {
+        if (projectId == null) {
+            return null;
+        }
+        try {
+            return projectRemoteFeign.getById(projectId);
+        } catch (FeignException e) {
+            int st = e.status();
+            if (st == 404) {
+                return null;
+            }
+            throw new RuntimeException(
+                    "Service Project indisponible ou erreur (" + st + "). Vérifiez Eureka et le microservice PROJECT.");
         }
     }
 

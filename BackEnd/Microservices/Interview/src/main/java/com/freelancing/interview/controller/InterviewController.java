@@ -5,6 +5,8 @@ import com.freelancing.interview.dto.InterviewResponseDTO;
 import com.freelancing.interview.service.InterviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +20,20 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class InterviewController {
 
+    private static final Logger log = LoggerFactory.getLogger(InterviewController.class);
+
     private final InterviewService interviewService;
+
+    private static String safeMessage(Throwable e) {
+        String m = e.getMessage();
+        if (m != null && !m.isBlank()) {
+            return m;
+        }
+        if (e.getCause() != null && e.getCause().getMessage() != null && !e.getCause().getMessage().isBlank()) {
+            return e.getCause().getMessage();
+        }
+        return e.getClass().getSimpleName();
+    }
 
     @GetMapping("/candidature/{candidatureId}/metrics")
     public ResponseEntity<?> getMetrics(
@@ -27,8 +42,13 @@ public class InterviewController {
         try {
             return ResponseEntity.ok(interviewService.getMetrics(candidatureId, requestingUserId));
         } catch (RuntimeException e) {
+            log.debug("getMetrics: {}", e.toString());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Collections.singletonMap("message", e.getMessage()));
+                    .body(Collections.singletonMap("message", safeMessage(e)));
+        } catch (Exception e) {
+            log.error("getMetrics failed", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("message", safeMessage(e)));
         }
     }
 
@@ -40,8 +60,13 @@ public class InterviewController {
             List<InterviewResponseDTO> list = interviewService.getInterviewsByCandidatureId(candidatureId, clientId);
             return ResponseEntity.ok(list);
         } catch (RuntimeException e) {
+            log.debug("getInterviews: {}", e.toString());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Collections.singletonMap("message", e.getMessage()));
+                    .body(Collections.singletonMap("message", safeMessage(e)));
+        } catch (Exception e) {
+            log.error("getInterviews failed", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("message", safeMessage(e)));
         }
     }
 
@@ -54,8 +79,13 @@ public class InterviewController {
             InterviewResponseDTO created = interviewService.scheduleInterview(candidatureId, clientId, requestDTO);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (RuntimeException e) {
+            log.debug("scheduleInterview: {}", e.toString());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Collections.singletonMap("message", e.getMessage()));
+                    .body(Collections.singletonMap("message", safeMessage(e)));
+        } catch (Exception e) {
+            log.error("scheduleInterview failed", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("message", safeMessage(e)));
         }
     }
 

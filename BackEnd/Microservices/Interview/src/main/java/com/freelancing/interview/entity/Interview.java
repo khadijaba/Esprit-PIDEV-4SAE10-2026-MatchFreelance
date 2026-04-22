@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Entity
 @Table(name = "interviews")
@@ -22,9 +22,8 @@ public class Interview {
     @Column(name = "candidature_id", nullable = false)
     private Long candidatureId;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "scheduled_at", nullable = false)
-    private Date scheduledAt;
+    private Instant scheduledAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

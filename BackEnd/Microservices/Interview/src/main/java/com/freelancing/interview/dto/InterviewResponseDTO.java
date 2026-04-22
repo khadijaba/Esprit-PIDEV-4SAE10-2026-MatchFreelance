@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Data
 @NoArgsConstructor
@@ -14,7 +14,7 @@ public class InterviewResponseDTO {
 
     private Long id;
     private Long candidatureId;
-    private Date scheduledAt;
+    private Instant scheduledAt;
     private InterviewStatus status;
     private String notes;
 }

@@ -6,6 +6,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "users")
+@Access(AccessType.FIELD)
 public class User {
 
     @Id
@@ -30,9 +31,13 @@ public class User {
     @Column(nullable = false)
     private LocalDate birthDate;
 
+    /**
+     * Rôle en base : colonne {@code user_role}.
+     * Le champ s’appelle {@code userRole} pour éviter que Hibernate ne mappe {@code getRole()} sur la colonne {@code role}.
+     */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role;
+    @Column(name = "user_role", nullable = false)
+    private Role userRole;
 
     @Column(columnDefinition = "TEXT")
     private String faceDescriptor;
@@ -47,7 +52,7 @@ public class User {
     }
 
     public User(Long id, String firstName, String lastName, String address, String email, String password,
-            LocalDate birthDate, Role role, boolean enabled, String faceDescriptor, String profilePictureUrl) {
+            LocalDate birthDate, Role userRole, boolean enabled, String faceDescriptor, String profilePictureUrl) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -55,7 +60,7 @@ public class User {
         this.email = email;
         this.password = password;
         this.birthDate = birthDate;
-        this.role = role;
+        this.userRole = userRole;
         this.enabled = enabled;
         this.faceDescriptor = faceDescriptor;
         this.profilePictureUrl = profilePictureUrl;
@@ -74,7 +79,7 @@ public class User {
         private String email;
         private String password;
         private LocalDate birthDate;
-        private Role role;
+        private Role userRole;
         private String faceDescriptor;
         private String profilePictureUrl;
         private boolean enabled = true;
@@ -110,7 +115,7 @@ public class User {
         }
 
         public UserBuilder role(Role role) {
-            this.role = role;
+            this.userRole = role;
             return this;
         }
 
@@ -130,7 +135,7 @@ public class User {
         }
 
         public User build() {
-            return new User(id, firstName, lastName, address, email, password, birthDate, role, enabled,
+            return new User(id, firstName, lastName, address, email, password, birthDate, userRole, enabled,
                     faceDescriptor, profilePictureUrl);
         }
     }
@@ -193,11 +198,11 @@ public class User {
     }
 
     public Role getRole() {
-        return role;
+        return userRole;
     }
 
     public void setRole(Role role) {
-        this.role = role;
+        this.userRole = role;
     }
 
     public boolean isEnabled() {

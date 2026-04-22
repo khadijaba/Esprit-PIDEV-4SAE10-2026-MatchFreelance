@@ -46,7 +46,7 @@ public class AuthController {
             request.setConfirmPassword(password); // Match for service validation
             request.setAddress(address);
             request.setBirthDate(java.time.LocalDate.parse(birthDate));
-            request.setRole(Entity.Role.valueOf(role));
+            request.setRole(Entity.Role.fromSignupString(role));
             request.setFaceDescriptor(faceDescriptor);
 
             User user = userService.register(request, file);

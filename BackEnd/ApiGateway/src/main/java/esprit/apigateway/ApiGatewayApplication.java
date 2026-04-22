@@ -29,9 +29,9 @@ public class ApiGatewayApplication {
                         .filters(f -> f.rewritePath("^/api/ai/(?<path>.*)$", "/api/${path}"))
                         .uri(teamAiUrl))
 
-                // SKILL SERVICE
+                // SKILL SERVICE (/api/skills seul = liste ; /api/skills/** sinon)
                 .route("skill-service", r -> r
-                        .path("/api/skills/**")
+                        .path("/api/skills", "/api/skills/**")
                         .filters(f -> f.stripPrefix(1))
                         .uri("lb://SKILL"))
 
@@ -59,10 +59,17 @@ public class ApiGatewayApplication {
                         .filters(f -> f.stripPrefix(1))
                         .uri("lb://PROJECT"))
 
-                // USER SERVICE
-                .route("user-service", r -> r
+                // USER SERVICE — ne pas stripPrefix : les contrôleurs sont sous /api/users et /api/auth
+                .route("user-auth-service", r -> r
+                        .path("/api/auth/**")
+                        .uri("lb://USER"))
+                // Liste publique GET /api/users?role=… (matching) : route dédiée en priorité (order négatif).
+                .route("user-service-users-exact", r -> r
+                        .order(-1)
+                        .path("/api/users")
+                        .uri("lb://USER"))
+                .route("user-service-users", r -> r
                         .path("/api/users/**")
-                        .filters(f -> f.stripPrefix(1))
                         .uri("lb://USER"))
 
                 // FORMATION SERVICE
