@@ -1,15 +1,3 @@
-/**
- * Pipeline CI — microservice Project
- *
- * Dépôt : https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance
- * Branche : projectskills
- * Chemin module : BackEnd/Microservices/Project
- *
- * Jenkins : sonar-token-backend, dockerhub-creds (si SKIP_DOCKER décoché)
- *
- * Clone : shallow + timeout pour éviter timeout / invalid index-pack sur gros dépôt.
- * Dans le job : branche SCM = projectskills (ou */projectskills).
- */
 pipeline {
     agent any
 
