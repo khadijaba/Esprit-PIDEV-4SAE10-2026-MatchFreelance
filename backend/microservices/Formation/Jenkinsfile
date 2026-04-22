@@ -20,7 +20,12 @@ pipeline {
             steps {
                 checkout([$class: 'GitSCM',
                     branches: [[name: '*/main']],
-                    extensions: [[$class: 'CloneOption', shallow: true, depth: 1]],
+                    extensions: [[
+                        $class: 'CloneOption',
+                        shallow: true,
+                        depth: 1,
+                        timeout: 30
+                    ]],
                     userRemoteConfigs: scm.userRemoteConfigs
                 ])
             }
@@ -28,31 +33,35 @@ pipeline {
 
         stage('Build & Test') {
             steps {
-                sh 'cd backend/microservices/Formation && mvn clean verify'
+                dir("${MODULE_DIR}") {
+                    sh 'mvn clean verify'
+                }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
-                    sh '''
-                        cd backend/microservices/Formation
-                        mvn sonar:sonar \
-                          -Dsonar.projectKey=formation \
-                          -Dsonar.host.url=${SONAR_HOST} \
-                          -Dsonar.login=${SONAR_TOKEN}
-                    '''
+                dir("${MODULE_DIR}") {
+                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            mvn sonar:sonar \
+                              -Dsonar.projectKey=formation \
+                              -Dsonar.host.url=${SONAR_HOST} \
+                              -Dsonar.login=${SONAR_TOKEN}
+                        '''
+                    }
                 }
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh '''
-                    cd backend/microservices/Formation
-                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                '''
+                dir("${MODULE_DIR}") {
+                    sh '''
+                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                    '''
+                }
             }
         }
 
@@ -71,7 +80,13 @@ pipeline {
 
     post {
         always {
-            cleanWs()
+            script {
+                try {
+                    cleanWs()
+                } catch (err) {
+                    echo "Workspace cleanup skipped"
+                }
+            }
         }
     }
 }
