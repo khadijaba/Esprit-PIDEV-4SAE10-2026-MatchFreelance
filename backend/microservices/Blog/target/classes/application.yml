@@ -1,0 +1,29 @@
+# Aligne le port avec angular/src/app/environments/environment.ts (apiUrl ...:8082)
+# et augmente la taille max du corps des requêtes (logos groupes en base64).
+server:
+  port: 8078
+  tomcat:
+    max-http-form-post-size: 25MB
+    max-swallow-size: 25MB
+
+spring:
+  application:
+    name: BLOG
+  datasource:
+    url: jdbc:mysql://localhost:3306/blog?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    username: root
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: true
