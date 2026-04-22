@@ -1,49 +1,46 @@
 pipeline {
     agent any
 
-    options {
-        skipDefaultCheckout(true)
-        timeout(time: 60, unit: 'MINUTES')
-    }
-
     environment {
-        REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
-        BRANCH = 'master'
-
-        MODULE_DIR = 'backend/microservices/Formation'
-
-        IMAGE_NAME = 'formation-app'
+        IMAGE_NAME = "formation-service"
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-
-        SONAR_PROJECT_KEY = 'formation'
-        SONAR_HOST = 'http://sonarqube:9000'
+        SONAR_HOST = "http://sonarqube:9000"
+        MODULE_DIR = "backend/microservices/Formation"
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo "Cloning repo branch ${BRANCH}"
-                git branch: "${BRANCH}", url: "${REPO_URL}"
+                git branch: 'master',
+                    url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
             }
         }
 
         stage('Build Maven') {
             steps {
                 dir("${MODULE_DIR}") {
-                    sh 'mvn clean install'
+                    sh "mvn clean package -DskipTests"
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    sh "mvn test"
                 }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonar') {
+                withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
                     dir("${MODULE_DIR}") {
                         sh """
-                            mvn sonar:sonar \
-                            -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                            -Dsonar.host.url=${SONAR_HOST}
+                        mvn sonar:sonar \
+                        -Dsonar.host.url=${SONAR_HOST} \
+                        -Dsonar.login=${SONAR_TOKEN}
                         """
                     }
                 }
@@ -52,21 +49,13 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                dir("${MODULE_DIR}") {
-                    sh """
-                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                    """
-                }
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ${MODULE_DIR}"
             }
         }
 
-        stage('Run Container') {
+        stage('Docker Run') {
             steps {
-                sh """
-                    docker rm -f formation || true
-                    docker run -d --name formation -p 8082:8080 ${IMAGE_NAME}:latest
-                """
+                sh "docker run -d -p 9090:9090 ${IMAGE_NAME}:${IMAGE_TAG}"
             }
         }
     }
