@@ -1,13 +1,11 @@
-<<<<<<< HEAD
 /**
  * Pipeline CI — microservice Project
  *
- * Prérequis Jenkins :
- * - Credential Secret text : ID = sonar-token-backend (token SonarQube)
- * - Optionnel push Docker : credential dockerhub-creds + décocher SKIP_DOCKER
+ * Dépôt : https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance
+ * Branche : projectskills
+ * Chemin module : BackEnd/Microservices/Project
  *
- * Adapter MODULE_DIR si la racine Git ne contient pas ce chemin (mono-repo).
- * Sonar : la clé projet doit exister dans SonarQube (SONAR_PROJECT_KEY).
+ * Jenkins : sonar-token-backend, dockerhub-creds (si SKIP_DOCKER décoché)
  */
 pipeline {
     agent any
@@ -16,32 +14,17 @@ pipeline {
         booleanParam(
             name: 'SKIP_DOCKER',
             defaultValue: true,
-            description: 'Coché = pas de build/push Docker (utile en local sans Docker Hub)'
+            description: 'Coché = pas de build/push Docker (utile sans Docker sur l’agent)'
         )
     }
 
     environment {
-        /* Même nom que le dépôt Docker Hub : docker.io/emna450/backend-project */
         IMAGE_NAME = 'emna450/backend-project'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
         SONAR_HOST = 'http://host.docker.internal:9000'
-        /* Chemin du module depuis la racine du dépôt Git (checkout scm) */
+        /* Après checkout sur la branche projectskills */
         MODULE_DIR = 'BackEnd/Microservices/Project'
-        /* Doit correspondre à la Project key créée dans SonarQube */
         SONAR_PROJECT_KEY = 'backend'
-=======
-pipeline {
-    agent any
-
-    environment {
-        IMAGE_NAME = 'emna450/project'
-        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-        SONAR_HOST = 'http://host.docker.internal:9000'
-<<<<<<< HEAD
-=======
-        MODULE_DIR = 'BackEnd/Microservices/Project'
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     }
 
     stages {
@@ -53,7 +36,6 @@ pipeline {
 
         stage('Build & Test') {
             steps {
-<<<<<<< HEAD
                 dir("${MODULE_DIR}") {
                     sh 'mvn -B clean verify'
                 }
@@ -62,21 +44,11 @@ pipeline {
                 always {
                     junit allowEmptyResults: true, testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
                 }
-=======
-<<<<<<< HEAD
-                sh 'mvn clean verify'
-=======
-                dir("${MODULE_DIR}") {
-                    sh 'mvn clean verify'
-                }
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-<<<<<<< HEAD
                 dir("${MODULE_DIR}") {
                     withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
                         sh """
@@ -86,33 +58,11 @@ pipeline {
                               -Dsonar.token=\${SONAR_TOKEN}
                         """
                     }
-=======
-<<<<<<< HEAD
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    sh '''
-                        mvn sonar:sonar \
-                          -Dsonar.projectKey=project \
-                          -Dsonar.host.url=${SONAR_HOST} \
-                          -Dsonar.login=${SONAR_TOKEN}
-                    '''
-=======
-                dir("${MODULE_DIR}") {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            mvn sonar:sonar \
-                              -Dsonar.projectKey=project \
-                              -Dsonar.host.url=${SONAR_HOST} \
-                              -Dsonar.login=${SONAR_TOKEN}
-                        '''
-                    }
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
                 }
             }
         }
 
         stage('Docker Build') {
-<<<<<<< HEAD
             when {
                 expression { return !params.SKIP_DOCKER }
             }
@@ -123,27 +73,10 @@ pipeline {
                         docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
                     """
                 }
-=======
-            steps {
-<<<<<<< HEAD
-                sh '''
-                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                '''
-=======
-                dir("${MODULE_DIR}") {
-                    sh '''
-                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                    '''
-                }
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
             }
         }
 
         stage('Docker Push') {
-<<<<<<< HEAD
             when {
                 expression { return !params.SKIP_DOCKER }
             }
@@ -154,15 +87,6 @@ pipeline {
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
                         docker push ${IMAGE_NAME}:latest
                     """
-=======
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker push ${IMAGE_NAME}:latest
-                    '''
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
                 }
             }
         }
