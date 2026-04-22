@@ -1,3 +1,20 @@
+/**
+ * Pipeline CI — microservice Project
+ *
+ * Dépôt : https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance
+ * Branche : projectskills
+ * Chemin module : BackEnd/Microservices/Project
+ *
+ * Jenkins : sonar-token-backend, dockerhub-creds (si SKIP_DOCKER décoché)
+ *
+ * Clone : shallow + timeout pour éviter timeout / invalid index-pack sur gros dépôt.
+ * Dans le job Git : branche = projectskills (spec Jenkins du type refs/heads/projectskills).
+ *
+ * Build / Sonar :
+ *   - MAVEN_IN_DOCKER = true : mvn dans maven:3-eclipse-temurin-17 (docker run). Nécessite docker sur l’agent.
+ *   - MAVEN_IN_DOCKER = false : mvn sur l’agent (installer JDK 17 + Maven, ou image Jenkins avec les outils).
+ * Pas besoin du plugin Docker Pipeline pour docker run.
+ */
 pipeline {
     agent any
 
@@ -10,14 +27,25 @@ pipeline {
         booleanParam(
             name: 'SKIP_DOCKER',
             defaultValue: true,
-            description: 'Coché = pas de build/push Docker (utile sans Docker sur l’agent)'
+            description: 'Coché = pas de build/push image Docker (étapes Docker Build/Push)'
+        )
+        booleanParam(
+            name: 'MAVEN_IN_DOCKER',
+            defaultValue: false,
+            description: 'Décoché (défaut) : mvn sur l’agent — à utiliser si « docker: not found ». Coché : mvn dans l’image maven (docker requis sur l’agent).'
+        )
+        string(
+            name: 'SONAR_HOST_URL',
+            defaultValue: 'http://host.docker.internal:9000',
+            trim: true,
+            description: 'URL SonarQube pour sonar:sonar. Sur Linux, souvent http://172.17.0.1:9000 ou le nom du service Compose.'
         )
     }
 
     environment {
         IMAGE_NAME = 'emna450/backend-project'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-        SONAR_HOST = 'http://host.docker.internal:9000'
+        SONAR_HOST = "${params.SONAR_HOST_URL}"
         /* Après checkout sur la branche projectskills */
         MODULE_DIR = 'BackEnd/Microservices/Project'
         SONAR_PROJECT_KEY = 'backend'
@@ -66,13 +94,21 @@ pipeline {
 
         stage('Build & Test') {
             steps {
-                sh """
-                    docker run --rm \\
-                      -v "${WORKSPACE}:/ws" \\
-                      -w "/ws/${MODULE_DIR}" \\
-                      maven:3-eclipse-temurin-17 \\
-                      mvn -B clean verify
-                """
+                script {
+                    if (params.MAVEN_IN_DOCKER) {
+                        sh """
+                            docker run --rm \\
+                              -v "${WORKSPACE}:/ws" \\
+                              -w "/ws/${MODULE_DIR}" \\
+                              maven:3-eclipse-temurin-17 \\
+                              mvn -B clean verify
+                        """
+                    } else {
+                        dir("${MODULE_DIR}") {
+                            sh 'mvn -B clean verify'
+                        }
+                    }
+                }
             }
             post {
                 always {
@@ -84,16 +120,29 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
-                    sh """
-                        docker run --rm \\
-                          -v "${WORKSPACE}:/ws" \\
-                          -w "/ws/${MODULE_DIR}" \\
-                          maven:3-eclipse-temurin-17 \\
-                          mvn -B sonar:sonar \\
-                            -Dsonar.projectKey=${SONAR_PROJECT_KEY} \\
-                            -Dsonar.host.url=${SONAR_HOST} \\
-                            -Dsonar.token=\${SONAR_TOKEN}
-                    """
+                    script {
+                        if (params.MAVEN_IN_DOCKER) {
+                            sh """
+                                docker run --rm \\
+                                  -v "${WORKSPACE}:/ws" \\
+                                  -w "/ws/${MODULE_DIR}" \\
+                                  maven:3-eclipse-temurin-17 \\
+                                  mvn -B sonar:sonar \\
+                                    -Dsonar.projectKey=${SONAR_PROJECT_KEY} \\
+                                    -Dsonar.host.url=${SONAR_HOST} \\
+                                    -Dsonar.token=\${SONAR_TOKEN}
+                            """
+                        } else {
+                            dir("${MODULE_DIR}") {
+                                sh """
+                                    mvn -B sonar:sonar \\
+                                      -Dsonar.projectKey=${SONAR_PROJECT_KEY} \\
+                                      -Dsonar.host.url=${SONAR_HOST} \\
+                                      -Dsonar.token=\${SONAR_TOKEN}
+                                """
+                            }
+                        }
+                    }
                 }
             }
         }
