@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-/**
- * Jenkinsfile (Declarative Pipeline) — même structure que le cours (agent, tools, options, environment, stages, post).
- * Adapté à : Esprit-PIDEV / microservice Formation + SonarQube + Docker Hub.
- *
- * Job Jenkins : Pipeline from SCM → ce repo → Script Path : backend/microservices/Formation/Jenkinsfile
- * Branche : master (ou main selon ton GitHub).
- */
-=======
->>>>>>> e513c554da3dfbb1fd77b087b1b340d90b9dc541
 pipeline {
     agent any
 
@@ -16,17 +6,7 @@ pipeline {
         maven 'Maven3'
     }
 
-<<<<<<< HEAD
-    // Le PDF utilisait 1 seconde (exemple) ; ici un timeout réaliste pour clone + build + Sonar + Docker.
-    options {
-        timeout(time: 120, unit: 'MINUTES')
-    }
-
     environment {
-        APP_ENV = 'DEV'
-=======
-    environment {
->>>>>>> e513c554da3dfbb1fd77b087b1b340d90b9dc541
         MODULE_DIR = 'backend/microservices/Formation'
         IMAGE_NAME = 'khadijabenayed/formation'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
@@ -35,20 +15,6 @@ pipeline {
     }
 
     stages {
-<<<<<<< HEAD
-        // Équivalent "Code Checkout" du cours : avec "Pipeline from SCM", checkout scm reprend l’URL/branche du job.
-        // Si tu colles le script à la main (sans SCM), décommente le bloc git ci-dessous et crée une credential GitHub (PAT).
-        stage('Code Checkout') {
-            steps {
-                checkout scm
-                // git branch: 'master',
-                //     url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git',
-                //     credentialsId: 'github-pat-khadijaba'
-            }
-        }
-
-        stage('Code Build') {
-=======
         stage('Checkout') {
             steps {
                 checkout scm
@@ -56,7 +22,6 @@ pipeline {
         }
 
         stage('Build & Test') {
->>>>>>> e513c554da3dfbb1fd77b087b1b340d90b9dc541
             steps {
                 dir("${MODULE_DIR}") {
                     sh 'mvn clean verify'
@@ -105,17 +70,7 @@ pipeline {
 
     post {
         always {
-<<<<<<< HEAD
-            echo '====== always ======'
-        }
-        success {
-            echo '===== pipeline executed successfully ====='
-        }
-        failure {
-            echo '====== pipeline execution failed ======'
-=======
             cleanWs()
->>>>>>> e513c554da3dfbb1fd77b087b1b340d90b9dc541
         }
     }
 }
