@@ -6,9 +6,17 @@
  * Chemin module : BackEnd/Microservices/Project
  *
  * Jenkins : sonar-token-backend, dockerhub-creds (si SKIP_DOCKER décoché)
+ *
+ * Clone : shallow + timeout pour éviter timeout / invalid index-pack sur gros dépôt.
+ * Dans le job : branche SCM = projectskills (ou */projectskills).
  */
 pipeline {
     agent any
+
+    options {
+        skipDefaultCheckout(true)
+        timeout(time: 90, unit: 'MINUTES')
+    }
 
     parameters {
         booleanParam(
@@ -30,7 +38,27 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                script {
+                    def exts = []
+                    if (scm.extensions != null && !scm.extensions.isEmpty()) {
+                        exts.addAll(scm.extensions)
+                    }
+                    exts.add([
+                        $class           : 'CloneOption',
+                        shallow          : true,
+                        depth            : 1,
+                        timeout          : 45,
+                        honorRefspec     : true,
+                        noTags           : true,
+                        reference        : ''
+                    ])
+                    checkout([
+                        $class             : 'GitSCM',
+                        branches           : scm.branches,
+                        extensions         : exts,
+                        userRemoteConfigs  : scm.userRemoteConfigs
+                    ])
+                }
             }
         }
 
@@ -94,7 +122,13 @@ pipeline {
 
     post {
         always {
-            cleanWs()
+            script {
+                try {
+                    cleanWs()
+                } catch (ignored) {
+                    /* Pas de workspace si le checkout a échoué avant l’alloc agent */
+                }
+            }
         }
     }
 }
