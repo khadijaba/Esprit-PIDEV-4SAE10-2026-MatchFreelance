@@ -13,14 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-<<<<<<< HEAD
 @Table(name = "project")
-=======
-<<<<<<< HEAD
-=======
-@Table(name = "project")
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -49,15 +42,7 @@ public class Project {
     private Integer duration; // in days
 
     @Enumerated(EnumType.STRING)
-<<<<<<< HEAD
     @Column(nullable = false, columnDefinition = "VARCHAR(32)")
-=======
-<<<<<<< HEAD
-    @Column(nullable = false)
-=======
-    @Column(nullable = false, columnDefinition = "VARCHAR(32)")
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     private ProjectStatus status;
 
     @Column(name = "project_owner_id", nullable = false)

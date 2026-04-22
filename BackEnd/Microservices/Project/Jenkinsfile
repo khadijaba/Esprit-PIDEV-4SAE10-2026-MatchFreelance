@@ -1,3 +1,20 @@
+/**
+ * Pipeline CI — microservice Project
+ *
+ * Dépôt : https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance
+ * Branche : projectskills
+ * Chemin module : BackEnd/Microservices/Project
+ *
+ * Jenkins : sonar-token-backend, dockerhub-creds (si SKIP_DOCKER décoché)
+ *
+ * Clone : shallow + timeout pour éviter timeout / invalid index-pack sur gros dépôt.
+ * Dans le job Git : branche = projectskills (spec Jenkins du type refs/heads/projectskills).
+ *
+ * Build / Sonar :
+ *   - MAVEN_IN_DOCKER = true : mvn dans maven:3-eclipse-temurin-17 (docker run). Nécessite docker sur l’agent.
+ *   - MAVEN_IN_DOCKER = false : si mvn absent, téléchargement Apache Maven dans JENKINS_HOME/.pipeline-tools (JDK requis sur l’agent, ex. image officielle Jenkins).
+ * Pas besoin du plugin Docker Pipeline pour docker run.
+ */
 pipeline {
     agent any
 
