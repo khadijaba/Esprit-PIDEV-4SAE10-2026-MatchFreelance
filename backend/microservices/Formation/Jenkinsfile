@@ -10,48 +10,49 @@ pipeline {
         MODULE_DIR = 'backend/microservices/Formation'
         IMAGE_NAME = 'khadijabenayed/formation'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-        SONAR_HOST = 'http://localhost:9000'
+        SONAR_HOST = 'http://host.docker.internal:9000'
         SONAR_CREDENTIALS_ID = 'sonar-token'
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                checkout scm
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    extensions: [[$class: 'CloneOption', shallow: true, depth: 1]],
+                    userRemoteConfigs: scm.userRemoteConfigs
+                ])
             }
         }
 
         stage('Build & Test') {
             steps {
-                dir("${MODULE_DIR}") {
-                    sh 'mvn clean verify'
-                }
+                sh 'cd backend/microservices/Formation && mvn clean verify'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                dir("${MODULE_DIR}") {
-                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            mvn sonar:sonar \
-                              -Dsonar.projectKey=formation \
-                              -Dsonar.host.url=${SONAR_HOST} \
-                              -Dsonar.login=${SONAR_TOKEN}
-                        '''
-                    }
+                withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                        cd backend/microservices/Formation
+                        mvn sonar:sonar \
+                          -Dsonar.projectKey=formation \
+                          -Dsonar.host.url=${SONAR_HOST} \
+                          -Dsonar.login=${SONAR_TOKEN}
+                    '''
                 }
             }
         }
 
         stage('Docker Build') {
             steps {
-                dir("${MODULE_DIR}") {
-                    sh '''
-                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                    '''
-                }
+                sh '''
+                    cd backend/microservices/Formation
+                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                '''
             }
         }
 
