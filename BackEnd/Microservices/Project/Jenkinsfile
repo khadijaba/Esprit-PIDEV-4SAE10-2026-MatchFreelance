@@ -1,10 +1,3 @@
-/**
- * CI minimal — microservice Project (Maven + Sonar).
- * Job : « Pipeline script from SCM » sur le dépôt, branche projectskills (ou multibranche).
- * Outils Jenkins (noms exacts) : JDK17, Maven3, Git Default.
- * Credential : sonar-token-backend
- * Modifier SONAR_HOST ci-dessous si besoin (Linux conteneur : souvent http://172.17.0.1:9000).
- */
 pipeline {
     agent any
 
@@ -15,6 +8,7 @@ pipeline {
     }
 
     options {
+        skipDefaultCheckout(true)
         timeout(time: 90, unit: 'MINUTES')
     }
 
@@ -25,6 +19,41 @@ pipeline {
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    def branch = env.BRANCH_NAME ?: 'projectskills'
+                    def exts = []
+                    if (scm.extensions != null && !scm.extensions.isEmpty()) {
+                        exts.addAll(scm.extensions)
+                    }
+                    exts.add([
+                        $class       : 'CloneOption',
+                        shallow      : true,
+                        depth        : 1,
+                        timeout      : 120,
+                        honorRefspec : true,
+                        noTags       : true,
+                        reference    : ''
+                    ])
+                    def remotes = scm.userRemoteConfigs.collect { cfg ->
+                        def m = [url: cfg.url]
+                        if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
+                            m.credentialsId = cfg.credentialsId
+                        }
+                        m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
+                        m
+                    }
+                    checkout([
+                        $class            : 'GitSCM',
+                        branches          : [[name: "*/${branch}"]],
+                        extensions        : exts,
+                        userRemoteConfigs : remotes
+                    ])
+                }
+            }
+        }
+
         stage('Build & Sonar') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
