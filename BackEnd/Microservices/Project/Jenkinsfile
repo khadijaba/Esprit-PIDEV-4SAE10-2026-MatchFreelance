@@ -29,7 +29,7 @@ pipeline {
                                 shallow: true,
                                 depth: 1,
                                 noTags: true,
-                                timeout: 30
+                                timeout: 120
                             ]
                         ]
                     ])
