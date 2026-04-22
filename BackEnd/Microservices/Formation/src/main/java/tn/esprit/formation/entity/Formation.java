@@ -56,6 +56,11 @@ public class Formation {
     @Builder.Default
     private StatutFormation statut = StatutFormation.OUVERTE;
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     /** Niveau de la formation (Débutant, Intermédiaire, Avancé). */
     @Enumerated(EnumType.STRING)
     @Column(name = "niveau", length = 20)
@@ -65,15 +70,28 @@ public class Formation {
     @Column(name = "examen_requis_id")
     private Long examenRequisId;
 
+<<<<<<< HEAD
+=======
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     @OneToMany(mappedBy = "formation", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Inscription> inscriptions = new ArrayList<>();
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     @OneToMany(mappedBy = "formation", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordre ASC")
     @Builder.Default
     private List<Module> modules = new ArrayList<>();
 
+<<<<<<< HEAD
+=======
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     public enum StatutFormation {
         OUVERTE,
         EN_COURS,

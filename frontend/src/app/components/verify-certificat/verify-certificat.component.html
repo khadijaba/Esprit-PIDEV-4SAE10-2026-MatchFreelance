@@ -1,0 +1,80 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 px-4 py-10 text-white">
+  <div class="mx-auto max-w-lg">
+    @if (loading) {
+      <div class="flex flex-col items-center justify-center py-24">
+        <div class="h-12 w-12 animate-spin rounded-full border-4 border-teal-500/30 border-t-teal-400"></div>
+        <p class="mt-4 text-sm text-slate-400">Vérification du certificat…</p>
+      </div>
+    }
+
+    @if (!loading && data) {
+      @if (data.valid) {
+        <div class="rounded-2xl bg-white p-8 text-slate-900 shadow-2xl">
+          <div class="mb-6 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-800">
+            <span>✓</span> Certificat valide
+          </div>
+          <h1 class="text-2xl font-bold text-slate-900">MatchFreelance</h1>
+          <p class="mt-2 text-sm text-slate-500">N° {{ data.numeroCertificat }}</p>
+
+          <div class="mt-6 space-y-3 text-left text-sm">
+            <div class="rounded-lg bg-slate-50 px-4 py-3">
+              <span class="font-semibold text-slate-600">Examen</span>
+              <p class="mt-1 text-slate-900">{{ data.examenTitre }}</p>
+            </div>
+            <div class="rounded-lg bg-slate-50 px-4 py-3">
+              <span class="font-semibold text-slate-600">Score</span>
+              <p class="mt-1 text-slate-900">{{ data.score }} %</p>
+            </div>
+            <div class="rounded-lg bg-slate-50 px-4 py-3">
+              <span class="font-semibold text-slate-600">Freelancer</span>
+              <p class="mt-1 text-slate-900">#{{ data.freelancerId }}</p>
+            </div>
+            @if (data.dateDelivrance) {
+              <div class="rounded-lg bg-slate-50 px-4 py-3">
+                <span class="font-semibold text-slate-600">Délivré le</span>
+                <p class="mt-1 text-slate-900">{{ data.dateDelivrance | date:'longDate' }}</p>
+              </div>
+            }
+          </div>
+
+          @if (data.formationsRecommandees && data.formationsRecommandees.length > 0) {
+            <div class="mt-8 border-t border-slate-200 pt-6">
+              <h2 class="text-center text-sm font-bold text-slate-800">Autres formations recommandées</h2>
+              <ul class="mt-4 space-y-3">
+                @for (f of data.formationsRecommandees; track $index) {
+                  <li class="rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+                    <a [routerLink]="formationLink(f.id)" class="font-semibold text-teal-700 hover:underline">
+                      {{ f.titre ?? 'Formation' }}
+                    </a>
+                    @if (f.typeFormation || f.niveau) {
+                      <p class="mt-1 text-xs text-slate-500">
+                        {{ f.typeFormation }}{{ f.typeFormation && f.niveau ? ' · ' : '' }}{{ f.niveau }}
+                      </p>
+                    }
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
+          <p class="mt-8 text-center text-xs text-slate-400">Certificat délivré par MatchFreelance.</p>
+        </div>
+      } @else {
+        <div class="rounded-2xl bg-white p-8 text-center text-slate-900 shadow-2xl">
+          <div class="mb-4 inline-flex items-center gap-2 rounded-full bg-red-100 px-4 py-2 text-sm font-bold text-red-800">
+            <span>✕</span> Certificat invalide ou introuvable
+          </div>
+          <h1 class="text-xl font-bold">MatchFreelance</h1>
+          @if (data.numeroCertificat) {
+            <p class="mt-2 text-sm text-slate-500">N° {{ data.numeroCertificat }}</p>
+          }
+          <p class="mt-4 text-sm text-slate-600">{{ data.message }}</p>
+        </div>
+      }
+    }
+
+    <p class="mt-8 text-center text-sm text-slate-500">
+      <a routerLink="/formations" class="text-teal-400 hover:underline">Retour aux formations</a>
+    </p>
+  </div>
+</div>

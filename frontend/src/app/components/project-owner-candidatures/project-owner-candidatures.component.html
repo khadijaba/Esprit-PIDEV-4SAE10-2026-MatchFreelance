@@ -1,0 +1,177 @@
+<div class="mx-auto max-w-4xl space-y-8 px-4 py-10">
+  <a routerLink="/project-owner/projects" class="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800">
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    Mes projets
+  </a>
+
+  @if (project) {
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Candidatures & contrat</h1>
+      <p class="mt-1 text-gray-600">{{ project.title }}</p>
+      <div class="mt-3">
+        <a [routerLink]="['/project-owner/projects', projectId, 'supervision']"
+          class="inline-flex items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100">
+          Ouvrir supervision par phases
+        </a>
+      </div>
+      <p class="mt-2 text-sm text-gray-500">
+        Plusieurs freelancers peuvent postuler. Planifiez des entretiens et marquez-les <strong>tous terminés</strong>, puis <strong>Accepter</strong> (contrat créé automatiquement) ou <strong>Refuser</strong>. Une seule acceptation active par projet.
+      </p>
+    </div>
+  }
+
+  @if (loading) {
+    <div class="flex justify-center py-16">
+      <div class="h-10 w-10 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-600"></div>
+    </div>
+  }
+
+  @if (!loading && project) {
+    @if (contractForProject(); as ct) {
+      <div class="rounded-xl border border-emerald-200 bg-emerald-50/80 p-6 shadow-sm">
+        <h2 class="text-lg font-semibold text-emerald-900">Contrat du projet</h2>
+        <p class="mt-2 text-sm text-emerald-800">
+          Freelancer #{{ ct.freelancerId }}
+          @if (ct.freelancerName) {
+            <span> — {{ ct.freelancerName }}</span>
+          }
+          · Budget proposé : <strong>{{ ct.proposedBudget | number:'1.0-0' }} TND</strong>
+          · Statut : <strong>{{ ct.status }}</strong>
+        </p>
+        @if (ct.status === 'ACTIVE') {
+          <div class="mt-4 flex flex-wrap gap-3">
+            <button type="button" (click)="payContract()"
+              class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+              Marquer comme payé / terminé
+            </button>
+            <button type="button" (click)="cancelContractFlow()"
+              class="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50">
+              Annuler le contrat (rouvrir le projet)
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    @if (!contractForProject() && candidatures.length === 0) {
+      <p class="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-center text-gray-600">
+        Aucune candidature pour l’instant. Les freelancers postulent depuis la fiche publique du projet.
+      </p>
+    }
+
+    <ul class="space-y-4">
+      @for (c of candidatures; track c.id) {
+        <li class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div class="flex flex-wrap items-start justify-between gap-4 p-5">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-semibold text-gray-900">{{ c.freelancerName || 'Freelancer #' + c.freelancerId }}</span>
+                <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="statusClass(c.status)">
+                  {{ c.status }}
+                </span>
+              </div>
+              <p class="mt-2 text-sm text-gray-600">
+                Budget proposé : <strong>{{ c.proposedBudget | number:'1.0-0' }} TND</strong>
+                <span class="ml-2 text-gray-500">· {{ interviewCountDisplay(c) }} entretien(s)</span>
+              </p>
+              @if (c.message) {
+                <p class="mt-2 whitespace-pre-wrap text-sm text-gray-700">{{ c.message }}</p>
+              }
+              @if (c.aiMatchScore != null) {
+                <p class="mt-1 text-xs text-indigo-600">Score IA : {{ c.aiMatchScore | number:'1.0-1' }}%</p>
+              }
+              @if (fitFor(c); as fit) {
+                <div class="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800">
+                  <p class="font-semibold text-slate-900">Estimation & réussite sur ce projet</p>
+                  <p class="mt-1">
+                    Durée estimée : <strong>{{ fit.estimatedDurationDays }} j</strong>
+                    ({{ fit.durationLowDays }}–{{ fit.durationHighDays }} j)
+                    · Score réussite : <strong>{{ fit.successScore }}/100</strong>
+                    · Confiance : <strong>{{ fit.confidence }}</strong>
+                    · Historique : {{ fit.pastMissionsConsidered }} mission(s)
+                  </p>
+                  <p class="mt-1 text-slate-600">{{ fit.summary }}</p>
+                </div>
+              }
+            </div>
+            <div class="flex min-w-[10rem] flex-col gap-2 sm:min-w-[11rem]">
+              <button type="button" (click)="toggleExpand(c)"
+                class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                {{ expandedId === c.id ? 'Fermer' : 'Entretiens' }}
+              </button>
+              @if (isPending(c) && !contractForProject()) {
+                @if (canDecide(c)) {
+                  <button type="button" (click)="reject(c)"
+                    class="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50">
+                    Refuser
+                  </button>
+                  <button type="button" (click)="accept(c)"
+                    class="rounded-lg bg-[var(--fiverr-green)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--fiverr-green-hover)]">
+                    Accepter
+                  </button>
+                } @else {
+                  <p class="max-w-xs text-xs text-amber-800">
+                    Lorsque <strong>tous</strong> les entretiens sont marqués terminés, vous pouvez <strong>Accepter</strong> (création du contrat) ou <strong>Refuser</strong>.
+                  </p>
+                }
+              }
+            </div>
+          </div>
+
+          @if (expandedId === c.id) {
+            <div class="border-t border-gray-100 bg-gray-50/80 px-5 py-4">
+              <h3 class="text-sm font-semibold text-gray-800">Entretiens</h3>
+              <ul class="mt-3 space-y-2">
+                @for (iv of interviewsFor(c.id); track iv.id) {
+                  <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm">
+                    <span>{{ iv.scheduledAt | date:'medium' }} — <strong>{{ iv.status }}</strong></span>
+                    @if (isInterviewScheduled(iv)) {
+                      <button type="button" (click)="markInterviewCompleted(c.id, iv)"
+                        class="text-xs font-medium text-emerald-700 hover:underline">
+                        Marquer terminé
+                      </button>
+                    }
+                  </li>
+                } @empty {
+                  <li class="text-sm text-gray-500">Aucun entretien planifié.</li>
+                }
+              </ul>
+              @if (isPending(c) && !contractForProject() && canDecide(c)) {
+                <div class="mt-4 flex flex-wrap gap-2 border-t border-gray-200 pt-4">
+                  <button type="button" (click)="reject(c)"
+                    class="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50">
+                    Refuser la candidature
+                  </button>
+                  <button type="button" (click)="accept(c)"
+                    class="rounded-lg bg-[var(--fiverr-green)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--fiverr-green-hover)]">
+                    Accepter — créer le contrat
+                  </button>
+                </div>
+              }
+              @if (isPending(c)) {
+                <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600">Date & heure</label>
+                    <input type="datetime-local" [(ngModel)]="scheduleAt"
+                      class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600">Notes (optionnel)</label>
+                    <input type="text" [(ngModel)]="scheduleNotes" placeholder="Lien visio, lieu…"
+                      class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                  </div>
+                </div>
+                <button type="button" (click)="submitSchedule(c.id)" [disabled]="savingInterview"
+                  class="mt-3 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50">
+                  {{ savingInterview ? 'Enregistrement…' : 'Planifier un entretien' }}
+                </button>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

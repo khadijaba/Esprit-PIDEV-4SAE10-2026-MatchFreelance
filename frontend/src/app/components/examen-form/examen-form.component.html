@@ -1,0 +1,103 @@
+<div class="mx-auto max-w-3xl space-y-6">
+  <div class="flex items-center gap-3">
+    <a routerLink="/admin/examens" class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">←</a>
+    <h2 class="text-2xl font-bold text-gray-800">Nouvel examen</h2>
+  </div>
+
+  @if (error) {
+    <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ error }}</div>
+  }
+
+  <form (ngSubmit)="onSubmit()" #f="ngForm" class="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div>
+      <label for="formationId" class="mb-1.5 block text-sm font-medium text-gray-700">Formation *</label>
+      <select
+        id="formationId"
+        [(ngModel)]="form.formationId"
+        name="formationId"
+        required
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+        <option [ngValue]="0">-- Choisir une formation --</option>
+        @for (f of formations; track f.id) {
+          <option [ngValue]="f.id">{{ f.titre }} (ID {{ f.id }})</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label for="titre" class="mb-1.5 block text-sm font-medium text-gray-700">Titre de l'examen *</label>
+      <input
+        id="titre"
+        type="text"
+        [(ngModel)]="form.titre"
+        name="titre"
+        required
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+        placeholder="Ex. Examen Spring Boot" />
+    </div>
+    <div>
+      <label for="description" class="mb-1.5 block text-sm font-medium text-gray-700">Description</label>
+      <textarea
+        id="description"
+        [(ngModel)]="form.description"
+        name="description"
+        rows="2"
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"></textarea>
+    </div>
+    <div>
+      <label for="seuilReussi" class="mb-1.5 block text-sm font-medium text-gray-700">Seuil pour réussir (%)</label>
+      <input
+        id="seuilReussi"
+        type="number"
+        [(ngModel)]="form.seuilReussi"
+        name="seuilReussi"
+        min="0"
+        max="100"
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+    </div>
+
+    <div class="border-t border-gray-100 pt-6">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-800">Questions (QCM)</h3>
+        <button type="button" (click)="addQuestion()" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
+          + Question
+        </button>
+      </div>
+      @for (q of form.questions; track $index) {
+        <div class="mt-4 rounded-lg border border-gray-200 bg-gray-50/50 p-4">
+          <div class="flex justify-between items-start gap-2">
+            <span class="text-sm font-medium text-gray-600">Question {{ $index + 1 }}</span>
+            <button type="button" (click)="removeQuestion($index)" class="text-red-600 hover:text-red-700 text-sm">Supprimer</button>
+          </div>
+          <input
+            type="text"
+            [(ngModel)]="q.enonce"
+            [name]="'enonce' + $index"
+            placeholder="Énoncé"
+            class="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+          <div class="mt-2 grid grid-cols-2 gap-2">
+            <input type="text" [(ngModel)]="q.optionA" [name]="'optA' + $index" placeholder="A" class="rounded border px-2 py-1 text-sm" />
+            <input type="text" [(ngModel)]="q.optionB" [name]="'optB' + $index" placeholder="B" class="rounded border px-2 py-1 text-sm" />
+            <input type="text" [(ngModel)]="q.optionC" [name]="'optC' + $index" placeholder="C" class="rounded border px-2 py-1 text-sm" />
+            <input type="text" [(ngModel)]="q.optionD" [name]="'optD' + $index" placeholder="D" class="rounded border px-2 py-1 text-sm" />
+          </div>
+          <div class="mt-2">
+            <label class="text-xs text-gray-500">Bonne réponse :</label>
+            <select [(ngModel)]="q.bonneReponse" [name]="'bonne' + $index" class="ml-2 rounded border px-2 py-1 text-sm">
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+            </select>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="flex gap-3 border-t border-gray-100 pt-5">
+      <a routerLink="/admin/examens" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</a>
+      <button type="submit" [disabled]="saving || form.questions.length === 0" class="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+        {{ saving ? 'Création...' : 'Créer l\'examen' }}
+      </button>
+    </div>
+  </form>
+</div>

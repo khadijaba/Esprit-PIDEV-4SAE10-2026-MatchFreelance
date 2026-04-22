@@ -1,0 +1,53 @@
+<div class="flex min-h-[calc(100vh-8rem)] flex-col">
+  <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-3">
+    <div class="flex flex-wrap items-center gap-3">
+      <a [routerLink]="backLink" class="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Retour à la supervision
+      </a>
+      <span class="hidden text-gray-300 sm:inline">|</span>
+      <div class="text-sm text-gray-700">
+        <span class="font-medium text-gray-900">Visio intégrée</span>
+        @if (!invalidParams) {
+          <span class="ml-2 text-gray-500">· salle {{ roomName }}</span>
+        }
+      </div>
+    </div>
+    <div class="flex flex-col items-end gap-1 text-right sm:flex-row sm:items-center sm:gap-3">
+      @if (displayName) {
+        <p class="text-xs text-gray-500">Connecté en tant que <strong class="text-gray-700">{{ displayName }}</strong></p>
+      }
+      @if (directJitsiUrl) {
+        <a
+          [href]="directJitsiUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-xs font-medium text-emerald-700 underline hover:text-emerald-900">
+          Ouvrir Jitsi dans un nouvel onglet
+        </a>
+      }
+    </div>
+  </div>
+
+  @if (invalidParams) {
+    <div class="m-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+      Lien de réunion invalide. Revenez à la supervision et ouvrez le meeting depuis la liste.
+    </div>
+  } @else {
+    <div class="relative min-h-[70vh] flex-1 bg-gray-900">
+      <iframe
+        [src]="iframeSrc"
+        class="absolute inset-0 h-full w-full border-0"
+        allow="camera *; microphone *; display-capture *; autoplay *; fullscreen *; clipboard-write *; speaker-selection *"
+        allowfullscreen
+        title="Salle de réunion"
+      ></iframe>
+    </div>
+    <p class="border-t border-gray-200 bg-gray-50 px-4 py-2 text-center text-xs text-gray-500">
+      Autorisez <strong>caméra</strong> et <strong>micro</strong> pour <code class="rounded bg-gray-200 px-1">meet.jit.si</code> quand la barre d’adresse ou l’icône à gauche de l’URL le propose.
+      Si l’iframe ne demande pas les permissions, utilisez <strong>« Ouvrir Jitsi dans un nouvel onglet »</strong> ci-dessus.
+    </p>
+  }
+</div>

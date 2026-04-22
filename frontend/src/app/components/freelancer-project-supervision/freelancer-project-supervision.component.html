@@ -1,0 +1,146 @@
+<div class="mx-auto max-w-6xl space-y-6 px-4 py-8">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Suivi de mes missions</h1>
+    <p class="mt-1 text-sm text-gray-600">
+      Consultez les phases définies par le project owner, les meetings et soumettez vos livrables.
+    </p>
+  </div>
+
+  @if (loading) {
+    <div class="flex justify-center py-10">
+      <div class="h-9 w-9 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-600"></div>
+    </div>
+  }
+
+  @if (!loading && missions.length === 0) {
+    <div class="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
+      Aucune mission acceptée pour le moment.
+    </div>
+  }
+
+  @if (!loading && missions.length > 0) {
+    <div class="grid gap-6 lg:grid-cols-3">
+      <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-1">
+        <h2 class="text-lg font-semibold text-gray-900">Mes projets acceptés</h2>
+        <ul class="mt-4 space-y-2">
+          @for (m of missions; track m.candidature.id) {
+            <li class="rounded-lg border border-gray-200 p-3"
+                [class.ring-2]="selectedMission?.project?.id === m.project.id"
+                [class.ring-emerald-400]="selectedMission?.project?.id === m.project.id">
+              <button type="button" (click)="selectMission(m)" class="w-full text-left">
+                <p class="font-medium text-gray-900">{{ m.project.title }}</p>
+                <p class="text-xs text-gray-500">Projet #{{ m.project.id }} · Candidature #{{ m.candidature.id }}</p>
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="space-y-6 lg:col-span-2">
+        @if (selectedMission) {
+          <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 class="text-lg font-semibold text-gray-900">{{ selectedMission.project.title }}</h2>
+            <p class="mt-1 text-sm text-gray-600">
+              Statut projet: <strong>{{ selectedMission.project.status }}</strong>
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <h3 class="text-base font-semibold text-gray-900">Phases du projet</h3>
+            <ul class="mt-3 space-y-2">
+              @for (phase of phases; track phase.id) {
+                <li class="rounded-lg border border-gray-200 p-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <button type="button" (click)="selectPhase(phase.id)" class="text-left">
+                      <p class="font-medium text-gray-900">
+                        #{{ phase.phaseOrder }} {{ phase.name }}
+                        @if (isCurrentPhase(phase)) {
+                          <span class="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                            Phase actuelle
+                          </span>
+                        }
+                      </p>
+                      @if (phase.dueDate) {
+                        <p class="text-xs text-gray-500">Échéance: {{ phase.dueDate | date:'short' }}</p>
+                      }
+                    </button>
+                    <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="phaseStatusClass(phase.status)">
+                      {{ phase.status }}
+                    </span>
+                  </div>
+                </li>
+              } @empty {
+                <li class="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
+                  Aucune phase disponible.
+                </li>
+              }
+            </ul>
+          </div>
+
+          @if (selectedPhaseId) {
+            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <h3 class="text-base font-semibold text-gray-900">Soumettre un livrable</h3>
+              <form class="mt-3 grid gap-2 sm:grid-cols-4" (ngSubmit)="submitDeliverable()">
+                <input [(ngModel)]="newDeliverable.title" name="deliverableTitle" placeholder="Titre"
+                  class="rounded-md border border-gray-300 px-3 py-2 text-sm sm:col-span-2" />
+                <select [(ngModel)]="newDeliverable.type" name="deliverableType"
+                  class="rounded-md border border-gray-300 px-3 py-2 text-sm">
+                  @for (t of deliverableTypes; track t) {
+                    <option [value]="t">{{ t }}</option>
+                  }
+                </select>
+                <button type="submit" [disabled]="creatingDeliverable"
+                  class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
+                  {{ creatingDeliverable ? '...' : 'Soumettre' }}
+                </button>
+                <textarea [(ngModel)]="newDeliverable.description" name="deliverableDescription" rows="2" placeholder="Description"
+                  class="rounded-md border border-gray-300 px-3 py-2 text-sm sm:col-span-4"></textarea>
+              </form>
+
+              <h4 class="mt-5 text-sm font-semibold text-gray-800">Livrables de la phase</h4>
+              <ul class="mt-2 space-y-2">
+                @for (d of deliverables; track d.id) {
+                  <li class="rounded-lg border border-gray-200 p-3 text-sm">
+                    <p class="font-medium text-gray-900">{{ d.title }} <span class="text-xs text-gray-500">({{ d.type }})</span></p>
+                    <p class="text-gray-600">Statut review: <strong>{{ d.reviewStatus }}</strong></p>
+                    @if (d.reviewComment) {
+                      <p class="text-gray-500">Commentaire owner: {{ d.reviewComment }}</p>
+                    }
+                  </li>
+                } @empty {
+                  <li class="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">Aucun livrable.</li>
+                }
+              </ul>
+
+              <h4 class="mt-5 text-sm font-semibold text-gray-800">Meetings de phase</h4>
+              <p class="mt-1 text-xs text-gray-500">Rejoignez la visio directement dans MatchFreelance.</p>
+              <ul class="mt-2 space-y-2">
+                @for (m of meetings; track m.id) {
+                  <li class="rounded-lg border border-gray-200 p-3 text-sm">
+                    <div class="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p class="font-medium text-gray-900">{{ m.meetingAt | date:'medium' }}</p>
+                        @if (m.decision) { <p class="text-gray-600">Décision: <strong>{{ m.decision }}</strong></p> }
+                        @if (m.agenda) { <p class="text-gray-600">Agenda: {{ m.agenda }}</p> }
+                        @if (m.summary) { <p class="text-gray-600">Résumé: {{ m.summary }}</p> }
+                      </div>
+                      @if (selectedMission && selectedPhaseId) {
+                        <a
+                          [routerLink]="['/freelancer', 'supervision', 'meeting', selectedMission.project.id, selectedPhaseId, m.id]"
+                          class="shrink-0 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">
+                          Rejoindre la salle
+                        </a>
+                      }
+                    </div>
+                  </li>
+                } @empty {
+                  <li class="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">Aucun meeting.</li>
+                }
+              </ul>
+            </div>
+          }
+        }
+      </section>
+    </div>
+  }
+</div>

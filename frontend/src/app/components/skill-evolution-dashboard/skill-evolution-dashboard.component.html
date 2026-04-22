@@ -1,0 +1,154 @@
+<div class="skill-evolution-page mx-auto max-w-5xl px-4 py-8 sm:px-6">
+  <!-- Header Fiverr-style -->
+  <header class="mb-10 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--fiverr-gray-light)] pb-8">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-[var(--fiverr-dark)] sm:text-3xl">Évolution des compétences</h1>
+      <p class="mt-1.5 text-sm text-[var(--fiverr-gray)]">Profil dynamique : ajouts, validations et progression (Junior → Expert).</p>
+    </div>
+    <a routerLink="/freelancer/skills"
+      class="inline-flex items-center gap-2 rounded-lg border border-[var(--fiverr-green)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--fiverr-green)] shadow-sm transition hover:bg-[var(--fiverr-green)] hover:text-white">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Retour à l’espace Freelancer
+    </a>
+  </header>
+
+  @if (loading) {
+    <div class="flex justify-center py-24">
+      <div class="h-12 w-12 animate-spin rounded-full border-4 border-[var(--fiverr-green-light)] border-t-[var(--fiverr-green)]"></div>
+    </div>
+  } @else {
+    <!-- Stats cards -->
+    <section class="mb-10 grid gap-5 sm:grid-cols-3">
+      <div class="fiverr-card rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:shadow-md">
+        <p class="text-sm font-medium uppercase tracking-wide text-[var(--fiverr-gray)]">Compétences actuelles</p>
+        <p class="mt-2 text-3xl font-bold text-[var(--fiverr-dark)] sm:text-4xl">{{ skills.length }}</p>
+      </div>
+      <div class="fiverr-card rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:shadow-md">
+        <p class="text-sm font-medium uppercase tracking-wide text-[var(--fiverr-gray)]">Ajouts (30 derniers jours)</p>
+        <p class="mt-2 text-3xl font-bold text-[var(--fiverr-green)] sm:text-4xl">{{ addedLast30 }}</p>
+      </div>
+      <div class="fiverr-card rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:shadow-md">
+        <p class="text-sm font-medium uppercase tracking-wide text-[var(--fiverr-gray)]">Progressions (30 derniers jours)</p>
+        <p class="mt-2 text-3xl font-bold text-[var(--fiverr-green-hover)] sm:text-4xl">{{ upgradedLast30 }}</p>
+      </div>
+    </section>
+
+    <!-- Score global + Répartition par niveau -->
+    <section class="mb-10 grid gap-8 lg:grid-cols-2">
+      <!-- Jauge score global -->
+      <div class="fiverr-card rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
+        <h2 class="text-lg font-semibold text-[var(--fiverr-dark)]">Score de profil</h2>
+        <p class="mt-1 text-sm text-[var(--fiverr-gray)]">Niveaux et expérience agrégés (0–100).</p>
+        <div class="mt-8 flex flex-col items-center">
+          <div class="score-ring relative h-40 w-40">
+            <svg class="h-full w-full -rotate-90" viewBox="0 0 100 100">
+              <circle class="text-[var(--fiverr-gray-light)]" cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="10" />
+              <circle class="text-[var(--fiverr-green)] transition-all duration-700" cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round"
+                [attr.stroke-dasharray]="overallScore * 2.64 + ' 264'" />
+            </svg>
+            <span class="absolute inset-0 flex items-center justify-center text-2xl font-bold text-[var(--fiverr-dark)]">{{ overallScore }}</span>
+          </div>
+          <p class="mt-4 text-sm font-medium text-[var(--fiverr-gray)]">sur 100</p>
+        </div>
+      </div>
+
+      <!-- Diagramme en barres : répartition par niveau -->
+      <div class="fiverr-card rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
+        <h2 class="text-lg font-semibold text-[var(--fiverr-dark)]">Répartition par niveau</h2>
+        <p class="mt-1 text-sm text-[var(--fiverr-gray)]">Nombre de compétences par palier.</p>
+        @if (levelMaxCount <= 0) {
+          <p class="mt-8 text-center text-sm text-[var(--fiverr-gray)]">Aucune compétence.</p>
+        } @else {
+          <div class="mt-6 space-y-4">
+            @for (d of levelDistribution; track d.label) {
+              <div class="flex items-center gap-4">
+                <span class="w-24 shrink-0 text-sm font-medium text-[var(--fiverr-dark)]">{{ d.label }}</span>
+                <div class="min-w-0 flex-1">
+                  <div class="h-8 overflow-hidden rounded-lg bg-[var(--fiverr-gray-light)]">
+                    <div class="h-full rounded-lg transition-all duration-500"
+                      [style.width.%]="(d.count / levelMaxCount) * 100"
+                      [class]="d.order === 1 ? 'bg-amber-400' : d.order === 2 ? 'bg-sky-400' : d.order === 3 ? 'bg-emerald-500' : 'bg-violet-500'"></div>
+                  </div>
+                </div>
+                <span class="w-8 shrink-0 text-right text-sm font-semibold text-[var(--fiverr-gray)]">{{ d.count }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Heatmap des compétences avec score -->
+    <section class="mb-10">
+      <div class="fiverr-card rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
+        <h2 class="text-lg font-semibold text-[var(--fiverr-dark)]">Heatmap des compétences</h2>
+        <p class="mt-1 text-sm text-[var(--fiverr-gray)]">Niveau et expérience par compétence — score 0–100 et progression.</p>
+        @if (skills.length === 0) {
+          <p class="mt-8 text-center text-[var(--fiverr-gray)]">Aucune compétence. Ajoutez-en depuis l’espace Freelancer.</p>
+        } @else {
+          <div class="mt-6 space-y-4">
+            @for (skill of skills; track skill.id) {
+              @let score = skillScore(skill);
+              <div class="group flex flex-col gap-3 rounded-xl border border-gray-100 bg-[var(--fiverr-gray-light)]/30 p-4 transition hover:border-[var(--fiverr-green-light)] hover:bg-[var(--fiverr-green-light)]/30">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <p class="font-semibold text-[var(--fiverr-dark)]">{{ skill.name }}</p>
+                    <p class="text-xs text-[var(--fiverr-gray)]">{{ getCategoryLabel(skill.category) }}</p>
+                  </div>
+                  <div class="flex shrink-0 items-center gap-3">
+                    <span class="rounded-full px-3 py-1 text-xs font-semibold" [class]="heatmapColor(skill.level)">
+                      {{ getLevelLabel(skill.level) }}
+                    </span>
+                    <span class="min-w-[3rem] text-right text-sm font-bold text-[var(--fiverr-dark)]">{{ score }}/100</span>
+                  </div>
+                </div>
+                <div class="h-2.5 w-full overflow-hidden rounded-full bg-white">
+                  <div class="h-full rounded-full bg-[var(--fiverr-green)] transition-all duration-500" [style.width.%]="score"></div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+        <!-- Légende -->
+        <div class="mt-6 flex flex-wrap items-center gap-4 rounded-xl bg-[var(--fiverr-gray-light)]/50 px-4 py-3 text-sm">
+          <span class="font-medium text-[var(--fiverr-dark)]">Niveaux :</span>
+          <span class="rounded-lg bg-amber-200 px-2.5 py-1 text-amber-900 font-medium">Junior</span>
+          <span class="rounded-lg bg-sky-200 px-2.5 py-1 text-sky-900 font-medium">Intermediate</span>
+          <span class="rounded-lg bg-emerald-200 px-2.5 py-1 text-emerald-900 font-medium">Advanced</span>
+          <span class="rounded-lg bg-violet-200 px-2.5 py-1 text-violet-900 font-medium">Expert</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Historique des évolutions -->
+    <section>
+      <div class="fiverr-card rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
+        <h2 class="text-lg font-semibold text-[var(--fiverr-dark)]">Historique des évolutions</h2>
+        <p class="mt-1 text-sm text-[var(--fiverr-gray)]">Ajouts de compétences et progressions de niveau.</p>
+        @if (evolutionHistory.length === 0) {
+          <p class="mt-8 text-center text-[var(--fiverr-gray)]">Aucune évolution enregistrée. Modifiez vos compétences (niveau) pour voir la progression ici.</p>
+        } @else {
+          <ul class="mt-6 space-y-3">
+            @for (entry of evolutionHistory; track entry.id) {
+              <li class="flex flex-wrap items-center gap-2 rounded-xl border border-gray-100 bg-[var(--fiverr-gray-light)]/30 px-4 py-3 transition hover:bg-[var(--fiverr-green-light)]/20">
+                @if (entry.previousLevel) {
+                  <span class="font-semibold text-[var(--fiverr-dark)]">{{ entry.skillName }}</span>
+                  <span class="rounded-lg bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">{{ getLevelLabel(entry.previousLevel) }}</span>
+                  <span class="text-gray-400">→</span>
+                  <span class="rounded-lg bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">{{ getLevelLabel(entry.newLevel) }}</span>
+                } @else {
+                  <span class="font-semibold text-[var(--fiverr-dark)]">{{ entry.skillName }}</span>
+                  <span class="text-[var(--fiverr-gray)]">ajouté au niveau</span>
+                  <span class="rounded-lg bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800">{{ getLevelLabel(entry.newLevel) }}</span>
+                }
+                <span class="ml-auto text-xs text-[var(--fiverr-gray)]">{{ formatDate(entry.date) }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </section>
+  }
+</div>

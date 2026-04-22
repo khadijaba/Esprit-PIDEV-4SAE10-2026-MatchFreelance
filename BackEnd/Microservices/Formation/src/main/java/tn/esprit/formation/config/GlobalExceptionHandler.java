@@ -4,7 +4,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+<<<<<<< HEAD
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+=======
+<<<<<<< HEAD
+=======
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.Map;
@@ -19,6 +26,11 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", ex.getMessage() != null ? ex.getMessage() : "Erreur"));
     }
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     /** Identifiant de path invalide (ex. /api/modules/allooo au lieu d'un nombre). */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, String>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
@@ -28,6 +40,10 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", message, "message", message));
     }
 
+<<<<<<< HEAD
+=======
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<Map<String, Object>> handle404(NoHandlerFoundException ex) {
         return ResponseEntity

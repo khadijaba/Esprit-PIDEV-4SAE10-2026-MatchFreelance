@@ -1,0 +1,393 @@
+<div class="mx-auto max-w-2xl space-y-6">
+  <div class="flex items-center gap-3">
+    <a [routerLink]="isProjectOwnerRoute() ? '/project-owner/projects' : '/admin/projects'" class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    </a>
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800">
+        @if (isOwnerCreateWizard && ownerCreateStep === 1) {
+          Nouveau projet — estimation
+        } @else if (isOwnerCreateWizard && ownerCreateStep === 2) {
+          Nouveau projet — vérification & publication
+        } @else if (isEdit) {
+          Edit Project
+        } @else {
+          Create Project
+        }
+      </h2>
+      @if (isOwnerCreateWizard) {
+        <p class="mt-1 text-sm text-gray-500">
+          @if (ownerCreateStep === 1) {
+            Étape 1 sur 2 : saisir le projet, puis enregistrer un brouillon pour calculer la charge et le risque.
+          } @else {
+            Étape 2 sur 2 : relire la charge estimée et le score de risque ; corrigez si besoin (retour étape 1), puis publiez.
+          }
+        </p>
+      }
+    </div>
+  </div>
+
+  @if (error) {
+    <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ error }}</div>
+  }
+
+  <form (ngSubmit)="onSubmit()" #f="ngForm" class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-5">
+    @if (isOwnerCreateWizard && ownerCreateStep === 2) {
+      <div class="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-sm text-emerald-900">
+        <p class="font-medium">Récapitulatif (brouillon #{{ draftProjectId }})</p>
+        <p class="mt-2"><span class="text-emerald-800/80">Titre :</span> {{ form.title }}</p>
+        <p class="mt-1 line-clamp-3 whitespace-pre-wrap"><span class="text-emerald-800/80">Description :</span> {{ form.description }}</p>
+        <p class="mt-1"><span class="text-emerald-800/80">Budget :</span> {{ form.budget | number:'1.0-0' }} TND</p>
+        <p class="mt-1"><span class="text-emerald-800/80">Durée estimée :</span> {{ form.duration }} jours (calendaires)</p>
+        @if (form.requiredSkills?.length) {
+          <p class="mt-1"><span class="text-emerald-800/80">Compétences :</span> {{ form.requiredSkills!.join(', ') }}</p>
+        }
+      </div>
+    }
+
+    <!-- Title -->
+    <div [hidden]="isOwnerCreateWizard && ownerCreateStep === 2">
+      <label for="title" class="mb-1.5 block text-sm font-medium text-gray-700">Title *</label>
+      <input id="title" type="text" [(ngModel)]="form.title" name="title" required minlength="3" maxlength="255"
+        #titleInput="ngModel"
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        placeholder="e.g. E-Commerce Website Redesign" />
+      @if (titleInput.invalid && titleInput.touched) {
+        <p class="mt-1 text-xs text-red-500">Title is required (3-255 characters)</p>
+      }
+      @if (getTitleValidationError() && titleInput.touched) {
+        <p class="mt-1 text-xs text-red-500">{{ getTitleValidationError() }}</p>
+      }
+    </div>
+
+    <!-- Description -->
+    <div [hidden]="isOwnerCreateWizard && ownerCreateStep === 2">
+      <label for="description" class="mb-1.5 block text-sm font-medium text-gray-700">Description *</label>
+      <textarea id="description" [(ngModel)]="form.description" name="description" required maxlength="2000" rows="4"
+        #descInput="ngModel"
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        placeholder="Describe the project scope, requirements..."></textarea>
+      @if (descInput.invalid && descInput.touched) {
+        <p class="mt-1 text-xs text-red-500">Description is required</p>
+      }
+      <p class="mt-1.5 text-xs text-gray-500">L’IA peut extraire rôles, compétences, budget et durée depuis la description.</p>
+      <div class="mt-2 flex flex-wrap items-center gap-2">
+        <button type="button" (click)="onAnalyzeWithAI()" [disabled]="analyzeLoading || descCoachLoading || !form.title.trim() || !form.description.trim()"
+          class="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 transition">
+          @if (analyzeLoading) {
+            <span class="h-4 w-4 animate-spin rounded-full border-2 border-indigo-300 border-t-indigo-600"></span>
+          }
+          Analyser avec l’IA (NLP)
+        </button>
+        <button type="button" (click)="onDescriptionCoach()" [disabled]="descCoachLoading || analyzeLoading || !form.title.trim() || !form.description.trim()"
+          class="inline-flex items-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100 disabled:opacity-50 transition">
+          @if (descCoachLoading) {
+            <span class="h-4 w-4 animate-spin rounded-full border-2 border-teal-300 border-t-teal-600"></span>
+          }
+          Suggestions de reformulation
+        </button>
+      </div>
+      <label class="mt-2 flex cursor-pointer items-start gap-2 text-xs text-gray-600">
+        <input type="checkbox" [(ngModel)]="descCoachUseLlm" name="descCoachUseLlm" class="mt-0.5 rounded border-gray-300 text-teal-600 focus:ring-teal-500" />
+        <span>
+          Inclure un <strong>brouillon LLM</strong> : par défaut <strong>Ollama</strong> local
+          (<code class="rounded bg-gray-100 px-1">OLLAMA_BASE_URL</code>, modèle
+          <code class="rounded bg-gray-100 px-1">OLLAMA_MODEL</code> ex. <code class="rounded bg-gray-100 px-1">llama3.2</code>),
+          sinon <strong>OpenAI</strong> si <code class="rounded bg-gray-100 px-1">OPENAI_API_KEY</code> est défini
+          (<code class="rounded bg-gray-100 px-1">LLM_PROVIDER</code>=auto|ollama|openai). Onglet <strong>LLM</strong> après génération.
+        </span>
+      </label>
+
+      <button type="button" (click)="descCoachHelpOpen = !descCoachHelpOpen"
+        class="mt-2 text-xs font-medium text-teal-700 hover:text-teal-900">
+        {{ descCoachHelpOpen ? 'Masquer' : 'Afficher' }} l’aide (à quoi ça sert ?)
+      </button>
+      @if (descCoachHelpOpen) {
+        <div class="mt-2 space-y-2 rounded-lg border border-teal-100 bg-teal-50/50 p-3 text-xs text-gray-700">
+          <p><span class="font-semibold text-gray-900">Qu’est-ce que c’est ?</span>
+            Des propositions de texte (ou une checklist générée) pour rendre la description plus claire sur : périmètre, livrables concrets, critères d’acceptation (« c’est fini quand… »).</p>
+          <p><span class="font-semibold text-gray-900">À quoi ça sert ?</span>
+            Réduire les malentendus, recevoir des devis plus précis et comparer les candidatures sur la même base. Moins de friction après signature.</p>
+          <p><span class="font-semibold text-gray-900">Comment ça peut fonctionner ?</span>
+            Analyse du texte actuel (livrables nommés, critères mesurables, objectifs flous) ; génération de paragraphes types ou de questions. Avec LLM côté serveur : brouillon enrichi que vous éditez toujours vous-même.</p>
+          <p><span class="font-semibold text-gray-900">Limites.</span>
+            Les suggestions ne remplacent pas votre vision : utilisez « Appliquer » ou « Ignorer » ; seule la version que vous enregistrez fait foi.</p>
+        </div>
+      }
+
+      @if (descCoach) {
+        <div class="mt-4 space-y-3 rounded-xl border border-teal-200 bg-white p-4 shadow-sm">
+          <p class="text-sm font-medium text-gray-900">{{ descCoach.summary }}</p>
+          @if (descCoach.gaps.length) {
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-amber-800">Points à renforcer</p>
+              <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-gray-700">
+                @for (g of descCoach.gaps; track g) { <li>{{ g }}</li> }
+              </ul>
+            </div>
+          }
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-teal-800">Checklist</p>
+            <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-gray-700">
+              @for (c of descCoach.checklist; track c) { <li>{{ c }}</li> }
+            </ul>
+          </div>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-700">Questions de clarification</p>
+            <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-gray-600">
+              @for (q of descCoach.questionsToClarify; track q) { <li>{{ q }}</li> }
+            </ul>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-800">Aperçu du brouillon</p>
+            @if (descCoach.llmUsed && descCoach.llmEnrichedMarkdown) {
+              <div class="mt-1 flex gap-1 border-b border-gray-200 text-xs">
+                <button type="button" (click)="descCoachPreviewTab = 'rules'"
+                  [class.border-b-2]="descCoachPreviewTab === 'rules'"
+                  [class.border-teal-600]="descCoachPreviewTab === 'rules'"
+                  [class.font-semibold]="descCoachPreviewTab === 'rules'"
+                  class="px-2 py-1 text-gray-600">Règles</button>
+                <button type="button" (click)="descCoachPreviewTab = 'llm'"
+                  [class.border-b-2]="descCoachPreviewTab === 'llm'"
+                  [class.border-teal-600]="descCoachPreviewTab === 'llm'"
+                  [class.font-semibold]="descCoachPreviewTab === 'llm'"
+                  class="px-2 py-1 text-gray-600">LLM</button>
+              </div>
+            }
+            <pre class="mt-2 max-h-48 overflow-auto whitespace-pre-wrap rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs text-gray-800">{{
+              descCoachPreviewTab === 'llm' && descCoach.llmEnrichedMarkdown ? descCoach.llmEnrichedMarkdown : descCoach.draftEnrichedDescription
+            }}</pre>
+          </div>
+          <div class="flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+            <button type="button" (click)="applyDescriptionDraft()"
+              class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">
+              Appliquer le brouillon (remplace la description)
+            </button>
+            <button type="button" (click)="dismissDescriptionCoach()"
+              class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+              Ignorer
+            </button>
+          </div>
+          <p class="text-xs text-gray-500">Vous pouvez éditer le texte après application. La version officielle reste celle que vous enregistrez.</p>
+        </div>
+      }
+    </div>
+
+    <!-- Budget & Duration -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2" [hidden]="isOwnerCreateWizard && ownerCreateStep === 2">
+      <div>
+        <label for="budget" class="mb-1.5 block text-sm font-medium text-gray-700">Budget (TND) *</label>
+        <input id="budget" type="number" [(ngModel)]="form.budget" name="budget" required min="1"
+          #budgetInput="ngModel"
+          class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          placeholder="5000" />
+        @if (budgetInput.invalid && budgetInput.touched) {
+          <p class="mt-1 text-xs text-red-500">Budget must be positive</p>
+        }
+      </div>
+      <div>
+        <label for="duration" class="mb-1.5 block text-sm font-medium text-gray-700">
+          @if (isOwnerCreateWizard) {
+            Durée estimée du projet (jours calendaires) *
+          } @else {
+            Duration (days) *
+          }
+        </label>
+        <input id="duration" type="number" [(ngModel)]="form.duration" name="duration" required min="1"
+          #durationInput="ngModel"
+          class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          placeholder="30" />
+        @if (durationInput.invalid && durationInput.touched) {
+          <p class="mt-1 text-xs text-red-500">Duration must be positive</p>
+        }
+        @if (isOwnerCreateWizard) {
+          <p class="mt-1 text-xs text-gray-500">Indiquez la durée prévue sur le calendrier ; vous pourrez la confirmer à l’étape suivante avant publication.</p>
+        }
+      </div>
+    </div>
+
+    <!-- Required Skills -->
+    <div [hidden]="isOwnerCreateWizard && ownerCreateStep === 2">
+      <label for="skills" class="mb-1.5 block text-sm font-medium text-gray-700">Required Skills</label>
+      <div class="flex gap-2 mb-2">
+        <input id="skills" type="text" [(ngModel)]="newSkill" name="newSkill"
+          (keyup.enter)="addSkill()"
+          class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          placeholder="e.g. Java, React, Angular" />
+        <button type="button" (click)="addSkill()"
+          class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 transition">
+          Add
+        </button>
+      </div>
+      @if (form.requiredSkills && form.requiredSkills.length > 0) {
+        <div class="flex flex-wrap gap-2">
+          @for (skill of form.requiredSkills; track skill) {
+            <span class="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1 text-sm text-indigo-800">
+              {{ skill }}
+              <button type="button" (click)="removeSkill(skill)" class="text-indigo-600 hover:text-indigo-800">
+                ×
+              </button>
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    @if ((isEdit && projectId) || (isOwnerCreateWizard && ownerCreateStep === 2 && draftProjectId)) {
+      @if (isOwnerCreateWizard && ownerCreateStep === 2 && draftProjectId) {
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="text-sm font-medium text-gray-700">Indicateurs calculés sur le brouillon</p>
+          <button type="button" (click)="reloadDraftInsights()"
+            [disabled]="effortLoading || mlRiskLoading"
+            class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+            Rafraîchir charge & risque
+          </button>
+        </div>
+      }
+      @if (effortLoading) {
+        <div class="flex justify-center rounded-lg border border-sky-100 bg-sky-50/50 py-6">
+          <div class="h-6 w-6 animate-spin rounded-full border-2 border-sky-200 border-t-sky-600"></div>
+        </div>
+      } @else if (effort) {
+        <div class="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50/90 to-white p-4 shadow-sm">
+          <h3 class="text-sm font-semibold text-gray-900">Charge estimée (jours-homme)</h3>
+          <p class="mt-1 text-xs text-gray-600">{{ effort.summary }}</p>
+          <div class="mt-3 flex flex-wrap gap-4">
+            <div>
+              <p class="text-xl font-bold text-sky-700">{{ effort.estimatedManDays }}</p>
+              <p class="text-xs text-gray-500">j-h (point)</p>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-800">{{ effort.estimatedManDaysLow }} – {{ effort.estimatedManDaysHigh }}</p>
+              <p class="text-xs text-gray-500">fourchette</p>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-800">{{ effort.fteRequiredVsDeclared | number:'1.2-2' }} ETP</p>
+              <p class="text-xs text-gray-500">sur {{ effort.declaredDurationDays }} j calendaires</p>
+            </div>
+          </div>
+          @if (effort.flags.length > 0) {
+            <ul class="mt-2 flex flex-wrap gap-1.5">
+              @for (fe of effort.flags; track fe) {
+                <li class="rounded bg-white px-2 py-0.5 text-xs text-sky-900 ring-1 ring-sky-200">{{ fe }}</li>
+              }
+            </ul>
+          }
+        </div>
+      } @else if (effortError) {
+        <div class="rounded-xl border border-amber-200 bg-amber-50/80 p-4 shadow-sm">
+          <h3 class="text-sm font-semibold text-amber-900">Charge estimée (jours-homme)</h3>
+          <p class="mt-1 text-xs text-amber-800">{{ effortError }}</p>
+          <button type="button" (click)="isOwnerCreateWizard && ownerCreateStep === 2 ? reloadDraftInsights() : reloadEffortEstimate()"
+            class="mt-2 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-50">
+            Réessayer
+          </button>
+        </div>
+      }
+
+      @if (isOwnerCreateWizard && ownerCreateStep === 2 && draftProjectId) {
+        @if (mlRiskLoading) {
+          <div class="flex justify-center rounded-lg border border-violet-100 bg-violet-50/50 py-6">
+            <div class="h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600"></div>
+          </div>
+        } @else if (mlRisk) {
+          <div class="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50/90 to-white p-4 shadow-sm">
+            <h3 class="text-sm font-semibold text-gray-900">Score de risque (ML)</h3>
+            <p class="mt-1 text-xs text-gray-600">{{ mlRisk.summary }}</p>
+            <div class="mt-3 flex flex-wrap items-start justify-between gap-3">
+              <p class="text-xs text-gray-500">Modèle : {{ mlRisk.modelId }}
+                @if (mlRisk.heuristicFallback) {
+                  <span class="ml-1 rounded bg-amber-100 px-1 py-0.5 text-amber-800">heuristique</span>
+                }
+              </p>
+              <div class="text-right">
+                <p class="text-2xl font-bold text-violet-700">{{ mlRisk.riskScore0To100 }}</p>
+                <span class="mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium" [class]="mlRiskBadgeClass(mlRisk.riskLevel)">
+                  {{ mlRisk.riskLevel }}
+                </span>
+              </div>
+            </div>
+            @if (mlRisk.flags.length > 0) {
+              <ul class="mt-2 flex flex-wrap gap-1.5">
+                @for (rf of mlRisk.flags; track rf) {
+                  <li class="rounded bg-white px-2 py-0.5 text-xs text-violet-900 ring-1 ring-violet-200">{{ rf }}</li>
+                }
+              </ul>
+            }
+          </div>
+        } @else if (mlRiskError) {
+          <div class="rounded-xl border border-amber-200 bg-amber-50/80 p-4 shadow-sm">
+            <h3 class="text-sm font-semibold text-amber-900">Score de risque (ML)</h3>
+            <p class="mt-1 text-xs text-amber-800">{{ mlRiskError }}</p>
+            <button type="button" (click)="reloadDraftInsights()"
+              class="mt-2 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-50">
+              Réessayer
+            </button>
+          </div>
+        }
+      }
+    }
+
+    @if (isOwnerCreateWizard && ownerCreateStep === 2) {
+      <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-gray-50/80 p-4 text-sm text-gray-800">
+        <input type="checkbox" name="ownerConfirmReviewed" [(ngModel)]="ownerConfirmReviewed" class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+        <span>
+          J’ai pris connaissance de la <strong>charge estimée</strong> et du <strong>score de risque</strong>, et j’ai corrigé le projet à l’étape précédente si nécessaire. Je publie en l’état.
+        </span>
+      </label>
+    }
+
+    <!-- Status -->
+    <div [hidden]="isOwnerCreateWizard">
+      <label for="status" class="mb-1.5 block text-sm font-medium text-gray-700">Status</label>
+      <select id="status" [(ngModel)]="form.status" name="status"
+        class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        @for (s of statuses; track s.value) {
+          <option [value]="s.value">{{ s.label }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-wrap items-center justify-end gap-3 border-t border-gray-100 pt-5">
+      <a [routerLink]="isProjectOwnerRoute() ? '/project-owner/projects' : '/admin/projects'" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+        @if (isProjectOwnerRoute()) { Annuler } @else { Cancel }
+      </a>
+      @if (isOwnerCreateWizard && ownerCreateStep === 2) {
+        <button type="button" (click)="goBackToEstimateStep()"
+          class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+          Retour à l’estimation
+        </button>
+      }
+      @if (isOwnerCreateWizard && ownerCreateStep === 1) {
+        <button type="button" (click)="saveDraftAndOpenVerification(f)"
+          [disabled]="f.invalid || !!getTitleValidationError() || draftSaving"
+          class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white shadow hover:bg-emerald-700 disabled:opacity-50 transition">
+          @if (draftSaving) {
+            <div class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
+          }
+          Enregistrer le brouillon et afficher charge & risque
+        </button>
+      }
+      @if (!isOwnerCreateWizard || ownerCreateStep === 2) {
+        <button type="submit"
+          [disabled]="f.invalid || saving || !!getTitleValidationError() || (isOwnerCreateWizard && (!ownerConfirmReviewed || effortLoading || mlRiskLoading))"
+          class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700 disabled:opacity-50 transition">
+          @if (saving) {
+            <div class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
+          }
+          @if (isEdit) {
+            Update Project
+          } @else if (isOwnerCreateWizard) {
+            Publier le projet (OPEN)
+          } @else {
+            Create Project
+          }
+        </button>
+      }
+    </div>
+  </form>
+</div>
+

@@ -1,0 +1,382 @@
+<div class="mx-auto max-w-6xl space-y-6 px-4 py-8">
+  <a routerLink="/project-owner/projects" class="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800">
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    Mes projets
+  </a>
+
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Supervision du projet</h1>
+      @if (project) {
+        <p class="mt-1 text-gray-600">{{ project.title }} · <strong>{{ project.status }}</strong></p>
+      }
+    </div>
+    @if (project) {
+      <a [routerLink]="['/project-owner/projects', projectId, 'candidatures']"
+         class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        Voir candidatures & contrat
+      </a>
+    }
+  </div>
+
+  @if (project?.status !== 'IN_PROGRESS') {
+    <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+      La supervision par phases est active uniquement quand le projet est <strong>IN_PROGRESS</strong>.
+    </div>
+  }
+
+  @if (scheduleRiskError) {
+    <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+      <span>{{ scheduleRiskError }}</span>
+      <button type="button" (click)="loadScheduleRisk()"
+        class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
+        Réessayer
+      </button>
+    </div>
+  } @else if (scheduleAssessment || scheduleRiskLoading) {
+    <div class="rounded-xl border p-5 shadow-sm transition-colors" [class]="scheduleRiskCardClass()">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 class="text-lg font-semibold text-gray-900">{{ scheduleRiskTitle() }}</h2>
+          @if (scheduleAssessment) {
+            <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold" [class]="scheduleRiskLevelClass(scheduleAssessment.scheduleRiskLevel)">
+              {{ scheduleAssessment.scheduleRiskLevel }}
+            </span>
+            <span class="text-sm text-gray-600">Score <strong>{{ scheduleAssessment.scheduleRiskScore0To100 }}</strong> / 100</span>
+          }
+        </div>
+        <button type="button" (click)="loadScheduleRisk()" [disabled]="scheduleRiskLoading"
+          class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+          {{ scheduleRiskLoading ? 'Calcul…' : 'Actualiser' }}
+        </button>
+      </div>
+      @if (scheduleRiskLoading && !scheduleAssessment) {
+        <div class="mt-3 flex items-center gap-2 text-sm text-gray-600">
+          <div class="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-emerald-600"></div>
+          Analyse du planning…
+        </div>
+      } @else if (scheduleAssessment) {
+        <p class="mt-3 text-sm text-gray-800">{{ scheduleAssessment.summary }}</p>
+        @if (scheduleAssessment.metrics; as m) {
+          <dl class="mt-3 grid gap-2 text-xs text-gray-600 sm:grid-cols-2 lg:grid-cols-4">
+            @if (m.timeElapsedRatio != null) {
+              <div><span class="font-medium text-gray-700">Temps écoulé</span> — {{ (m.timeElapsedRatio * 100) | number:'1.0-0' }} %</div>
+            }
+            @if (m.progressRatio != null) {
+              <div><span class="font-medium text-gray-700">Avancement</span> — {{ (m.progressRatio * 100) | number:'1.0-0' }} %</div>
+            }
+            @if (m.gapProgressVsTime != null) {
+              <div><span class="font-medium text-gray-700">Écart (t − av.)</span> — {{ (m.gapProgressVsTime * 100) | number:'1.0-1' }} pts</div>
+            }
+            @if (m.overduePhasesCount != null) {
+              <div><span class="font-medium text-gray-700">Phases en retard</span> — {{ m.overduePhasesCount }}</div>
+            }
+          </dl>
+        }
+        @if (scheduleAssessment.flags.length) {
+          <p class="mt-2 text-xs text-gray-500">Indicateurs : {{ scheduleAssessment.flags.join(', ') }}</p>
+        }
+      }
+    </div>
+  }
+
+  @if (loading) {
+    <div class="flex justify-center py-10">
+      <div class="h-9 w-9 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-600"></div>
+    </div>
+  }
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-1">
+      <h2 class="text-lg font-semibold text-gray-900">Phases</h2>
+      <p class="mt-1 text-sm text-gray-500">Démarrage séquentiel, clôture avec livrables validés + meeting.</p>
+
+      <div class="mt-3 rounded-lg border border-teal-200 bg-teal-50/60 p-3">
+        <div class="flex items-start justify-between gap-2">
+          <p class="text-sm font-semibold text-teal-900">Planning Assistant IA</p>
+          <label class="flex items-center gap-1 text-xs text-teal-800">
+            <input type="checkbox" [(ngModel)]="planningUseLlm" name="planningUseLlm" class="rounded border-teal-300 text-teal-700" />
+            LLM
+          </label>
+        </div>
+        <p class="mt-1 text-xs text-teal-800">Génère des phases initiales ou propose un réajustement si retard.</p>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button type="button" (click)="generateInitialPlanningWithAi()"
+            [disabled]="planningLoading || planningApplying || project?.status !== 'IN_PROGRESS'"
+            class="rounded border border-teal-300 bg-white px-2.5 py-1 text-xs font-medium text-teal-800 hover:bg-teal-100 disabled:opacity-50">
+            {{ planningLoading ? '...' : 'Générer plan initial' }}
+          </button>
+          <button type="button" (click)="generateAdjustPlanningWithAi()"
+            [disabled]="planningLoading || planningApplying || project?.status !== 'IN_PROGRESS' || !phases.length"
+            class="rounded border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-50">
+            Réajuster selon risque
+          </button>
+        </div>
+        @if (planningError) {
+          <p class="mt-2 text-xs text-red-700">{{ planningError }}</p>
+        }
+        @if (planningProposal) {
+          <div class="mt-2 rounded border border-gray-200 bg-white p-2 text-xs text-gray-700">
+            <p class="font-medium text-gray-900">
+              {{ planningProposal.summary }}
+              @if (planningProposal.llmUsed) { <span class="text-teal-700">(LLM: {{ planningProposal.llmBackend || 'N/A' }})</span> }
+            </p>
+            @if (planningProposal.recommendedActions?.length) {
+              <ul class="mt-1 list-disc space-y-0.5 pl-4">
+                @for (a of planningProposal.recommendedActions; track a) { <li>{{ a }}</li> }
+              </ul>
+            }
+            <ul class="mt-2 max-h-44 space-y-1 overflow-auto">
+              @for (pp of planningProposal.phases; track pp.phaseOrder) {
+                <li class="rounded border border-gray-100 p-2">
+                  <p class="font-medium">#{{ pp.phaseOrder }} {{ pp.name }} ({{ pp.plannedDays }} j)</p>
+                  <p class="text-[11px] text-gray-500">
+                    @if (pp.startDate) { Début {{ pp.startDate | date:'shortDate' }} } @else { Début N/A }
+                    —
+                    @if (pp.dueDate) { Fin {{ pp.dueDate | date:'shortDate' }} } @else { Fin N/A }
+                  </p>
+                </li>
+              }
+            </ul>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <button type="button" (click)="applyPlanningProposal()" [disabled]="planningApplying || project?.status !== 'IN_PROGRESS'"
+                class="rounded bg-teal-600 px-3 py-1 text-xs font-semibold text-white hover:bg-teal-700 disabled:opacity-50">
+                {{ planningApplying ? 'Application…' : 'Appliquer phases IA' }}
+              </button>
+              <button type="button" (click)="clearPlanningProposal()"
+                class="rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                Ignorer
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <form class="mt-4 space-y-3" (ngSubmit)="createPhase()">
+        <input [(ngModel)]="newPhase.name" name="phaseName" placeholder="Nom de phase"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+        <input [(ngModel)]="newPhase.phaseOrder" name="phaseOrder" type="number" min="1"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+        <textarea [(ngModel)]="newPhase.description" name="phaseDescription" rows="2" placeholder="Description"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"></textarea>
+        <div class="grid grid-cols-2 gap-2">
+          <input [(ngModel)]="newPhase.startDate" name="phaseStartDate" type="datetime-local"
+            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+          <input [(ngModel)]="newPhase.dueDate" name="phaseDueDate" type="datetime-local"
+            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+        </div>
+        <button type="submit" [disabled]="creatingPhase || project?.status !== 'IN_PROGRESS'"
+          class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
+          {{ creatingPhase ? 'Création…' : 'Ajouter phase' }}
+        </button>
+      </form>
+
+      <ul class="mt-4 space-y-2">
+        @for (phase of phases; track phase.id) {
+          <li class="rounded-lg border border-gray-200 p-3"
+              [class.ring-2]="selectedPhaseId === phase.id"
+              [class.ring-emerald-400]="selectedPhaseId === phase.id">
+            <div class="flex items-start justify-between gap-2">
+              <button type="button" (click)="selectPhase(phase.id)" class="text-left">
+                <p class="font-medium text-gray-900">#{{ phase.phaseOrder }} {{ phase.name }}</p>
+                <p class="text-xs text-gray-500">
+                  @if (phase.dueDate) { Échéance {{ phase.dueDate | date:'short' }} } @else { Sans échéance }
+                </p>
+              </button>
+              <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="statusClass(phase.status)">
+                {{ phase.status }}
+              </span>
+            </div>
+            <div class="mt-2 flex gap-2">
+              <button type="button" (click)="startPhase(phase)" [disabled]="startingPhaseId === phase.id || project?.status !== 'IN_PROGRESS'"
+                class="rounded border border-blue-200 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50">
+                {{ startingPhaseId === phase.id ? '...' : 'Start' }}
+              </button>
+              <button type="button" (click)="deletePhase(phase)"
+                [disabled]="deletingPhaseId === phase.id || phase.status !== 'PLANNED' || project?.status !== 'IN_PROGRESS'"
+                class="rounded border border-red-200 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50">
+                {{ deletingPhaseId === phase.id ? '...' : 'Supprimer' }}
+              </button>
+            </div>
+          </li>
+        } @empty {
+          <li class="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
+            Aucune phase créée.
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="space-y-6 lg:col-span-2">
+      @if (selectedPhase; as phase) {
+        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900">Phase #{{ phase.phaseOrder }} — {{ phase.name }}</h2>
+              @if (phase.description) {
+                <p class="mt-1 text-sm text-gray-600">{{ phase.description }}</p>
+              }
+            </div>
+            <button type="button" (click)="closeSelectedPhase()" [disabled]="closingPhase || project?.status !== 'IN_PROGRESS'"
+              class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50">
+              {{ closingPhase ? 'Clôture…' : 'Clôturer la phase' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="text-base font-semibold text-gray-900">IA Decision Copilot</h3>
+            <button type="button" (click)="loadDecisionCopilot()"
+              class="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
+              Rafraîchir
+            </button>
+          </div>
+          @if (copilotLoading) {
+            <div class="mt-3 flex justify-center py-4">
+              <div class="h-6 w-6 animate-spin rounded-full border-2 border-emerald-100 border-t-emerald-600"></div>
+            </div>
+          } @else if (decisionCopilot) {
+            <div class="mt-3 space-y-3 text-sm">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold" [class]="recommendationClass(decisionCopilot.recommendation)">
+                  {{ decisionCopilot.recommendation }}
+                </span>
+                <span class="text-gray-600">Confiance: <strong>{{ decisionCopilot.confidence }}%</strong></span>
+              </div>
+              <p class="text-gray-700">{{ decisionCopilot.summary }}</p>
+              @if (decisionCopilot.reasons.length) {
+                <div>
+                  <p class="font-medium text-gray-800">Raisons</p>
+                  <ul class="mt-1 list-disc space-y-1 pl-5 text-gray-600">
+                    @for (r of decisionCopilot.reasons; track r) { <li>{{ r }}</li> }
+                  </ul>
+                </div>
+              }
+              @if (decisionCopilot.suggestedActions.length) {
+                <div>
+                  <p class="font-medium text-gray-800">Actions suggérées</p>
+                  <ul class="mt-1 list-disc space-y-1 pl-5 text-gray-600">
+                    @for (a of decisionCopilot.suggestedActions; track a) { <li>{{ a }}</li> }
+                  </ul>
+                </div>
+              }
+              <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Message owner prêt à envoyer</p>
+                <p class="mt-1 text-gray-700">{{ decisionCopilot.ownerMessageDraft }}</p>
+              </div>
+            </div>
+          } @else {
+            <p class="mt-3 text-sm text-gray-500">Aucune recommandation disponible.</p>
+          }
+        </div>
+
+        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h3 class="text-base font-semibold text-gray-900">Livrables</h3>
+          <form class="mt-3 grid gap-2 sm:grid-cols-4" (ngSubmit)="createDeliverable()">
+            <input [(ngModel)]="newDeliverable.title" name="deliverableTitle" placeholder="Titre"
+              class="rounded-md border border-gray-300 px-3 py-2 text-sm sm:col-span-2" />
+            <select [(ngModel)]="newDeliverable.type" name="deliverableType"
+              class="rounded-md border border-gray-300 px-3 py-2 text-sm">
+              @for (t of deliverableTypes; track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+            <button type="submit" [disabled]="creatingDeliverable || project?.status !== 'IN_PROGRESS'"
+              class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
+              {{ creatingDeliverable ? '...' : 'Ajouter' }}
+            </button>
+            <textarea [(ngModel)]="newDeliverable.description" name="deliverableDescription" rows="2" placeholder="Description"
+              class="rounded-md border border-gray-300 px-3 py-2 text-sm sm:col-span-4"></textarea>
+          </form>
+
+          <ul class="mt-4 space-y-2">
+            @for (d of deliverables; track d.id) {
+              <li class="rounded-lg border border-gray-200 p-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <p class="font-medium text-gray-900">{{ d.title }} <span class="text-xs text-gray-500">({{ d.type }})</span></p>
+                  <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="reviewClass(d.reviewStatus)">
+                    {{ d.reviewStatus }}
+                  </span>
+                </div>
+                @if (d.description) {
+                  <p class="mt-1 text-sm text-gray-600">{{ d.description }}</p>
+                }
+                @if (d.reviewComment) {
+                  <p class="mt-1 text-xs text-gray-500">Commentaire: {{ d.reviewComment }}</p>
+                }
+                <div class="mt-2 flex flex-wrap gap-2">
+                  @for (s of reviewStatuses; track s) {
+                    <button type="button"
+                      (click)="reviewDeliverable(d.id, s)"
+                      [disabled]="reviewingDeliverableId === d.id || project?.status !== 'IN_PROGRESS'"
+                      class="rounded border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                      {{ s }}
+                    </button>
+                  }
+                </div>
+              </li>
+            } @empty {
+              <li class="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
+                Aucun livrable.
+              </li>
+            }
+          </ul>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h3 class="text-base font-semibold text-gray-900">Meetings phase</h3>
+          <p class="mt-1 text-sm text-gray-500">Ouvrez la visio dans la plateforme : même salle pour vous et le freelancer.</p>
+          <form class="mt-3 grid gap-2 sm:grid-cols-4" (ngSubmit)="createMeeting()">
+            <input [(ngModel)]="newMeeting.meetingAt" name="meetingAt" type="datetime-local"
+              class="rounded-md border border-gray-300 px-3 py-2 text-sm sm:col-span-2" />
+            <select [(ngModel)]="newMeeting.decision" name="meetingDecision"
+              class="rounded-md border border-gray-300 px-3 py-2 text-sm">
+              @for (d of meetingDecisions; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+            <button type="submit" [disabled]="creatingMeeting || project?.status !== 'IN_PROGRESS'"
+              class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
+              {{ creatingMeeting ? '...' : 'Ajouter' }}
+            </button>
+            <input [(ngModel)]="newMeeting.agenda" name="meetingAgenda" placeholder="Agenda"
+              class="rounded-md border border-gray-300 px-3 py-2 text-sm sm:col-span-4" />
+            <textarea [(ngModel)]="newMeeting.summary" name="meetingSummary" rows="2" placeholder="Résumé"
+              class="rounded-md border border-gray-300 px-3 py-2 text-sm sm:col-span-4"></textarea>
+          </form>
+
+          <ul class="mt-4 space-y-2">
+            @for (m of meetings; track m.id) {
+              <li class="rounded-lg border border-gray-200 p-3 text-sm">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p class="font-medium text-gray-900">{{ m.meetingAt | date:'medium' }}</p>
+                    @if (m.decision) { <p class="text-gray-600">Décision: <strong>{{ m.decision }}</strong></p> }
+                    @if (m.agenda) { <p class="text-gray-600">Agenda: {{ m.agenda }}</p> }
+                    @if (m.summary) { <p class="text-gray-600">Résumé: {{ m.summary }}</p> }
+                  </div>
+                  <a
+                    [routerLink]="['/project-owner', 'projects', projectId, 'supervision', 'meeting', phase.id, m.id]"
+                    class="shrink-0 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">
+                    Rejoindre la salle
+                  </a>
+                </div>
+              </li>
+            } @empty {
+              <li class="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
+                Aucun meeting.
+              </li>
+            }
+          </ul>
+        </div>
+      } @else {
+        <div class="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
+          Sélectionnez ou créez une phase pour commencer la supervision.
+        </div>
+      }
+    </section>
+  </div>
+</div>

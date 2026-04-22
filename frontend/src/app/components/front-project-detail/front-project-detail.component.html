@@ -1,0 +1,314 @@
+@if (loading) {
+  <div class="flex justify-center py-20">
+    <div class="h-10 w-10 animate-spin rounded-full border-4 border-[var(--fiverr-green-light)] border-t-[var(--fiverr-green)]"></div>
+  </div>
+}
+
+@if (project) {
+  <div class="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+    @if (isProjectOwner) {
+      <a routerLink="/project-owner/projects" class="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[var(--fiverr-gray)] hover:text-[var(--fiverr-dark)]">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Retour à mes projets
+      </a>
+    } @else {
+      <a routerLink="/projects" class="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[var(--fiverr-gray)] hover:text-[var(--fiverr-dark)]">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Retour aux projets
+      </a>
+    }
+
+    <article class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div class="border-b border-gray-100 bg-[var(--fiverr-gray-light)]/50 px-6 py-6 sm:px-8">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium" [class]="statusClass(project.status)">
+              {{ formatStatus(project.status) }}
+            </span>
+            <h1 class="mt-3 text-2xl font-bold text-[var(--fiverr-dark)] sm:text-3xl">{{ project.title }}</h1>
+            <p class="mt-2 text-sm text-[var(--fiverr-gray)]">Publié le {{ project.createdAt | date:'mediumDate' }}</p>
+          </div>
+          <div class="flex flex-col items-end gap-1">
+            <span class="text-2xl font-bold text-[var(--fiverr-green)]">{{ project.budget | number:'1.0-0' }} TND</span>
+            <span class="text-sm text-[var(--fiverr-gray)]">Budget</span>
+          </div>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-6 text-sm">
+          <div>
+            <span class="inline font-medium text-[var(--fiverr-gray)]">Durée</span>
+            <span class="ml-2 text-[var(--fiverr-dark)]">{{ project.duration }} jours</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-8 sm:px-8">
+        <h2 class="text-sm font-medium text-[var(--fiverr-gray)]">Description du projet</h2>
+        <p class="mt-3 whitespace-pre-wrap text-[var(--fiverr-dark)] leading-relaxed">{{ project.description }}</p>
+        
+        @if (project.requiredSkills && project.requiredSkills.length > 0) {
+          <div class="mt-6">
+            <h2 class="text-sm font-medium text-[var(--fiverr-gray)]">Compétences requises</h2>
+            <div class="mt-3 flex flex-wrap gap-2">
+              @for (skill of project.requiredSkills; track skill) {
+                <span class="inline-flex items-center rounded-full bg-[var(--fiverr-green-light)] px-3 py-1 text-sm font-medium text-[var(--fiverr-green)]">
+                  {{ skill }}
+                </span>
+              }
+            </div>
+          </div>
+        }
+
+        @if (effortLoading) {
+          <div class="mt-6 flex justify-center rounded-lg border border-sky-100 bg-sky-50/40 py-6">
+            <div class="h-8 w-8 animate-spin rounded-full border-4 border-sky-200 border-t-sky-600"></div>
+          </div>
+        } @else if (effort) {
+          <div class="mt-6 rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50/90 to-white p-5 shadow-sm">
+            <h2 class="text-base font-semibold text-[var(--fiverr-dark)]">Charge estimée (jours-homme)</h2>
+            <p class="mt-2 text-sm text-[var(--fiverr-gray)]">{{ effort.summary }}</p>
+            <div class="mt-4 flex flex-wrap gap-6">
+              <div>
+                <p class="text-2xl font-bold text-sky-700">{{ effort.estimatedManDays }}</p>
+                <p class="text-xs text-[var(--fiverr-gray)]">j-h (point)</p>
+              </div>
+              <div>
+                <p class="text-lg font-semibold text-[var(--fiverr-dark)]">{{ effort.estimatedManDaysLow }} – {{ effort.estimatedManDaysHigh }}</p>
+                <p class="text-xs text-[var(--fiverr-gray)]">fourchette indicative</p>
+              </div>
+              <div>
+                <p class="text-lg font-semibold text-[var(--fiverr-dark)]">{{ effort.fteRequiredVsDeclared | number:'1.2-2' }} ETP</p>
+                <p class="text-xs text-[var(--fiverr-gray)]">sur {{ effort.declaredDurationDays }} j calendaires</p>
+              </div>
+            </div>
+            <p class="mt-2 text-xs text-[var(--fiverr-gray)]">Méthode : {{ effort.methodVersion }}</p>
+            @if (effort.flags.length > 0) {
+              <ul class="mt-3 flex flex-wrap gap-2">
+                @for (f of effort.flags; track f) {
+                  <li class="rounded-md bg-white px-2 py-1 text-xs text-sky-900 ring-1 ring-sky-200">{{ f }}</li>
+                }
+              </ul>
+            }
+          </div>
+        } @else if (effortError) {
+          <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50/80 p-4 shadow-sm">
+            <h2 class="text-base font-semibold text-amber-900">Charge estimée (jours-homme)</h2>
+            <p class="mt-2 text-sm text-amber-800">{{ effortError }}</p>
+            <button type="button" (click)="reloadEffort()"
+              class="mt-3 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-50">
+              Réessayer
+            </button>
+          </div>
+        }
+
+        @if (mlRiskLoading) {
+          <div class="mt-6 flex justify-center rounded-lg border border-violet-100 bg-violet-50/40 py-6">
+            <div class="h-8 w-8 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600"></div>
+          </div>
+        } @else if (mlRisk) {
+          <div class="mt-6 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50/90 to-white p-5 shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 class="text-base font-semibold text-[var(--fiverr-dark)]">Risque projet (ML)</h2>
+                <p class="mt-1 text-sm text-[var(--fiverr-gray)]">{{ mlRisk.summary }}</p>
+                <p class="mt-2 text-xs text-[var(--fiverr-gray)]">
+                  Modèle : {{ mlRisk.modelId }}
+                  @if (mlRisk.heuristicFallback) {
+                    <span class="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-amber-800">repli heuristique</span>
+                  }
+                </p>
+              </div>
+              <div class="text-right">
+                <p class="text-3xl font-bold text-violet-700">{{ mlRisk.riskScore0To100 }}</p>
+                <p class="text-xs text-[var(--fiverr-gray)]">score (0–100)</p>
+                <span class="mt-2 inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="mlRiskBadgeClass(mlRisk.riskLevel)">
+                  {{ mlRisk.riskLevel }}
+                </span>
+              </div>
+            </div>
+            @if (mlRisk.flags.length > 0) {
+              <ul class="mt-4 flex flex-wrap gap-2 border-t border-violet-100 pt-4">
+                @for (f of mlRisk.flags; track f) {
+                  <li class="rounded-md bg-white px-2 py-1 text-xs font-medium text-violet-900 ring-1 ring-violet-200">{{ f }}</li>
+                }
+              </ul>
+            }
+          </div>
+        }
+
+        @if (isOwnerOfThisProject && (project.status === 'OPEN' || project.status === 'IN_PROGRESS')) {
+          <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/60 px-4 py-3">
+            <p class="text-sm text-emerald-900">
+              <strong>Votre projet</strong> — candidatures, entretiens et contrat.
+            </p>
+            <a [routerLink]="['/project-owner/projects', project.id, 'candidatures']"
+              class="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+              Candidatures & contrat
+            </a>
+          </div>
+        }
+
+        <!-- Compatibilité freelancer : affichée pour TOUS les projets cliqués (matching intelligent) -->
+        @if (isFreelancer) {
+          <div class="mt-8 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50/80 to-white p-6 shadow-sm">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 class="flex items-center gap-2 text-base font-semibold text-slate-800">
+                <span class="text-amber-600">📊</span> Votre compatibilité avec ce projet
+              </h2>
+              <button type="button" (click)="loadSkillGap()" [disabled]="skillGapLoading"
+                class="rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-50">
+                {{ skillGapLoading ? 'Chargement...' : 'Rafraîchir' }}
+              </button>
+            </div>
+            @if (skillGapLoading) {
+              <div class="flex justify-center py-4">
+                <div class="h-6 w-6 animate-spin rounded-full border-4 border-amber-200 border-t-amber-600"></div>
+              </div>
+            } @else if (!skillGapLoading && skillGap === null) {
+              <p class="py-2 text-sm text-amber-700">Impossible de charger vos compétences. Vérifiez que votre profil Freelancer contient des compétences (Espace Freelancer).</p>
+            } @else if (skillGap) {
+              <div class="flex flex-wrap items-center gap-4">
+                <div class="rounded-lg border border-amber-200 bg-white px-5 py-3 shadow-sm">
+                  <p class="text-sm font-medium text-slate-500">Compatibilité</p>
+                  @if (project.requiredSkills && project.requiredSkills.length > 0) {
+                    <p class="text-3xl font-bold" [class.text-emerald-600]="skillGap.compatibility >= 70" [class.text-amber-600]="skillGap.compatibility >= 40 && skillGap.compatibility < 70" [class.text-red-600]="skillGap.compatibility < 40">
+                      {{ skillGap.compatibility }}%
+                    </p>
+                  } @else {
+                    <p class="text-3xl font-bold text-slate-500">N/A</p>
+                  }
+                </div>
+                @if (!project.requiredSkills || project.requiredSkills.length === 0) {
+                  <p class="text-sm text-slate-600">Ce projet n'indique pas de compétences requises. Aucun score de compatibilité calculé.</p>
+                } @else if (skillGap.missingSkills.length > 0) {
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-600">Compétences manquantes</p>
+                    <ul class="mt-2 flex flex-wrap gap-2">
+                      @for (skill of skillGap.missingSkills; track skill) {
+                        <li class="inline-flex items-center gap-1 rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-800">
+                          <span class="text-red-500">−</span> {{ skill }}
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                } @else {
+                  <p class="text-sm font-medium text-emerald-700">Vous avez toutes les compétences requises pour ce projet.</p>
+                }
+              </div>
+              @if (skillGap.matchedSkills.length > 0 && skillGap.missingSkills.length > 0) {
+                <p class="mt-3 text-xs text-slate-500">
+                  Compétences acquises : {{ skillGap.matchedSkills.join(', ') }}
+                </p>
+              }
+            }
+          </div>
+        }
+
+        @if (isFreelancer && project.status === 'OPEN') {
+          <div class="mt-8 rounded-xl border border-slate-200 bg-slate-50/80 p-6 shadow-sm">
+            <h2 class="text-base font-semibold text-slate-800">Postuler au projet</h2>
+            <p class="mt-1 text-sm text-slate-600">Une candidature par projet. Le client planifie un entretien puis accepte au plus un freelancer.</p>
+            @if (myCandidature) {
+              <p class="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                Vous avez déjà postulé. Statut : <strong>{{ myCandidature.status }}</strong>
+                @if (myCandidature.proposedBudget != null) {
+                  · Budget proposé : {{ myCandidature.proposedBudget | number:'1.0-0' }} TND
+                }
+              </p>
+            } @else {
+              <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-medium text-slate-600">Message / proposition</label>
+                  <textarea [(ngModel)]="applyMessage" rows="3"
+                    class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-[var(--fiverr-green)] focus:outline-none focus:ring-1 focus:ring-[var(--fiverr-green)]"
+                    placeholder="Présentez votre approche, délais…"></textarea>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600">Budget proposé (TND)</label>
+                  <input type="number" [(ngModel)]="applyBudget" min="1" step="1"
+                    class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600">Budget tâches supp. (optionnel)</label>
+                  <input type="number" [(ngModel)]="applyExtra" min="0" step="1"
+                    class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
+                </div>
+              </div>
+              <button type="button" (click)="submitApplication()" [disabled]="applySubmitting"
+                class="mt-4 rounded-lg bg-[var(--fiverr-green)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--fiverr-green-hover)] disabled:opacity-50">
+                {{ applySubmitting ? 'Envoi…' : 'Envoyer ma candidature' }}
+              </button>
+            }
+          </div>
+        }
+
+        <!-- Top 5 Freelancers + Contactez-moi (style Fiverr) -->
+        @if (!isFreelancer) {
+        <div class="mt-8 rounded-lg border border-[var(--fiverr-green-light)] bg-gradient-to-br from-[var(--fiverr-green-light)]/50 to-white p-6">
+          <h2 class="mb-1 flex items-center gap-2 text-base font-semibold text-[var(--fiverr-dark)]">
+            <span class="text-[var(--fiverr-green)]">💎</span> Top 5 Freelancers compatibles
+          </h2>
+          <p class="mb-4 text-sm text-[var(--fiverr-gray)]">
+            Score = (Compétences × 0,7) + (Expérience × 0,3)
+          </p>
+          @if (matchingLoading) {
+            <div class="flex justify-center py-6">
+              <div class="h-8 w-8 animate-spin rounded-full border-4 border-[var(--fiverr-green-light)] border-t-[var(--fiverr-green)]"></div>
+            </div>
+          } @else if (matchingFreelancers.length === 0) {
+            <p class="py-4 text-sm text-[var(--fiverr-gray)]">Ajoutez des compétences requises au projet (bouton Modifier) pour afficher les freelancers compatibles.</p>
+          } @else {
+            <ul class="space-y-3">
+              @for (m of matchingFreelancers; track m.freelancerId) {
+                <li class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                  <div class="flex items-center gap-3">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--fiverr-green-light)] text-base font-bold text-[var(--fiverr-green)]">
+                      {{ m.fullName.charAt(0) }}
+                    </div>
+                    <div>
+                      <p class="font-medium text-[var(--fiverr-dark)]">{{ m.fullName }}</p>
+                      @if (m.email) {
+                        <p class="text-xs text-[var(--fiverr-gray)]">{{ m.email }}</p>
+                      }
+                    </div>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-3">
+                    <a href="#" (click)="openDiscussion(m.freelancerId, m.fullName); $event.preventDefault()"
+                      class="inline-flex items-center gap-1.5 rounded-md bg-[var(--fiverr-green)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--fiverr-green-hover)]">
+                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      Contactez-moi
+                    </a>
+                    <div class="text-right">
+                      <p class="text-xl font-bold text-[var(--fiverr-green)]">{{ m.score }}%</p>
+                      <p class="text-xs text-[var(--fiverr-gray)]">Score · Comp. {{ m.skillMatch }}% · Exp. {{ m.experience }}%</p>
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+        }
+      </div>
+
+      @if (project.status === 'OPEN') {
+        <div class="border-t border-gray-100 bg-[var(--fiverr-gray-light)]/50 px-6 py-6 sm:px-8">
+          <p class="text-sm text-[var(--fiverr-gray)]">
+            Ce projet est ouvert. Consultez votre espace ou contactez le client.
+          </p>
+          <a routerLink="/projects" class="mt-4 inline-flex items-center gap-2 rounded-md bg-[var(--fiverr-green)] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[var(--fiverr-green-hover)] transition">
+            Voir d'autres projets
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </a>
+        </div>
+      }
+    </article>
+  </div>
+}

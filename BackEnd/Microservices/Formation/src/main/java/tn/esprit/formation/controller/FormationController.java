@@ -31,12 +31,21 @@ public class FormationController {
         return ResponseEntity.ok(formationService.findOuvertes());
     }
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     /** Métier avancé : formations recommandées pour un freelancer (selon ses gaps de compétences). */
     @GetMapping("/recommandations/freelancer/{freelancerId}")
     public ResponseEntity<List<FormationDto>> getRecommandationsForFreelancer(@PathVariable Long freelancerId) {
         return ResponseEntity.ok(formationService.getRecommandationsForFreelancer(freelancerId));
     }
 
+<<<<<<< HEAD
+=======
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     @GetMapping("/{id}")
     public ResponseEntity<FormationDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(formationService.findById(id));
