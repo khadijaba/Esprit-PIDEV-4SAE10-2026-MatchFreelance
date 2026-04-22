@@ -14,14 +14,26 @@ pipeline {
 
     stages {
 
-        stage('Checkout (projectskills only)') {
+        stage('Checkout (optimized)') {
             steps {
-                checkout([$class: 'GitSCM',
-                    branches: [[name: '*/projectskills']],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
-                    ]]
-                ])
+                script {
+                    def branch = env.BRANCH_NAME ?: 'projectskills'
+
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: "*/${branch}"]],
+                        userRemoteConfigs: [[
+                            url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+                        ]],
+                        extensions: [
+                            [$class: 'CloneOption',
+                                shallow: true,
+                                depth: 1,
+                                noTags: true,
+                                timeout: 30
+                            ]
+                        ]
+                    ])
+                }
             }
         }
 
@@ -32,7 +44,7 @@ pipeline {
             }
         }
 
-        stage('Build & Test (fast)') {
+        stage('Build & Test') {
             steps {
                 dir("${MODULE_DIR}") {
                     sh 'mvn -B clean verify'
@@ -63,11 +75,11 @@ pipeline {
         }
 
         success {
-            echo "✅ Build SUCCESS - projectskills"
+            echo "✅ Pipeline SUCCESS - projectskills"
         }
 
         failure {
-            echo "❌ Build FAILED"
+            echo "❌ Pipeline FAILED"
         }
     }
 }
