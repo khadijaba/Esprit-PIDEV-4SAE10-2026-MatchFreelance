@@ -1,43 +1,79 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven3'
+    options {
+        skipDefaultCheckout(true)
+        timeout(time: 60, unit: 'MINUTES')
+    }
+
+    environment {
+        REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        BRANCH = 'master'
+
+        MODULE_DIR = 'backend/microservices/Formation'
+
+        IMAGE_NAME = 'formation-app'
+        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
+
+        SONAR_PROJECT_KEY = 'formation'
+        SONAR_HOST = 'http://sonarqube:9000'
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                git branch: 'master',
-                    url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+                echo "Cloning repo branch ${BRANCH}"
+                git branch: "${BRANCH}", url: "${REPO_URL}"
             }
         }
 
-        stage('Build') {
+        stage('Build Maven') {
             steps {
-                sh 'mvn clean install'
+                dir("${MODULE_DIR}") {
+                    sh 'mvn clean install'
+                }
             }
         }
 
-        stage('SonarQube') {
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar') {
-                    sh 'mvn sonar:sonar'
+                    dir("${MODULE_DIR}") {
+                        sh """
+                            mvn sonar:sonar \
+                            -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                            -Dsonar.host.url=${SONAR_HOST}
+                        """
+                    }
                 }
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t formation-app .'
+                dir("${MODULE_DIR}") {
+                    sh """
+                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                    """
+                }
             }
         }
 
-        stage('Docker Run') {
+        stage('Run Container') {
             steps {
-                sh 'docker run -d -p 8081:8080 formation-app'
+                sh """
+                    docker rm -f formation || true
+                    docker run -d --name formation -p 8082:8080 ${IMAGE_NAME}:latest
+                """
             }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
         }
     }
 }
