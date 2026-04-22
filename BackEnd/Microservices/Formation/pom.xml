@@ -89,24 +89,10 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-
-        <!-- Config Client -->
-=======
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-config</artifactId>
         </dependency>
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-
-=======
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-loadbalancer</artifactId>
@@ -117,10 +103,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
-<<<<<<< HEAD
-=======
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
@@ -150,11 +132,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
             <plugin>
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.12</version>
@@ -174,10 +151,6 @@
                 </executions>
             </plugin>
             <plugin>
-<<<<<<< HEAD
-=======
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>4.0.0.4121</version>

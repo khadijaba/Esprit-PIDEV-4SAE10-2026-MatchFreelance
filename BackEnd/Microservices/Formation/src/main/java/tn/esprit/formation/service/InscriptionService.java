@@ -3,14 +3,7 @@ package tn.esprit.formation.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-<<<<<<< HEAD
 import tn.esprit.formation.client.EvaluationClient;
-=======
-<<<<<<< HEAD
-=======
-import tn.esprit.formation.client.EvaluationClient;
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
 import tn.esprit.formation.dto.InscriptionDto;
 import tn.esprit.formation.entity.Formation;
 import tn.esprit.formation.entity.Inscription;
@@ -18,14 +11,7 @@ import tn.esprit.formation.repository.FormationRepository;
 import tn.esprit.formation.repository.InscriptionRepository;
 
 import java.util.List;
-<<<<<<< HEAD
 import java.util.Map;
-=======
-<<<<<<< HEAD
-=======
-import java.util.Map;
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
 import java.util.stream.Collectors;
 
 @Service
@@ -34,14 +20,7 @@ public class InscriptionService {
 
     private final InscriptionRepository inscriptionRepository;
     private final FormationRepository formationRepository;
-<<<<<<< HEAD
     private final EvaluationClient evaluationClient;
-=======
-<<<<<<< HEAD
-=======
-    private final EvaluationClient evaluationClient;
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
 
     @Transactional(readOnly = true)
     public List<InscriptionDto> findByFormation(Long formationId) {
@@ -76,11 +55,6 @@ public class InscriptionService {
         if (formation.getStatut() != Formation.StatutFormation.OUVERTE)
             throw new RuntimeException("Formation non ouverte aux inscriptions");
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
         // Condition d'accès : certificat requis (examen Y)
         Long examenRequisId = formation.getExamenRequisId();
         if (examenRequisId != null) {
@@ -97,10 +71,6 @@ public class InscriptionService {
             }
         }
 
-<<<<<<< HEAD
-=======
->>>>>>> 8d5250d (Ajout du projet MatchFreelance)
->>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
         Inscription ins = Inscription.builder()
                 .formation(formation)
                 .freelancerId(freelancerId)
