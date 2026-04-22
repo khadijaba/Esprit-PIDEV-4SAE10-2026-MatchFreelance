@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -129,14 +130,14 @@ public class ProjectSupervisionService {
     @Transactional
     public PhaseMeeting createMeeting(Long projectId, Long phaseId, CreatePhaseMeetingRequest request) {
         ProjectPhase phase = loadProjectPhase(projectId, phaseId);
-        if (phase.getStatus() == ProjectPhaseStatus.PLANNED) {
+        if (phase.getStatus() == ProjectPhaseStatus.APPROVED) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Start phase before scheduling meeting");
+                    "Impossible de planifier un meeting sur une phase déjà approuvée.");
         }
         PhaseMeeting meeting = new PhaseMeeting();
         meeting.setPhase(phase);
-        meeting.setMeetingAt(request.getMeetingAt());
+        meeting.setMeetingAt(LocalDateTime.ofInstant(request.getMeetingAt(), ZoneOffset.UTC));
         meeting.setAgenda(request.getAgenda());
         meeting.setSummary(request.getSummary());
         meeting.setDecision(request.getDecision());

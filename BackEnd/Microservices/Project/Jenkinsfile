@@ -1,11 +1,33 @@
+/**
+ * Pipeline CI — microservice Project
+ *
+ * Prérequis Jenkins :
+ * - Credential Secret text : ID = sonar-token-backend (token SonarQube)
+ * - Optionnel push Docker : credential dockerhub-creds + décocher SKIP_DOCKER
+ *
+ * Adapter MODULE_DIR si la racine Git ne contient pas ce chemin (mono-repo).
+ * Sonar : la clé projet doit exister dans SonarQube (SONAR_PROJECT_KEY).
+ */
 pipeline {
     agent any
 
+    parameters {
+        booleanParam(
+            name: 'SKIP_DOCKER',
+            defaultValue: true,
+            description: 'Coché = pas de build/push Docker (utile en local sans Docker Hub)'
+        )
+    }
+
     environment {
-        IMAGE_NAME = 'emna450/project'
+        /* Même nom que le dépôt Docker Hub : docker.io/emna450/backend-project */
+        IMAGE_NAME = 'emna450/backend-project'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
         SONAR_HOST = 'http://host.docker.internal:9000'
+        /* Chemin du module depuis la racine du dépôt Git (checkout scm) */
         MODULE_DIR = 'BackEnd/Microservices/Project'
+        /* Doit correspondre à la Project key créée dans SonarQube */
+        SONAR_PROJECT_KEY = 'backend'
     }
 
     stages {
@@ -18,7 +40,12 @@ pipeline {
         stage('Build & Test') {
             steps {
                 dir("${MODULE_DIR}") {
-                    sh 'mvn clean verify'
+                    sh 'mvn -B clean verify'
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
                 }
             }
         }
@@ -26,37 +53,43 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 dir("${MODULE_DIR}") {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            mvn sonar:sonar \
-                              -Dsonar.projectKey=project \
-                              -Dsonar.host.url=${SONAR_HOST} \
-                              -Dsonar.login=${SONAR_TOKEN}
-                        '''
+                    withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
+                        sh """
+                            mvn -B sonar:sonar \\
+                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \\
+                              -Dsonar.host.url=${SONAR_HOST} \\
+                              -Dsonar.token=\${SONAR_TOKEN}
+                        """
                     }
                 }
             }
         }
 
         stage('Docker Build') {
+            when {
+                expression { return !params.SKIP_DOCKER }
+            }
             steps {
                 dir("${MODULE_DIR}") {
-                    sh '''
+                    sh """
                         docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
                         docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                    '''
+                    """
                 }
             }
         }
 
         stage('Docker Push') {
+            when {
+                expression { return !params.SKIP_DOCKER }
+            }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+                    sh """
+                        echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
                         docker push ${IMAGE_NAME}:latest
-                    '''
+                    """
                 }
             }
         }
