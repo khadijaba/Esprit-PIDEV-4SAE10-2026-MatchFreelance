@@ -1,111 +1,54 @@
 pipeline {
     agent any
 
-    options {
-        skipDefaultCheckout(true)
-        timeout(time: 90, unit: 'MINUTES')
+    tools {
+        jdk 'JDK17'
+        maven 'Maven3'
     }
 
     environment {
         MODULE_DIR = 'BackEnd/Microservices/Project'
         SONAR_PROJECT_KEY = 'backend'
         SONAR_HOST = 'http://host.docker.internal:9000'
-        MAVEN_DOCKER_IMAGE = 'maven:3-eclipse-temurin-17'
-        MAVEN_BOOTSTRAP_VERSION = '3.9.9'
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                script {
-                    def branch = env.BRANCH_NAME ?: 'projectskills'
-                    def exts = []
-                    if (scm.extensions != null && !scm.extensions.isEmpty()) {
-                        exts.addAll(scm.extensions)
-                    }
-                    exts.add([
-                        $class       : 'CloneOption',
-                        shallow      : true,
-                        depth        : 1,
-                        timeout      : 120,
-                        honorRefspec : true,
-                        noTags       : true,
-                        reference    : ''
-                    ])
-                    def remotes = scm.userRemoteConfigs.collect { cfg ->
-                        def m = [url: cfg.url]
-                        if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
-                            m.credentialsId = cfg.credentialsId
-                        }
-                        m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
-                        m
-                    }
-                    checkout([
-                        $class            : 'GitSCM',
-                        branches          : [[name: "*/${branch}"]],
-                        extensions        : exts,
-                        userRemoteConfigs : remotes
-                    ])
+                git branch: 'projectskills',
+                    url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+            }
+        }
+
+        stage('Verify Tools') {
+            steps {
+                sh 'echo "Java version:"'
+                sh 'java -version'
+                sh 'echo "Maven version:"'
+                sh 'mvn -v'
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    sh 'mvn clean verify'
                 }
             }
         }
 
-        stage('Build, Test & Sonar') {
+        stage('SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
-                    sh """#!/bin/bash
-set -euo pipefail
-MAVEN_VER="${env.MAVEN_BOOTSTRAP_VERSION}"
-ensure_maven_on_path() {
-  if command -v mvn >/dev/null 2>&1; then
-    return 0
-  fi
-  local base="\${JENKINS_HOME:-\${HOME:-/tmp}}/.pipeline-tools"
-  local dir="\${base}/apache-maven-\${MAVEN_VER}"
-  if [ ! -x "\${dir}/bin/mvn" ]; then
-    mkdir -p "\${base}"
-    local url="https://archive.apache.org/dist/maven/maven-3/\${MAVEN_VER}/binaries/apache-maven-\${MAVEN_VER}-bin.tar.gz"
-    local tgz="\${base}/apache-maven-\${MAVEN_VER}-bin.tar.gz"
-    if command -v curl >/dev/null 2>&1; then
-      curl -fsSL "\${url}" -o "\${tgz}"
-    elif command -v wget >/dev/null 2>&1; then
-      wget -q -O "\${tgz}" "\${url}"
-    else
-      echo "Sans Docker utilisable : mvn absent et ni curl ni wget pour installer Maven." >&2
-      exit 1
-    fi
-    tar -xzf "\${tgz}" -C "\${base}"
-    rm -f "\${tgz}"
-  fi
-  export PATH="\${dir}/bin:\${PATH}"
-}
-run_sonar_mvn() {
-  mvn -B clean verify sonar:sonar \\
-    -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
-    -Dsonar.host.url=${env.SONAR_HOST} \\
-    -Dsonar.token=\${SONAR_TOKEN}
-}
-if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-  docker run --rm \\
-    -v "${WORKSPACE}:/ws" \\
-    -w "/ws/${MODULE_DIR}" \\
-    -e SONAR_TOKEN \\
-    ${env.MAVEN_DOCKER_IMAGE} \\
-    mvn -B clean verify sonar:sonar \\
-      -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
-      -Dsonar.host.url=${env.SONAR_HOST} \\
-      -Dsonar.token=\${SONAR_TOKEN}
-else
-  cd "${WORKSPACE}/${MODULE_DIR}"
-  ensure_maven_on_path
-  run_sonar_mvn
-fi
-"""
-                }
-            }
-            post {
-                always {
-                    junit allowEmptyResults: true, testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
+                    dir("${MODULE_DIR}") {
+                        sh """
+                        mvn sonar:sonar \
+                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                        -Dsonar.host.url=${SONAR_HOST} \
+                        -Dsonar.token=$SONAR_TOKEN
+                        """
+                    }
                 }
             }
         }
@@ -113,13 +56,15 @@ fi
 
     post {
         always {
-            script {
-                try {
-                    cleanWs()
-                } catch (ignored) {
-                    // pas de workspace si échec avant checkout
-                }
-            }
+            junit allowEmptyResults: true, testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
+        }
+
+        success {
+            echo '✅ Pipeline exécuté avec succès !'
+        }
+
+        failure {
+            echo '❌ Pipeline échoué, vérifier les logs.'
         }
     }
 }
