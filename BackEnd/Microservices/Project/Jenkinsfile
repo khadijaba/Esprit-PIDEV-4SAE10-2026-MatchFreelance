@@ -9,9 +9,9 @@ pipeline {
     environment {
         MODULE_DIR = 'BackEnd/Microservices/Project'
         SONAR_PROJECT_KEY = 'backend'
-        /* Pas de paramètres à cocher : URL Sonar fixe ici ou surcharge via config Jenkins */
         SONAR_HOST = 'http://host.docker.internal:9000'
         MAVEN_DOCKER_IMAGE = 'maven:3-eclipse-temurin-17'
+        MAVEN_BOOTSTRAP_VERSION = '3.9.9'
     }
 
     stages {
@@ -53,17 +53,54 @@ pipeline {
         stage('Build, Test & Sonar') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
-                    sh """
-                        docker run --rm \\
-                          -v "${WORKSPACE}:/ws" \\
-                          -w "/ws/${MODULE_DIR}" \\
-                          -e SONAR_TOKEN \\
-                          ${env.MAVEN_DOCKER_IMAGE} \\
-                          mvn -B clean verify sonar:sonar \\
-                            -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
-                            -Dsonar.host.url=${env.SONAR_HOST} \\
-                            -Dsonar.token=\${SONAR_TOKEN}
-                    """
+                    sh """#!/bin/bash
+set -euo pipefail
+MAVEN_VER="${env.MAVEN_BOOTSTRAP_VERSION}"
+ensure_maven_on_path() {
+  if command -v mvn >/dev/null 2>&1; then
+    return 0
+  fi
+  local base="\${JENKINS_HOME:-\${HOME:-/tmp}}/.pipeline-tools"
+  local dir="\${base}/apache-maven-\${MAVEN_VER}"
+  if [ ! -x "\${dir}/bin/mvn" ]; then
+    mkdir -p "\${base}"
+    local url="https://archive.apache.org/dist/maven/maven-3/\${MAVEN_VER}/binaries/apache-maven-\${MAVEN_VER}-bin.tar.gz"
+    local tgz="\${base}/apache-maven-\${MAVEN_VER}-bin.tar.gz"
+    if command -v curl >/dev/null 2>&1; then
+      curl -fsSL "\${url}" -o "\${tgz}"
+    elif command -v wget >/dev/null 2>&1; then
+      wget -q -O "\${tgz}" "\${url}"
+    else
+      echo "Sans Docker utilisable : mvn absent et ni curl ni wget pour installer Maven." >&2
+      exit 1
+    fi
+    tar -xzf "\${tgz}" -C "\${base}"
+    rm -f "\${tgz}"
+  fi
+  export PATH="\${dir}/bin:\${PATH}"
+}
+run_sonar_mvn() {
+  mvn -B clean verify sonar:sonar \\
+    -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
+    -Dsonar.host.url=${env.SONAR_HOST} \\
+    -Dsonar.token=\${SONAR_TOKEN}
+}
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  docker run --rm \\
+    -v "${WORKSPACE}:/ws" \\
+    -w "/ws/${MODULE_DIR}" \\
+    -e SONAR_TOKEN \\
+    ${env.MAVEN_DOCKER_IMAGE} \\
+    mvn -B clean verify sonar:sonar \\
+      -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
+      -Dsonar.host.url=${env.SONAR_HOST} \\
+      -Dsonar.token=\${SONAR_TOKEN}
+else
+  cd "${WORKSPACE}/${MODULE_DIR}"
+  ensure_maven_on_path
+  run_sonar_mvn
+fi
+"""
                 }
             }
             post {
