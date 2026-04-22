@@ -14,26 +14,28 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
+        stage('Checkout (projectskills only)') {
             steps {
-                git branch: 'projectskills',
-                    url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/projectskills']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+                    ]]
+                ])
             }
         }
 
         stage('Verify Tools') {
             steps {
-                sh 'echo "Java version:"'
                 sh 'java -version'
-                sh 'echo "Maven version:"'
                 sh 'mvn -v'
             }
         }
 
-        stage('Build & Test') {
+        stage('Build & Test (fast)') {
             steps {
                 dir("${MODULE_DIR}") {
-                    sh 'mvn clean verify'
+                    sh 'mvn -B clean verify'
                 }
             }
         }
@@ -56,15 +58,16 @@ pipeline {
 
     post {
         always {
-            junit allowEmptyResults: true, testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
+            junit allowEmptyResults: true,
+                  testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
         }
 
         success {
-            echo '✅ Pipeline exécuté avec succès !'
+            echo "✅ Build SUCCESS - projectskills"
         }
 
         failure {
-            echo '❌ Pipeline échoué, vérifier les logs.'
+            echo "❌ Build FAILED"
         }
     }
 }
