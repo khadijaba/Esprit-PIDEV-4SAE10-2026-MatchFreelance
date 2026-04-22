@@ -5,6 +5,7 @@ import Entity.Role;
 import Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -37,6 +38,11 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        if (!usersTableExists()) {
+            System.out.println("Initialisation admin ignoree: table users introuvable.");
+            return;
+        }
+
         alignRoleColumnIfNeeded();
 
         User defaultAdmin = userRepository.findByEmailIgnoreCase(DEFAULT_ADMIN_EMAIL).orElse(null);
@@ -65,6 +71,18 @@ public class DataInitializer implements CommandLineRunner {
                 userRepository.save(toRepair);
                 System.out.println("Compte admin par defaut resynchronise : " + DEFAULT_ADMIN_EMAIL + " / " + DEFAULT_ADMIN_PASSWORD);
             }
+        }
+    }
+
+    private boolean usersTableExists() {
+        try {
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'users'",
+                    Integer.class);
+            return count != null && count > 0;
+        } catch (DataAccessException e) {
+            System.out.println("Verification de la table users impossible: " + e.getMessage());
+            return false;
         }
     }
 

@@ -58,7 +58,7 @@ public class GatewayApplication {
     }
 
     @Bean
-    public RouteLocator customRouting(RouteLocatorBuilder builder, NotFoundJsonFilter notFoundJsonFilter, WelcomeJsonFilter welcomeJsonFilter) {
+    public RouteLocator customRouting(RouteLocatorBuilder builder, tn.esprit.gateway.NotFoundJsonFilter notFoundJsonFilter, tn.esprit.gateway.WelcomeJsonFilter welcomeJsonFilter) {
         return builder.routes()
                 // Rapports PDF & graphiques (Python FastAPI) — en premier pour éviter tout conflit de prédicat
                 .route("evaluation-reports", r -> r.path("/api/evaluation-reports", "/api/evaluation-reports/**")

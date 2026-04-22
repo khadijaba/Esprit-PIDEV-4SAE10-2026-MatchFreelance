@@ -1,10 +1,16 @@
 pipeline {
     agent any
 
+    tools {
+        jdk 'JDK17'
+        maven 'Maven3'
+    }
+
     environment {
-        IMAGE_NAME = 'emna450/skill'
+        IMAGE_NAME = 'khadijabenayed/skill'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-        SONAR_HOST = 'http://host.docker.internal:9000'
+        SONAR_HOST = 'http://localhost:9000'
+        SONAR_CREDENTIALS_ID = 'sonar-token'
         MODULE_DIR = 'backend/microservices/Skill'
     }
 
@@ -26,7 +32,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 dir("${MODULE_DIR}") {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
                         sh '''
                             mvn sonar:sonar \
                               -Dsonar.projectKey=skill \
@@ -51,9 +57,9 @@ pipeline {
 
         stage('Docker Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
-                        echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
                         docker push ${IMAGE_NAME}:latest
                     '''
@@ -62,9 +68,5 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            cleanWs()
-        }
-    }
+    // Ne pas utiliser cleanWs() ici : si le checkout Git échoue, le post n'a pas de workspace → erreur Jenkins.
 }

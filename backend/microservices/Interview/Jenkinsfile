@@ -7,11 +7,11 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = 'khadijabenayed/user'
+        IMAGE_NAME = 'khadijabenayed/interview'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
         SONAR_HOST = 'http://localhost:9000'
         SONAR_CREDENTIALS_ID = 'sonar-token'
-        MODULE_DIR = 'backend/microservices/User'
+        MODULE_DIR = 'backend/microservices/Interview'
     }
 
     stages {
@@ -35,7 +35,7 @@ pipeline {
                     withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
                         sh '''
                             mvn sonar:sonar \
-                              -Dsonar.projectKey=user \
+                              -Dsonar.projectKey=interview \
                               -Dsonar.host.url=${SONAR_HOST} \
                               -Dsonar.login=${SONAR_TOKEN}
                         '''

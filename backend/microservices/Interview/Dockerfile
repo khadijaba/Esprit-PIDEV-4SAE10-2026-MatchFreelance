@@ -1,8 +1,5 @@
 FROM eclipse-temurin:17-jre
-
+WORKDIR /app
 EXPOSE 8089
-
-ADD target/interview-service-0.0.1-SNAPSHOT.jar interview-service.jar
-
-ENTRYPOINT ["java","-jar","interview-service.jar"]
-
+ADD target/*.jar app.jar
+ENTRYPOINT ["java","-jar","app.jar"]

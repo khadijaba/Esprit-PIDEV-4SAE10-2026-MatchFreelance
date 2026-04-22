@@ -1,8 +1,5 @@
 FROM eclipse-temurin:17-jre
-
+WORKDIR /app
 EXPOSE 8088
-
-ADD target/contract-service-0.0.1-SNAPSHOT.jar contract-service.jar
-
-ENTRYPOINT ["java","-jar","contract-service.jar"]
-
+ADD target/*.jar app.jar
+ENTRYPOINT ["java","-jar","app.jar"]

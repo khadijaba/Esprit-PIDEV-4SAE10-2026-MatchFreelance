@@ -1,3 +1,10 @@
+/**
+ * Jenkinsfile (Declarative Pipeline) — même structure que le cours (agent, tools, options, environment, stages, post).
+ * Adapté à : Esprit-PIDEV / microservice Formation + SonarQube + Docker Hub.
+ *
+ * Job Jenkins : Pipeline from SCM → ce repo → Script Path : backend/microservices/Formation/Jenkinsfile
+ * Branche : master (ou main selon ton GitHub).
+ */
 pipeline {
     agent any
 
@@ -6,22 +13,33 @@ pipeline {
         maven 'Maven3'
     }
 
+    // Le PDF utilisait 1 seconde (exemple) ; ici un timeout réaliste pour clone + build + Sonar + Docker.
+    options {
+        timeout(time: 120, unit: 'MINUTES')
+    }
+
     environment {
-        IMAGE_NAME = 'khadijabenayed/user'
+        APP_ENV = 'DEV'
+        MODULE_DIR = 'backend/microservices/Formation'
+        IMAGE_NAME = 'khadijabenayed/formation'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
         SONAR_HOST = 'http://localhost:9000'
         SONAR_CREDENTIALS_ID = 'sonar-token'
-        MODULE_DIR = 'backend/microservices/User'
     }
 
     stages {
-        stage('Checkout') {
+        // Équivalent "Code Checkout" du cours : avec "Pipeline from SCM", checkout scm reprend l’URL/branche du job.
+        // Si tu colles le script à la main (sans SCM), décommente le bloc git ci-dessous et crée une credential GitHub (PAT).
+        stage('Code Checkout') {
             steps {
                 checkout scm
+                // git branch: 'master',
+                //     url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git',
+                //     credentialsId: 'github-pat-khadijaba'
             }
         }
 
-        stage('Build & Test') {
+        stage('Code Build') {
             steps {
                 dir("${MODULE_DIR}") {
                     sh 'mvn clean verify'
@@ -35,7 +53,7 @@ pipeline {
                     withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
                         sh '''
                             mvn sonar:sonar \
-                              -Dsonar.projectKey=user \
+                              -Dsonar.projectKey=formation \
                               -Dsonar.host.url=${SONAR_HOST} \
                               -Dsonar.login=${SONAR_TOKEN}
                         '''
@@ -68,5 +86,15 @@ pipeline {
         }
     }
 
-    // Ne pas utiliser cleanWs() ici : si le checkout Git échoue, le post n'a pas de workspace → erreur Jenkins.
+    post {
+        always {
+            echo '====== always ======'
+        }
+        success {
+            echo '===== pipeline executed successfully ====='
+        }
+        failure {
+            echo '====== pipeline execution failed ======'
+        }
+    }
 }
