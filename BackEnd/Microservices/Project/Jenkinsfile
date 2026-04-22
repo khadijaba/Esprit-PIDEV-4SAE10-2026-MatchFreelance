@@ -1,9 +1,21 @@
+/**
+ * CI minimal — microservice Project (Maven + Sonar).
+ * Job : « Pipeline script from SCM » sur le dépôt, branche projectskills (ou multibranche).
+ * Outils Jenkins (noms exacts) : JDK17, Maven3, Git Default.
+ * Credential : sonar-token-backend
+ * Modifier SONAR_HOST ci-dessous si besoin (Linux conteneur : souvent http://172.17.0.1:9000).
+ */
 pipeline {
     agent any
 
     tools {
         jdk 'JDK17'
         maven 'Maven3'
+        git 'Default'
+    }
+
+    options {
+        timeout(time: 90, unit: 'MINUTES')
     }
 
     environment {
@@ -13,73 +25,24 @@ pipeline {
     }
 
     stages {
-
-        stage('Checkout (optimized)') {
-            steps {
-                script {
-                    def branch = env.BRANCH_NAME ?: 'projectskills'
-
-                    checkout([$class: 'GitSCM',
-                        branches: [[name: "*/${branch}"]],
-                        userRemoteConfigs: [[
-                            url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
-                        ]],
-                        extensions: [
-                            [$class: 'CloneOption',
-                                shallow: true,
-                                depth: 1,
-                                noTags: true,
-                                timeout: 120
-                            ]
-                        ]
-                    ])
-                }
-            }
-        }
-
-        stage('Verify Tools') {
-            steps {
-                bat 'java -version || true'
-                bat 'mvn -v || true'
-            }
-        }
-
-        stage('Build & Test') {
-            steps {
-                dir("${MODULE_DIR}") {
-                    bat 'mvn -B clean verify'
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
+        stage('Build & Sonar') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
-                    dir("${MODULE_DIR}") {
-                        bat """
-                        mvn sonar:sonar ^
-                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} ^
-                        -Dsonar.host.url=${SONAR_HOST} ^
-                        -Dsonar.token=%SONAR_TOKEN%
+                    dir("${env.MODULE_DIR}") {
+                        sh """
+                            mvn -B clean verify sonar:sonar \\
+                              -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
+                              -Dsonar.host.url=${env.SONAR_HOST} \\
+                              -Dsonar.token=\${SONAR_TOKEN}
                         """
                     }
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            junit allowEmptyResults: true,
-                  testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
-        }
-
-        success {
-            echo "✅ Pipeline SUCCESS - projectskills"
-        }
-
-        failure {
-            echo "❌ Pipeline FAILED"
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: "${env.MODULE_DIR}/target/surefire-reports/*.xml"
+                }
+            }
         }
     }
 }
