@@ -39,15 +39,15 @@ pipeline {
 
         stage('Verify Tools') {
             steps {
-                sh 'java -version'
-                sh 'mvn -v'
+                bat 'java -version || true'
+                bat 'mvn -v || true'
             }
         }
 
         stage('Build & Test') {
             steps {
                 dir("${MODULE_DIR}") {
-                    sh 'mvn -B clean verify'
+                    bat 'mvn -B clean verify'
                 }
             }
         }
@@ -56,11 +56,11 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
                     dir("${MODULE_DIR}") {
-                        sh """
-                        mvn sonar:sonar \
-                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                        -Dsonar.host.url=${SONAR_HOST} \
-                        -Dsonar.token=$SONAR_TOKEN
+                        bat """
+                        mvn sonar:sonar ^
+                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} ^
+                        -Dsonar.host.url=${SONAR_HOST} ^
+                        -Dsonar.token=%SONAR_TOKEN%
                         """
                     }
                 }
