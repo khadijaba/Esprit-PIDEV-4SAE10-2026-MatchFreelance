@@ -65,16 +65,14 @@ pipeline {
         }
 
         stage('Build & Test') {
-            agent {
-                docker {
-                    image 'maven:3-eclipse-temurin-17'
-                    reuseNode true
-                }
-            }
             steps {
-                dir("${MODULE_DIR}") {
-                    sh 'mvn -B clean verify'
-                }
+                sh """
+                    docker run --rm \\
+                      -v "${WORKSPACE}:/ws" \\
+                      -w "/ws/${MODULE_DIR}" \\
+                      maven:3-eclipse-temurin-17 \\
+                      mvn -B clean verify
+                """
             }
             post {
                 always {
@@ -84,22 +82,18 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            agent {
-                docker {
-                    image 'maven:3-eclipse-temurin-17'
-                    reuseNode true
-                }
-            }
             steps {
-                dir("${MODULE_DIR}") {
-                    withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
-                        sh """
-                            mvn -B sonar:sonar \\
-                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \\
-                              -Dsonar.host.url=${SONAR_HOST} \\
-                              -Dsonar.token=\${SONAR_TOKEN}
-                        """
-                    }
+                withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
+                    sh """
+                        docker run --rm \\
+                          -v "${WORKSPACE}:/ws" \\
+                          -w "/ws/${MODULE_DIR}" \\
+                          maven:3-eclipse-temurin-17 \\
+                          mvn -B sonar:sonar \\
+                            -Dsonar.projectKey=${SONAR_PROJECT_KEY} \\
+                            -Dsonar.host.url=${SONAR_HOST} \\
+                            -Dsonar.token=\${SONAR_TOKEN}
+                    """
                 }
             }
         }
