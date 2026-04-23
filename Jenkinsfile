@@ -60,7 +60,7 @@ pipeline {
                     dir("${env.MODULE_DIR}") {
                         sh """
                             mvn -B clean verify sonar:sonar \\
-                              -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
+                              -Dsonar.projectKey=${env.SONAR_Formation1_KEY} \\
                               -Dsonar.host.url=${env.SONAR_HOST} \\
                               -Dsonar.token=\${SONAR_TOKEN}
                         """
