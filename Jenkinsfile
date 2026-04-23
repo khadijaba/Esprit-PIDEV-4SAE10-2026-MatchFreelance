@@ -6,6 +6,11 @@ pipeline {
         maven 'Maven3'
     }
 
+    options {
+        timeout(time: 120, unit: 'MINUTES')
+        skipDefaultCheckout(true)
+    }
+
     environment {
         MODULE_DIR = 'backend/microservices/Formation'
         IMAGE_NAME = 'khadijabenayed/formation'
@@ -17,7 +22,23 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                retry(2) {
+                    timeout(time: 2, unit: 'MINUTES') {
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: '*/master']],
+                            userRemoteConfigs: [[
+                                url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git',
+                                refspec: '+refs/heads/master:refs/remotes/origin/master'
+                            ]],
+                            extensions: [
+                                [$class: 'CleanBeforeCheckout'],
+                                [$class: 'PruneStaleBranch'],
+                                [$class: 'CloneOption', shallow: true, depth: 1, noTags: true, timeout: 10]
+                            ]
+                        ])
+                    }
+                }
             }
         }
 
