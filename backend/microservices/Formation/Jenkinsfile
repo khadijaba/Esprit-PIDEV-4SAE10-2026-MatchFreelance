@@ -22,37 +22,32 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                script {
-                    def branch = env.BRANCH_NAME ?: 'master'
-                    def exts = []
-                    if (scm.extensions != null && !scm.extensions.isEmpty()) {
-                        exts.addAll(scm.extensions)
-                    }
-                    exts.add([
-                        $class       : 'CloneOption',
-                        shallow      : true,
-                        depth        : 1,
-                        timeout      : 120,
-                        honorRefspec : true,
-                        noTags       : true,
-                        reference    : ''
-                    ])
+                retry(3) {
+                    timeout(time: 8, unit: 'MINUTES') {
+                        script {
+                            def branch = env.BRANCH_NAME ?: 'master'
+                            def remotes = scm.userRemoteConfigs.collect { cfg ->
+                                def m = [url: cfg.url]
+                                if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
+                                    m.credentialsId = cfg.credentialsId
+                                }
+                                m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
+                                m
+                            }
 
-                    def remotes = scm.userRemoteConfigs.collect { cfg ->
-                        def m = [url: cfg.url]
-                        if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
-                            m.credentialsId = cfg.credentialsId
+                            checkout([
+                                $class: 'GitSCM',
+                                branches: [[name: "*/${branch}"]],
+                                userRemoteConfigs: remotes,
+                                extensions: [
+                                    [$class: 'CleanBeforeCheckout'],
+                                    [$class: 'PruneStaleBranch'],
+                                    [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'backend/microservices/Formation']]],
+                                    [$class: 'CloneOption', shallow: true, depth: 1, noTags: true, timeout: 8, honorRefspec: true, reference: '']
+                                ]
+                            ])
                         }
-                        m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
-                        m
                     }
-
-                    checkout([
-                        $class            : 'GitSCM',
-                        branches          : [[name: "*/${branch}"]],
-                        extensions        : exts,
-                        userRemoteConfigs : remotes
-                    ])
                 }
             }
         }
