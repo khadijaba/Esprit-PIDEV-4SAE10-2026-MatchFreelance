@@ -1,15 +1,18 @@
 pipeline {
     agent any
 
+    options {
+        timeout(time: 120, unit: 'MINUTES')
+    }
+
     environment {
-        IMAGE_NAME = "formation-service"
+        IMAGE_NAME = "khadijabenayed/formation"
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-        SONAR_HOST = "http://sonarqube:9000"
+        SONAR_HOST = "http://localhost:9000" // ou host.docker.internal:9000 selon ton Jenkins
         MODULE_DIR = "backend/microservices/Formation"
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 git branch: 'validation',
@@ -17,41 +20,30 @@ pipeline {
             }
         }
 
-        stage('Build Maven (Docker)') {
+        stage('Build & Test (Maven in Docker)') {
             steps {
                 sh """
                 docker run --rm \
                   -v ${WORKSPACE}:/app \
                   -w /app/${MODULE_DIR} \
                   maven:3-eclipse-temurin-17 \
-                  mvn clean package -DskipTests
-                """
-            }
-        }
-
-        stage('Test') {
-            steps {
-                sh """
-                docker run --rm \
-                  -v ${WORKSPACE}:/app \
-                  -w /app/${MODULE_DIR} \
-                  maven:3-eclipse-temurin-17 \
-                  mvn test
+                  mvn clean verify
                 """
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                     sh """
                     docker run --rm \
                       -v ${WORKSPACE}:/app \
                       -w /app/${MODULE_DIR} \
                       maven:3-eclipse-temurin-17 \
                       mvn sonar:sonar \
+                      -Dsonar.projectKey=formation \
                       -Dsonar.host.url=${SONAR_HOST} \
-                      -Dsonar.token=${SONAR_TOKEN}
+                      -Dsonar.login=${SONAR_TOKEN}
                     """
                 }
             }
@@ -59,7 +51,19 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ${MODULE_DIR}"
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ${MODULE_DIR}"
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                    docker push ${IMAGE_NAME}:latest
+                    """
+                }
             }
         }
 
@@ -67,15 +71,18 @@ pipeline {
             steps {
                 sh """
                 docker rm -f formation-container || true
-                docker run -d -p 9090:9090 --name formation-container ${IMAGE_NAME}:${IMAGE_TAG}
+                docker run -d --name formation-container -p 8081:8081 \
+                  -e SPRING_DATASOURCE_URL='jdbc:mysql://host.docker.internal:3306/FormationDB?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true' \
+                  -e SPRING_DATASOURCE_USERNAME='root' \
+                  -e SPRING_DATASOURCE_PASSWORD='' \
+                  ${IMAGE_NAME}:${IMAGE_TAG}
                 """
             }
         }
     }
 
     post {
-        always {
-            cleanWs()
-        }
+        success { echo "Pipeline Formation OK" }
+        failure { echo "Pipeline Formation KO" }
     }
 }
