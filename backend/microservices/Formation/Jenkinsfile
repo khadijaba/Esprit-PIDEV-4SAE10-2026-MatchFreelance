@@ -12,37 +12,47 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'master',
+                git branch: 'validation',
                     url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
             }
         }
 
-        stage('Build Maven') {
+        stage('Build Maven (Docker)') {
             steps {
-                dir("${MODULE_DIR}") {
-                    sh "mvn clean package -DskipTests"
-                }
+                sh """
+                docker run --rm \
+                  -v ${WORKSPACE}:/app \
+                  -w /app/${MODULE_DIR} \
+                  maven:3-eclipse-temurin-17 \
+                  mvn clean package -DskipTests
+                """
             }
         }
 
         stage('Test') {
             steps {
-                dir("${MODULE_DIR}") {
-                    sh "mvn test"
-                }
+                sh """
+                docker run --rm \
+                  -v ${WORKSPACE}:/app \
+                  -w /app/${MODULE_DIR} \
+                  maven:3-eclipse-temurin-17 \
+                  mvn test
+                """
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
-                    dir("${MODULE_DIR}") {
-                        sh """
-                        mvn sonar:sonar \
-                        -Dsonar.host.url=${SONAR_HOST} \
-                        -Dsonar.login=${SONAR_TOKEN}
-                        """
-                    }
+                    sh """
+                    docker run --rm \
+                      -v ${WORKSPACE}:/app \
+                      -w /app/${MODULE_DIR} \
+                      maven:3-eclipse-temurin-17 \
+                      mvn sonar:sonar \
+                      -Dsonar.host.url=${SONAR_HOST} \
+                      -Dsonar.token=${SONAR_TOKEN}
+                    """
                 }
             }
         }
@@ -55,7 +65,10 @@ pipeline {
 
         stage('Docker Run') {
             steps {
-                sh "docker run -d -p 9090:9090 ${IMAGE_NAME}:${IMAGE_TAG}"
+                sh """
+                docker rm -f formation-container || true
+                docker run -d -p 9090:9090 --name formation-container ${IMAGE_NAME}:${IMAGE_TAG}
+                """
             }
         }
     }
