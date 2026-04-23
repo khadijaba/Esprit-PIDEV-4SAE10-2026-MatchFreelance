@@ -4,94 +4,74 @@ pipeline {
     tools {
         jdk 'JDK17'
         maven 'Maven3'
+        git 'Default'
     }
 
     options {
-        timeout(time: 120, unit: 'MINUTES')
         skipDefaultCheckout(true)
+        timeout(time: 90, unit: 'MINUTES')
     }
 
     environment {
-        MODULE_DIR = 'backend/microservices/Formation'
-        IMAGE_NAME = 'khadijabenayed/formation'
-        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-        SONAR_HOST = 'http://localhost:9000'
-        SONAR_CREDENTIALS_ID = 'sonar-token'
+        MODULE_DIR = 'BackEnd/Microservices/Formation'
+        SONAR_PROJECT_KEY = 'backend'
+        SONAR_HOST = 'http://host.docker.internal:9000'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                retry(2) {
-                    timeout(time: 2, unit: 'MINUTES') {
-                        checkout([
-                            $class: 'GitSCM',
-                            branches: [[name: '*/master']],
-                            userRemoteConfigs: [[
-                                url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git',
-                                refspec: '+refs/heads/master:refs/remotes/origin/master'
-                            ]],
-                            extensions: [
-                                [$class: 'CleanBeforeCheckout'],
-                                [$class: 'PruneStaleBranch'],
-                                [$class: 'CloneOption', shallow: true, depth: 1, noTags: true, timeout: 10]
-                            ]
-                        ])
+                script {
+                    def branch = env.BRANCH_NAME ?: 'master'
+                    def exts = []
+                    if (scm.extensions != null && !scm.extensions.isEmpty()) {
+                        exts.addAll(scm.extensions)
+                    }
+                    exts.add([
+                        $class       : 'CloneOption',
+                        shallow      : true,
+                        depth        : 1,
+                        timeout      : 120,
+                        honorRefspec : true,
+                        noTags       : true,
+                        reference    : ''
+                    ])
+                    def remotes = scm.userRemoteConfigs.collect { cfg ->
+                        def m = [url: cfg.url]
+                        if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
+                            m.credentialsId = cfg.credentialsId
+                        }
+                        m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
+                        m
+                    }
+                    checkout([
+                        $class            : 'GitSCM',
+                        branches          : [[name: "*/${branch}"]],
+                        extensions        : exts,
+                        userRemoteConfigs : remotes
+                    ])
+                }
+            }
+        }
+
+        stage('Build & Sonar') {
+            steps {
+                withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
+                    dir("${env.MODULE_DIR}") {
+                        sh """
+                            mvn -B clean verify sonar:sonar \\
+                              -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
+                              -Dsonar.host.url=${env.SONAR_HOST} \\
+                              -Dsonar.token=\${SONAR_TOKEN}
+                        """
                     }
                 }
             }
-        }
-
-        stage('Build & Test') {
-            steps {
-                dir("${MODULE_DIR}") {
-                    sh 'mvn clean verify'
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: "${env.MODULE_DIR}/target/surefire-reports/*.xml"
                 }
             }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                dir("${MODULE_DIR}") {
-                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            mvn sonar:sonar \
-                              -Dsonar.projectKey=formation \
-                              -Dsonar.host.url=${SONAR_HOST} \
-                              -Dsonar.login=${SONAR_TOKEN}
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                dir("${MODULE_DIR}") {
-                    sh '''
-                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                    '''
-                }
-            }
-        }
-
-        stage('Docker Push') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker push ${IMAGE_NAME}:latest
-                    '''
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            cleanWs()
         }
     }
 }
