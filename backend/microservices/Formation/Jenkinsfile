@@ -1,88 +1,97 @@
 pipeline {
     agent any
 
+    tools {
+        jdk 'JDK17'
+        maven 'Maven3'
+    }
+
     options {
         timeout(time: 120, unit: 'MINUTES')
+        skipDefaultCheckout(true)
     }
 
     environment {
-        IMAGE_NAME = "khadijabenayed/formation"
+        MODULE_DIR = 'backend/microservices/Formation'
+        IMAGE_NAME = 'khadijabenayed/formation'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-        SONAR_HOST = "http://localhost:9000" // ou host.docker.internal:9000 selon ton Jenkins
-        MODULE_DIR = "backend/microservices/Formation"
+        SONAR_HOST = 'http://localhost:9000'
+        SONAR_CREDENTIALS_ID = 'sonar-token'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master',
-                    url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+                retry(2) {
+                    timeout(time: 2, unit: 'MINUTES') {
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: '*/master']],
+                            userRemoteConfigs: [[
+                                url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git',
+                                refspec: '+refs/heads/master:refs/remotes/origin/master'
+                            ]],
+                            extensions: [
+                                [$class: 'CleanBeforeCheckout'],
+                                [$class: 'PruneStaleBranch'],
+                                [$class: 'CloneOption', shallow: true, depth: 1, noTags: true, timeout: 10]
+                            ]
+                        ])
+                    }
+                }
             }
         }
 
-        stage('Build & Test (Maven in Docker)') {
+        stage('Build & Test') {
             steps {
-                sh """
-                docker run --rm \
-                  -v ${WORKSPACE}:/app \
-                  -w /app/${MODULE_DIR} \
-                  maven:3-eclipse-temurin-17 \
-                  mvn clean verify
-                """
+                dir("${MODULE_DIR}") {
+                    sh 'mvn clean verify'
+                }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    sh """
-                    docker run --rm \
-                      -v ${WORKSPACE}:/app \
-                      -w /app/${MODULE_DIR} \
-                      maven:3-eclipse-temurin-17 \
-                      mvn sonar:sonar \
-                      -Dsonar.projectKey=formation \
-                      -Dsonar.host.url=${SONAR_HOST} \
-                      -Dsonar.login=${SONAR_TOKEN}
-                    """
+                dir("${MODULE_DIR}") {
+                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            mvn sonar:sonar \
+                              -Dsonar.projectKey=formation \
+                              -Dsonar.host.url=${SONAR_HOST} \
+                              -Dsonar.login=${SONAR_TOKEN}
+                        '''
+                    }
                 }
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ${MODULE_DIR}"
+                dir("${MODULE_DIR}") {
+                    sh '''
+                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                    '''
+                }
             }
         }
 
         stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                    docker push ${IMAGE_NAME}:latest
-                    """
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                        docker push ${IMAGE_NAME}:latest
+                    '''
                 }
-            }
-        }
-
-        stage('Docker Run') {
-            steps {
-                sh """
-                docker rm -f formation-container || true
-                docker run -d --name formation-container -p 8081:8081 \
-                  -e SPRING_DATASOURCE_URL='jdbc:mysql://host.docker.internal:3306/FormationDB?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true' \
-                  -e SPRING_DATASOURCE_USERNAME='root' \
-                  -e SPRING_DATASOURCE_PASSWORD='' \
-                  ${IMAGE_NAME}:${IMAGE_TAG}
-                """
             }
         }
     }
 
     post {
-        success { echo "Pipeline Formation OK" }
-        failure { echo "Pipeline Formation KO" }
+        always {
+            cleanWs()
+        }
     }
 }
