@@ -1,65 +1,58 @@
-pipeline {
-    agent any
+node {
+    env.JAVA_HOME = tool(name: 'JDK17', type: 'jdk')
+    env.PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
 
-    tools {
-        jdk 'JDK17'
-        maven 'Maven3'
-    }
+    def mvnHome = tool(name: 'Maven3', type: 'hudson.tasks.Maven_MavenInstallation')
+    env.PATH = "${mvnHome}/bin:${env.PATH}"
 
-    options {
-        skipDefaultCheckout(true)
-        timeout(time: 90, unit: 'MINUTES')
-    }
+    def repoUrl = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+    def branch = 'douja'
+    def moduleDir = 'backend/microservices/Formation'
+    def sonarProjectKey = 'formation'
+    def sonarHost = 'http://host.docker.internal:9000'
+    def sonarCredentialsId = 'sonar-token-backend'
 
-    environment {
-        REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
-        BRANCH = 'douja'
-        MODULE_DIR = 'backend/microservices/Formation'
-        SONAR_PROJECT_KEY = 'formation'
-        SONAR_HOST = 'http://host.docker.internal:9000'
-        SONAR_CREDENTIALS_ID = 'sonar-token-backend'
-        JAVA_HOME = tool('JDK17')
-        PATH = "${JAVA_HOME}/bin:${env.PATH}"
-    }
+    properties([
+        disableConcurrentBuilds(),
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    ])
 
-    stages {
+    timeout(time: 90, unit: 'MINUTES') {
         stage('Checkout') {
-            steps {
-                retry(3) {
-                    sh '''
-                        set -eux
-                        rm -rf .git
-                        git init .
-                        git remote add origin "${REPO_URL}" || git remote set-url origin "${REPO_URL}"
-                        git config core.sparseCheckout true
-                        git config remote.origin.promisor true
-                        git config remote.origin.partialclonefilter blob:none
-                        mkdir -p .git/info
-                        printf "backend/microservices/Formation\\n" > .git/info/sparse-checkout
-                        git -c protocol.version=2 fetch --no-tags --depth=1 origin "${BRANCH}"
-                        git checkout -f FETCH_HEAD
-                    '''
-                }
+            retry(3) {
+                sh """
+                    set -eux
+                    rm -rf .git
+                    git init .
+                    git remote add origin '${repoUrl}' || git remote set-url origin '${repoUrl}'
+                    git config core.sparseCheckout true
+                    git config remote.origin.promisor true
+                    git config remote.origin.partialclonefilter blob:none
+                    mkdir -p .git/info
+                    printf '${moduleDir}\\n' > .git/info/sparse-checkout
+                    git -c protocol.version=2 fetch --no-tags --depth=1 origin '${branch}'
+                    git checkout -f FETCH_HEAD
+                """
             }
         }
 
         stage('Build, Test, JaCoCo') {
-            steps {
-                dir("${MODULE_DIR}") {
-                    sh 'mvn -B clean verify'
-                }
-            }
-            post {
-                always {
-                    junit allowEmptyResults: true, testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
-                }
+            dir(moduleDir) {
+                sh 'mvn -B clean verify'
             }
         }
 
+        stage('JUnit reports') {
+            junit allowEmptyResults: true, testResults: "${moduleDir}/target/surefire-reports/*.xml"
+        }
+
         stage('SonarQube Analysis') {
-            steps {
-                dir("${MODULE_DIR}") {
-                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+            dir(moduleDir) {
+                withEnv([
+                    "SONAR_PROJECT_KEY=${sonarProjectKey}",
+                    "SONAR_HOST=${sonarHost}"
+                ]) {
+                    withCredentials([string(credentialsId: sonarCredentialsId, variable: 'SONAR_TOKEN')]) {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             retry(2) {
                                 timeout(time: 4, unit: 'MINUTES') {
