@@ -1,6 +1,7 @@
 node {
-    env.JAVA_HOME = tool(name: 'JDK17', type: 'jdk')
-    env.PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
+    def jdkHome = tool(name: 'JDK17', type: 'hudson.model.JDK')
+    env.JAVA_HOME = jdkHome
+    env.PATH = "${jdkHome}/bin:${env.PATH}"
 
     def repoUrl = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
     def branch = 'douja'
@@ -35,7 +36,15 @@ node {
 
         stage('Build, Test, JaCoCo') {
             dir(moduleDir) {
-                sh 'mvn -B clean verify'
+                sh """
+                    set -eux
+                    test -x "\${JAVA_HOME}/bin/javac"
+                    "\${JAVA_HOME}/bin/java" -version
+                    "\${JAVA_HOME}/bin/javac" -version
+                    mvn -B clean verify \
+                      -Dmaven.compiler.fork=true \
+                      -Dmaven.compiler.executable=\${JAVA_HOME}/bin/javac
+                """
             }
         }
 
@@ -55,6 +64,8 @@ node {
                                 timeout(time: 4, unit: 'MINUTES') {
                                     sh '''
                                         mvn -B sonar:sonar \
+                                          -Dmaven.compiler.fork=true \
+                                          -Dmaven.compiler.executable=${JAVA_HOME}/bin/javac \
                                           -Dsonar.projectKey=$SONAR_PROJECT_KEY \
                                           -Dsonar.host.url=$SONAR_HOST \
                                           -Dsonar.token=$SONAR_TOKEN
