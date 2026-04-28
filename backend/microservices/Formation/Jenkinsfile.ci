@@ -1,8 +1,5 @@
 node {
     def jdkHome = tool(name: 'JDK17', type: 'hudson.model.JDK')
-    env.JAVA_HOME = jdkHome
-    env.PATH = "${jdkHome}/bin:${env.PATH}"
-
     def repoUrl = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
     def branch = 'douja'
     def moduleDir = 'backend/microservices/Formation'
@@ -10,66 +7,71 @@ node {
     def sonarHost = 'http://host.docker.internal:9000'
     def sonarCredentialsId = 'sonar-token-backend'
 
-    properties([
-        disableConcurrentBuilds(),
-        buildDiscarder(logRotator(numToKeepStr: '20'))
-    ])
+    withEnv([
+        "JAVA_HOME=${jdkHome}",
+        "PATH+JDK=${jdkHome}/bin"
+    ]) {
+        properties([
+            disableConcurrentBuilds(),
+            buildDiscarder(logRotator(numToKeepStr: '20'))
+        ])
 
-    timeout(time: 90, unit: 'MINUTES') {
-        stage('Checkout') {
-            retry(3) {
-                sh """
-                    set -eux
-                    rm -rf .git
-                    git init .
-                    git remote add origin '${repoUrl}' || git remote set-url origin '${repoUrl}'
-                    git config core.sparseCheckout true
-                    git config remote.origin.promisor true
-                    git config remote.origin.partialclonefilter blob:none
-                    mkdir -p .git/info
-                    printf '${moduleDir}\\n' > .git/info/sparse-checkout
-                    git -c protocol.version=2 fetch --no-tags --depth=1 origin '${branch}'
-                    git checkout -f FETCH_HEAD
-                """
+        timeout(time: 90, unit: 'MINUTES') {
+            stage('Checkout') {
+                retry(3) {
+                    sh """
+                        set -eux
+                        rm -rf .git
+                        git init .
+                        git remote add origin '${repoUrl}' || git remote set-url origin '${repoUrl}'
+                        git config core.sparseCheckout true
+                        git config remote.origin.promisor true
+                        git config remote.origin.partialclonefilter blob:none
+                        mkdir -p .git/info
+                        printf '${moduleDir}\\n' > .git/info/sparse-checkout
+                        git -c protocol.version=2 fetch --no-tags --depth=1 origin '${branch}'
+                        git checkout -f FETCH_HEAD
+                    """
+                }
             }
-        }
 
-        stage('Build, Test, JaCoCo') {
-            dir(moduleDir) {
-                sh """
-                    set -eux
-                    test -x "\${JAVA_HOME}/bin/javac"
-                    "\${JAVA_HOME}/bin/java" -version
-                    "\${JAVA_HOME}/bin/javac" -version
-                    mvn -B clean verify \
-                      -Dmaven.compiler.fork=true \
-                      -Dmaven.compiler.executable=\${JAVA_HOME}/bin/javac
-                """
+            stage('Build, Test, JaCoCo') {
+                dir(moduleDir) {
+                    sh """
+                        set -ex
+                        test -x '${jdkHome}/bin/javac'
+                        '${jdkHome}/bin/java' -version
+                        '${jdkHome}/bin/javac' -version
+                        mvn -B clean verify \\
+                          -Dmaven.compiler.fork=true \\
+                          -Dmaven.compiler.executable='${jdkHome}/bin/javac'
+                    """
+                }
             }
-        }
 
-        stage('JUnit reports') {
-            junit allowEmptyResults: true, testResults: "${moduleDir}/target/surefire-reports/*.xml"
-        }
+            stage('JUnit reports') {
+                junit allowEmptyResults: true, testResults: "${moduleDir}/target/surefire-reports/*.xml"
+            }
 
-        stage('SonarQube Analysis') {
-            dir(moduleDir) {
-                withEnv([
-                    "SONAR_PROJECT_KEY=${sonarProjectKey}",
-                    "SONAR_HOST=${sonarHost}"
-                ]) {
-                    withCredentials([string(credentialsId: sonarCredentialsId, variable: 'SONAR_TOKEN')]) {
-                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                            retry(2) {
-                                timeout(time: 4, unit: 'MINUTES') {
-                                    sh '''
-                                        mvn -B sonar:sonar \
-                                          -Dmaven.compiler.fork=true \
-                                          -Dmaven.compiler.executable=${JAVA_HOME}/bin/javac \
-                                          -Dsonar.projectKey=$SONAR_PROJECT_KEY \
-                                          -Dsonar.host.url=$SONAR_HOST \
-                                          -Dsonar.token=$SONAR_TOKEN
-                                    '''
+            stage('SonarQube Analysis') {
+                dir(moduleDir) {
+                    withEnv([
+                        "SONAR_PROJECT_KEY=${sonarProjectKey}",
+                        "SONAR_HOST=${sonarHost}"
+                    ]) {
+                        withCredentials([string(credentialsId: sonarCredentialsId, variable: 'SONAR_TOKEN')]) {
+                            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                                retry(2) {
+                                    timeout(time: 4, unit: 'MINUTES') {
+                                        sh """
+                                            mvn -B sonar:sonar \\
+                                              -Dmaven.compiler.fork=true \\
+                                              -Dmaven.compiler.executable='${jdkHome}/bin/javac' \\
+                                              -Dsonar.projectKey=\${SONAR_PROJECT_KEY} \\
+                                              -Dsonar.host.url=\${SONAR_HOST} \\
+                                              -Dsonar.token=\${SONAR_TOKEN}
+                                        """
+                                    }
                                 }
                             }
                         }
