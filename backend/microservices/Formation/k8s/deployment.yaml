@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: formation
+  labels:
+    app: formation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: formation
+  template:
+    metadata:
+      labels:
+        app: formation
+    spec:
+      containers:
+        - name: formation
+          image: khadijabenayed/formation:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8096

@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK17'
+        maven 'Maven3'
+    }
+
+    environment {
+        REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        BRANCH = 'douja'
+        MODULE_DIR = 'backend/microservices/Formation'
+        SONAR_PROJECT_KEY = 'formation'
+        SONAR_HOST = 'http://sonarqube:9000'
+        SONAR_CREDENTIALS_ID = 'sonar-token-backend'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build, Test, JaCoCo, Sonar') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+                        bat """
+                            mvn -B clean verify sonar:sonar ^
+                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} ^
+                              -Dsonar.host.url=${SONAR_HOST} ^
+                              -Dsonar.token=%SONAR_TOKEN%
+                        """
+                    }
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
+                }
+            }
+        }
+    }
+}

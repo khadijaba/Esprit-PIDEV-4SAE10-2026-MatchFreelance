@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK17'
+        maven 'Maven3'
+    }
+
+    environment {
+        REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        BRANCH = 'douja'
+        MODULE_DIR = 'backend/microservices/Formation'
+        IMAGE_NAME = 'khadijabenayed/formation'
+        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Jar') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    bat 'mvn -B clean package -DskipTests'
+                }
+            }
+        }
+
+        stage('Docker Build & Push') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        bat """
+                            echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                            docker build -t %IMAGE_NAME%:%IMAGE_TAG% .
+                            docker tag %IMAGE_NAME%:%IMAGE_TAG% %IMAGE_NAME%:latest
+                            docker push %IMAGE_NAME%:%IMAGE_TAG%
+                            docker push %IMAGE_NAME%:latest
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Kubernetes') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    withKubeConfig([credentialsId: 'kubeconfig-prod']) {
+                        bat 'kubectl apply -f k8s/'
+                    }
+                }
+            }
+        }
+    }
+}
