@@ -2,9 +2,6 @@ node {
     env.JAVA_HOME = tool(name: 'JDK17', type: 'jdk')
     env.PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
 
-    def mvnHome = tool(name: 'Maven3', type: 'hudson.tasks.Maven_MavenInstallation')
-    env.PATH = "${mvnHome}/bin:${env.PATH}"
-
     def repoUrl = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
     def branch = 'douja'
     def moduleDir = 'backend/microservices/Formation'
