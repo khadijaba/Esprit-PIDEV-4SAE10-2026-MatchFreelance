@@ -100,6 +100,7 @@ tn\esprit\evaluation\dto\SuccessPredictionDto$SuccessPredictionDtoBuilder.class
 tn\esprit\evaluation\entity\PassageExamen$ResultatExamen.class
 tn\esprit\evaluation\entity\FreelancerAmenagementTemps.class
 tn\esprit\evaluation\dto\ExamenDto.class
+tn\esprit\evaluation\client\FormationClient$3.class
 tn\esprit\evaluation\dto\ReponseExamenRequest.class
 tn\esprit\evaluation\entity\Certificat$CertificatBuilder.class
 tn\esprit\evaluation\entity\FreelancerObjectifTheme$FreelancerObjectifThemeBuilder.class
@@ -118,6 +119,7 @@ tn\esprit\evaluation\dto\SkillScoreDto.class
 tn\esprit\evaluation\repository\QuestionRepository.class
 tn\esprit\evaluation\util\QuestionDifficultyPonderation.class
 tn\esprit\evaluation\dto\RiskEvaluationDto$RiskEvaluationDtoBuilder.class
+tn\esprit\evaluation\client\FormationClient$4.class
 tn\esprit\evaluation\dto\QuestionValidationRequest$QuestionValidationRequestBuilder.class
 tn\esprit\evaluation\service\CertificatService.class
 tn\esprit\evaluation\dto\ReponseExamenRequest$ReponseExamenRequestBuilder.class

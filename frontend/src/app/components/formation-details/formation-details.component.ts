@@ -69,9 +69,19 @@ export class FormationDetailsComponent implements OnInit {
           this.loadModules(f.id);
         }
       },
-      error: () => {
+      error: (err) => {
         this.loading = false;
-        this.toast.error('Formation introuvable');
+        const status = err?.status;
+        if (status === 404) {
+          this.toast.error('Formation introuvable.');
+        } else if (status === 0) {
+          this.toast.error(
+            'Service Formation indisponible. Vérifiez que le microservice Formation et la Gateway sont démarrés.'
+          );
+        } else {
+          const msg = err?.error?.message ?? err?.error?.error ?? 'Impossible de charger la formation.';
+          this.toast.error(msg);
+        }
         this.router.navigate(['/admin/formations']);
       },
     });
@@ -208,7 +218,8 @@ export class FormationDetailsComponent implements OnInit {
         if (err?.status === 404) {
           msg = 'Ressource introuvable.';
         } else if (err?.status === 0 || !(err?.error?.error || err?.error?.message || err?.message)) {
-          msg = 'Connexion impossible. Utilisez bien http://localhost:4200 (ng serve), vérifiez que Formation tourne sur le port 8081, puis relancez ng serve.';
+          msg =
+            'Connexion impossible. Utilisez http://localhost:4200 (ng serve), vérifiez que Formation tourne (port 8096) et que la Gateway est démarrée.';
         } else {
           msg = err?.error?.error || err?.error?.message || err?.message;
         }

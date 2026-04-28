@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { FormationService } from '../../services/formation.service';
 import { Formation, StatutFormation, TypeFormation, TYPE_FORMATION_LABELS } from '../../models/formation.model';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-front-formation-list',
@@ -16,17 +17,59 @@ export class FrontFormationListComponent implements OnInit {
   filtered: Formation[] = [];
   searchTerm = '';
   loading = true;
+  showingAllFallback = false;
 
-  constructor(private formationService: FormationService) {}
+  constructor(
+    private formationService: FormationService,
+    private toast: ToastService
+  ) {}
 
   ngOnInit() {
     this.formationService.getOuvertes().subscribe({
       next: (data) => {
-        this.formations = data;
-        this.applyFilters();
-        this.loading = false;
+        const ouvertes = data ?? [];
+        if (ouvertes.length > 0) {
+          this.formations = ouvertes;
+          this.showingAllFallback = false;
+          this.applyFilters();
+          this.loading = false;
+          return;
+        }
+        this.formationService.getAll().subscribe({
+          next: (all) => {
+            this.formations = all ?? [];
+            this.showingAllFallback = true;
+            this.applyFilters();
+            this.loading = false;
+            if (this.formations.length > 0) {
+              this.toast.info('Aucune formation ouverte actuellement : affichage de tout le catalogue.');
+            }
+          },
+          error: () => {
+            this.loading = false;
+            this.toast.error('Impossible de charger les formations.');
+          },
+        });
       },
-      error: () => (this.loading = false),
+      error: () => {
+        this.formationService.getAll().subscribe({
+          next: (all) => {
+            this.formations = all ?? [];
+            this.showingAllFallback = true;
+            this.applyFilters();
+            this.loading = false;
+            if (this.formations.length > 0) {
+              this.toast.info('Service "formations ouvertes" indisponible : affichage du catalogue complet.');
+            } else {
+              this.toast.error('Impossible de charger les formations.');
+            }
+          },
+          error: () => {
+            this.loading = false;
+            this.toast.error('Impossible de charger les formations.');
+          },
+        });
+      },
     });
   }
 

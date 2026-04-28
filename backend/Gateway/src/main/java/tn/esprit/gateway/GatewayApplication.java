@@ -19,9 +19,21 @@ public class GatewayApplication {
 
     @Value("${gateway.service.evaluation:EVALUATION}")
     private String evaluationServiceId;
+    /**
+     * Override optionnel pour router EVALUATION en direct quand la résolution Eureka/hostname pose problème.
+     * Ex: gateway.evaluation.url=http://localhost:8083
+     */
+    @Value("${gateway.evaluation.url:}")
+    private String evaluationDirectUrl;
 
     @Value("${gateway.service.formation:FORMATION}")
     private String formationServiceId;
+    /**
+     * Override optionnel pour router FORMATION en direct (utile si Eureka conserve une instance obsolète).
+     * Ex: gateway.formation.url=http://localhost:8096
+     */
+    @Value("${gateway.formation.url:}")
+    private String formationDirectUrl;
 
     @Value("${gateway.service.skill:SKILL}")
     private String skillServiceId;
@@ -59,6 +71,8 @@ public class GatewayApplication {
 
     @Bean
     public RouteLocator customRouting(RouteLocatorBuilder builder, tn.esprit.gateway.NotFoundJsonFilter notFoundJsonFilter, tn.esprit.gateway.WelcomeJsonFilter welcomeJsonFilter) {
+        String evaluationUri = resolveEvaluationUri();
+        String formationUri = resolveFormationUri();
         return builder.routes()
                 // Rapports PDF & graphiques (Python FastAPI) — en premier pour éviter tout conflit de prédicat
                 .route("evaluation-reports", r -> r.path("/api/evaluation-reports", "/api/evaluation-reports/**")
@@ -114,20 +128,20 @@ public class GatewayApplication {
                 // Examens et Certificats -> lb://EVALUATION (nom dans application.properties)
                 // Un seul motif ** évite les ambiguïtés de matching sur les sous-chemins (ex. /formation/.../auto-generate)
                 .route("evaluation-examens", r -> r.path("/api/examens/**")
-                        .uri("lb://" + evaluationServiceId))
+                        .uri(evaluationUri))
                 .route("evaluation-examens-root", r -> r.path("/api/examens")
-                        .uri("lb://" + evaluationServiceId))
+                        .uri(evaluationUri))
                 .route("evaluation-certificats", r -> r.path("/api/certificats/**")
-                        .uri("lb://" + evaluationServiceId))
+                        .uri(evaluationUri))
                 .route("evaluation-certificats-root", r -> r.path("/api/certificats")
-                        .uri("lb://" + evaluationServiceId))
+                        .uri(evaluationUri))
                 // Formations / Inscriptions / Modules -> lb://FORMATION
                 .route("formation-api", r -> r.path("/api/formations", "/api/formations/**")
-                        .uri("lb://" + formationServiceId))
+                        .uri(formationUri))
                 .route("formation-modules", r -> r.path("/api/modules", "/api/modules/**")
-                        .uri("lb://" + formationServiceId))
+                        .uri(formationUri))
                 .route("formation-inscriptions", r -> r.path("/api/inscriptions", "/api/inscriptions/**")
-                        .uri("lb://" + formationServiceId))
+                        .uri(formationUri))
                 // Match Freelance (PIDEV) : candidatures, contrats, entretiens — chemins /api/... inchangés côté MS
                 .route("candidature-api", r -> r.path("/api/candidatures", "/api/candidatures/**")
                         .uri("lb://" + candidatureServiceId))
@@ -147,6 +161,20 @@ public class GatewayApplication {
                         .filters(f -> f.filter(notFoundJsonFilter))
                         .uri("http://localhost:8050"))
                 .build();
+    }
+
+    private String resolveFormationUri() {
+        if (formationDirectUrl != null && !formationDirectUrl.isBlank()) {
+            return formationDirectUrl.trim();
+        }
+        return "lb://" + formationServiceId;
+    }
+
+    private String resolveEvaluationUri() {
+        if (evaluationDirectUrl != null && !evaluationDirectUrl.isBlank()) {
+            return evaluationDirectUrl.trim();
+        }
+        return "lb://" + evaluationServiceId;
     }
 }
 

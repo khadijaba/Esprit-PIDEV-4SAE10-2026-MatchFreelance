@@ -1,5 +1,6 @@
 pipeline {
     agent any
+    35
 
     tools {
         jdk 'JDK17'

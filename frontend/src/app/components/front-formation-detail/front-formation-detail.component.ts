@@ -94,8 +94,19 @@ export class FrontFormationDetailComponent implements OnInit {
           this.examenRequisTitre = null;
         }
       },
-      error: () => {
+      error: (err) => {
         this.loading = false;
+        const status = err?.status;
+        if (status === 404) {
+          this.toast.error('Formation introuvable.');
+        } else if (status === 0) {
+          this.toast.error(
+            'Service Formation indisponible. Vérifiez que le microservice Formation et la Gateway sont démarrés.'
+          );
+        } else {
+          const msg = err?.error?.message ?? err?.error?.error ?? 'Impossible de charger la formation.';
+          this.toast.error(msg);
+        }
         this.router.navigate(['/formations']);
       },
     });

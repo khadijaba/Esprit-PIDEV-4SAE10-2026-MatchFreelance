@@ -76,7 +76,7 @@
             </div>
             @if (openedInterviewCandidatureId === c.id && clientId) {
               <div class="mt-3 border-t border-slate-100 pt-3">
-                <app-interview-schedule [candidatureId]="c.id" [clientId]="clientId" />
+                <app-interview-schedule [candidatureId]="c.id" [clientId]="clientId" (interviewsChanged)="onInterviewsChanged(c.id)" />
               </div>
             }
             @if (pitchAnalysisResult && analyzedPitchCandidatureId === c.id) {
@@ -181,7 +181,7 @@
               </div>
               @if (openedInterviewCandidatureId === c.id && clientId) {
                 <div class="mt-3 border-t border-slate-100 pt-3">
-                  <app-interview-schedule [candidatureId]="c.id" [clientId]="clientId" />
+                  <app-interview-schedule [candidatureId]="c.id" [clientId]="clientId" (interviewsChanged)="onInterviewsChanged(c.id)" />
                 </div>
               }
               @if (pitchAnalysisResult && analyzedPitchCandidatureId === c.id) {

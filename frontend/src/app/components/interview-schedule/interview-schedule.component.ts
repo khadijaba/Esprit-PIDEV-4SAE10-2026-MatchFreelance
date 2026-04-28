@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InterviewService } from '../../services/interview.service';
@@ -14,6 +14,7 @@ import { Interview, InterviewRequest, InterviewStatus } from '../../models/inter
 export class InterviewScheduleComponent implements OnInit {
   @Input() candidatureId!: number;
   @Input() clientId!: number;
+  @Output() interviewsChanged = new EventEmitter<void>();
 
   interviews: Interview[] = [];
   loading = true;
@@ -73,6 +74,7 @@ export class InterviewScheduleComponent implements OnInit {
         this.toast.success('Interview scheduled');
         this.loadInterviews();
         this.closeForm();
+        this.interviewsChanged.emit();
       },
       error: (err) => this.toast.error(err?.error?.message || 'Failed to schedule interview'),
     });
@@ -87,6 +89,7 @@ export class InterviewScheduleComponent implements OnInit {
       next: () => {
         this.toast.success('Interview updated');
         this.loadInterviews();
+        this.interviewsChanged.emit();
       },
       error: (err) => this.toast.error(err?.error?.message || 'Failed to update interview'),
     });
@@ -98,6 +101,7 @@ export class InterviewScheduleComponent implements OnInit {
       next: () => {
         this.toast.success('Interview removed');
         this.loadInterviews();
+        this.interviewsChanged.emit();
       },
       error: (err) => this.toast.error(err?.error?.message || 'Failed to remove interview'),
     });

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { timeout } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { ExamenService } from '../../services/examen.service';
 import { ToastService } from '../../services/toast.service';
 import { AuthService, FREELANCER_ID_STORAGE_KEY } from '../../services/auth.service';
@@ -123,8 +125,31 @@ export class PasserExamenComponent implements OnInit, OnDestroy {
       this.revisionCiblee && fid != null
         ? this.examenService.getPourRevision(this.examenId, fid, this.selectedParcours)
         : this.examenService.getPourPassage(this.examenId, this.selectedParcours);
-    examen$.subscribe({
+    examen$
+      .pipe(
+        catchError((err) => {
+          // Fallback robuste : certaines instances backend renvoient 500 sur /passage
+          // alors que l'examen existe ; on recharge l'examen brut pour ne pas bloquer l'utilisateur.
+          if (err?.status === 500 || err?.status === 502 || err?.status === 503) {
+            return this.examenService.getById(this.examenId).pipe(
+              catchError(() => of(null))
+            );
+          }
+          return of(null);
+        })
+      )
+      .subscribe({
       next: (e) => {
+        if (!e) {
+          this.loading = false;
+          this.toast.error('Examen indisponible pour le moment (service backend en erreur).');
+          this.router.navigate(['/formations', this.formationId || '']);
+          return;
+        }
+        // Sécurité : même en fallback, ne jamais exposer la bonne réponse côté front.
+        if (Array.isArray(e.questions)) {
+          e.questions = e.questions.map((q) => ({ ...q, bonneReponse: '' }));
+        }
         this.examen = e;
         this.reponses = (e.questions ?? []).map(() => '');
         this.classiqueQuestionIndex = 0;
@@ -167,9 +192,13 @@ export class PasserExamenComponent implements OnInit, OnDestroy {
           this.planifierChronoClassiqueSiBesoin();
         }
       },
-      error: () => {
+      error: (err) => {
         this.loading = false;
-        this.toast.error('Examen introuvable');
+        const msg =
+          err?.status === 404
+            ? 'Examen introuvable.'
+            : err?.error?.message ?? 'Erreur serveur lors du chargement de l’examen.';
+        this.toast.error(msg);
         this.router.navigate(['/formations', this.formationId || '']);
       },
     });

@@ -17,11 +17,12 @@ import { ToastService } from '../../services/toast.service';
 })
 export class MatchfreelanceProjectsComponent implements OnInit {
   openProjects: Project[] = [];
+  allProjects: Project[] = [];
   myProjects: Project[] = [];
   loading = true;
   error: string | null = null;
   applyOpenProjectId: number | null = null;
-  applyLoading = false;
+  applyLoadingProjectId: number | null = null;
   applyMessage = '';
   applyBudget: number | null = null;
   applyExtraBudget: number | null = null;
@@ -34,9 +35,21 @@ export class MatchfreelanceProjectsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.projectService.getByStatus('OPEN').subscribe({
+    this.loadProjects();
+    const u = this.auth.getStoredUser();
+    if (this.auth.isProjectOwner() && u?.userId) {
+      this.projectService.getByOwnerId(u.userId).subscribe({
+        next: (list) => (this.myProjects = list ?? []),
+        error: () => {},
+      });
+    }
+  }
+
+  private loadProjects(): void {
+    this.projectService.getAll().subscribe({
       next: (list) => {
-        this.openProjects = list ?? [];
+        this.allProjects = list ?? [];
+        this.openProjects = this.allProjects.filter((p) => p.status === 'OPEN');
         this.loading = false;
       },
       error: () => {
@@ -45,13 +58,10 @@ export class MatchfreelanceProjectsComponent implements OnInit {
         this.loading = false;
       },
     });
-    const u = this.auth.getStoredUser();
-    if (this.auth.isProjectOwner() && u?.userId) {
-      this.projectService.getByOwnerId(u.userId).subscribe({
-        next: (list) => (this.myProjects = list ?? []),
-        error: () => {},
-      });
-    }
+  }
+
+  canApply(project: Project): boolean {
+    return project.status === 'OPEN';
   }
 
   isFreelancer(): boolean {
@@ -62,7 +72,8 @@ export class MatchfreelanceProjectsComponent implements OnInit {
     this.applyOpenProjectId = project.id;
     this.applyMessage = '';
     this.applyExtraBudget = null;
-    this.applyBudget = Number.isFinite(project.budget) && project.budget > 0 ? project.budget : null;
+    const [min, max] = this.getBudgetRange(project);
+    this.applyBudget = min;
   }
 
   closeApplyForm(): void {
@@ -70,7 +81,35 @@ export class MatchfreelanceProjectsComponent implements OnInit {
     this.applyMessage = '';
     this.applyBudget = null;
     this.applyExtraBudget = null;
-    this.applyLoading = false;
+    this.applyLoadingProjectId = null;
+  }
+
+  isApplying(projectId: number): boolean {
+    return this.applyLoadingProjectId === projectId;
+  }
+
+  private extractErrorMessage(err: unknown): string {
+    const e = err as { error?: unknown; message?: string } | null;
+    const body = e?.error;
+    if (typeof body === 'string' && body.trim()) return body;
+    if (body && typeof body === 'object') {
+      const message = (body as { message?: unknown }).message;
+      if (typeof message === 'string' && message.trim()) return message;
+      const error = (body as { error?: unknown }).error;
+      if (typeof error === 'string' && error.trim()) return error;
+    }
+    if (typeof e?.message === 'string' && e.message.trim()) return e.message;
+    return 'Echec de la candidature.';
+  }
+
+  getBudgetRange(project: Project): [number, number] {
+    const p = project as unknown as { minBudget?: number | null; maxBudget?: number | null; budget?: number | null };
+    const minRaw = Number(p.minBudget);
+    const maxRaw = Number(p.maxBudget);
+    const fallback = Number(p.budget);
+    const min = Number.isFinite(minRaw) && minRaw > 0 ? minRaw : Number.isFinite(fallback) && fallback > 0 ? fallback : 1;
+    const max = Number.isFinite(maxRaw) && maxRaw > 0 ? maxRaw : Number.isFinite(fallback) && fallback > 0 ? fallback : min;
+    return [Math.min(min, max), Math.max(min, max)];
   }
 
   submitApplication(project: Project): void {
@@ -83,7 +122,12 @@ export class MatchfreelanceProjectsComponent implements OnInit {
       this.toast.error('Budget propose invalide.');
       return;
     }
-    this.applyLoading = true;
+    const [minBudget, maxBudget] = this.getBudgetRange(project);
+    if (this.applyBudget < minBudget || this.applyBudget > maxBudget) {
+      this.toast.error(`Le budget propose doit etre entre ${minBudget} et ${maxBudget}.`);
+      return;
+    }
+    this.applyLoadingProjectId = project.id;
     const req: CandidatureRequest = {
       projectId: project.id,
       freelancerId: user.userId,
@@ -96,13 +140,13 @@ export class MatchfreelanceProjectsComponent implements OnInit {
     };
     this.candidatureService.create(req).subscribe({
       next: () => {
-        this.applyLoading = false;
+        this.applyLoadingProjectId = null;
         this.toast.success('Candidature envoyee avec succes.');
         this.closeApplyForm();
       },
       error: (err) => {
-        this.applyLoading = false;
-        this.toast.error(err?.error?.message || 'Echec de la candidature.');
+        this.applyLoadingProjectId = null;
+        this.toast.error(this.extractErrorMessage(err));
       },
     });
   }

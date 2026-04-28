@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ForumPost } from '../models/forum.model';
+import { ForumChatMessage, ForumPost } from '../models/forum.model';
 
 @Injectable({ providedIn: 'root' })
 export class ForumApiService {
@@ -23,5 +23,13 @@ export class ForumApiService {
 
   likePost(id: number): Observable<ForumPost> {
     return this.http.put<ForumPost>(`${this.base}/like-forum/${id}`, {});
+  }
+
+  getConversation(userId1: number, userId2: number): Observable<ForumChatMessage[]> {
+    return this.http.get<ForumChatMessage[]>(`${this.base}/get-conversation/${userId1}/${userId2}`);
+  }
+
+  sendDirectMessage(message: ForumChatMessage): Observable<ForumChatMessage> {
+    return this.http.post<ForumChatMessage>(`${this.base}/send-message`, message);
   }
 }

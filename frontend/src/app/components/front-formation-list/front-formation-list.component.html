@@ -2,6 +2,11 @@
   <div class="mb-8">
     <h1 class="text-3xl font-bold text-slate-900">Formations</h1>
     <p class="mt-2 text-slate-600">Développez vos compétences avec nos formations pour freelancers</p>
+    @if (showingAllFallback) {
+      <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <strong>Info :</strong> aucune formation au statut <strong>OUVERTE</strong> pour l’instant ; affichage de tout le catalogue.
+      </div>
+    }
     <div class="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
       <strong>Info :</strong> Cette page affiche uniquement les formations au statut <strong>« Ouverte »</strong>.
       Si vous avez créé une formation dans le dashboard admin, vérifiez que son statut est bien <strong>Ouverte</strong> pour qu’elle apparaisse ici.

@@ -12,11 +12,15 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.EnumSet;
@@ -221,84 +225,214 @@ public class ContractService {
             document.addPage(page);
 
             PDPageContentStream content = new PDPageContentStream(document, page);
-            float margin = 50;
+            float margin = 42f;
+            float pageWidth = page.getMediaBox().getWidth();
             float y = page.getMediaBox().getHeight() - margin;
-            float leading = 16;
+            float leading = 16f;
+            float contentWidth = pageWidth - (2 * margin);
+            final int mfBlueR = 18, mfBlueG = 84, mfBlueB = 147;
+            final int mfOrangeR = 241, mfOrangeG = 135, mfOrangeB = 37;
 
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-
-            content.beginText();
-            content.setFont(PDType1Font.HELVETICA_BOLD, 18);
-            content.newLineAtOffset(margin, y);
-            content.showText("Contract #" + c.getId());
-            content.endText();
-            y -= 2 * leading;
-
-            content.beginText();
-            content.setFont(PDType1Font.HELVETICA, 12);
-            content.newLineAtOffset(margin, y);
-            content.showText("Project ID: " + c.getProjectId());
-            content.endText();
-            y -= leading;
-
-            content.beginText();
-            content.setFont(PDType1Font.HELVETICA, 12);
-            content.newLineAtOffset(margin, y);
-            content.showText("Client ID: " + c.getClientId() + "   Freelancer ID: " + c.getFreelancerId());
-            content.endText();
-            y -= leading;
-
-            if (c.getStartDate() != null || c.getEndDate() != null) {
-                String start = c.getStartDate() != null ? df.format(c.getStartDate()) : "-";
-                String end = c.getEndDate() != null ? df.format(c.getEndDate()) : "-";
-                content.beginText();
-                content.setFont(PDType1Font.HELVETICA, 12);
-                content.newLineAtOffset(margin, y);
-                content.showText("Period: " + start + " to " + end);
-                content.endText();
-                y -= leading;
+            String clientName = null;
+            String freelancerName = null;
+            try {
+                if (c.getClientId() != null) {
+                    UserClient.UserResponse user = userClient.getUserById(c.getClientId());
+                    clientName = user != null ? user.getName() : null;
+                }
+                if (c.getFreelancerId() != null) {
+                    UserClient.UserResponse user = userClient.getUserById(c.getFreelancerId());
+                    freelancerName = user != null ? user.getName() : null;
+                }
+            } catch (Exception ignored) {
+                // Keep PDF generation robust even if User service is unavailable.
             }
 
-            if (c.getProposedBudget() != null) {
-                double total = (c.getProposedBudget() != null ? c.getProposedBudget() : 0)
-                        + (c.getExtraTasksBudget() != null ? c.getExtraTasksBudget() : 0);
-                content.beginText();
-                content.setFont(PDType1Font.HELVETICA, 12);
-                content.newLineAtOffset(margin, y);
-                content.showText(String.format("Budget: %.0f$", total));
-                content.endText();
-                y -= leading;
-            }
+            // Header band
+            content.setNonStrokingColor(mfBlueR, mfBlueG, mfBlueB);
+            content.addRect(0, page.getMediaBox().getHeight() - 96, page.getMediaBox().getWidth(), 96);
+            content.fill();
+            content.setNonStrokingColor(255, 255, 255);
+
+            drawLogoIfAvailable(document, content, margin, page.getMediaBox().getHeight() - 84, 124, 42);
+
+            // Title
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA_BOLD, 21);
+            content.newLineAtOffset(margin + 132, page.getMediaBox().getHeight() - 46);
+            content.showText("MatchFreelance Contract");
+            content.endText();
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA, 10);
+            content.newLineAtOffset(margin + 132, page.getMediaBox().getHeight() - 63);
+            content.showText("Professional freelance agreement");
+            content.endText();
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA_BOLD, 10);
+            content.newLineAtOffset(pageWidth - 170, page.getMediaBox().getHeight() - 46);
+            content.showText("Ref: CT-" + c.getId());
+            content.endText();
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA, 9);
+            content.newLineAtOffset(pageWidth - 170, page.getMediaBox().getHeight() - 63);
+            content.showText("Date: " + formatDate(new Date()));
+            content.endText();
+
+            content.setNonStrokingColor(0, 0, 0);
+
+            y = page.getMediaBox().getHeight() - 122;
+
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA_BOLD, 15);
+            content.setNonStrokingColor(mfBlueR, mfBlueG, mfBlueB);
+            content.newLineAtOffset(margin, y);
+            content.showText("Contract Summary");
+            content.endText();
+            content.setNonStrokingColor(0, 0, 0);
+            y -= leading * 1.4f;
+
+            // Light card around identity block
+            float identityTop = y + 8f;
+            float identityHeight = 120f;
+            content.setNonStrokingColor(248, 250, 252);
+            content.addRect(margin - 6f, identityTop - identityHeight, contentWidth + 12f, identityHeight);
+            content.fill();
+            content.setStrokingColor(226, 232, 240);
+            content.addRect(margin - 6f, identityTop - identityHeight, contentWidth + 12f, identityHeight);
+            content.stroke();
+            content.setNonStrokingColor(0, 0, 0);
+            content.setStrokingColor(0, 0, 0);
+
+            y = writeLabelValue(content, margin, y, leading, "Contract ID", String.valueOf(c.getId()));
+            y = writeLabelValue(content, margin, y, leading, "Project ID", String.valueOf(c.getProjectId()));
+            y = writeLabelValue(content, margin, y, leading, "Client",
+                (clientName != null ? clientName + " " : "") + "(ID " + c.getClientId() + ")");
+            y = writeLabelValue(content, margin, y, leading, "Freelancer",
+                (freelancerName != null ? freelancerName + " " : "") + "(ID " + c.getFreelancerId() + ")");
+            y = writeLabelValue(content, margin, y, leading, "Status", String.valueOf(c.getStatus()));
+            y = writeLabelValue(content, margin, y, leading, "Timeline",
+                formatDate(c.getStartDate()) + " to " + formatDate(c.getEndDate()));
+            y -= leading * 0.2f;
+
+            // Section separator
+            content.setStrokingColor(203, 213, 225);
+            content.moveTo(margin, y + 4f);
+            content.lineTo(pageWidth - margin, y + 4f);
+            content.stroke();
+            content.setStrokingColor(0, 0, 0);
+            y -= leading * 0.3f;
+
+            double proposed = c.getProposedBudget() != null ? c.getProposedBudget() : 0d;
+            double extra = c.getExtraTasksBudget() != null ? c.getExtraTasksBudget() : 0d;
+            double total = proposed + extra;
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA_BOLD, 13);
+            content.setNonStrokingColor(mfBlueR, mfBlueG, mfBlueB);
+            content.newLineAtOffset(margin, y);
+            content.showText("Financial Breakdown");
+            content.endText();
+            content.setNonStrokingColor(0, 0, 0);
+            y -= leading * 1.2f;
+
+            y = writeLabelValue(content, margin, y, leading, "Proposed budget", formatMoney(proposed));
+            y = writeLabelValue(content, margin, y, leading, "Extra tasks budget", formatMoney(extra));
+            y = writeLabelValue(content, margin, y, leading, "Total budget", formatMoney(total));
+            y = writeLabelValue(content, margin, y, leading, "Progress", (c.getProgressPercent() != null ? c.getProgressPercent() : 0) + "%");
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA_BOLD, 12);
+            content.setNonStrokingColor(mfOrangeR, mfOrangeG, mfOrangeB);
+            content.newLineAtOffset(margin, y);
+            content.showText("Estimated payable amount: " + formatMoney(total));
+            content.endText();
+            content.setNonStrokingColor(0, 0, 0);
+            y -= leading * 1.1f;
 
             if (c.getClientRating() != null) {
-                content.beginText();
-                content.setFont(PDType1Font.HELVETICA, 12);
-                content.newLineAtOffset(margin, y);
-                content.showText("Client rating: " + c.getClientRating() + "/5");
-                content.endText();
-                y -= leading;
+                y = writeLabelValue(content, margin, y, leading, "Client rating", c.getClientRating() + "/5");
             }
+            y -= leading * 0.8f;
 
-            y -= leading;
+            if (c.getApplicationMessage() != null && !c.getApplicationMessage().isBlank()) {
+                content.beginText();
+                content.setFont(PDType1Font.HELVETICA_BOLD, 13);
+                content.setNonStrokingColor(mfBlueR, mfBlueG, mfBlueB);
+                content.newLineAtOffset(margin, y);
+                content.showText("Application message");
+                content.endText();
+                content.setNonStrokingColor(0, 0, 0);
+                y -= leading * 1.2f;
+                y = writeWrappedText(content, margin, y, contentWidth, leading, c.getApplicationMessage());
+                y -= leading * 0.6f;
+            }
 
             String terms = c.getTerms();
             if (terms != null && !terms.isBlank()) {
+                y -= leading * 0.2f;
                 content.beginText();
-                content.setFont(PDType1Font.HELVETICA_BOLD, 14);
+                content.setFont(PDType1Font.HELVETICA_BOLD, 13);
+                content.setNonStrokingColor(mfBlueR, mfBlueG, mfBlueB);
                 content.newLineAtOffset(margin, y);
-                content.showText("Terms");
+                content.showText("Contract terms");
                 content.endText();
-                y -= leading;
-
-                content.beginText();
-                content.setFont(PDType1Font.HELVETICA, 12);
-                content.newLineAtOffset(margin, y);
-                for (String line : terms.split("\\r?\\n")) {
-                    content.showText(line);
-                    content.newLineAtOffset(0, -leading);
-                }
-                content.endText();
+                content.setNonStrokingColor(0, 0, 0);
+                y -= leading * 1.2f;
+                y = writeWrappedText(content, margin, y, contentWidth, leading, terms);
             }
+
+            y -= leading * 1.2f;
+            if (y < 120) {
+                y = 120;
+            }
+
+            // Signature block
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA_BOLD, 12);
+            content.setNonStrokingColor(mfBlueR, mfBlueG, mfBlueB);
+            content.newLineAtOffset(margin, y);
+            content.showText("Signatures");
+            content.endText();
+            content.setNonStrokingColor(0, 0, 0);
+            y -= leading;
+
+            float leftSigX = margin;
+            float rightSigX = margin + (contentWidth / 2f) + 16f;
+            float sigY = y - 18f;
+            float sigWidth = (contentWidth / 2f) - 24f;
+            content.moveTo(leftSigX, sigY);
+            content.lineTo(leftSigX + sigWidth, sigY);
+            content.moveTo(rightSigX, sigY);
+            content.lineTo(rightSigX + sigWidth, sigY);
+            content.stroke();
+
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA, 10);
+            content.newLineAtOffset(leftSigX, sigY - 14);
+            content.showText("Client signature: " + (clientName != null ? clientName : "ID " + c.getClientId()));
+            content.endText();
+
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA, 10);
+            content.newLineAtOffset(rightSigX, sigY - 14);
+            content.showText("Freelancer signature: " + (freelancerName != null ? freelancerName : "ID " + c.getFreelancerId()));
+            content.endText();
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA_OBLIQUE, 9);
+            content.newLineAtOffset(margin, sigY - 30);
+            content.showText("This document is generated electronically and is valid as contractual evidence.");
+            content.endText();
+
+            // Footer
+            float footerY = margin - 6;
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA_OBLIQUE, 9);
+            content.newLineAtOffset(margin, footerY);
+            content.showText("Generated by MatchFreelance Contract Service on " + formatDate(new Date()));
+            content.endText();
+            content.beginText();
+            content.setFont(PDType1Font.HELVETICA_OBLIQUE, 9);
+            content.newLineAtOffset(pageWidth - 150, footerY);
+            content.showText("Page 1/1");
+            content.endText();
 
             content.close();
             document.save(baos);
@@ -306,6 +440,95 @@ public class ContractService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to generate contract PDF", e);
         }
+    }
+
+    private static float writeLabelValue(PDPageContentStream content, float x, float y, float leading,
+                                         String label, String value) throws IOException {
+        content.beginText();
+        content.setFont(PDType1Font.HELVETICA_BOLD, 11);
+        content.newLineAtOffset(x, y);
+        content.showText(label + ": ");
+        content.endText();
+
+        content.beginText();
+        content.setFont(PDType1Font.HELVETICA, 11);
+        content.newLineAtOffset(x + 120, y);
+        content.showText(value != null ? value : "-");
+        content.endText();
+        return y - leading;
+    }
+
+    private static float writeWrappedText(PDPageContentStream content, float x, float y, float width,
+                                          float leading, String text) throws IOException {
+        if (text == null || text.isBlank()) {
+            return y;
+        }
+        content.setFont(PDType1Font.HELVETICA, 11);
+        float fontWidthFactor = 5.2f; // approximation for Helvetica 11
+        int maxCharsPerLine = Math.max(25, (int) (width / fontWidthFactor));
+        String[] rawLines = text.replace("\r", "").split("\n");
+        for (String raw : rawLines) {
+            String line = raw.trim();
+            if (line.isEmpty()) {
+                y -= leading;
+                continue;
+            }
+            while (line.length() > maxCharsPerLine) {
+                int breakAt = line.lastIndexOf(' ', maxCharsPerLine);
+                if (breakAt <= 0) breakAt = maxCharsPerLine;
+                String chunk = line.substring(0, breakAt).trim();
+                content.beginText();
+                content.newLineAtOffset(x, y);
+                content.showText(chunk);
+                content.endText();
+                y -= leading;
+                line = line.substring(breakAt).trim();
+            }
+            if (!line.isEmpty()) {
+                content.beginText();
+                content.newLineAtOffset(x, y);
+                content.showText(line);
+                content.endText();
+                y -= leading;
+            }
+        }
+        return y;
+    }
+
+    private static String formatDate(Date date) {
+        return date == null ? "-" : new SimpleDateFormat("yyyy-MM-dd").format(date);
+    }
+
+    private static String formatMoney(double amount) {
+        return String.format("%.2f TND", amount);
+    }
+
+    private static void drawLogoIfAvailable(PDDocument document, PDPageContentStream content,
+                                            float x, float y, float width, float height) {
+        try {
+            File logoFile = resolveLogoFile();
+            if (logoFile == null) return;
+            PDImageXObject logo = PDImageXObject.createFromFileByContent(logoFile, document);
+            content.drawImage(logo, x, y, width, height);
+        } catch (Exception ignored) {
+            // Keep PDF generation resilient if logo file is missing/unreadable.
+        }
+    }
+
+    private static File resolveLogoFile() {
+        List<Path> candidates = List.of(
+                Paths.get("src/main/resources/static/matchfreelance-logo.png"),
+                Paths.get("../evaluation-reports-py/app/assets/logo.png"),
+                Paths.get("../../evaluation-reports-py/app/assets/logo.png"),
+                Paths.get("../../../evaluation-reports-py/app/assets/logo.png")
+        );
+        for (Path path : candidates) {
+            File f = path.toFile();
+            if (f.exists() && f.isFile()) {
+                return f;
+            }
+        }
+        return null;
     }
 
     private ContractResponseDTO toResponseDTO(Contract c) {

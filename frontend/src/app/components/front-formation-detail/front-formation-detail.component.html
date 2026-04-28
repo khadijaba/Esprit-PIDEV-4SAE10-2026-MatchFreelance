@@ -191,10 +191,11 @@
           <div class="mt-4 flex flex-wrap gap-3">
             @for (e of examens; track e.id) {
               @if (isExamenDejaPasse(e.id)) {
-                <span
-                  class="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-600 cursor-not-allowed">
-                  {{ e.titre }} — Déjà passé
-                </span>
+                <a [routerLink]="['/formations', formation.id, 'examen', e.id]"
+                  class="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
+                  {{ e.titre }} — Voir / Repasser (entraînement)
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </a>
               } @else {
                 <a [routerLink]="['/formations', formation.id, 'examen', e.id]"
                   class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 transition hover:bg-amber-600">

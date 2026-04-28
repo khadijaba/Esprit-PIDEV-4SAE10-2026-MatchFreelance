@@ -1,121 +1,75 @@
-<<<<<<< HEAD
-/**
- * Jenkinsfile (Declarative Pipeline) — même structure que le cours (agent, tools, options, environment, stages, post).
- * Adapté à : Esprit-PIDEV / microservice Formation + SonarQube + Docker Hub.
- *
- * Job Jenkins : Pipeline from SCM → ce repo → Script Path : backend/microservices/Formation/Jenkinsfile
- * Branche : master (ou main selon ton GitHub).
- */
-=======
->>>>>>> e513c554da3dfbb1fd77b087b1b340d90b9dc541
 pipeline {
     agent any
 
     tools {
         jdk 'JDK17'
         maven 'Maven3'
-    }
-
-<<<<<<< HEAD
-    // Le PDF utilisait 1 seconde (exemple) ; ici un timeout réaliste pour clone + build + Sonar + Docker.
-    options {
-        timeout(time: 120, unit: 'MINUTES')
+        git 'Default'
     }
 
     environment {
-        APP_ENV = 'DEV'
-=======
-    environment {
->>>>>>> e513c554da3dfbb1fd77b087b1b340d90b9dc541
         MODULE_DIR = 'backend/microservices/Formation'
-        IMAGE_NAME = 'khadijabenayed/formation'
-        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-        SONAR_HOST = 'http://localhost:9000'
-        SONAR_CREDENTIALS_ID = 'sonar-token'
+        SONAR_PROJECT_KEY = 'formation'
+        SONAR_HOST = 'http://sonarqube:9000'
+        SONAR_CREDENTIALS_ID = 'sonar-token-backend'
+    }
+
+    options {
+        skipDefaultCheckout(true)
+        timeout(time: 90, unit: 'MINUTES')
     }
 
     stages {
-<<<<<<< HEAD
-        // Équivalent "Code Checkout" du cours : avec "Pipeline from SCM", checkout scm reprend l’URL/branche du job.
-        // Si tu colles le script à la main (sans SCM), décommente le bloc git ci-dessous et crée une credential GitHub (PAT).
-        stage('Code Checkout') {
-            steps {
-                checkout scm
-                // git branch: 'master',
-                //     url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git',
-                //     credentialsId: 'github-pat-khadijaba'
-            }
-        }
-
-        stage('Code Build') {
-=======
         stage('Checkout') {
             steps {
-                checkout scm
-            }
-        }
+                retry(3) {
+                    timeout(time: 8, unit: 'MINUTES') {
+                        script {
+                            def branch = env.BRANCH_NAME ?: 'master'
+                            def remotes = scm.userRemoteConfigs.collect { cfg ->
+                                def m = [url: cfg.url]
+                                if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
+                                    m.credentialsId = cfg.credentialsId
+                                }
+                                m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
+                                m
+                            }
 
-        stage('Build & Test') {
->>>>>>> e513c554da3dfbb1fd77b087b1b340d90b9dc541
-            steps {
-                dir("${MODULE_DIR}") {
-                    sh 'mvn clean verify'
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                dir("${MODULE_DIR}") {
-                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            mvn sonar:sonar \
-                              -Dsonar.projectKey=formation \
-                              -Dsonar.host.url=${SONAR_HOST} \
-                              -Dsonar.login=${SONAR_TOKEN}
-                        '''
+                            checkout([
+                                $class: 'GitSCM',
+                                branches: [[name: "*/${branch}"]],
+                                userRemoteConfigs: remotes,
+                                extensions: [
+                                    [$class: 'CleanBeforeCheckout'],
+                                    [$class: 'PruneStaleBranch'],
+                                    [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'backend/microservices/Formation']]],
+                                    [$class: 'CloneOption', shallow: true, depth: 1, noTags: true, timeout: 8, honorRefspec: true, reference: '']
+                                ]
+                            ])
+                        }
                     }
                 }
             }
         }
 
-        stage('Docker Build') {
+        stage('Build & Sonar') {
             steps {
-                dir("${MODULE_DIR}") {
-                    sh '''
-                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                    '''
+                withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+                    dir("${MODULE_DIR}") {
+                        sh '''
+                            mvn -B clean verify sonar:sonar \
+                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                              -Dsonar.host.url=${SONAR_HOST} \
+                              -Dsonar.token=${SONAR_TOKEN}
+                        '''
+                    }
                 }
             }
-        }
-
-        stage('Docker Push') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker push ${IMAGE_NAME}:latest
-                    '''
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
                 }
             }
-        }
-    }
-
-    post {
-        always {
-<<<<<<< HEAD
-            echo '====== always ======'
-        }
-        success {
-            echo '===== pipeline executed successfully ====='
-        }
-        failure {
-            echo '====== pipeline execution failed ======'
-=======
-            cleanWs()
->>>>>>> e513c554da3dfbb1fd77b087b1b340d90b9dc541
         }
     }
 }

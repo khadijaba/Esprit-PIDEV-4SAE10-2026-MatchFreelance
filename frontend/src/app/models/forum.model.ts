@@ -17,3 +17,19 @@ export interface ForumPost {
   createdAt?: string | Date;
   updatedAt?: string | Date;
 }
+
+export interface ForumChatMessage {
+  id?: number;
+  senderId: number;
+  senderName?: string;
+  senderAvatar?: string;
+  receiverId: number;
+  receiverName?: string;
+  content: string;
+  messageType?: 'TEXT' | 'IMAGE' | 'GIF' | 'SHARED_POST';
+  imageUrl?: string;
+  gifUrl?: string;
+  sharedPostId?: number;
+  isRead?: boolean;
+  createdAt?: string | Date;
+}

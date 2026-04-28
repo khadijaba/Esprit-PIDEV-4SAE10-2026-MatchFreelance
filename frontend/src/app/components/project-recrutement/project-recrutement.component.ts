@@ -106,6 +106,30 @@ export class ProjectRecrutementComponent implements OnInit {
       this.openedInterviewCandidatureId === candidatureId ? null : candidatureId;
   }
 
+  onInterviewsChanged(candidatureId: number): void {
+    if (!this.clientId) {
+      return;
+    }
+    this.candidatureService.listByProject(this.projectId, this.clientId).subscribe({
+      next: (c) => {
+        this.candidatures = c ?? [];
+        this.clampSwipeIndex();
+        const updated = this.candidatures.find((item) => item.id === candidatureId);
+        if (updated?.eligibleForAcceptance) {
+          this.toast.success("Entretien mis à jour : candidature maintenant éligible à l'acceptation.");
+        }
+      },
+      error: () => {
+        this.candidatures = [];
+        this.clampSwipeIndex();
+      },
+    });
+    this.contractService.listByProject(this.projectId).subscribe({
+      next: (c) => (this.contracts = c ?? []),
+      error: () => (this.contracts = []),
+    });
+  }
+
   setApplicationView(view: 'swipe' | 'list' | 'ranked'): void {
     this.applicationView = view;
     this.swipeIndex = 0;

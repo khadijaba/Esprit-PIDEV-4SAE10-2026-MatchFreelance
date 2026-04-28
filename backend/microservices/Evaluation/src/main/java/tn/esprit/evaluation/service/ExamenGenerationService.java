@@ -18,6 +18,7 @@ import tn.esprit.evaluation.dto.QuestionDto;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -60,8 +61,24 @@ public class ExamenGenerationService {
         }
         List<Map<String, Object>> modules = formationClient.getModulesByFormation(formationId);
         if (modules == null || modules.isEmpty()) {
-            throw new RuntimeException(
-                    "Aucun module pour cette formation : impossible de générer un examen automatique. Ajoutez des modules côté Formation.");
+            // Fallback robuste : certaines intégrations ne remontent pas les modules malgré leur présence.
+            // On construit alors un module synthétique à partir de la formation pour éviter un blocage total.
+            String titreFormationFallback = str(formation.get("titre"));
+            if (titreFormationFallback.isBlank()) {
+                titreFormationFallback = "Formation " + formationId;
+            }
+            String descriptionFallback = str(formation.get("description"));
+
+            Map<String, Object> synthetic = new HashMap<>();
+            synthetic.put("titre", "Synthèse - " + titreFormationFallback);
+            synthetic.put("description", descriptionFallback);
+            synthetic.put("ordre", 0);
+            modules = new ArrayList<>();
+            modules.add(synthetic);
+
+            log.warn(
+                    "Aucun module récupéré pour formationId={} ; génération via module synthétique basé sur la description de la formation.",
+                    formationId);
         }
 
         modules.sort(Comparator.comparingInt(m -> parseOrdre(m.get("ordre"))));
