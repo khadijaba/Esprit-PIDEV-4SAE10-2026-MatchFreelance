@@ -1,0 +1,286 @@
+<div class="mx-auto max-w-2xl space-y-6">
+  <div class="flex items-center gap-3">
+    <a routerLink="/admin/formations" class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    </a>
+    <h2 class="text-2xl font-bold text-gray-800">Détail formation</h2>
+  </div>
+
+  @if (loading) {
+    <div class="flex justify-center py-12">
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"></div>
+    </div>
+  }
+
+  @if (!loading && formation) {
+    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+      <div class="flex items-start justify-between gap-4">
+        <h3 class="text-xl font-semibold text-gray-800">{{ formation.titre }}</h3>
+        <span
+          class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+          [class]="statutClass(formation.statut)">
+          {{ formation.statut }}
+        </span>
+      </div>
+      @if (formation.description) {
+        <p class="text-sm text-gray-600 whitespace-pre-wrap">{{ formation.description }}</p>
+      }
+      <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm">
+        @if (formation.typeFormation) {
+          <div>
+            <dt class="text-gray-500">Domaine</dt>
+            <dd class="font-medium text-gray-800">{{ typeFormationLabel(formation.typeFormation) }}</dd>
+          </div>
+        }
+        @if (formation.niveau) {
+          <div>
+            <dt class="text-gray-500">Niveau</dt>
+            <dd class="font-medium text-gray-800">{{ niveauLabel(formation.niveau) }}</dd>
+          </div>
+        }
+        <div>
+          <dt class="text-gray-500">Durée</dt>
+          <dd class="font-medium text-gray-800">{{ formation.dureeHeures }} h</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Dates</dt>
+          <dd class="font-medium text-gray-800">{{ formation.dateDebut }} → {{ formation.dateFin }}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Capacité max</dt>
+          <dd class="font-medium text-gray-800">{{ formation.capaciteMax ?? '—' }}</dd>
+        </div>
+      </dl>
+      <!-- Modules courts -->
+    <div class="pt-4 border-t border-gray-100">
+      <h4 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+        <svg class="h-4 w-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5s-3.332.477-4.5 1.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        Modules de la formation
+      </h4>
+      @if (modulesLoading) {
+        <p class="text-sm text-gray-500">Chargement des modules…</p>
+      } @else {
+        @if (modules.length > 0) {
+          <ul class="space-y-2 mb-4">
+            @for (m of modules; track m.id) {
+              <li class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50/50 px-4 py-2.5">
+                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">{{ m.ordre + 1 }}</span>
+                <div class="min-w-0 flex-1">
+                  <span class="font-medium text-gray-800">{{ m.titre }}</span>
+                  <span class="ml-2 text-xs text-gray-500">— {{ m.dureeMinutes }} min</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+        <div class="rounded-lg border border-teal-100 bg-teal-50/30 p-4">
+          <p class="text-sm font-medium text-gray-700 mb-3">Ajouter un module court</p>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-gray-600">Titre du module *</label>
+              <input type="text" [(ngModel)]="newModule.titre" name="moduleTitre" placeholder="Ex. Introduction à Spring"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-gray-600">Durée (minutes)</label>
+              <input type="number" [(ngModel)]="newModule.dureeMinutes" name="moduleDuree" min="1" placeholder="15"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="mb-1 block text-xs font-medium text-gray-600">Description (optionnel)</label>
+            <textarea [(ngModel)]="newModule.description" name="moduleDescription" placeholder="Contenu ou objectifs du module..." rows="2"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"></textarea>
+          </div>
+          <div class="mt-3 flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-medium text-gray-600">Ordre d'affichage</label>
+              <input type="number" [(ngModel)]="newModule.ordre" name="moduleOrdre" min="0" class="w-16 rounded-lg border border-gray-300 px-2 py-1.5 text-sm" />
+            </div>
+            <button type="button" (click)="addModule()" [disabled]="moduleSaving || !newModule.titre.trim()"
+              class="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              @if (moduleSaving) {
+                <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                Enregistrement…
+              } @else {
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                Ajouter le module
+              }
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+      <!-- Examens de cette formation -->
+      <div class="pt-4 border-t border-gray-100">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">Examens de cette formation</h4>
+        <div class="mb-4 rounded-xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-4 shadow-sm">
+          <p class="text-sm font-semibold text-gray-900">Générer automatiquement un examen</p>
+          <p class="mt-1 text-xs text-gray-600">
+            À partir des <strong>modules</strong> : les questions sont <strong>affichées en prévisualisation</strong> ; après vérification, validez pour enregistrer ou régénérez un nouveau jeu. Au moins <strong>7 questions</strong> par parcours (Standard et Renforcement).
+          </p>
+          <label class="mt-2 flex cursor-pointer items-center gap-2 text-xs text-gray-700">
+            <input
+              type="checkbox"
+              [(ngModel)]="useLlmForAutoGenerate"
+              name="useLlmFormationDetail"
+              [disabled]="generatingExamen || confirmingExamen"
+              class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+            <span>Rédaction LLM (ex. Ollama <code class="rounded bg-white/80 px-1">http://127.0.0.1:11434/v1</code> côté serveur)</span>
+          </label>
+          <button
+            type="button"
+            (click)="generateExamenFromModules()"
+            [disabled]="generatingExamen || confirmingExamen || modulesLoading || modules.length === 0"
+            class="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50">
+            @if (generatingExamen) {
+              <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+              Génération en cours…
+            } @else {
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Prévisualiser l’examen depuis les modules
+            }
+          </button>
+          @if (!modulesLoading && modules.length === 0) {
+            <p class="mt-2 text-xs text-amber-700">Ajoutez d’abord au moins un module pour activer ce bouton.</p>
+          }
+        </div>
+        @if (examensLoading) {
+          <p class="text-sm text-gray-500">Chargement des examens…</p>
+        } @else if (examens.length > 0) {
+          <ul class="space-y-2">
+            @for (e of examens; track e.id) {
+              <li class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50/50 px-3 py-2">
+                <span class="font-medium text-gray-800">{{ e.titre }}</span>
+                <a [routerLink]="['/admin/examens', e.id]" class="text-sm text-indigo-600 hover:text-indigo-800">Voir résultats</a>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="text-sm text-gray-500">Aucun examen pour l’instant — utilisez le bouton ci-dessus ou <a routerLink="/admin/examens/new" class="font-medium text-indigo-600 hover:underline">créez un examen manuellement</a>.</p>
+        }
+      </div>
+
+    <!-- Inscriptions -->
+    @if (inscriptionsLoading) {
+      <p class="pt-4 border-t border-gray-100 text-sm text-gray-500">Chargement des inscriptions…</p>
+    } @else {
+      <div class="pt-4 border-t border-gray-100">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">Inscriptions ({{ inscriptions.length }})</h4>
+        @if (inscriptions.length === 0) {
+          <p class="text-sm text-gray-500">Aucune inscription.</p>
+        } @else {
+          <ul class="space-y-2">
+            @for (ins of inscriptions; track ins.id) {
+              <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50/50 px-3 py-2">
+                <span class="text-gray-800">Freelancer #{{ ins.freelancerId }}</span>
+                <span
+                  class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  [class]="statutInscriptionClass(ins.statut)">
+                  {{ ins.statut }}
+                </span>
+                @if (ins.statut === 'EN_ATTENTE') {
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      (click)="validerInscription(ins)"
+                      class="text-sm font-medium text-emerald-600 hover:text-emerald-800">
+                      Valider
+                    </button>
+                    <button
+                      type="button"
+                      (click)="annulerInscription(ins)"
+                      class="text-sm font-medium text-red-600 hover:text-red-800">
+                      Annuler
+                    </button>
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+
+    <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-100">
+      <a
+        [routerLink]="['/admin/formations', formation.id, 'edit']"
+        class="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 transition">
+        Modifier
+      </a>
+      <a [routerLink]="['/admin/examens/new']" [queryParams]="{ formationId: formation.id }"
+        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition">
+        Créer un examen
+      </a>
+      <a [routerLink]="['/admin/examens']" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+        Voir tous les examens
+      </a>
+      <a routerLink="/admin/formations" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+        Retour à la liste
+      </a>
+    </div>
+  </div>
+
+  @if (draftGeneratedExamen) {
+    <div class="fixed inset-0 z-[100] flex items-end justify-center sm:items-center p-4 bg-black/50" role="dialog" aria-modal="true">
+      <div class="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl flex flex-col">
+        <div class="shrink-0 border-b border-gray-200 px-5 py-4 flex items-start justify-between gap-3 bg-indigo-50/80">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700">Prévisualisation — non enregistrée</p>
+            <h3 class="text-lg font-bold text-gray-900 mt-1">{{ draftGeneratedExamen.titre }}</h3>
+            <p class="text-sm text-gray-600 mt-1">{{ draftGeneratedExamen.description }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ draftGeneratedExamen.questions.length }} question(s) · seuil {{ draftGeneratedExamen.seuilReussi }} %</p>
+          </div>
+          <button type="button" (click)="closeDraftPreview()" class="rounded-lg p-2 text-gray-500 hover:bg-white/80 hover:text-gray-800" aria-label="Fermer">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          @for (q of draftGeneratedExamen.questions; track q.ordre) {
+            <div class="rounded-xl border border-gray-200 bg-gray-50/80 p-4 text-sm">
+              <p class="font-semibold text-gray-900"><span class="text-indigo-600">#{{ q.ordre + 1 }}</span> · {{ q.enonce }}</p>
+              @if (q.theme) {
+                <p class="text-xs text-gray-500 mt-1">Thème : {{ q.theme }} · {{ q.parcoursInclusion }} · {{ q.niveauDifficulte }}</p>
+              }
+              <ul class="mt-3 space-y-1.5 text-gray-800">
+                <li [class.ring-2]="q.bonneReponse === 'A'" [class.ring-emerald-400]="q.bonneReponse === 'A'" class="rounded-md px-2 py-1 bg-white/90"><span class="font-medium text-indigo-700">A</span> {{ optionLabel(q, 'A') }}</li>
+                <li [class.ring-2]="q.bonneReponse === 'B'" [class.ring-emerald-400]="q.bonneReponse === 'B'" class="rounded-md px-2 py-1 bg-white/90"><span class="font-medium text-indigo-700">B</span> {{ optionLabel(q, 'B') }}</li>
+                <li [class.ring-2]="q.bonneReponse === 'C'" [class.ring-emerald-400]="q.bonneReponse === 'C'" class="rounded-md px-2 py-1 bg-white/90"><span class="font-medium text-indigo-700">C</span> {{ optionLabel(q, 'C') }}</li>
+                <li [class.ring-2]="q.bonneReponse === 'D'" [class.ring-emerald-400]="q.bonneReponse === 'D'" class="rounded-md px-2 py-1 bg-white/90"><span class="font-medium text-indigo-700">D</span> {{ optionLabel(q, 'D') }}</li>
+              </ul>
+              <p class="text-xs text-emerald-800 mt-2 font-medium">Bonne réponse : {{ q.bonneReponse }}</p>
+              @if (q.explication) {
+                <p class="text-xs text-gray-600 mt-2 border-t border-gray-200 pt-2">{{ q.explication }}</p>
+              }
+            </div>
+          }
+        </div>
+        <div class="shrink-0 border-t border-gray-200 px-5 py-4 flex flex-wrap gap-3 justify-end bg-white">
+          <button type="button" (click)="closeDraftPreview()" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
+          <button
+            type="button"
+            (click)="regenerateDraftExamen()"
+            [disabled]="generatingExamen"
+            class="rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-100 disabled:opacity-50">
+            {{ generatingExamen ? 'Régénération…' : 'Régénérer (nouveau jeu)' }}
+          </button>
+          <button
+            type="button"
+            (click)="confirmDraftExamen()"
+            [disabled]="confirmingExamen || generatingExamen"
+            class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+            {{ confirmingExamen ? 'Enregistrement…' : 'Valider et créer l’examen' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+  }
+</div>

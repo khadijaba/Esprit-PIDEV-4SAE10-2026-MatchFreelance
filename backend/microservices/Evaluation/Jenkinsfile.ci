@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK17'
+        maven 'Maven3'
+    }
+
+    options {
+        skipDefaultCheckout(true)
+        timeout(time: 90, unit: 'MINUTES')
+    }
+
+    environment {
+        REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        BRANCH = 'douja'
+        MODULE_DIR = 'backend/microservices/Evaluation'
+        SONAR_PROJECT_KEY = 'evaluation'
+        SONAR_HOST = 'http://sonarqube:9000'
+        SONAR_CREDENTIALS_ID = 'sonar-token-backend'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${BRANCH}"]],
+                    userRemoteConfigs: [[
+                        url: "${REPO_URL}",
+                        refspec: "+refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}"
+                    ]],
+                    extensions: [
+                        [$class: 'CleanBeforeCheckout'],
+                        [$class: 'PruneStaleBranch'],
+                        [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'backend/microservices/Evaluation']]],
+                        [$class: 'CloneOption', shallow: true, depth: 1, noTags: true, timeout: 30, honorRefspec: true, reference: '']
+                    ]
+                ])
+            }
+        }
+
+        stage('Build, Test, JaCoCo, Sonar') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+                        bat """
+                            mvn -B clean verify sonar:sonar ^
+                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} ^
+                              -Dsonar.host.url=${SONAR_HOST} ^
+                              -Dsonar.token=%SONAR_TOKEN%
+                        """
+                    }
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
+                }
+            }
+        }
+    }
+}

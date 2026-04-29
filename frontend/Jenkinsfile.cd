@@ -1,0 +1,78 @@
+pipeline {
+    agent any
+
+    options {
+        skipDefaultCheckout(true)
+        timeout(time: 45, unit: 'MINUTES')
+    }
+
+    parameters {
+        string(name: 'GIT_BRANCH', defaultValue: 'douja', description: 'Git branch to deploy')
+        string(name: 'IMAGE_NAME', defaultValue: 'khadijabenayed/matchfreelance-frontend', description: 'Docker image name')
+        string(name: 'IMAGE_TAG', defaultValue: '', description: 'Docker image tag from CI')
+    }
+
+    tools {
+        nodejs 'Node20'
+    }
+
+    environment {
+        REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        MODULE_DIR = 'frontend'
+        EFFECTIVE_TAG = "${params.IMAGE_TAG ?: "1.0.${BUILD_NUMBER}"}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git credentialsId: 'github-credentials',
+                    url: "${REPO_URL}",
+                    branch: "${params.GIT_BRANCH}"
+            }
+        }
+
+        stage('Build Frontend Artifacts') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    sh '''
+                        npm ci
+                        npm run build
+                    '''
+                }
+            }
+        }
+
+        stage('Docker Build + Push') {
+            steps {
+                withCredentials([usernamePassword(
+                        credentialsId: 'docker-hub-credentials',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    dir("${MODULE_DIR}") {
+                        sh '''
+                            echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+                            docker build -t ${IMAGE_NAME}:${EFFECTIVE_TAG} -f Dockerfile .
+                            docker tag ${IMAGE_NAME}:${EFFECTIVE_TAG} ${IMAGE_NAME}:latest
+                            docker push ${IMAGE_NAME}:${EFFECTIVE_TAG}
+                            docker push ${IMAGE_NAME}:latest
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Kubernetes') {
+            steps {
+                withKubeConfig([credentialsId: 'kubeconfig-prod']) {
+                    sh '''
+                        kubectl apply -f k8s/namespace.yaml
+                        kubectl apply -f k8s/frontend/
+                        kubectl -n matchfreelance set image deployment/frontend-deployment frontend=${IMAGE_NAME}:${EFFECTIVE_TAG}
+                        kubectl -n matchfreelance rollout status deployment/frontend-deployment --timeout=180s
+                    '''
+                }
+            }
+        }
+    }
+}

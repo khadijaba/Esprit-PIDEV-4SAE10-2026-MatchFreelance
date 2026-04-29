@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: matchfreelance
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    rule_files:
+      - /etc/prometheus/alert.rules.yml
+
+    scrape_configs:
+      - job_name: 'candidature-service'
+        metrics_path: /actuator/prometheus
+        static_configs:
+          - targets: ['candidature-service:8091']
+
+      - job_name: 'contract-service'
+        metrics_path: /actuator/prometheus
+        static_configs:
+          - targets: ['contract-service:8088']
+
+      - job_name: 'frontend-availability'
+        metrics_path: /
+        static_configs:
+          - targets: ['frontend-service:80']
+
+      # Update these tool targets to your WSL host IP/ports if needed.
+      - job_name: 'jenkins'
+        metrics_path: /prometheus
+        static_configs:
+          - targets: ['host.docker.internal:8080']
+
+      - job_name: 'sonarqube'
+        metrics_path: /api/monitoring/metrics
+        static_configs:
+          - targets: ['host.docker.internal:9000']
+
+  alert.rules.yml: |
+    groups:
+      - name: devops-platform-alerts
+        rules:
+          - alert: BackendServiceDown
+            expr: up{job=~"candidature-service|contract-service"} == 0
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Backend service down"
+              description: "A monitored backend service is not reachable."

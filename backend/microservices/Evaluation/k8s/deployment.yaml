@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: evaluation
+  labels:
+    app: evaluation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: evaluation
+  template:
+    metadata:
+      labels:
+        app: evaluation
+    spec:
+      containers:
+        - name: evaluation
+          image: khadijabenayed/evaluation:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8083

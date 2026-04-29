@@ -1,0 +1,263 @@
+<div class="main-container">
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-link">Link</span><span class="logo-freelance">Freelance</span>
+    </div>
+
+    <div class="nav-section">
+      <h3 class="nav-section-title">Discover</h3>
+      <div
+        class="nav-item"
+        *ngFor="let cat of categories"
+        [class.active]="activeNav === cat.value"
+        (click)="selectNav(cat.value)"
+      >
+        <div class="dot" [class]="'dot dot-' + cat.color"></div>
+        <span>{{ cat.label }}</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <h3 class="nav-section-title">Sessions</h3>
+      <div class="session-list" *ngIf="sessionUsers.length > 0; else noSessions">
+        <button
+          type="button"
+          class="session-item"
+          *ngFor="let user of sessionUsers"
+          [class.active]="selectedSessionUserId === user.userId"
+          (click)="openSession(user.userId)"
+        >
+          <span>{{ getInitials(user.fullName) }}</span>
+          <small>{{ user.fullName }}</small>
+        </button>
+      </div>
+      <ng-template #noSessions>
+        <div class="state">No users available yet.</div>
+      </ng-template>
+    </div>
+
+    <div class="profile-card">
+      <div class="avatar">{{ getInitials(currentUserName) }}</div>
+      <div class="profile-info">
+        <span class="profile-name">{{ currentUserName }}</span>
+        <span class="profile-role">{{ currentUserRole }}</span>
+      </div>
+    </div>
+
+    <button type="button" class="sidebar-primary" (click)="openThreadDrawer()">+ New Thread</button>
+    <button type="button" class="sidebar-secondary" (click)="openGroupModal()">Create Group</button>
+  </aside>
+
+  <main class="feed">
+    <header class="feed-header">
+      <h2>Messages</h2>
+    </header>
+
+    <div class="feed-body">
+      <aside class="messages-panel">
+        <h3>Messages</h3>
+        <div class="messages-placeholder" *ngIf="sessionUsers.length === 0">
+          No messages yet.
+        </div>
+        <div class="messages-list" *ngIf="sessionUsers.length > 0">
+          <button
+            type="button"
+            class="msg-user"
+            *ngFor="let user of sessionUsers"
+            [class.active]="selectedSessionUserId === user.userId"
+            (click)="openSession(user.userId)"
+          >
+            <span>{{ getInitials(user.fullName) }}</span>
+            <div>
+              <strong>{{ user.fullName }}</strong>
+              <small>{{ user.role }}</small>
+            </div>
+          </button>
+        </div>
+      </aside>
+
+      <section class="timeline-panel">
+        <section class="quick-compose">
+          <textarea
+            rows="3"
+            [(ngModel)]="newPostContent"
+            placeholder="What's happening in your freelance world?"
+          ></textarea>
+          <button type="button" (click)="createPost()" [disabled]="creating || !newPostContent.trim()">
+            {{ creating ? 'Posting...' : 'Post' }}
+          </button>
+        </section>
+
+        <section class="chat-card" *ngIf="selectedSessionUserId">
+          <div class="chat-header">Session Chat</div>
+          <div class="chat-messages" *ngIf="!loadingConversation; else loadingConv">
+            <p class="state" *ngIf="conversation.length === 0">No messages yet.</p>
+            <div class="chat-message" *ngFor="let m of conversation" [class.mine]="m.senderId === currentUserId">
+              <span class="msg-author">{{ m.senderId === currentUserId ? 'You' : (m.senderName || 'User') }}</span>
+              <p>{{ m.content }}</p>
+            </div>
+          </div>
+          <ng-template #loadingConv>
+            <div class="state">Loading conversation...</div>
+          </ng-template>
+          <div class="chat-input-row">
+            <input
+              type="text"
+              [(ngModel)]="messageDraft"
+              placeholder="Type a message..."
+              [disabled]="!selectedSessionUserId"
+            />
+            <button type="button" (click)="sendMessage()" [disabled]="!messageDraft.trim() || !selectedSessionUserId">Send</button>
+          </div>
+        </section>
+
+        <div class="state" *ngIf="loading">Loading posts...</div>
+        <div class="state" *ngIf="!loading && posts.length === 0">No posts yet.</div>
+
+        <section class="thread-list" *ngIf="!loading && posts.length > 0">
+          <article class="post-card" *ngFor="let post of posts">
+            <div class="post-card-header">
+              <div class="post-author-info">
+                <div class="post-avatar">{{ getInitials(post.author || post.username || 'U') }}</div>
+                <div class="post-author-details">
+                <strong>{{ post.author || post.username || 'Utilisateur' }}</strong>
+                  <span>{{ asDate(post.createdAt) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="post-card-body">
+              <p>{{ post.content }}</p>
+            </div>
+
+            <div class="post-actions">
+              <button type="button" (click)="like(post)">Like ({{ post.likes ?? 0 }})</button>
+              <button type="button" (click)="toggleReplies(post)">
+                Replies ({{ repliesByPostId[post.id!]?.length ?? post.comments ?? 0 }})
+              </button>
+              <button type="button" class="ghost-action">Repost (0)</button>
+              <button type="button" class="ghost-action">Share (0)</button>
+            </div>
+
+            <div class="reply-box" *ngIf="post.id && repliesByPostId[post.id]">
+              <div class="reply" *ngFor="let r of repliesByPostId[post.id]">
+                <strong>{{ r.author || r.username || 'Utilisateur' }}:</strong>
+                {{ r.content }}
+              </div>
+              <div class="reply-form">
+                <input
+                  type="text"
+                  [(ngModel)]="replyContentByPostId[post.id]"
+                  placeholder="Write a reply..."
+                />
+                <button type="button" (click)="submitReply(post)">Reply</button>
+              </div>
+            </div>
+          </article>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <aside class="right-rail">
+    <div class="rail-card">
+      <h4>My Groups</h4>
+      <p *ngIf="groups.length === 0">No groups yet</p>
+      <p *ngFor="let g of groups">{{ g.name }} <span class="muted">· {{ g.topic }}</span></p>
+      <button type="button" class="rail-action" (click)="openGroupModal()">Create your first group</button>
+    </div>
+    <div class="rail-card">
+      <h4>Trending</h4>
+      <p>#FreelanceTips</p>
+      <p>#RemoteWork</p>
+      <p>#ProjectOwner</p>
+    </div>
+    <div class="rail-card">
+      <h4>Who to follow</h4>
+      <p>Developers community</p>
+      <p>UI/UX experts</p>
+      <p>PM hub</p>
+    </div>
+  </aside>
+</div>
+
+<div class="thread-drawer-backdrop" *ngIf="isThreadDrawerOpen" (click)="closeThreadDrawer()"></div>
+<aside class="thread-drawer" *ngIf="isThreadDrawerOpen">
+  <div class="drawer-header">
+    <h3>Create Thread</h3>
+    <button type="button" class="close-btn" (click)="closeThreadDrawer()">×</button>
+  </div>
+
+  <div class="drawer-user">
+    <div class="avatar">{{ getInitials(currentUserName) }}</div>
+    <div>
+      <strong>{{ currentUserName }}</strong>
+      <div class="badge">{{ currentUserRole }}</div>
+    </div>
+  </div>
+
+  <label>WHAT'S ON YOUR MIND?</label>
+  <textarea rows="6" [(ngModel)]="threadDraft" placeholder="Share your thoughts, ask a question, or start a discussion..."></textarea>
+
+  <label>IMAGE (OPTIONAL)</label>
+  <div class="upload-zone">Click to upload image</div>
+
+  <label>TAGS</label>
+  <input type="text" [(ngModel)]="threadTagDraft" placeholder="Add a tag..." />
+
+  <label>SPACE</label>
+  <div class="chips">
+    <button type="button" *ngFor="let s of spaces" (click)="selectedSpace = s" [class.active-chip]="selectedSpace === s">{{ s }}</button>
+  </div>
+
+  <div class="drawer-actions">
+    <button type="button" class="cancel-btn" (click)="closeThreadDrawer()">Cancel</button>
+    <button type="button" (click)="submitThreadFromDrawer()" [disabled]="creating || !threadDraft.trim()">
+      {{ creating ? 'Posting...' : 'Post Thread' }}
+    </button>
+  </div>
+</aside>
+
+<div class="group-modal-backdrop" *ngIf="isGroupModalOpen">
+  <div class="group-modal" (click)="$event.stopPropagation()">
+    <div class="drawer-header">
+      <h3>Create Discussion Group</h3>
+      <button type="button" class="close-btn" (click)="closeGroupModal()">×</button>
+    </div>
+
+    <label>Group Logo</label>
+    <div class="upload-zone group-logo-zone">
+      Drag &amp; drop an image or click to browse
+      <small>PNG, JPG, up to 5MB</small>
+    </div>
+
+    <label>Group Name *</label>
+    <input type="text" [(ngModel)]="groupNameDraft" placeholder="Enter group name" />
+
+    <label>Topic *</label>
+    <select [(ngModel)]="groupTopicDraft">
+      <option>Freelancing</option>
+      <option>Project owners</option>
+      <option>Open collab</option>
+      <option>Skill exchange</option>
+      <option>Jobs & Opportunities</option>
+    </select>
+
+    <label class="checkbox-line">
+      <input type="checkbox" [(ngModel)]="groupPrivateDraft" />
+      Private Group
+    </label>
+
+    <div class="permissions">
+      <h4>Group Permissions</h4>
+      <label class="checkbox-line"><input type="checkbox" [(ngModel)]="allowInvites" /> Allow members to invite others</label>
+      <label class="checkbox-line"><input type="checkbox" [(ngModel)]="allowEmojis" /> Allow emojis</label>
+      <label class="checkbox-line"><input type="checkbox" [(ngModel)]="allowGifs" /> Allow GIFs</label>
+    </div>
+
+    <div class="drawer-actions">
+      <button type="button" class="cancel-btn" (click)="closeGroupModal()">Cancel</button>
+      <button type="button" (click)="createGroup()" [disabled]="!groupNameDraft.trim()">Create Group</button>
+    </div>
+  </div>
+</div>

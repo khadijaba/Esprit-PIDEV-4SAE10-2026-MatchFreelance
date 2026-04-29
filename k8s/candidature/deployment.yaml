@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: candidature-deployment
+  namespace: matchfreelance
+  labels:
+    app: candidature
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: candidature
+  template:
+    metadata:
+      labels:
+        app: candidature
+    spec:
+      containers:
+        - name: candidature
+          image: khadijabenayed/candidature:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8091
+          env:
+            - name: EUREKA_URL
+              value: http://eureka-service:8761/eureka/
+            - name: CONFIG_SERVER_HOST
+              value: config-server
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8091
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8091
+            initialDelaySeconds: 40
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 150m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

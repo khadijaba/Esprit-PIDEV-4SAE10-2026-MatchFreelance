@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: contract-deployment
+  namespace: matchfreelance
+  labels:
+    app: contract
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: contract
+  template:
+    metadata:
+      labels:
+        app: contract
+    spec:
+      containers:
+        - name: contract
+          image: khadijabenayed/contract:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8088
+          env:
+            - name: EUREKA_URL
+              value: http://eureka-service:8761/eureka/
+            - name: CONFIG_SERVER_HOST
+              value: config-server
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8088
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8088
+            initialDelaySeconds: 40
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 150m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

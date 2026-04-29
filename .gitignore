@@ -1,0 +1,8 @@
+kubeconfig-prod.yaml
+
+# Build and IDE
+**/target/
+.idea/
+node_modules/
+dist/
+.angular/

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: candidature-service
+  namespace: matchfreelance
+  labels:
+    app: candidature
+spec:
+  selector:
+    app: candidature
+  ports:
+    - name: http
+      port: 8091
+      targetPort: 8091
+  type: ClusterIP

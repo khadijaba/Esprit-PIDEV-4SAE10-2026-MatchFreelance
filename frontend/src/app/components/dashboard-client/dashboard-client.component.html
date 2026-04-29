@@ -1,0 +1,308 @@
+<div class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+  <h1 class="text-2xl font-bold text-slate-900">My Projects</h1>
+  <p class="mt-1 text-slate-600">Review and manage freelancer applications for your projects</p>
+
+  @if (error) {
+    <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{{ error }}</div>
+  }
+
+  @if (!error && loading) {
+    <div class="mt-8 flex justify-center py-12">
+      <div class="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-slate-600"></div>
+    </div>
+  }
+  @if (!error && !loading) {
+    <section class="mt-6 space-y-3">
+      @for (p of projects; track p.id) {
+        <button
+          type="button"
+          (click)="selectProject(p.id)"
+          class="w-full rounded-2xl border p-5 text-left shadow-sm transition hover:border-teal-200 hover:shadow"
+          [class.border-teal-300]="selectedProjectId === p.id"
+          [class.bg-white]="selectedProjectId !== p.id"
+          [class.bg-teal-50/30]="selectedProjectId === p.id"
+        >
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-3">
+                <h3 class="text-lg font-semibold text-slate-900">{{ p.title }}</h3>
+                <span
+                  class="rounded-full px-2 py-0.5 text-xs font-medium"
+                  [class.bg-amber-100]="p.status === 'IN_PROGRESS'"
+                  [class.text-amber-700]="p.status === 'IN_PROGRESS'"
+                  [class.bg-emerald-100]="p.status === 'OPEN'"
+                  [class.text-emerald-700]="p.status === 'OPEN'"
+                  [class.bg-slate-100]="p.status !== 'OPEN' && p.status !== 'IN_PROGRESS'"
+                  [class.text-slate-700]="p.status !== 'OPEN' && p.status !== 'IN_PROGRESS'"
+                >
+                  {{ p.status }}
+                </span>
+              </div>
+              <p class="mt-1 text-sm text-slate-600 line-clamp-1">{{ p.description }}</p>
+              <p class="mt-2 text-sm font-semibold text-teal-700">{{ p.budget | number: '1.0-0' }} TND <span class="ml-3 font-normal text-slate-500">{{ p.duration }} days</span></p>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="rounded-lg bg-teal-50 px-4 py-2 text-center ring-1 ring-teal-100">
+                <p class="text-2xl font-bold text-teal-700">{{ contractCounts[p.id] }}</p>
+                <p class="text-xs font-medium text-teal-800">Contrat(s)</p>
+              </div>
+              <div class="rounded-lg bg-slate-50 px-4 py-2 text-center ring-1 ring-slate-100">
+                <p class="text-2xl font-bold text-slate-900">{{ applicationCounts[p.id] }}</p>
+                <p class="text-xs text-slate-500">Candidatures</p>
+              </div>
+              <span class="text-xl text-slate-400">›</span>
+            </div>
+          </div>
+        </button>
+      }
+    </section>
+
+    @if (selectedProjectId != null) {
+      <section class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-2xl font-bold text-slate-900">Freelancer Applications</h2>
+          <div class="flex rounded-lg border border-slate-200 bg-slate-50 p-1 text-sm font-medium shadow-inner">
+            <button type="button" (click)="setApplicationView('swipe')" class="rounded-md px-3 py-1.5 transition" [class.bg-white]="selectedApplicationView === 'swipe'" [class.shadow-sm]="selectedApplicationView === 'swipe'">Swipe</button>
+            <button type="button" (click)="setApplicationView('list')" class="rounded-md px-3 py-1.5 transition" [class.bg-emerald-100]="selectedApplicationView === 'list'" [class.text-emerald-900]="selectedApplicationView === 'list'" [class.shadow-sm]="selectedApplicationView === 'list'">List</button>
+            <button type="button" (click)="setApplicationView('ranked')" class="rounded-md px-3 py-1.5 transition" [class.bg-white]="selectedApplicationView === 'ranked'" [class.shadow-sm]="selectedApplicationView === 'ranked'">Ranked</button>
+          </div>
+        </div>
+
+        @if (loadingProjectPanel) {
+          <div class="flex justify-center py-8">
+            <div class="h-8 w-8 animate-spin rounded-full border-4 border-teal-200 border-t-teal-600"></div>
+          </div>
+        } @else if (selectedApplications.length === 0) {
+          <p class="text-sm text-slate-500">Aucune candidature pour ce projet.</p>
+        } @else if (selectedApplicationView === 'swipe') {
+          @if (swipeQueue.length === 0) {
+            <p class="text-sm text-slate-600">Aucune candidature en attente de décision.</p>
+          } @else if (swipeCurrent; as app) {
+            <div class="rounded-2xl border-2 border-slate-200 bg-gradient-to-b from-white to-slate-50/80 p-6 shadow-sm">
+              <div class="flex items-center justify-between text-xs text-slate-500">
+                <span>Candidature {{ swipeIndex + 1 }} / {{ swipeQueue.length }}</span>
+                <div class="flex gap-1">
+                  <button type="button" (click)="swipePrev()" [disabled]="swipeIndex === 0" class="rounded border border-slate-200 bg-white px-2 py-1 disabled:opacity-40">←</button>
+                  <button type="button" (click)="swipeNext()" [disabled]="swipeIndex >= swipeQueue.length - 1" class="rounded border border-slate-200 bg-white px-2 py-1 disabled:opacity-40">→</button>
+                </div>
+              </div>
+              <div class="mt-4 flex flex-wrap items-center gap-3">
+                <p class="text-xl font-bold text-slate-900">{{ app.freelancerName || ('Freelancer #' + app.freelancerId) }}</p>
+                <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">{{ app.status }}</span>
+              </div>
+              <p class="mt-3 break-words text-sm leading-relaxed text-slate-700">{{ app.message || 'Pas de message.' }}</p>
+              <p class="mt-3 text-lg font-bold text-emerald-700">Total : {{ app.proposedBudget | number: '1.0-0' }} TND —</p>
+              <p class="text-xs text-slate-500">{{ app.createdAt | date: 'medium' }}</p>
+              <div class="mt-5 flex flex-wrap items-center gap-2">
+                <button type="button" (click)="analyzePitchFor(app)" class="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-800">Analyze pitch</button>
+                @if (isPendingCandidature(app)) {
+                  <button
+                    type="button"
+                    [disabled]="actionLoading || !canAccept(app)"
+                    [attr.title]="acceptDisabledTitle(app) || null"
+                    (click)="acceptApplication(app)"
+                    class="rounded-lg bg-teal-600 px-5 py-2 text-sm font-bold text-white shadow-sm disabled:opacity-50"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    type="button"
+                    [disabled]="actionLoading || !canReject(app)"
+                    (click)="rejectApplication(app)"
+                    class="rounded-lg border-2 border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-800 disabled:opacity-50"
+                  >
+                    Reject
+                  </button>
+                } @else {
+                  <span class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
+                    Décision déjà enregistrée (<strong>{{ app.status }}</strong>).
+                  </span>
+                }
+              </div>
+              @if (pitchAnalysisResult && analyzedPitchCandidatureId === app.id) {
+                <div class="mt-4 rounded-xl border-2 border-teal-200 bg-teal-50/80 p-4">
+                  <div class="mb-3 flex items-center justify-between">
+                    <h4 class="text-sm font-semibold text-slate-900">Analyse du pitch</h4>
+                    <button type="button" (click)="closePitchAnalysis()" class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100">Fermer</button>
+                  </div>
+                  @let r = pitchAnalysisResult;
+                  <div class="flex items-center gap-3 rounded-lg border border-white bg-white/60 p-3">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold" [style.color]="pitchScoreColor(r.overallScore)">{{ r.overallScore }}</div>
+                    <div>
+                      <p class="text-sm font-semibold" [style.color]="pitchScoreColor(r.overallScore)">{{ pitchScoreLabel(r.overallScore) }} match</p>
+                      <p class="text-xs text-slate-600">{{ r.verdict }}</p>
+                    </div>
+                  </div>
+                  <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                    <div class="rounded-lg bg-emerald-50 p-2">
+                      <p class="text-xs font-bold uppercase text-emerald-700">Points forts</p>
+                      <ul class="mt-1 list-inside list-disc text-xs text-slate-700">
+                        @for (m of r.keyMatches; track m) { <li>{{ m }}</li> }
+                      </ul>
+                    </div>
+                    <div class="rounded-lg bg-amber-50 p-2">
+                      <p class="text-xs font-bold uppercase text-amber-700">Lacunes</p>
+                      <ul class="mt-1 list-inside list-disc text-xs text-slate-700">
+                        @for (g of r.keyGaps; track g) { <li>{{ g }}</li> }
+                      </ul>
+                    </div>
+                  </div>
+                  @for (d of r.dimensions; track d.name) {
+                    <div class="mt-2">
+                      <div class="mb-0.5 flex justify-between text-xs">
+                        <span class="font-medium text-slate-700">{{ d.name }}</span>
+                        <span [style.color]="pitchScoreColor(d.score)">{{ d.score }}</span>
+                      </div>
+                      <div class="h-1.5 overflow-hidden rounded-full bg-slate-200">
+                        <div class="h-full rounded-full" [style.width.%]="d.score" [style.background]="pitchScoreColor(d.score)"></div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        } @else {
+          <div class="space-y-4">
+            @for (app of (selectedApplicationView === 'ranked' ? rankedApplications : selectedApplications); track app.id; let rank = $index) {
+              <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div class="min-w-0 flex-1">
+                    @if (selectedApplicationView === 'ranked') {
+                      <span class="mb-2 inline-flex rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">#{{ rank + 1 }}</span>
+                    }
+                    <div class="flex flex-wrap items-center gap-3">
+                      <p class="text-lg font-semibold text-slate-900">{{ app.freelancerName || ('Freelancer #' + app.freelancerId) }}</p>
+                      <span class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">{{ app.status }}</span>
+                      @if (selectedApplicationView === 'ranked' && app.aiMatchScore != null) {
+                        <span class="text-xs font-medium text-indigo-600">Score IA : {{ app.aiMatchScore }}</span>
+                      }
+                    </div>
+                    <p class="mt-2 break-words text-sm leading-relaxed text-slate-700">{{ app.message || 'No message' }}</p>
+                    <p class="mt-2 text-sm font-semibold text-teal-700">Total: {{ app.proposedBudget | number: '1.0-0' }} TND —</p>
+                    <p class="text-xs text-slate-500">Applied {{ app.createdAt | date: 'medium' }}</p>
+                  </div>
+                  <div class="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                    <button type="button" (click)="analyzePitchFor(app)" class="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700">Analyze pitch</button>
+                    @if (isPendingCandidature(app)) {
+                      <button
+                        type="button"
+                        [disabled]="actionLoading || !canAccept(app)"
+                        [attr.title]="acceptDisabledTitle(app) || null"
+                        (click)="acceptApplication(app)"
+                        class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        type="button"
+                        [disabled]="actionLoading || !canReject(app)"
+                        (click)="rejectApplication(app)"
+                        class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
+                      >
+                        Reject
+                      </button>
+                    }
+                  </div>
+                </div>
+                @if (!isPendingCandidature(app)) {
+                  <p class="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium leading-relaxed text-slate-600">
+                    Statut <strong>{{ app.status }}</strong> — Accept / Reject uniquement pour les candidatures <strong>en attente (PENDING)</strong>.
+                  </p>
+                }
+                @if (pitchAnalysisResult && analyzedPitchCandidatureId === app.id) {
+                  <div class="mt-4 rounded-xl border-2 border-teal-200 bg-teal-50/80 p-4">
+                    <div class="mb-3 flex items-center justify-between">
+                      <h4 class="text-sm font-semibold text-slate-900">Analyse du pitch</h4>
+                      <button type="button" (click)="closePitchAnalysis()" class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100">Fermer</button>
+                    </div>
+                    @let r = pitchAnalysisResult;
+                    <div class="flex items-center gap-3 rounded-lg border border-white bg-white/60 p-3">
+                      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold" [style.color]="pitchScoreColor(r.overallScore)">{{ r.overallScore }}</div>
+                      <div>
+                        <p class="text-sm font-semibold" [style.color]="pitchScoreColor(r.overallScore)">{{ pitchScoreLabel(r.overallScore) }} match</p>
+                        <p class="text-xs text-slate-600">{{ r.verdict }}</p>
+                      </div>
+                    </div>
+                    <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                      <div class="rounded-lg bg-emerald-50 p-2">
+                        <p class="text-xs font-bold uppercase text-emerald-700">Points forts</p>
+                        <ul class="mt-1 list-inside list-disc text-xs text-slate-700">
+                          @for (m of r.keyMatches; track m) { <li>{{ m }}</li> }
+                        </ul>
+                      </div>
+                      <div class="rounded-lg bg-amber-50 p-2">
+                        <p class="text-xs font-bold uppercase text-amber-700">Lacunes</p>
+                        <ul class="mt-1 list-inside list-disc text-xs text-slate-700">
+                          @for (g of r.keyGaps; track g) { <li>{{ g }}</li> }
+                        </ul>
+                      </div>
+                    </div>
+                    @for (d of r.dimensions; track d.name) {
+                      <div class="mt-2">
+                        <div class="mb-0.5 flex justify-between text-xs">
+                          <span class="font-medium text-slate-700">{{ d.name }}</span>
+                          <span [style.color]="pitchScoreColor(d.score)">{{ d.score }}</span>
+                        </div>
+                        <div class="h-1.5 overflow-hidden rounded-full bg-slate-200">
+                          <div class="h-full rounded-full" [style.width.%]="d.score" [style.background]="pitchScoreColor(d.score)"></div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      @if (selectedContracts.length > 0) {
+        @for (c of selectedContracts; track c.id) {
+          <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-3">
+                  <h3 class="text-xl font-bold text-slate-900">Contrat #{{ c.id }}</h3>
+                  <span class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">{{ c.status || 'ACTIVE' }}</span>
+                </div>
+                <p class="mt-2 text-slate-700">{{ chatPeerLabel(c) }}</p>
+                <p class="mt-1 text-xs text-slate-500">{{ contractDateRange(c) }}</p>
+                @if (c.applicationMessage) {
+                  <p class="mt-2 line-clamp-2 text-xs text-slate-600">{{ c.applicationMessage }}</p>
+                }
+                <p class="mt-2 text-xl font-bold text-teal-700">{{ c.proposedBudget | number: '1.0-0' }} TND total</p>
+                <p class="mt-2 text-xs text-slate-500">{{ c.progressPercent ?? 0 }}% complete</p>
+                <div class="mt-2 h-2 rounded-full bg-slate-100">
+                  <div class="h-2 rounded-full bg-teal-500" [style.width.%]="c.progressPercent ?? 0"></div>
+                </div>
+                <a [routerLink]="['/projets', selectedProjectId, 'recrutement']" class="mt-3 inline-block text-sm font-medium text-teal-700 hover:underline">▸ Recrutement & entretiens</a>
+              </div>
+              <div class="flex flex-col items-end gap-2">
+                <button type="button" (click)="payContract(c)" [disabled]="actionLoading" class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Pay</button>
+                <button type="button" (click)="cancelContract(c)" [disabled]="actionLoading" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50">Cancel</button>
+                <button type="button" (click)="openContractPdf(c.id)" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  Download PDF
+                </button>
+                <a [routerLink]="['/projets', selectedProjectId]" class="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1 text-sm text-indigo-700">Preview Project</a>
+                @if (skillTagsForProject().length) {
+                  <div class="flex flex-wrap justify-end gap-2 text-xs">
+                    @for (tag of skillTagsForProject(); track tag) {
+                      <span class="rounded-full border border-indigo-200 px-2 py-0.5 text-indigo-700">{{ tag }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="mt-6 border-t border-slate-200 pt-5">
+              @if (clientId) {
+                <app-contract-chat-panel [contractId]="c.id" [currentUserId]="clientId" [peerName]="chatPeerLabel(c)" />
+              }
+            </div>
+          </section>
+        }
+      }
+    }
+  }
+</div>

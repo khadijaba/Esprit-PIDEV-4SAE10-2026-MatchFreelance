@@ -1,0 +1,22 @@
+<div class="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+  <h1 class="text-2xl font-bold text-slate-900">Mes compétences</h1>
+  <p class="mt-2 text-sm text-slate-600">
+    L’annuaire de compétences (microservice <strong>Skill</strong>) a été retiré de la plateforme.
+  </p>
+  @if (!auth.isLoggedIn()) {
+    <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+      <a routerLink="/login" class="font-medium text-amber-700 hover:underline">Connectez-vous</a> pour accéder au reste de votre espace.
+    </div>
+  } @else if (auth.getStoredUser()?.role !== 'FREELANCER') {
+    <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+      Cette section s’adressait aux freelancers. Utilisez le menu adapté à votre rôle.
+    </div>
+  } @else {
+    <div class="mt-6 rounded-xl border border-teal-200 bg-teal-50/60 p-6 text-sm text-slate-800">
+      <p>
+        Poursuivez votre parcours via les <a routerLink="/formations" class="font-semibold text-teal-700 hover:underline">formations</a>
+        et le <a routerLink="/parcours-intelligent" class="font-semibold text-teal-700 hover:underline">Parcours intelligent</a>.
+      </p>
+    </div>
+  }
+</div>

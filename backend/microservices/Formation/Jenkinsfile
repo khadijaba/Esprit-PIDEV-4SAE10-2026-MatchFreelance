@@ -1,0 +1,75 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK17'
+        maven 'Maven3'
+        git 'Default'
+    }
+
+    environment {
+        MODULE_DIR = 'backend/microservices/Formation'
+        SONAR_PROJECT_KEY = 'formation'
+        SONAR_HOST = 'http://sonarqube:9000'
+        SONAR_CREDENTIALS_ID = 'sonar-token-backend'
+    }
+
+    options {
+        skipDefaultCheckout(true)
+        timeout(time: 90, unit: 'MINUTES')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                retry(3) {
+                    timeout(time: 8, unit: 'MINUTES') {
+                        script {
+                            def branch = env.BRANCH_NAME ?: 'master'
+                            def remotes = scm.userRemoteConfigs.collect { cfg ->
+                                def m = [url: cfg.url]
+                                if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
+                                    m.credentialsId = cfg.credentialsId
+                                }
+                                m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
+                                m
+                            }
+
+                            checkout([
+                                $class: 'GitSCM',
+                                branches: [[name: "*/${branch}"]],
+                                userRemoteConfigs: remotes,
+                                extensions: [
+                                    [$class: 'CleanBeforeCheckout'],
+                                    [$class: 'PruneStaleBranch'],
+                                    [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'backend/microservices/Formation']]],
+                                    [$class: 'CloneOption', shallow: true, depth: 1, noTags: true, timeout: 8, honorRefspec: true, reference: '']
+                                ]
+                            ])
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build & Sonar') {
+            steps {
+                withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+                    dir("${MODULE_DIR}") {
+                        sh '''
+                            mvn -B clean verify sonar:sonar \
+                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                              -Dsonar.host.url=${SONAR_HOST} \
+                              -Dsonar.token=${SONAR_TOKEN}
+                        '''
+                    }
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
+                }
+            }
+        }
+    }
+}

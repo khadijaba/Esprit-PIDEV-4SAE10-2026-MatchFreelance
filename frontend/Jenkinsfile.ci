@@ -1,0 +1,92 @@
+pipeline {
+    agent any
+
+    options {
+        skipDefaultCheckout(true)
+        timeout(time: 60, unit: 'MINUTES')
+    }
+
+    tools {
+        nodejs 'Node20'
+    }
+
+    environment {
+        REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        BRANCH = 'douja'
+        MODULE_DIR = 'frontend'
+        SONAR_PROJECT_KEY = 'matchfreelance-frontend'
+        SONAR_HOST = 'http://sonarqube:9000'
+        SONAR_CREDENTIALS_ID = 'sonar-token'
+        IMAGE_NAME = 'khadijabenayed/matchfreelance-frontend'
+        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git credentialsId: 'github-credentials',
+                    url: "${REPO_URL}",
+                    branch: "${BRANCH}"
+            }
+        }
+
+        stage('Install') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    sh 'npm ci'
+                }
+            }
+        }
+
+        stage('Unit Tests + Coverage') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    sh 'npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage'
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            npx sonar-scanner \
+                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                              -Dsonar.host.url=${SONAR_HOST} \
+                              -Dsonar.token=${SONAR_TOKEN} \
+                              -Dsonar.javascript.lcov.reportPaths=coverage/angular/lcov.info
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Trigger Frontend CD') {
+            steps {
+                build job: 'frontend-cd',
+                      wait: false,
+                      parameters: [
+                          string(name: 'GIT_BRANCH', value: "${BRANCH}"),
+                          string(name: 'IMAGE_NAME', value: "${IMAGE_NAME}"),
+                          string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
+                      ]
+            }
+        }
+    }
+
+    post {
+        always {
+            junit allowEmptyResults: true, testResults: 'frontend/test-results/**/*.xml'
+            archiveArtifacts allowEmptyArchive: true, artifacts: 'frontend/coverage/angular/**/*'
+        }
+    }
+}

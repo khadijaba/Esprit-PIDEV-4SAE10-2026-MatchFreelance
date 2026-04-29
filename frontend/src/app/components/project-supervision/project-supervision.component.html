@@ -1,0 +1,381 @@
+<div class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+  @if (loading) {
+    <div class="flex justify-center py-20">
+      <div class="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-slate-800"></div>
+    </div>
+  } @else if (error) {
+    <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">{{ error }}</div>
+    <a routerLink="/projets" class="mt-4 inline-block text-sm font-medium text-teal-700 hover:underline">← Projets</a>
+  } @else if (project) {
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Supervision du projet</h1>
+        <p class="mt-1 text-slate-700">{{ project.title }}</p>
+        <span
+          class="mt-2 inline-flex rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-mono font-bold uppercase tracking-wide text-white"
+        >
+          {{ project.status }}
+        </span>
+      </div>
+      <a
+        [routerLink]="['/projets', project.id, 'recrutement']"
+        class="rounded-xl border-2 border-teal-500 bg-white px-4 py-2.5 text-sm font-bold text-teal-800 shadow-sm hover:bg-teal-50"
+      >
+        Voir candidatures &amp; contrat
+      </a>
+    </div>
+
+    @if (insights) {
+      <section
+        class="mt-8 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-teal-50/50 p-5 shadow-sm"
+      >
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-emerald-800">Planning &amp; avancement</h2>
+            <div class="mt-2 flex flex-wrap items-center gap-3">
+              <span
+                class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold"
+                [class.bg-emerald-200]="planningBannerOk()"
+                [class.text-emerald-900]="planningBannerOk()"
+                [class.bg-amber-200]="!planningBannerOk()"
+                [class.text-amber-900]="!planningBannerOk()"
+              >
+                {{ planningBannerOk() ? 'OK' : 'Attention' }}
+              </span>
+              <span class="text-2xl font-bold text-slate-900">
+                {{ insights.compositeHealthScore }} <span class="text-base font-normal text-slate-500">/ 100</span>
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            (click)="reloadData()"
+            class="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-900 hover:bg-emerald-50"
+          >
+            Actualiser
+          </button>
+        </div>
+        <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-4">
+          <div class="rounded-lg bg-white/70 px-3 py-2 ring-1 ring-emerald-100">
+            <dt class="text-xs text-slate-500">Temps écoulé</dt>
+            <dd class="font-bold text-slate-900">{{ elapsedTimelinePercent }}%</dd>
+          </div>
+          <div class="rounded-lg bg-white/70 px-3 py-2 ring-1 ring-emerald-100">
+            <dt class="text-xs text-slate-500">Avancement</dt>
+            <dd class="font-bold text-slate-900">{{ progressFromPhasesPercent }}%</dd>
+          </div>
+          <div class="rounded-lg bg-white/70 px-3 py-2 ring-1 ring-emerald-100">
+            <dt class="text-xs text-slate-500">Écart</dt>
+            <dd class="font-bold text-slate-900">{{ ecartPts }} pts</dd>
+          </div>
+          <div class="rounded-lg bg-white/70 px-3 py-2 ring-1 ring-emerald-100">
+            <dt class="text-xs text-slate-500">Phases en retard</dt>
+            <dd class="font-bold text-slate-900">{{ phasesLateCount }}</dd>
+          </div>
+        </dl>
+        <p class="mt-3 text-xs text-slate-600">{{ insights.summary }}</p>
+      </section>
+    }
+
+    <div class="mt-10 grid gap-8 lg:grid-cols-5">
+      <aside class="space-y-6 lg:col-span-2">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 class="font-bold text-slate-900">Planning Assistant IA</h3>
+          <label class="mt-3 flex cursor-pointer items-center gap-2 text-xs text-slate-600">
+            <input type="checkbox" [(ngModel)]="useLlmPlanning" name="llmplan" class="rounded border-slate-300" />
+            Inclure suggestions LLM (Team AI / Ollama)
+          </label>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              (click)="generateInitialPlanFromAi()"
+              [disabled]="planningBusy"
+              class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {{ planningBusy ? 'Traitement…' : 'Générer plan initial' }}
+            </button>
+            <button
+              type="button"
+              (click)="adjustPlanForRisk()"
+              [disabled]="planningBusy"
+              class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-900 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {{ planningBusy ? 'Traitement…' : 'Réajuster selon risque' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 class="font-bold text-slate-900">Ajouter une phase</h3>
+          @if (phaseError) {
+            <p class="mt-2 text-xs text-red-700">{{ phaseError }}</p>
+          }
+          <label class="mt-3 block text-xs font-semibold text-slate-600">Nom de phase</label>
+          <input
+            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            [(ngModel)]="phaseName"
+            name="pn"
+            placeholder="ex. Cadrage &amp; architecture"
+          />
+          <label class="mt-3 block text-xs font-semibold text-slate-600">Ordre (séquence)</label>
+          <input type="number" min="1" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" [(ngModel)]="phaseOrder" name="po" />
+          <label class="mt-2 block text-xs font-semibold text-slate-600">Description</label>
+          <textarea rows="3" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" [(ngModel)]="phaseDescription" name="pd"></textarea>
+          <div class="mt-3 grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-xs text-slate-600">Début</label>
+              <input type="datetime-local" class="mt-1 w-full rounded border border-slate-300 px-1 py-1.5 text-xs" [(ngModel)]="phaseStart" name="ps" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-600">Fin</label>
+              <input type="datetime-local" class="mt-1 w-full rounded border border-slate-300 px-1 py-1.5 text-xs" [(ngModel)]="phaseDue" name="pdd" />
+            </div>
+          </div>
+          <button
+            type="button"
+            (click)="addPhase()"
+            [disabled]="savingPhase"
+            class="mt-4 w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {{ savingPhase ? 'Envoi…' : 'Ajouter phase' }}
+          </button>
+        </div>
+
+        <ul class="space-y-3">
+          @for (ph of phases; track ph.id) {
+            <li class="overflow-hidden rounded-xl border-2 border-slate-200 bg-white shadow-sm">
+              <button
+                type="button"
+                (click)="selectPhase(ph)"
+                class="w-full px-4 py-3 text-left transition"
+                [class.bg-teal-50]="selectedPhase?.id === ph.id"
+                [class.ring-2]="selectedPhase?.id === ph.id"
+                [class.ring-inset]="selectedPhase?.id === ph.id"
+                [class.ring-teal-500]="selectedPhase?.id === ph.id"
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-sm font-bold text-slate-900">#{{ ph.phaseOrder }} {{ ph.name }}</span>
+                  <span class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-700">
+                    {{ ph.status }}
+                  </span>
+                </div>
+                @if (ph.dueDate) {
+                  <p class="mt-1 text-xs text-slate-500">Échéance {{ ph.dueDate | date: 'short' }}</p>
+                }
+              </button>
+              <div class="border-t border-slate-100 bg-slate-50/90 px-3 py-2">
+                <p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Livrables (cette phase)</p>
+                @if (deliverablesLoadingAll && getDeliverablesForPhase(ph.id).length === 0) {
+                  <p class="mt-1 text-xs text-slate-400">Chargement…</p>
+                } @else if (getDeliverablesForPhase(ph.id).length === 0) {
+                  <p class="mt-1 text-xs text-slate-400">Aucun livrable</p>
+                } @else {
+                  <ul class="mt-1.5 max-h-36 space-y-1 overflow-y-auto">
+                    @for (d of getDeliverablesForPhase(ph.id); track d.id) {
+                      <li class="flex items-start justify-between gap-2 rounded-md bg-white px-2 py-1 text-xs ring-1 ring-slate-100">
+                        <span class="min-w-0 truncate font-medium text-slate-800" [title]="d.title">{{ d.title }}</span>
+                        <span
+                          class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-mono font-bold"
+                          [class.bg-amber-100]="d.reviewStatus === 'PENDING'"
+                          [class.text-amber-900]="d.reviewStatus === 'PENDING'"
+                          [class.bg-orange-100]="d.reviewStatus === 'CHANGES_REQUESTED'"
+                          [class.text-orange-900]="d.reviewStatus === 'CHANGES_REQUESTED'"
+                          [class.bg-emerald-100]="d.reviewStatus === 'ACCEPTED'"
+                          [class.text-emerald-900]="d.reviewStatus === 'ACCEPTED'"
+                        >
+                          {{ d.reviewStatus }}
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      </aside>
+
+      <section class="space-y-6 lg:col-span-3">
+        @if (selectedPhase) {
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-900">
+              Phase #{{ selectedPhase.phaseOrder }} — {{ selectedPhase.name }}
+            </h3>
+            <p class="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{{ selectedPhase.description }}</p>
+
+            <button
+              type="button"
+              (click)="closeSelectedPhase()"
+              [disabled]="closingPhase"
+              class="mt-6 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-50"
+            >
+              {{ closingPhase ? '…' : 'Clôturer la phase' }}
+            </button>
+          </div>
+
+          <div
+            class="rounded-2xl border-2 border-amber-200 bg-gradient-to-b from-amber-50 to-orange-50/40 p-6 shadow-sm"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 class="font-bold text-slate-900">IA Decision Copilot</h3>
+              <button type="button" (click)="loadCopilot()" class="text-xs font-bold text-amber-900 underline">Rafraîchir</button>
+            </div>
+            @if (copilotLoading) {
+              <p class="mt-4 text-sm text-slate-600">Analyse en cours…</p>
+            } @else if (copilot) {
+              <p
+                class="mt-4 inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide"
+                [class.bg-orange-200]="(copilot.recommendation || '').includes('CHANGE')"
+                [class.text-orange-900]="(copilot.recommendation || '').includes('CHANGE')"
+                [class.bg-emerald-200]="!(copilot.recommendation || '').includes('CHANGE')"
+                [class.text-emerald-900]="!(copilot.recommendation || '').includes('CHANGE')"
+              >
+                {{ copilot.recommendation }}
+              </p>
+              @if (copilot.confidence != null) {
+                <p class="mt-2 text-sm font-medium text-slate-800">Confiance : {{ copilot.confidence }}%</p>
+              }
+              @if (copilot.summary) {
+                <p class="mt-2 text-sm text-slate-700">{{ copilot.summary }}</p>
+              }
+              @if (copilot.reasons && copilot.reasons.length > 0) {
+                <ul class="mt-3 list-inside list-disc space-y-1 text-sm text-slate-800">
+                  @for (r of copilot.reasons; track r) {
+                    <li>{{ r }}</li>
+                  }
+                </ul>
+              }
+              @if (copilot.suggestedActions && copilot.suggestedActions.length > 0) {
+                <p class="mt-4 text-xs font-bold uppercase text-slate-600">Actions suggérées</p>
+                <ul class="mt-1 list-inside list-decimal text-sm text-slate-800">
+                  @for (a of copilot.suggestedActions; track a) {
+                    <li>{{ a }}</li>
+                  }
+                </ul>
+              }
+              @if (copilot.ownerMessageDraft) {
+                <div class="mt-4 rounded-xl border border-amber-300/60 bg-white/90 p-4 text-sm text-slate-800 shadow-inner">
+                  <p class="text-xs font-bold text-amber-900">Message owner prêt à envoyer</p>
+                  <p class="mt-2 whitespace-pre-wrap">{{ copilot.ownerMessageDraft }}</p>
+                </div>
+              }
+            } @else {
+              <p class="mt-4 text-sm text-slate-600">Pas de suggestion pour cette phase.</p>
+            }
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-900">Livrables — phase #{{ selectedPhase.phaseOrder }}</h3>
+            <p class="mt-1 text-xs text-slate-500">
+              Les mêmes livrables apparaissent sous la phase dans la colonne de gauche. Ici : ajout et revue.
+            </p>
+
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+              <div class="sm:col-span-2">
+                <label class="text-xs font-semibold text-slate-600">Titre</label>
+                <input
+                  class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  [(ngModel)]="newDeliverableTitle"
+                  name="ndt"
+                  placeholder="ex. Document d’architecture"
+                />
+              </div>
+              <div>
+                <label class="text-xs font-semibold text-slate-600">Type</label>
+                <select
+                  class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  [(ngModel)]="newDeliverableType"
+                  name="ndty"
+                >
+                  <option value="DOC">DOC</option>
+                  <option value="DESIGN">DESIGN</option>
+                  <option value="CODE">CODE</option>
+                  <option value="DEMO">DEMO</option>
+                  <option value="REPORT">REPORT</option>
+                </select>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="text-xs font-semibold text-slate-600">Description</label>
+                <textarea
+                  rows="2"
+                  class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  [(ngModel)]="newDeliverableDescription"
+                  name="ndd"
+                ></textarea>
+              </div>
+            </div>
+            <button
+              type="button"
+              (click)="addDeliverable()"
+              [disabled]="savingDeliverable || !newDeliverableTitle.trim()"
+              class="mt-3 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {{ savingDeliverable ? '…' : 'Ajouter le livrable' }}
+            </button>
+
+            @if (deliverables.length === 0) {
+              <p class="mt-6 text-sm text-slate-500">Aucun livrable pour cette phase.</p>
+            } @else {
+              <ul class="mt-6 space-y-4">
+                @for (d of deliverables; track d.id) {
+                  <li class="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
+                    <div class="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <span class="font-mono text-[10px] font-bold text-violet-600">[{{ d.type }}]</span>
+                        <span class="text-base font-bold text-slate-900">{{ d.title }}</span>
+                        @if (d.description) {
+                          <p class="mt-1 text-sm text-slate-600">{{ d.description }}</p>
+                        }
+                      </div>
+                      <span
+                        class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-mono font-bold"
+                        [class.bg-amber-100]="d.reviewStatus === 'PENDING'"
+                        [class.text-amber-900]="d.reviewStatus === 'PENDING'"
+                        [class.bg-orange-100]="d.reviewStatus === 'CHANGES_REQUESTED'"
+                        [class.text-orange-900]="d.reviewStatus === 'CHANGES_REQUESTED'"
+                        [class.bg-emerald-100]="d.reviewStatus === 'ACCEPTED'"
+                        [class.text-emerald-900]="d.reviewStatus === 'ACCEPTED'"
+                      >
+                        {{ d.reviewStatus }}
+                      </span>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        (click)="setDeliverableReview(d, 'PENDING')"
+                        [disabled]="reviewingId === d.id"
+                        class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        PENDING
+                      </button>
+                      <button
+                        type="button"
+                        (click)="setDeliverableReview(d, 'CHANGES_REQUESTED')"
+                        [disabled]="reviewingId === d.id"
+                        class="rounded-lg border border-orange-300 bg-orange-50 px-2 py-1 text-[10px] font-bold text-orange-900 hover:bg-orange-100 disabled:opacity-50"
+                      >
+                        CHANGES_REQUESTED
+                      </button>
+                      <button
+                        type="button"
+                        (click)="setDeliverableReview(d, 'ACCEPTED')"
+                        [disabled]="reviewingId === d.id"
+                        class="rounded-lg border border-emerald-400 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
+                      >
+                        ACCEPTED
+                      </button>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        } @else {
+          <p class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
+            Sélectionnez une phase ou ajoutez-en une nouvelle.
+          </p>
+        }
+      </section>
+    </div>
+  }
+</div>

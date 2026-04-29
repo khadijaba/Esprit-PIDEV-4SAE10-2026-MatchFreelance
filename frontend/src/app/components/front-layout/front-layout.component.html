@@ -1,0 +1,164 @@
+<div class="flex min-h-screen flex-col bg-[#f8fafc]">
+  <a href="#main-content" class="skip-link">Aller au contenu principal</a>
+  <!-- Header -->
+  <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md shadow-sm">
+    <div class="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
+      <a routerLink="/" class="flex items-center gap-3">
+        <img src="/logo-matchfreelance.png" alt="MatchFreelance" class="h-10 w-auto object-contain" />
+        <div class="flex flex-col">
+          <span class="text-xl font-bold tracking-tight text-slate-900">
+            <span class="text-[#2563eb]">Match</span><span class="text-[#ea580c]">Freelance</span>
+          </span>
+          <span class="text-xs font-medium text-slate-500">Connecting Skills to Opportunities</span>
+          <div class="mt-1 flex flex-wrap items-center gap-2">
+            <span
+              class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800 ring-1 ring-emerald-200/70"
+              title="Intégration auth et API locale"
+            >
+              Plateforme · avril 2026
+            </span>
+            <span class="text-[11px] text-slate-500">Connexion sécurisée (JWT)</span>
+          </div>
+        </div>
+      </a>
+      <nav class="flex items-center gap-1">
+        <a routerLink="/" routerLinkActive="bg-teal-50 text-teal-700" [routerLinkActiveOptions]="{exact:true}"
+          class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+          Accueil
+        </a>
+        <a routerLink="/projets" routerLinkActive="bg-teal-50 text-teal-700"
+          class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+          Projets
+        </a>
+        <a routerLink="/formations" routerLinkActive="bg-teal-50 text-teal-700"
+          class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+          Formations
+        </a>
+        @if (auth.isLoggedIn()) {
+          <a href="/communaute"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            title="Forum et blog (application MatchFreelance-blog)">
+            Communauté
+          </a>
+        }
+        <a routerLink="/parcours-intelligent"
+          class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+          Parcours Intelligent
+        </a>
+        @if (auth.isLoggedIn() && auth.getStoredUser()?.role === 'FREELANCER') {
+          <a routerLink="/dashboard-freelancer" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            Mon dashboard
+          </a>
+          <a routerLink="/freelancer/productivity" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            Productivite
+          </a>
+          <a routerLink="/mes-competences" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            Mes compétences
+          </a>
+          <a routerLink="/mon-activite" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            Mon activité
+          </a>
+          <a routerLink="/mes-candidatures" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            Mes candidatures
+          </a>
+          <a routerLink="/mes-contrats" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            Mes contrats
+          </a>
+        }
+        @if (auth.isLoggedIn() && auth.isProjectOwner()) {
+          <a routerLink="/client" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            title="Projets MatchFreelance (microservices Project, Candidature, Contract)">
+            Mes projets
+          </a>
+          <a routerLink="/dashboard-client" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            Mon dashboard
+          </a>
+        }
+        @if (auth.isLoggedIn() && auth.getStoredUser()?.role === 'ADMIN') {
+          <a routerLink="/admin"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            Back-office
+          </a>
+          <a routerLink="/admin/rapports" routerLinkActive="bg-teal-50 text-teal-700"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            title="Histogrammes, courbes et PDF (evaluation-reports-py)">
+            Rapports &amp; PDF
+          </a>
+        }
+        @if (auth.isLoggedIn()) {
+          @if (auth.isProjectOwner()) {
+            <span
+              class="hidden rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-900 ring-1 ring-emerald-200 sm:inline"
+            >
+              Project Owner
+            </span>
+          }
+          <a routerLink="/profile" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900" title="Mon profil">
+            {{ auth.getStoredUser()?.email }}
+          </a>
+          <button type="button" (click)="logout()"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700">
+            Déconnexion
+          </button>
+        } @else {
+          <a routerLink="/register"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-teal-700 transition hover:bg-teal-50 hover:text-teal-800">
+            Inscription
+          </a>
+          <a routerLink="/login"
+            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            Connexion
+          </a>
+        }
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content" class="flex-1" tabindex="-1">
+    <router-outlet />
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 bg-white">
+    <div class="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+      <div class="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="sm:col-span-2 lg:col-span-1">
+          <div class="flex items-center gap-3">
+            <img src="/logo-matchfreelance.png" alt="MatchFreelance" class="h-10 w-auto object-contain" />
+            <span class="text-lg font-bold text-slate-900">
+              <span class="text-[#2563eb]">Match</span><span class="text-[#ea580c]">Freelance</span>
+            </span>
+          </div>
+          <p class="mt-4 text-sm leading-relaxed text-slate-500">
+            Connecting Skills to Opportunities — Projets, formations et évaluation pour freelancers.
+          </p>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">Explorer</h4>
+          <ul class="mt-4 space-y-3">
+            <li><a routerLink="/" class="text-sm text-slate-600 transition hover:text-teal-600">Accueil</a></li>
+            <li><a routerLink="/formations" class="text-sm text-slate-600 transition hover:text-teal-600">Formations</a></li>
+            <li><a routerLink="/parcours-intelligent" class="text-sm text-slate-600 transition hover:text-teal-600">Parcours Intelligent</a></li>
+            <li><a routerLink="/projets" class="text-sm text-slate-600 transition hover:text-teal-600">Projets</a></li>
+            @if (auth.isLoggedIn()) {
+              <li><a href="/communaute" class="text-sm text-slate-600 transition hover:text-teal-600">Communauté &amp; forum</a></li>
+            }
+            <li><a routerLink="/admin/rapports" class="text-sm text-slate-600 transition hover:text-teal-600">Rapports &amp; graphiques (admin)</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-100 pt-8 sm:flex-row">
+        <p class="text-sm text-slate-400">© {{ currentYear }} MatchFreelance. Tous droits réservés.</p>
+        <p class="text-sm text-slate-500">Formations · Examens (évaluations)</p>
+      </div>
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,337 @@
+{
+  "generatedAt": "2026-04-16T04:30:48.430098",
+  "summary": {
+    "freelancers": 7,
+    "rappels_total": 39
+  },
+  "rappels": [
+    {
+      "freelancer_id": 5,
+      "email": "khadija.benayed@esprit.tn",
+      "fullName": "",
+      "rappels": [
+        {
+          "type": "formation_ouverte",
+          "message": "Vous avez des formations ouvertes disponibles.",
+          "detail": "Machine Learning; Cloud Computing; MLOps; Feature Engineering; Deep Learning"
+        },
+        {
+          "type": "certificat",
+          "message": "Nouveau certificat disponible.",
+          "detail": "QCM"
+        }
+      ]
+    },
+    {
+      "freelancer_id": 6,
+      "email": "benayedkhadija5@gmail.com",
+      "fullName": "",
+      "rappels": [
+        {
+          "type": "formation_ouverte",
+          "message": "Vous avez des formations ouvertes disponibles.",
+          "detail": "Machine Learning; Cloud Computing; MLOps; Feature Engineering; Deep Learning"
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Machine Learning",
+          "detail": "Examen : Examen — Machine Learning",
+          "examenTitre": "Examen — Machine Learning",
+          "formationId": 3,
+          "examenId": 36
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Machine Learning",
+          "detail": "Examen : Examen — Machine Learning",
+          "examenTitre": "Examen — Machine Learning",
+          "formationId": 3,
+          "examenId": 41
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Machine Learning",
+          "detail": "Examen : Examen — Machine Learning",
+          "examenTitre": "Examen — Machine Learning",
+          "formationId": 3,
+          "examenId": 48
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Machine Learning",
+          "detail": "Examen : Examen — Machine Learning",
+          "examenTitre": "Examen — Machine Learning",
+          "formationId": 3,
+          "examenId": 49
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Machine Learning",
+          "detail": "Examen : Examen — Machine Learning",
+          "examenTitre": "Examen — Machine Learning",
+          "formationId": 3,
+          "examenId": 50
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 26
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 27
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 30
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 31
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 32
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 38
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 39
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 40
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 45
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 46
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 47
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 51
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : MLOps",
+          "detail": "Examen : Examen — MLOps",
+          "examenTitre": "Examen — MLOps",
+          "formationId": 6,
+          "examenId": 53
+        },
+        {
+          "type": "examen_non_passe_retard",
+          "message": "Examen non passé depuis plus de 14 jours — formation : Machine Learning",
+          "detail": "Examen : Examen — Machine Learning. Passez-le pour valider votre parcours.",
+          "examenTitre": "Examen — Machine Learning",
+          "formationId": 3,
+          "examenId": 36
+        },
+        {
+          "type": "examen_non_passe_retard",
+          "message": "Examen non passé depuis plus de 14 jours — formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing. Passez-le pour valider votre parcours.",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 26
+        },
+        {
+          "type": "examen_non_passe_retard",
+          "message": "Examen non passé depuis plus de 14 jours — formation : MLOps",
+          "detail": "Examen : Examen — MLOps. Passez-le pour valider votre parcours.",
+          "examenTitre": "Examen — MLOps",
+          "formationId": 6,
+          "examenId": 53
+        },
+        {
+          "type": "certificat",
+          "message": "Nouveau(x) certificat(s) disponible(s).",
+          "detail": "QCM, MLOps, Cloud Computing"
+        }
+      ]
+    },
+    {
+      "freelancer_id": 8,
+      "email": "benayedmustapha24@gmail.com",
+      "fullName": "",
+      "rappels": [
+        {
+          "type": "formation_ouverte",
+          "message": "Vous avez des formations ouvertes disponibles.",
+          "detail": "Machine Learning; Cloud Computing; MLOps; Feature Engineering; Deep Learning"
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 26
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 27
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 30
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 31
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 38
+        },
+        {
+          "type": "examen_a_passer",
+          "message": "Examen à passer pour la formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 39
+        },
+        {
+          "type": "examen_non_passe_retard",
+          "message": "Examen non passé depuis plus de 14 jours — formation : Cloud Computing",
+          "detail": "Examen : Examen — Cloud Computing. Passez-le pour valider votre parcours.",
+          "examenTitre": "Examen — Cloud Computing",
+          "formationId": 4,
+          "examenId": 26
+        },
+        {
+          "type": "certificat",
+          "message": "Nouveau(x) certificat(s) disponible(s).",
+          "detail": "Examen — intellagence e, Examen — Spring Boot avancé, MLOps, Cloud Computing"
+        }
+      ]
+    },
+    {
+      "freelancer_id": 10,
+      "email": "emnad750@gmail.com",
+      "fullName": "emna dorai",
+      "rappels": [
+        {
+          "type": "formation_ouverte",
+          "message": "Vous avez des formations ouvertes disponibles.",
+          "detail": "Machine Learning; Cloud Computing; MLOps; Feature Engineering; Deep Learning"
+        }
+      ]
+    },
+    {
+      "freelancer_id": 11,
+      "email": "benayedkhadija482@gmail.com",
+      "fullName": "khadija ben ayed",
+      "rappels": [
+        {
+          "type": "formation_ouverte",
+          "message": "Vous avez des formations ouvertes disponibles.",
+          "detail": "Machine Learning; Cloud Computing; MLOps; Feature Engineering; Deep Learning"
+        }
+      ]
+    },
+    {
+      "freelancer_id": 12,
+      "email": "benayedkhadija82@gmail.com",
+      "fullName": "khadija ben ayed",
+      "rappels": [
+        {
+          "type": "formation_ouverte",
+          "message": "Vous avez des formations ouvertes disponibles.",
+          "detail": "Machine Learning; Cloud Computing; MLOps; Feature Engineering; Deep Learning"
+        },
+        {
+          "type": "certificat",
+          "message": "Nouveau(x) certificat(s) disponible(s).",
+          "detail": "Examen — Machine Learning, Examen — Machine Learning"
+        }
+      ]
+    },
+    {
+      "freelancer_id": 13,
+      "email": "ebac2000@gmail.com",
+      "fullName": "ahmed ben ayed",
+      "rappels": [
+        {
+          "type": "formation_ouverte",
+          "message": "Vous avez des formations ouvertes disponibles.",
+          "detail": "Machine Learning; Cloud Computing; MLOps; Feature Engineering; Deep Learning"
+        }
+      ]
+    }
+  ]
+}

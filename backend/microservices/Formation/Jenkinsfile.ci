@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+    tools {
+        jdk 'JDK17'
+        maven 'Maven3'
+    }
+    options {
+        skipDefaultCheckout(true)
+        timeout(time: 90, unit: 'MINUTES')
+    }
+    environment {
+        REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        BRANCH = 'douja'
+        MODULE_DIR = 'backend/microservices/Formation'
+        SONAR_PROJECT_KEY = 'formation'
+        SONAR_HOST = 'http://sonarqube:9000'
+        SONAR_CREDENTIALS_ID = 'sonar-token'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git credentialsId: 'github-credentials',
+                    url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git',
+                    branch: 'douja'
+            }
+        }
+        stage('Build, Test, JaCoCo') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    sh '''
+                        java -version
+                        javac -version
+                        mvn -B clean verify
+                    '''
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true,
+                          testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
+                }
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+                        retry(2) {
+                            timeout(time: 5, unit: 'MINUTES') {
+                                sh '''
+                                    mvn -B sonar:sonar \
+                                      -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                                      -Dsonar.host.url=${SONAR_HOST} \
+                                      -Dsonar.token=${SONAR_TOKEN}
+                                '''
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

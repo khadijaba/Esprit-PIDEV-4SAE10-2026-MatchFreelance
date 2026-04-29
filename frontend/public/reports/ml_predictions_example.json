@@ -1,0 +1,33 @@
+{
+  "dropouts": [
+    {
+      "freelancer_id": 6,
+      "email": "freelancer@test.com",
+      "fullName": "Jean Dupont",
+      "inscription_id": 1,
+      "formation_id": 1,
+      "formation_titre": "Spring Boot avancé",
+      "jours_depuis_inscription": 18,
+      "risk": "medium"
+    }
+  ],
+  "project_recommendations_by_freelancer": {},
+  "exam_success_predictions": [
+    {
+      "freelancer_id": 6,
+      "email": "freelancer@test.com",
+      "fullName": "Jean Dupont",
+      "examen_id": 1,
+      "examen_titre": "Examen Spring Boot",
+      "formation_id": 1,
+      "formation_titre": "Spring Boot avancé",
+      "proba_reussite": 72.5
+    }
+  ],
+  "meta": {
+    "jours_decrochage": 14,
+    "seuil_reussite_examen": 60,
+    "project_recommendation_note": null,
+    "projects_count": 0
+  }
+}

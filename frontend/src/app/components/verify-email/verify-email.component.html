@@ -1,0 +1,91 @@
+<div class="auth-pidev-bg flex min-h-screen items-center justify-center px-4 py-10">
+  <div class="w-full max-w-md rounded-[1.25rem] bg-white p-8 shadow-2xl ring-1 ring-slate-200/80">
+    <h1 class="text-2xl font-bold text-slate-900">Vérifier votre e-mail</h1>
+    <p class="mt-2 text-sm text-slate-600">
+      @if (!showEmailField) {
+        Pour le compte affiché ci-dessous, saisissez <strong>uniquement le code à 6 chiffres</strong> reçu par e-mail,
+        validez, puis connectez-vous sur <strong>Sign in</strong>.
+      } @else {
+        Après la création du compte, vous recevez un <strong>code à 6 chiffres</strong> par e-mail. Indiquez votre
+        e-mail et le code, validez, puis allez sur <strong>Sign in</strong>.
+      }
+    </p>
+
+    <ol class="mt-4 list-decimal space-y-1 pl-5 text-xs text-slate-500">
+      <li>Création du compte</li>
+      <li>Saisie du code reçu (ou affiché ci-dessous en dev)</li>
+      <li>Connexion sur la page Sign in</li>
+    </ol>
+
+    @if (hintCode) {
+      <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <p class="font-medium">Code actif (e-mail ou mode dev) :</p>
+        <p class="mt-1 font-mono text-2xl font-bold tracking-[0.35em] text-emerald-800">{{ hintCode }}</p>
+        <p class="mt-2 text-xs text-emerald-800/90">
+          S’il correspond à celui reçu dans votre boîte, cliquez sur « Vérifier ».
+        </p>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mt-6 space-y-4">
+      @if (errorMessage) {
+        <div class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{{ errorMessage }}</div>
+      }
+      @if (showEmailField) {
+        <div>
+          <label class="mb-1 block text-xs font-semibold text-slate-600">E-mail du compte</label>
+          <input
+            type="email"
+            formControlName="email"
+            placeholder="vous@exemple.com"
+            class="auth-pidev-input w-full rounded-xl px-4 py-3.5 placeholder-slate-400"
+          />
+        </div>
+      } @else {
+        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800">
+          <span class="text-slate-600">Compte :</span>
+          <span class="ml-1 font-medium">{{ form.get('email')?.value }}</span>
+          <button
+            type="button"
+            (click)="revealEmailField()"
+            class="ml-2 text-xs font-semibold text-indigo-600 underline hover:text-indigo-800"
+          >
+            Modifier l’e-mail
+          </button>
+        </div>
+      }
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-600">Code à 6 chiffres</label>
+        <input
+          type="text"
+          formControlName="verificationCode"
+          inputmode="numeric"
+          maxlength="6"
+          autocomplete="one-time-code"
+          placeholder="000000"
+          class="auth-pidev-input w-full rounded-xl px-4 py-3.5 font-mono text-lg tracking-[0.4em] placeholder-slate-400"
+        />
+      </div>
+      <button
+        type="submit"
+        [disabled]="loading"
+        class="w-full rounded-xl bg-indigo-600 py-3.5 text-sm font-bold uppercase tracking-wide text-white hover:bg-indigo-700 disabled:opacity-60"
+      >
+        {{ loading ? 'Vérification…' : 'Vérifier mon e-mail' }}
+      </button>
+    </form>
+
+    <button
+      type="button"
+      (click)="resend()"
+      [disabled]="resendLoading"
+      class="mt-4 w-full rounded-xl border border-slate-300 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
+    >
+      {{ resendLoading ? 'Envoi…' : 'Renvoyer le code par e-mail' }}
+    </button>
+
+    <p class="mt-6 text-center text-sm text-slate-500">
+      <a routerLink="/login" class="font-semibold text-indigo-600 hover:text-indigo-700">→ Aller à la connexion (Sign in)</a>
+    </p>
+  </div>
+</div>

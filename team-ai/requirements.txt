@@ -1,0 +1,13 @@
+# Team AI — Python 3.14 : versions récentes (roues pydantic-core précompilées pour cp314).
+# Installation :  .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+# Démarrage :     .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 5000
+# La Gateway attend Team AI sur le port 5000 par défaut (8090 = evaluation-reports).
+
+fastapi>=0.115.0,<1
+uvicorn[standard]>=0.32.0,<1
+pydantic>=2.10.0,<3
+pydantic-settings>=2.6.0,<3
+httpx>=0.27.0,<1
+
+# NLP / extraction (optionnel)
+# openai>=1.12.0

@@ -1,0 +1,12 @@
+formation_id;titre;type_formation;capacite_max;statut;date_fin;nb_inscriptions;nb_inscriptions_validees;nb_passages_examen;nb_certificats;taux_inscription_pct;taux_passage_pct;taux_reussite_pct
+3;Machine Learning;AI;20;OUVERTE;2026-03-22;4;4;14;4;20.0;350.0;28.6
+4;Cloud Computing;DEVOPS;20;OUVERTE;2026-02-22;4;4;8;2;20.0;200.0;25.0
+6;MLOps;AI;20;OUVERTE;2026-04-04;1;1;2;2;5.0;200.0;100.0
+7;Feature Engineering;AI;20;OUVERTE;2026-02-22;2;2;0;0;10.0;0.0;0
+8;Deep Learning;AI;20;OUVERTE;2026-03-27;1;1;0;0;5.0;0.0;0
+12;React;WEB_DEVELOPMENT;20;EN_COURS;2026-03-04;0;0;0;0;0.0;0;0
+13;React;WEB_DEVELOPMENT;1;OUVERTE;2026-03-04;1;1;0;0;100.0;0.0;0
+14;intellagence e;AI;20;OUVERTE;2026-03-05;0;0;1;1;0.0;0;100.0
+15;Spring Boot avancé;WEB_DEVELOPMENT;20;OUVERTE;2026-07-16;0;0;1;1;0.0;0;100.0
+16;Cloud Computing;WEB_DEVELOPMENT;20;EN_COURS;2026-04-15;0;0;0;0;0.0;0;0
+17;dfjrfjer;WEB_DEVELOPMENT;20;OUVERTE;2026-04-15;1;0;0;0;5.0;0;0
