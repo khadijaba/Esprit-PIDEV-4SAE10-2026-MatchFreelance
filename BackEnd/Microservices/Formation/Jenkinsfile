@@ -59,7 +59,7 @@ pipeline {
 
         stage('Build & Sonar') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
+                withCredentials([string(credentialsId: 'sonar-token-formation', variable: 'SONAR_TOKEN')]) {
                     dir("${env.MODULE_DIR}") {
                         sh """
                             mvn -B clean verify sonar:sonar \\
