@@ -14,8 +14,8 @@ pipeline {
         )
         string(
             name: 'SONAR_HOST_URL',
-            defaultValue: 'http://host.docker.internal:9000',
-            description: 'SonarQube base URL from this agent. If you see "No route to host": on Linux Docker try http://172.17.0.1:9000; on WSL2 Sonar on Windows try the IP from "grep nameserver /etc/resolv.conf"; or add --add-host=host.docker.internal:host-gateway to the Jenkins container.'
+            defaultValue: 'AUTO',
+            description: 'AUTO = run scripts/ci/detect-sonar-host.sh (host.docker.internal, 172.17.0.1, 127.0.0.1, WSL nameserver). Or set an explicit URL. Jenkins env SONAR_HOST_URL overrides this if set.'
         )
     }
 
@@ -82,9 +82,19 @@ pipeline {
             steps {
                 dir("${MODULE_DIR}") {
                     script {
-                        def fromParam = params.SONAR_HOST_URL?.trim()
+                        // Params are mirrored into env; only treat as override if it is a real URL (not AUTO).
                         def fromEnv = env.SONAR_HOST_URL?.trim()
-                        env.SONAR_HOST = (fromParam ?: fromEnv) ?: 'http://host.docker.internal:9000'
+                        def fromParam = params.SONAR_HOST_URL?.trim()
+                        def chosen = null
+                        if (fromEnv && !fromEnv.equalsIgnoreCase('auto') && fromEnv.startsWith('http')) {
+                            chosen = fromEnv
+                        } else if (fromParam && !fromParam.equalsIgnoreCase('auto') && fromParam.startsWith('http')) {
+                            chosen = fromParam
+                        }
+                        env.SONAR_HOST = chosen ?: sh(
+                            script: "bash '${env.WORKSPACE}/scripts/ci/detect-sonar-host.sh'",
+                            returnStdout: true
+                        ).trim()
                         echo "Sonar host URL: ${env.SONAR_HOST}"
                     }
                     withCredentials([string(credentialsId: "${params.SONAR_CREDENTIALS_ID ?: 'sonar-token'}", variable: 'SONAR_TOKEN')]) {

@@ -15,8 +15,8 @@ pipeline {
         string(name: 'SONAR_CREDENTIALS_ID', defaultValue: 'sonar-token', description: 'Jenkins Secret text credential ID for Sonar token')
         string(
             name: 'SONAR_HOST_URL',
-            defaultValue: 'http://host.docker.internal:9000',
-            description: 'SonarQube URL from agent. If unreachable, try http://172.17.0.1:9000 (Linux Docker) or WSL nameserver IP.'
+            defaultValue: 'AUTO',
+            description: 'AUTO = scripts/ci/detect-sonar-host.sh. Or explicit URL. Env SONAR_HOST_URL overrides if set.'
         )
     }
 
@@ -58,8 +58,18 @@ pipeline {
             steps {
                 dir("${MODULE_DIR}") {
                     script {
-                        def u = params.SONAR_HOST_URL?.trim() ?: env.SONAR_HOST_URL?.trim()
-                        env.SONAR_HOST = u ?: 'http://host.docker.internal:9000'
+                        def fromEnv = env.SONAR_HOST_URL?.trim()
+                        def fromParam = params.SONAR_HOST_URL?.trim()
+                        def chosen = null
+                        if (fromEnv && !fromEnv.equalsIgnoreCase('auto') && fromEnv.startsWith('http')) {
+                            chosen = fromEnv
+                        } else if (fromParam && !fromParam.equalsIgnoreCase('auto') && fromParam.startsWith('http')) {
+                            chosen = fromParam
+                        }
+                        env.SONAR_HOST = chosen ?: sh(
+                            script: "bash '${env.WORKSPACE}/scripts/ci/detect-sonar-host.sh'",
+                            returnStdout: true
+                        ).trim()
                         echo "Sonar host URL: ${env.SONAR_HOST}"
                     }
                     withCredentials([string(credentialsId: "${params.SONAR_CREDENTIALS_ID ?: 'sonar-token'}", variable: 'SONAR_TOKEN')]) {
