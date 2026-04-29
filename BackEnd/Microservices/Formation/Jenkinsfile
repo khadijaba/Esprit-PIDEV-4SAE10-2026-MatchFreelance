@@ -13,7 +13,7 @@ pipeline {
 
     environment {
         MODULE_DIR = 'BackEnd/Microservices/Formation'
-        SONAR_PROJECT_KEY = 'backend-formation'
+        SONAR_PROJECT_KEY = 'sonar-token-formation'
         SONAR_HOST = 'http://host.docker.internal:9000'
         IMAGE_NAME = 'emna450/backend-formation'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
