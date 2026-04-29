@@ -19,10 +19,20 @@ Notes:
   - `docker-hub-credentials`
   - `sonar-token`
   - `kubeconfig-prod`
-- Required Jenkins tools:
+- Required Jenkins tools (names must match **exactly** — see below):
   - `JDK17`
   - `Maven3`
   - `Node20`
+
+### Configure tools in Jenkins (fixes `Tool type "nodejs" does not have an install of "Node20"`)
+
+1. Install plugins if needed: **Manage Jenkins → Plugins** → ensure **NodeJS** (and **Pipeline**, **Git**) are installed.
+2. **Manage Jenkins → Tools** (or **Global Tool Configuration** on older Jenkins).
+3. **JDK** → **Add JDK** → set **Name** to `JDK17` → either point to an existing JDK 17 on the agent or use an installer.
+4. **Maven** → **Add Maven** → set **Name** to `Maven3` → use installer or `MAVEN_HOME` on the agent.
+5. **NodeJS** → **Add NodeJS** → set **Name** to **`Node20`** (this string is what the pipeline references; spelling and case matter).
+   - Enable **Install automatically** and pick a **20.x** version from the list, *or* point **Installation directory** at a folder that already contains Node 20 on the agent.
+6. **Save**, then re-run **`frontend-ci`** / **`frontend-cd`**.
 
 ## 2) SonarQube URL (why `localhost:9000` works in the browser but not in Jenkins)
 
