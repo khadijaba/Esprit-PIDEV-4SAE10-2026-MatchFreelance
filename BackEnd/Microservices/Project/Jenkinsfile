@@ -15,7 +15,6 @@ pipeline {
     environment {
         MODULE_DIR = 'BackEnd/Microservices/Project'
         SONAR_PROJECT_KEY = 'backend'
-        SONAR_HOST = 'http://host.docker.internal:9000'
         IMAGE_NAME = 'emna450/backend-project'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
     }
@@ -58,13 +57,11 @@ pipeline {
 
         stage('Build & Sonar') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
+                withSonarQubeEnv('sonare') {
                     dir("${env.MODULE_DIR}") {
                         sh """
                             mvn -B clean verify sonar:sonar \\
-                              -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
-                              -Dsonar.host.url=${env.SONAR_HOST} \\
-                              -Dsonar.token=\${SONAR_TOKEN}
+                              -Dsonar.projectKey=${env.SONAR_PROJECT_KEY}
                         """
                     }
                 }
