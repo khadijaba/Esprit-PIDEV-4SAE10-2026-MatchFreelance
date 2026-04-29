@@ -12,6 +12,11 @@ pipeline {
             defaultValue: 'sonar-token',
             description: 'Jenkins credential ID (Secret text) whose value is the SonarQube user token. Create it under Manage Jenkins → Credentials if missing.'
         )
+        string(
+            name: 'SONAR_HOST_URL',
+            defaultValue: 'http://host.docker.internal:9000',
+            description: 'SonarQube base URL from this agent. If you see "No route to host": on Linux Docker try http://172.17.0.1:9000; on WSL2 Sonar on Windows try the IP from "grep nameserver /etc/resolv.conf"; or add --add-host=host.docker.internal:host-gateway to the Jenkins container.'
+        )
     }
 
     environment {
@@ -20,7 +25,6 @@ pipeline {
         BRANCH = 'azizdevops'
         MODULE_DIR = 'frontend'
         SONAR_PROJECT_KEY = 'matchfreelance-frontend'
-        SONAR_HOST = "${env.SONAR_HOST_URL ?: 'http://host.docker.internal:9000'}"
         IMAGE_NAME = 'khadijabenayed/matchfreelance-frontend'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
     }
@@ -77,6 +81,12 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 dir("${MODULE_DIR}") {
+                    script {
+                        def fromParam = params.SONAR_HOST_URL?.trim()
+                        def fromEnv = env.SONAR_HOST_URL?.trim()
+                        env.SONAR_HOST = (fromParam ?: fromEnv) ?: 'http://host.docker.internal:9000'
+                        echo "Sonar host URL: ${env.SONAR_HOST}"
+                    }
                     withCredentials([string(credentialsId: "${params.SONAR_CREDENTIALS_ID ?: 'sonar-token'}", variable: 'SONAR_TOKEN')]) {
                         sh '''
                             npx sonar-scanner \

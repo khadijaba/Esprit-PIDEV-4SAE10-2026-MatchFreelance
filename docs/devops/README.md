@@ -52,7 +52,11 @@ If you see **`EnvVarsForToolStep` / `getName()` is null**: under **Tools**, dele
 
 - **`http://sonarqube:9000`** only resolves when Jenkins and SonarQube share the same Docker network and the Sonar container is named `sonarqube`.
 - Your browser uses **`http://localhost:9000`** because SonarQube listens on the machine where you open the browser.
-- **Jenkins in Docker** must call the host with **`http://host.docker.internal:9000`** (default in the scoped `Jenkinsfile.ci` files). Override with a Jenkins global or job env var **`SONAR_HOST_URL`** (for example `http://127.0.0.1:9000` if the Jenkins agent runs on the host, not in a container).
+- **Jenkins in Docker** usually uses **`http://host.docker.internal:9000`** (default **Build parameter** `SONAR_HOST_URL` on `frontend-ci`, `candidature-ci`, `contract-ci`). If the scanner logs **`No route to host`** / **`can not be reached`**:
+  - **Linux Docker (no Desktop):** try **`http://172.17.0.1:9000`** (typical bridge gateway to the host), or start Jenkins with **`--add-host=host.docker.internal:host-gateway`** so `host.docker.internal` resolves.
+  - **WSL2 + Sonar on Windows:** from the Jenkins container shell, **`grep nameserver /etc/resolv.conf`** — use **`http://<that-ip>:9000`** as `SONAR_HOST_URL` (often the Windows host from WSL).
+  - **Jenkins on the same host as Sonar (no container):** **`http://127.0.0.1:9000`**.
+- Ensure SonarQube listens on **all interfaces** (not only `127.0.0.1`) if accessed by IP from another container.
 
 ## 3) SonarQube projects
 
