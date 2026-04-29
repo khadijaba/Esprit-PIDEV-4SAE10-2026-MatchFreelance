@@ -16,7 +16,7 @@ pipeline {
         BRANCH = 'azizdevops'
         MODULE_DIR = 'backend/microservices/Contract'
         SONAR_PROJECT_KEY = 'matchfreelance-contract'
-        SONAR_HOST = 'http://sonarqube:9000'
+        SONAR_HOST = "${env.SONAR_HOST_URL ?: 'http://host.docker.internal:9000'}"
         SONAR_CREDENTIALS_ID = 'sonar-token'
         IMAGE_NAME = 'khadijabenayed/contract'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
