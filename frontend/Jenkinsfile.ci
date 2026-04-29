@@ -36,6 +36,16 @@ pipeline {
             }
         }
 
+        stage('Setup Chromium for Karma') {
+            steps {
+                script {
+                    def chromeBin = sh(script: 'bash scripts/ci/bootstrap-chromium.sh', returnStdout: true).trim()
+                    env.CHROME_BIN = chromeBin
+                    sh '"$CHROME_BIN" --version'
+                }
+            }
+        }
+
         stage('Install') {
             steps {
                 dir("${MODULE_DIR}") {
@@ -47,7 +57,7 @@ pipeline {
         stage('Unit Tests + Coverage') {
             steps {
                 dir("${MODULE_DIR}") {
-                    sh 'npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage'
+                    sh 'npm run test -- --watch=false --code-coverage'
                 }
             }
             post {
