@@ -7,3 +7,5 @@ node_modules/
 dist/
 .angular/
 .ci-node/
+frontend/coverage/
+frontend/test-results/
