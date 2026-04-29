@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: formation-ms
+  namespace: __NAMESPACE__
+  labels:
+    app: formation-ms
+spec:
+  selector:
+    app: formation-ms
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+  type: ClusterIP

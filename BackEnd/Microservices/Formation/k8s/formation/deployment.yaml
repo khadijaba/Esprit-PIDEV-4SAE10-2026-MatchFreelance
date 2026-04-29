@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: formation-ms
+  namespace: __NAMESPACE__
+  labels:
+    app: formation-ms
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: formation-ms
+  template:
+    metadata:
+      labels:
+        app: formation-ms
+    spec:
+      terminationGracePeriodSeconds: 15
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until nc -z mysql-formation 3306; do echo waiting for mysql-formation; sleep 2; done
+      containers:
+        - name: formation-ms
+          image: __IMAGE__
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SERVER_PORT
+              value: "8081"
+            - name: MYSQL_HOST
+              value: mysql-formation
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: formation-mysql-secret
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: formation-mysql-secret
+                  key: MYSQL_PASSWORD
+            - name: CONFIG_SERVER_HOST
+              value: config-server
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 40
+            periodSeconds: 15
