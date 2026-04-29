@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: evaluation-ms
+  namespace: __NAMESPACE__
+  labels:
+    app: evaluation-ms
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: evaluation-ms
+  template:
+    metadata:
+      labels:
+        app: evaluation-ms
+    spec:
+      terminationGracePeriodSeconds: 15
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z mysql-evaluation 3306; do echo waiting for mysql-evaluation; sleep 3; done;']
+      containers:
+        - name: evaluation-ms
+          image: __IMAGE__
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8083
+          env:
+            - name: CONFIG_SERVER_HOST
+              value: config-server
+            - name: EUREKA_URL
+              value: http://eureka:8761/eureka
+            - name: MYSQL_HOST
+              value: mysql-evaluation
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: evaluation-mysql-secret
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: evaluation-mysql-secret
+                  key: MYSQL_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 80
+            periodSeconds: 20

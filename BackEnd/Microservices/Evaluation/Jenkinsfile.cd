@@ -1,57 +1,17 @@
 pipeline {
     agent any
 
-    options {
-        skipDefaultCheckout(true)
-    }
-
     parameters {
         string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag to deploy')
         string(name: 'K8S_NAMESPACE', defaultValue: 'matchfreelance', description: 'Kubernetes namespace')
     }
 
     environment {
-        IMAGE_NAME = 'emna450/backend-skill'
-        MANIFESTS_DIR = 'BackEnd/Microservices/Skill/k8s/skill'
-        KUBECTL_IMAGE = 'bitnami/kubectl:1.31.3'
+        IMAGE_NAME = 'emna450/backend-evaluation'
+        MANIFESTS_DIR = 'BackEnd/Microservices/Evaluation/k8s/evaluation'
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                script {
-                    def branch = env.BRANCH_NAME ?: 'projectskills'
-                    def exts = []
-                    if (scm.extensions != null && !scm.extensions.isEmpty()) {
-                        exts.addAll(scm.extensions)
-                    }
-                    exts.add([
-                        $class       : 'CloneOption',
-                        shallow      : true,
-                        depth        : 1,
-                        timeout      : 120,
-                        honorRefspec : true,
-                        noTags       : true,
-                        reference    : ''
-                    ])
-                    def remotes = scm.userRemoteConfigs.collect { cfg ->
-                        def m = [url: cfg.url]
-                        if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
-                            m.credentialsId = cfg.credentialsId
-                        }
-                        m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
-                        m
-                    }
-                    checkout([
-                        $class            : 'GitSCM',
-                        branches          : [[name: "*/${branch}"]],
-                        extensions        : exts,
-                        userRemoteConfigs : remotes
-                    ])
-                }
-            }
-        }
-
         stage('Deploy') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-project', variable: 'KUBECONFIG_FILE')]) {
@@ -96,10 +56,10 @@ pipeline {
                         export KUBECONFIG="${KUBECONFIG_FILE}"
                         "${KUBECTL_CMD}" apply -f "${TMP_NS}"
                         "${KUBECTL_CMD}" apply -f "${TMP_MYSQL}"
-                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" rollout status deployment/mysql-skill --timeout=900s
+                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" rollout status deployment/mysql-evaluation --timeout=900s
                         "${KUBECTL_CMD}" apply -f "${TMP_DEPLOY}" -f "${TMP_SVC}"
-                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" rollout status deployment/skill-ms --timeout=300s
-                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" get pods,svc -l app=skill-ms
+                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" rollout status deployment/evaluation-ms --timeout=300s
+                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" get pods,svc -l app=evaluation-ms
                     '''
                 }
             }

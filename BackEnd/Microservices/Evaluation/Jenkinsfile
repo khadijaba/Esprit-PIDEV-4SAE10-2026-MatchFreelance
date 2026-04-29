@@ -1,0 +1,124 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK17'
+        maven 'Maven3'
+        git 'Default'
+    }
+
+    options {
+        skipDefaultCheckout(true)
+    }
+
+    environment {
+        MODULE_DIR = 'BackEnd/Microservices/Evaluation'
+        SONAR_PROJECT_KEY = 'sonar-token-evaluation'
+        SONAR_HOST = 'http://host.docker.internal:9000'
+        IMAGE_NAME = 'emna450/backend-evaluation'
+        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
+        CD_JOB_NAME = 'pipeline-CD-evaluation-ms'
+        K8S_NAMESPACE = 'matchfreelance'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    def branch = env.BRANCH_NAME ?: 'projectskills'
+                    def exts = []
+                    if (scm.extensions != null && !scm.extensions.isEmpty()) {
+                        exts.addAll(scm.extensions)
+                    }
+                    exts.add([
+                        $class       : 'CloneOption',
+                        shallow      : true,
+                        depth        : 1,
+                        timeout      : 120,
+                        honorRefspec : true,
+                        noTags       : true,
+                        reference    : ''
+                    ])
+                    def remotes = scm.userRemoteConfigs.collect { cfg ->
+                        def m = [url: cfg.url]
+                        if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
+                            m.credentialsId = cfg.credentialsId
+                        }
+                        m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
+                        m
+                    }
+                    checkout([
+                        $class            : 'GitSCM',
+                        branches          : [[name: "*/${branch}"]],
+                        extensions        : exts,
+                        userRemoteConfigs : remotes
+                    ])
+                }
+            }
+        }
+
+        stage('Build & Sonar') {
+            steps {
+                withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
+                    dir("${env.MODULE_DIR}") {
+                        sh """
+                            mvn -B clean verify sonar:sonar \\
+                              -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
+                              -Dsonar.host.url=${env.SONAR_HOST} \\
+                              -Dsonar.login=\${SONAR_TOKEN}
+                        """
+                    }
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: "${env.MODULE_DIR}/target/surefire-reports/*.xml"
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir("${env.MODULE_DIR}") {
+                    sh """
+                        docker image prune -f || true
+                        docker build --pull --no-cache -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} .
+                        docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        set -e
+                        docker image inspect ${env.IMAGE_NAME}:${env.IMAGE_TAG} > /dev/null
+                        echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
+                        docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+                        CURRENT_BRANCH="\${BRANCH_NAME:-\$(git rev-parse --abbrev-ref HEAD)}"
+                        if [ "\${CURRENT_BRANCH}" = "main" ]; then
+                            docker image inspect ${env.IMAGE_NAME}:latest > /dev/null
+                            docker push ${env.IMAGE_NAME}:latest
+                        else
+                            echo "Skip latest push on branch \${CURRENT_BRANCH}"
+                        fi
+                        docker logout
+                    """
+                }
+            }
+        }
+
+        stage('Trigger CD') {
+            steps {
+                build job: "${env.CD_JOB_NAME}",
+                      wait: false,
+                      parameters: [
+                          string(name: 'IMAGE_TAG', value: "${env.IMAGE_TAG}"),
+                          string(name: 'K8S_NAMESPACE', value: "${env.K8S_NAMESPACE}")
+                      ]
+            }
+        }
+    }
+}
