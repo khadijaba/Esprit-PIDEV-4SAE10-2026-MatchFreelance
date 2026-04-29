@@ -21,10 +21,24 @@ pipeline {
                         EFFECTIVE_TAG="${IMAGE_TAG:-latest}"
                         EFFECTIVE_NS="${K8S_NAMESPACE:-matchfreelance}"
                         DEPLOY_IMAGE="${IMAGE_NAME}:${EFFECTIVE_TAG}"
+                        KCFG_TMP="$(mktemp)"
 
                         TMP_DEPLOY="$(mktemp)"
                         TMP_SVC="$(mktemp)"
                         TMP_NS="$(mktemp)"
+
+                        if [ -d "${KUBECONFIG_FILE}" ]; then
+                          if [ -f "${KUBECONFIG_FILE}/kubeconfig" ]; then
+                            cp "${KUBECONFIG_FILE}/kubeconfig" "${KCFG_TMP}"
+                          elif [ -f "${KUBECONFIG_FILE}/config" ]; then
+                            cp "${KUBECONFIG_FILE}/config" "${KCFG_TMP}"
+                          else
+                            echo "Invalid kubeconfig credential: expected a file but got directory ${KUBECONFIG_FILE}"
+                            exit 1
+                          fi
+                        else
+                          cp "${KUBECONFIG_FILE}" "${KCFG_TMP}"
+                        fi
 
                         cp "${MANIFESTS_DIR}/deployment.yaml" "${TMP_DEPLOY}"
                         cp "${MANIFESTS_DIR}/service.yaml" "${TMP_SVC}"
@@ -35,10 +49,10 @@ pipeline {
                         sed -i "s|__NAMESPACE__|${EFFECTIVE_NS}|g" "${TMP_SVC}"
                         sed -i "s|__NAMESPACE__|${EFFECTIVE_NS}|g" "${TMP_NS}"
 
-                        docker run --rm -v "${KUBECONFIG_FILE}:/kubeconfig:ro" -v "${TMP_NS}:/ns.yaml:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} apply -f /ns.yaml
-                        docker run --rm -v "${KUBECONFIG_FILE}:/kubeconfig:ro" -v "${TMP_DEPLOY}:/deployment.yaml:ro" -v "${TMP_SVC}:/service.yaml:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} apply -f /deployment.yaml -f /service.yaml
-                        docker run --rm -v "${KUBECONFIG_FILE}:/kubeconfig:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} -n "${EFFECTIVE_NS}" rollout status deployment/project-ms --timeout=300s
-                        docker run --rm -v "${KUBECONFIG_FILE}:/kubeconfig:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} -n "${EFFECTIVE_NS}" get pods,svc -l app=project-ms
+                        docker run --rm -v "${KCFG_TMP}:/kubeconfig:ro" -v "${TMP_NS}:/ns.yaml:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} apply -f /ns.yaml
+                        docker run --rm -v "${KCFG_TMP}:/kubeconfig:ro" -v "${TMP_DEPLOY}:/deployment.yaml:ro" -v "${TMP_SVC}:/service.yaml:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} apply -f /deployment.yaml -f /service.yaml
+                        docker run --rm -v "${KCFG_TMP}:/kubeconfig:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} -n "${EFFECTIVE_NS}" rollout status deployment/project-ms --timeout=300s
+                        docker run --rm -v "${KCFG_TMP}:/kubeconfig:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} -n "${EFFECTIVE_NS}" get pods,svc -l app=project-ms
                     '''
                 }
             }
