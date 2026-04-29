@@ -87,13 +87,18 @@ pipeline {
 
         stage('Trigger Contract CD') {
             steps {
-                build job: 'contract-cd',
-                      wait: false,
-                      parameters: [
-                          string(name: 'GIT_BRANCH', value: "${BRANCH}"),
-                          string(name: 'IMAGE_NAME', value: "${IMAGE_NAME}"),
-                          string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
-                      ]
+                script {
+                    // Do not fail CI if the CD job is not created yet (Jenkins: "No item named …").
+                    catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                        build job: 'contract-cd',
+                              wait: false,
+                              parameters: [
+                                  string(name: 'GIT_BRANCH', value: "${BRANCH}"),
+                                  string(name: 'IMAGE_NAME', value: "${IMAGE_NAME}"),
+                                  string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
+                              ]
+                    }
+                }
             }
         }
     }

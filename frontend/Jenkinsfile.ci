@@ -112,13 +112,18 @@ pipeline {
 
         stage('Trigger Frontend CD') {
             steps {
-                build job: 'frontend-cd',
-                      wait: false,
-                      parameters: [
-                          string(name: 'GIT_BRANCH', value: "${BRANCH}"),
-                          string(name: 'IMAGE_NAME', value: "${IMAGE_NAME}"),
-                          string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
-                      ]
+                script {
+                    // Do not fail CI if the CD job is not created yet (Jenkins: "No item named …").
+                    catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                        build job: 'frontend-cd',
+                              wait: false,
+                              parameters: [
+                                  string(name: 'GIT_BRANCH', value: "${BRANCH}"),
+                                  string(name: 'IMAGE_NAME', value: "${IMAGE_NAME}"),
+                                  string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
+                              ]
+                    }
+                }
             }
         }
     }
