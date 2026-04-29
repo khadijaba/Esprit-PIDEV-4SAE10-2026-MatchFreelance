@@ -139,6 +139,56 @@ class ProjectSupervisionServiceTest {
         assertThat(response.getOwnerMessageDraft()).contains("validée");
     }
 
+    @Test
+    void getDecisionCopilot_returnsSplitPhase_whenManyDeliverablesAndLowAcceptance() {
+        Project project = newProject(18L, ProjectStatus.IN_PROGRESS);
+        ProjectPhase phase = newPhase(19L, project, 2, ProjectPhaseStatus.IN_PROGRESS);
+        phase.setDueDate(LocalDateTime.now().plusDays(1));
+
+        PhaseDeliverable acceptedOne = new PhaseDeliverable();
+        acceptedOne.setPhase(phase);
+        acceptedOne.setReviewStatus(DeliverableReviewStatus.ACCEPTED);
+
+        PhaseDeliverable pendingOne = new PhaseDeliverable();
+        pendingOne.setPhase(phase);
+        pendingOne.setReviewStatus(DeliverableReviewStatus.PENDING);
+
+        List<PhaseDeliverable> deliverables = List.of(
+                acceptedOne, pendingOne, pendingOne, pendingOne, pendingOne, pendingOne
+        );
+
+        when(projectRepository.findById(18L)).thenReturn(Optional.of(project));
+        when(projectPhaseRepository.findById(19L)).thenReturn(Optional.of(phase));
+        when(phaseDeliverableRepository.findByPhase(phase)).thenReturn(deliverables);
+        when(phaseMeetingRepository.findByPhase(phase)).thenReturn(List.of(new PhaseMeeting()));
+
+        DecisionCopilotResponse response = service.getDecisionCopilot(18L, 19L);
+
+        assertThat(response.getRecommendation()).isEqualTo("SPLIT_PHASE");
+        assertThat(response.getSummary()).contains("découpage recommandé");
+    }
+
+    @Test
+    void getDecisionCopilot_returnsEscalateRisk_whenPhaseIsOverdue() {
+        Project project = newProject(30L, ProjectStatus.IN_PROGRESS);
+        ProjectPhase phase = newPhase(31L, project, 1, ProjectPhaseStatus.IN_PROGRESS);
+        phase.setDueDate(LocalDateTime.now().minusDays(1));
+
+        PhaseDeliverable pending = new PhaseDeliverable();
+        pending.setPhase(phase);
+        pending.setReviewStatus(DeliverableReviewStatus.PENDING);
+
+        when(projectRepository.findById(30L)).thenReturn(Optional.of(project));
+        when(projectPhaseRepository.findById(31L)).thenReturn(Optional.of(phase));
+        when(phaseDeliverableRepository.findByPhase(phase)).thenReturn(List.of(pending));
+        when(phaseMeetingRepository.findByPhase(phase)).thenReturn(List.of());
+
+        DecisionCopilotResponse response = service.getDecisionCopilot(30L, 31L);
+
+        assertThat(response.getRecommendation()).isEqualTo("ESCALATE_RISK");
+        assertThat(response.getSuggestedActions()).anyMatch(a -> a.contains("24h"));
+    }
+
     private static Project newProject(Long id, ProjectStatus status) {
         Project project = new Project();
         project.setId(id);

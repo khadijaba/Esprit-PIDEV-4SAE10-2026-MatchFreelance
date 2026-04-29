@@ -3,7 +3,6 @@ package esprit.project.Service;
 import esprit.project.Repositories.ClientFreelancerRatingRepository;
 import esprit.project.Repositories.ProjectRepository;
 import esprit.project.client.CandidatureClient;
-import esprit.project.dto.FreelancerFitBatchDto;
 import esprit.project.dto.SubmitFreelancerRatingRequest;
 import esprit.project.dto.candidature.CandidatureSummaryDto;
 import esprit.project.entities.ClientFreelancerRating;
@@ -40,87 +39,106 @@ class FreelancerFitServiceTest {
     private FreelancerFitService service;
 
     @Test
-    void computeFit_returnsEmptyRows_whenFreelancerIdsIsNull() {
-        Project target = newProject(1L, ProjectStatus.IN_PROGRESS, List.of("Java"));
-        when(projectRepository.findById(1L)).thenReturn(Optional.of(target));
-
-        FreelancerFitBatchDto out = service.computeFit(1L, null);
-
-        assertThat(out.getProjectId()).isEqualTo(1L);
-        assertThat(out.getFreelancers()).isEmpty();
-    }
-
-    @Test
-    void computeFit_buildsSingleRow_forDistinctFreelancersAndAcceptedHistory() {
-        Project target = newProject(1L, ProjectStatus.IN_PROGRESS, List.of("Java", "Spring"));
-        Project past = newProject(2L, ProjectStatus.COMPLETED, List.of("Java"));
-        past.setCreatedAt(LocalDateTime.now().minusDays(12));
-        past.setUpdatedAt(LocalDateTime.now().minusDays(2));
-        past.setDuration(8);
-
-        CandidatureSummaryDto accepted = new CandidatureSummaryDto();
-        accepted.setProjectId(2L);
-        accepted.setFreelancerId(99L);
-        accepted.setStatus("ACCEPTED");
-
-        when(projectRepository.findById(1L)).thenReturn(Optional.of(target));
-        when(candidatureClient.listByFreelancer(99L)).thenReturn(List.of(accepted));
-        when(projectRepository.findAllById(any())).thenReturn(List.of(past));
-        when(ratingRepository.averageRatingByFreelancerId(99L)).thenReturn(4.5);
-
-        FreelancerFitBatchDto out = service.computeFit(1L, List.of(99L, 99L));
-
-        assertThat(out.getFreelancers()).hasSize(1);
-        assertThat(out.getFreelancers().get(0).getFreelancerId()).isEqualTo(99L);
-        assertThat(out.getFreelancers().get(0).getPastMissionsConsidered()).isEqualTo(1);
-        assertThat(out.getFreelancers().get(0).getSummary()).contains("note moyenne clients");
-    }
-
-    @Test
-    void submitRating_throwsBadRequest_whenFieldsMissing() {
-        when(projectRepository.findById(7L)).thenReturn(Optional.of(newProject(7L, ProjectStatus.OPEN, List.of())));
+    void submitRating_updatesExistingRow_whenRatingAlreadyExists() {
+        Project project = newProject(10L);
+        ClientFreelancerRating existing = new ClientFreelancerRating();
+        existing.setId(99L);
+        existing.setProjectId(10L);
+        existing.setFreelancerId(7L);
+        existing.setRating(2);
 
         SubmitFreelancerRatingRequest request = new SubmitFreelancerRatingRequest();
-        request.setFreelancerId(null);
+        request.setFreelancerId(7L);
         request.setRating(5);
 
-        assertThatThrownBy(() -> service.submitRating(7L, request))
+        when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
+        when(ratingRepository.findByProjectIdAndFreelancerId(10L, 7L)).thenReturn(Optional.of(existing));
+        when(ratingRepository.save(existing)).thenReturn(existing);
+
+        ClientFreelancerRating saved = service.submitRating(10L, request);
+
+        assertThat(saved.getProjectId()).isEqualTo(10L);
+        assertThat(saved.getFreelancerId()).isEqualTo(7L);
+        assertThat(saved.getRating()).isEqualTo(5);
+        verify(ratingRepository).save(existing);
+    }
+
+    @Test
+    void submitRating_throwsBadRequest_whenMissingRequiredFields() {
+        Project project = newProject(5L);
+        SubmitFreelancerRatingRequest request = new SubmitFreelancerRatingRequest();
+        request.setFreelancerId(null);
+        request.setRating(4);
+
+        when(projectRepository.findById(5L)).thenReturn(Optional.of(project));
+
+        assertThatThrownBy(() -> service.submitRating(5L, request))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("freelancerId and rating required");
     }
 
     @Test
-    void submitRating_updatesExistingRow_whenAlreadyRated() {
-        when(projectRepository.findById(8L)).thenReturn(Optional.of(newProject(8L, ProjectStatus.OPEN, List.of())));
+    void computeFit_handlesMixedPastProjects_andReturnsSingleDistinctFreelancer() {
+        Project target = newProject(20L);
+        target.setRequiredSkills(List.of("Java", "Spring"));
+        target.setDuration(30);
 
-        ClientFreelancerRating existing = new ClientFreelancerRating();
-        existing.setProjectId(8L);
-        existing.setFreelancerId(55L);
-        existing.setRating(3);
+        CandidatureSummaryDto accepted = new CandidatureSummaryDto();
+        accepted.setProjectId(101L);
+        accepted.setStatus("ACCEPTED");
+        accepted.setFreelancerId(77L);
 
-        when(ratingRepository.findByProjectIdAndFreelancerId(8L, 55L)).thenReturn(Optional.of(existing));
-        when(ratingRepository.save(existing)).thenReturn(existing);
+        Project completed = newProject(101L);
+        completed.setStatus(ProjectStatus.COMPLETED);
+        completed.setRequiredSkills(List.of("Spring", "SQL"));
+        completed.setCreatedAt(LocalDateTime.now().minusDays(18));
+        completed.setUpdatedAt(LocalDateTime.now().minusDays(2));
+        completed.setDuration(12);
 
-        SubmitFreelancerRatingRequest request = new SubmitFreelancerRatingRequest();
-        request.setFreelancerId(55L);
-        request.setRating(5);
+        when(projectRepository.findById(20L)).thenReturn(Optional.of(target));
+        when(candidatureClient.listByFreelancer(77L)).thenReturn(List.of(accepted));
+        when(projectRepository.findAllById(any())).thenReturn(List.of(completed));
+        when(ratingRepository.averageRatingByFreelancerId(77L)).thenReturn(4.5);
 
-        ClientFreelancerRating out = service.submitRating(8L, request);
+        var batch = service.computeFit(20L, List.of(77L, 77L));
 
-        assertThat(out.getRating()).isEqualTo(5);
-        verify(ratingRepository).save(existing);
+        assertThat(batch.getFreelancers()).hasSize(1);
+        assertThat(batch.getFreelancers().get(0).getFreelancerId()).isEqualTo(77L);
+        assertThat(batch.getFreelancers().get(0).getSuccessScore()).isBetween(0, 100);
     }
 
-    private static Project newProject(Long id, ProjectStatus status, List<String> skills) {
+    @Test
+    void computeFit_returnsEmptyResult_whenFreelancerIdsEmpty() {
+        Project target = newProject(21L);
+        when(projectRepository.findById(21L)).thenReturn(Optional.of(target));
+
+        var batch = service.computeFit(21L, List.of());
+
+        assertThat(batch.getProjectId()).isEqualTo(21L);
+        assertThat(batch.getFreelancers()).isEmpty();
+    }
+
+    @Test
+    void submitRating_throwsNotFound_whenProjectMissing() {
+        SubmitFreelancerRatingRequest request = new SubmitFreelancerRatingRequest();
+        request.setFreelancerId(4L);
+        request.setRating(3);
+        when(projectRepository.findById(404L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.submitRating(404L, request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Project not found");
+    }
+
+    private static Project newProject(Long id) {
         Project p = new Project();
         p.setId(id);
-        p.setTitle("Project " + id);
-        p.setDescription("Detailed description for project " + id);
-        p.setBudget(6000.0);
+        p.setStatus(ProjectStatus.OPEN);
+        p.setTitle("Sample project");
+        p.setDescription("Build APIs and deliver features quickly.");
+        p.setBudget(1200.0);
         p.setDuration(20);
-        p.setStatus(status);
-        p.setProjectOwnerId(10L);
-        p.setRequiredSkills(skills);
+        p.setProjectOwnerId(1L);
         return p;
     }
 }

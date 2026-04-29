@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import tn.esprit.evaluation.client.FormationClient;
 import tn.esprit.evaluation.dto.CertificatDto;
 import tn.esprit.evaluation.service.CertificatPdfService;
+import tn.esprit.evaluation.service.CertificatCarriereService;
 import tn.esprit.evaluation.service.CertificatService;
 
 import java.time.format.DateTimeFormatter;
@@ -30,18 +31,23 @@ public class CertificatController {
     private final CertificatService certificatService;
     private final CertificatPdfService certificatPdfService;
     private final FormationClient formationClient;
+    private final CertificatCarriereService certificatCarriereService;
 
     @Value("${app.frontend.base-url:http://localhost:4200}")
     private String frontendBaseUrl;
 
     @GetMapping("/freelancer/{freelancerId}")
     public ResponseEntity<List<CertificatDto>> getByFreelancer(@PathVariable Long freelancerId) {
-        return ResponseEntity.ok(certificatService.findByFreelancer(freelancerId));
+        List<CertificatDto> certificats = certificatService.findByFreelancer(freelancerId);
+        certificats.forEach(certificatCarriereService::synchroniserSkillsDepuisCertificat);
+        return ResponseEntity.ok(certificats);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CertificatDto> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(certificatService.findById(id));
+        CertificatDto dto = certificatService.findById(id);
+        certificatCarriereService.synchroniserSkillsDepuisCertificat(dto);
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
@@ -57,7 +63,9 @@ public class CertificatController {
 
     @GetMapping("/passage/{passageExamenId}")
     public ResponseEntity<CertificatDto> getByPassage(@PathVariable Long passageExamenId) {
-        return ResponseEntity.ok(certificatService.findByPassageExamen(passageExamenId));
+        CertificatDto dto = certificatService.findByPassageExamen(passageExamenId);
+        certificatCarriereService.synchroniserSkillsDepuisCertificat(dto);
+        return ResponseEntity.ok(dto);
     }
 
     /**

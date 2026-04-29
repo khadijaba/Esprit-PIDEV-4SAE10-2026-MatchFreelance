@@ -118,7 +118,7 @@ public class FreelancerFitService {
 
         long completed = pastProjects.stream().filter(p -> p.getStatus() == ProjectStatus.COMPLETED).count();
         long inProgress = pastProjects.stream().filter(p -> p.getStatus() == ProjectStatus.IN_PROGRESS).count();
-        double experience = clamp(completed * 14 + inProgress * 6, 0, 100);
+        double experience = clamp(completed * 14d + inProgress * 6, 0, 100);
 
         Double avgClientRating = ratingRepository.averageRatingByFreelancerId(freelancerId);
         double reputation = avgClientRating == null ? 50 : (avgClientRating / 5.0) * 100;
@@ -157,14 +157,15 @@ public class FreelancerFitService {
 
     @Transactional
     public ClientFreelancerRating submitRating(Long projectId, SubmitFreelancerRatingRequest request) {
-        projectRepository.findById(projectId).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Project not found"));
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Project not found"));
         if (request.getFreelancerId() == null || request.getRating() == null) {
             throw new ResponseStatusException(BAD_REQUEST, "freelancerId and rating required");
         }
         ClientFreelancerRating row = ratingRepository
                 .findByProjectIdAndFreelancerId(projectId, request.getFreelancerId())
                 .orElseGet(ClientFreelancerRating::new);
-        row.setProjectId(projectId);
+        row.setProjectId(project.getId());
         row.setFreelancerId(request.getFreelancerId());
         row.setRating(request.getRating());
         return ratingRepository.save(row);

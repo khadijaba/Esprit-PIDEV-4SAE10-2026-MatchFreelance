@@ -1,12 +1,24 @@
 package esprit.project.Controllers;
 
 import esprit.project.Service.ProjectService;
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+import esprit.project.entities.Project;
+import esprit.project.entities.ProjectStatus;
+import org.springframework.web.bind.annotation.*;
+=======
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
 import esprit.project.dto.ProjectWritePayload;
 import esprit.project.entities.Project;
 import esprit.project.entities.ProjectStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+<<<<<<< HEAD
+=======
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
 
 import java.util.List;
 
@@ -22,12 +34,23 @@ public class ProjectController {
     }
 
     @PostMapping
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+    public Project createProject(@RequestBody Project project) {
+        return projectService.createProject(project);
+=======
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     public Project createProject(@RequestBody ProjectWritePayload payload) {
         try {
             return projectService.createProject(payload.toProjectForCreate());
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
+<<<<<<< HEAD
+=======
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     }
 
     @GetMapping
@@ -61,6 +84,13 @@ public class ProjectController {
     }
 
     @PutMapping("/{id}")
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+    public Project updateProject(@PathVariable Long id, @RequestBody Project project) {
+        return projectService.updateProject(id, project);
+=======
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     public Project updateProject(@PathVariable Long id, @RequestBody ProjectWritePayload payload) {
         try {
             Project existing = projectService.getProjectById(id);
@@ -69,6 +99,10 @@ public class ProjectController {
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
+<<<<<<< HEAD
+=======
+>>>>>>> 8d5250d (Ajout du projet MatchFreelance)
+>>>>>>> b7e93fa9abcd913d3ba37913b8481d5dd480ed43
     }
 
     @DeleteMapping("/{id}")

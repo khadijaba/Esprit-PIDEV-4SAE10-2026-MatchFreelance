@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.evaluation.client.FormationClient;
 import tn.esprit.evaluation.client.ExamenLlmClient;
-import tn.esprit.evaluation.client.SkillClient;
 import tn.esprit.evaluation.domain.TypeParcours;
 import tn.esprit.evaluation.dto.ModuleRevisionDto;
 import tn.esprit.evaluation.dto.RemediationPlanDto;
@@ -46,7 +45,6 @@ public class ParcoursApprenantService {
     private final PassageExamenRepository passageExamenRepository;
     private final QuestionRepository questionRepository;
     private final FormationClient formationClient;
-    private final SkillClient skillClient;
     private final ExamenLlmClient examenLlmClient;
     private final FreelancerQuestionTraceService freelancerQuestionTraceService;
 
@@ -69,8 +67,8 @@ public class ParcoursApprenantService {
                 .mapToInt(m -> parseInt(m.get("dureeMinutes"), 0))
                 .sum();
 
-        List<String> gaps = skillClient.getParcoursIntelligent(freelancerId).getGapsDetectes();
-        int nbGaps = gaps != null ? gaps.size() : 0;
+        List<String> gaps = gapsDetectesSansMicroserviceSkill(freelancerId);
+        int nbGaps = gaps.size();
 
         int score = 0;
         List<String> facteurs = new ArrayList<>();
@@ -97,10 +95,10 @@ public class ParcoursApprenantService {
         }
         if (nbGaps >= 3) {
             score += 12;
-            facteurs.add("Plusieurs gaps de compétences détectés (service Skill).");
+            facteurs.add("Plusieurs signaux de préparation à renforcer (sans annuaire Skill).");
         } else if (nbGaps >= 1) {
             score += 5;
-            facteurs.add("Gaps de compétences à combler avant l'examen.");
+            facteurs.add("Axes de révision à consolider avant l'examen.");
         }
 
         score = Math.min(100, score);
@@ -204,7 +202,7 @@ public class ParcoursApprenantService {
 
         int avgPrepDays = computeAvgPrepDays(historique, resolveDateInscription(freelancerId, formationId));
         int prepTempoScore = Math.max(20, Math.min(100, avgPrepDays * 8));
-        int nbGaps = skillClient.getParcoursIntelligent(freelancerId).getGapsDetectes().size();
+        int nbGaps = gapsDetectesSansMicroserviceSkill(freelancerId).size();
         int skillReadiness = Math.max(0, 100 - (nbGaps * 12));
 
         int probabilite = clampScore((int) Math.round(avgScore * 0.55 + successRate * 0.25 + prepTempoScore * 0.10 + skillReadiness * 0.10));
@@ -213,7 +211,7 @@ public class ParcoursApprenantService {
 
         List<ModuleRevisionDto> modules = List.of();
         if (probabilite < 75) {
-            List<String> motsCles = new ArrayList<>(skillClient.getParcoursIntelligent(freelancerId).getGapsDetectes());
+            List<String> motsCles = new ArrayList<>(gapsDetectesSansMicroserviceSkill(freelancerId));
             modules = proposerModulesDepuisMotsCles(formationId, motsCles, 2);
         }
 
@@ -259,7 +257,7 @@ public class ParcoursApprenantService {
 
         List<String> motsCles = new ArrayList<>(themesFaibles);
         if (motsCles.isEmpty()) {
-            motsCles.addAll(skillClient.getParcoursIntelligent(freelancerId).getGapsDetectes());
+            motsCles.addAll(gapsDetectesSansMicroserviceSkill(freelancerId));
         }
 
         List<ModuleRevisionDto> modules = proposerModulesDepuisMotsCles(examen.getFormationId(), motsCles, 6);
@@ -488,5 +486,11 @@ public class ParcoursApprenantService {
         } catch (Exception ignored) {
             return fallback;
         }
+    }
+
+    /** Ancien flux Skill / parcours intelligent : microservice retiré. */
+    @SuppressWarnings("unused")
+    private List<String> gapsDetectesSansMicroserviceSkill(Long freelancerId) {
+        return List.of();
     }
 }

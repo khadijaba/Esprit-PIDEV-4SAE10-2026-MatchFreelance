@@ -21,4 +21,8 @@ public class ProjetMarcheDto {
      * (plus élevé = meilleure correspondance).
      */
     private Integer scoreAlignementSkills;
+    /**
+     * 0–100 : score combiné compétences + performance examens (tri des recommandations).
+     */
+    private Integer scoreComposite;
 }

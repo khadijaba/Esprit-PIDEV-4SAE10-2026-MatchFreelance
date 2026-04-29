@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -24,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Ranking global des freelancers + recommandations projets basées sur les scores et compétences.
+ * Ranking global des freelancers et recommandations de projets (Skill + Project via Eureka).
  */
 @Service
 @RequiredArgsConstructor
@@ -55,21 +54,100 @@ public class RankingRecommendationService {
     }
 
     public FreelancerProjectMatchingDto recommendProjects(Long freelancerId, int limit) {
-        int n = Math.max(1, Math.min(limit, 30));
-        Set<String> profileTokens = buildFreelancerSkillTokens(skillClient.getSkillsByFreelancer(freelancerId));
-        List<Map<String, Object>> openProjects = projectClient.getProjetsOuverts();
-        List<ProjetMarcheDto> scored = openProjects.stream()
-                .map(project -> mapProjectWithScore(project, profileTokens))
-                .sorted(Comparator.comparingInt(
-                                (ProjetMarcheDto dto) -> dto.getScoreAlignementSkills() != null ? dto.getScoreAlignementSkills() : 0)
-                        .reversed())
+        Integer examGlobal = resolveExamGlobalScore(freelancerId);
+        List<Map<String, Object>> profileSkills = skillClient.getSkillsByFreelancer(freelancerId);
+        int tokens = profileSkills.size();
+        List<Map<String, Object>> open = projectClient.getProjectsByStatus("OPEN");
+        int n = Math.max(1, limit);
+        List<ProjetMarcheDto> projects = open.stream()
+                .map(p -> toProjetMatch(p, profileSkills, examGlobal))
+                .sorted(Comparator.comparingInt(ProjetMarcheDto::getScoreComposite).reversed())
                 .limit(n)
                 .collect(Collectors.toList());
         return FreelancerProjectMatchingDto.builder()
                 .freelancerId(freelancerId)
-                .profileSkillTokens(profileTokens.size())
-                .projects(scored)
+                .profileSkillTokens(tokens)
+                .freelancerExamGlobalScore(examGlobal)
+                .projects(projects)
                 .build();
+    }
+
+    private ProjetMarcheDto toProjetMatch(Map<String, Object> p, List<Map<String, Object>> freelancerSkills, Integer examGlobal) {
+        Long id = toLong(p.get("id"));
+        String title = p.get("title") != null ? p.get("title").toString() : "";
+        Double budget = p.get("budget") instanceof Number nb ? nb.doubleValue() : null;
+        Integer duration = p.get("duration") instanceof Number nb ? nb.intValue() : null;
+        String statut = p.get("status") != null ? p.get("status").toString() : "";
+        @SuppressWarnings("unchecked")
+        List<String> required = (List<String>) p.get("requiredSkills");
+        int align = alignmentScore(freelancerSkills, required);
+        int composite = examGlobal != null
+                ? (int) Math.round(align * 0.6 + examGlobal * 0.4)
+                : align;
+        return ProjetMarcheDto.builder()
+                .id(id)
+                .titre(title)
+                .budget(budget)
+                .dureeJours(duration)
+                .statut(statut)
+                .raison("Alignement compétences profil / exigences projet")
+                .scoreAlignementSkills(align)
+                .scoreComposite(composite)
+                .build();
+    }
+
+    private static int alignmentScore(List<Map<String, Object>> freelancerSkills, List<String> required) {
+        if (required == null || required.isEmpty()) {
+            return 50;
+        }
+        Set<String> profile = freelancerSkills.stream()
+                .map(m -> normalizeToken(m.get("name")))
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toSet());
+        if (profile.isEmpty()) {
+            return 0;
+        }
+        int match = 0;
+        for (String req : required) {
+            String n = normalizeToken(req);
+            if (n.isEmpty()) {
+                continue;
+            }
+            boolean ok = profile.stream().anyMatch(p -> p.equals(n) || p.contains(n) || n.contains(p));
+            if (ok) {
+                match++;
+            }
+        }
+        return (int) Math.round(100.0 * match / required.size());
+    }
+
+    private static String normalizeToken(Object name) {
+        if (name == null) {
+            return "";
+        }
+        return name.toString().toLowerCase(Locale.ROOT).trim();
+    }
+
+    private static Long toLong(Object v) {
+        if (v == null) {
+            return null;
+        }
+        if (v instanceof Number n) {
+            return n.longValue();
+        }
+        try {
+            return Long.parseLong(v.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Integer resolveExamGlobalScore(Long freelancerId) {
+        return aggregateRankingRows().stream()
+                .filter(r -> freelancerId.equals(r.getFreelancerId()))
+                .map(FreelancerRankingDto::getGlobalScore)
+                .findFirst()
+                .orElse(null);
     }
 
     private List<FreelancerRankingDto> aggregateRankingRows() {
@@ -124,145 +202,10 @@ public class RankingRecommendationService {
         return rows;
     }
 
-    /**
-     * Score global 0-100 : exam performance + régularité de réussite + bonus certifications.
-     */
     private static int computeGlobalScore(int averageScore, int successRate, int certifs) {
         int certifBonus = Math.min(100, certifs * 20);
         double weighted = averageScore * 0.6 + successRate * 0.3 + certifBonus * 0.1;
         int rounded = (int) Math.round(weighted);
         return Math.max(0, Math.min(100, rounded));
-    }
-
-    private static ProjetMarcheDto mapProjectWithScore(Map<String, Object> project, Set<String> profileTokens) {
-        int align = scoreAlignementProjet(project, profileTokens);
-        String title = valueAsString(project.get("title"));
-        String reason = align >= 75
-                ? "Très bonne adéquation avec vos compétences principales."
-                : align >= 45
-                ? "Adéquation partielle : projet pertinent avec montée en compétence possible."
-                : "Faible adéquation : intéressant surtout en apprentissage.";
-        return ProjetMarcheDto.builder()
-                .id(toLong(project.get("id")))
-                .titre(title)
-                .budget(toDouble(project.get("budget")))
-                .dureeJours(toInt(project.get("duration")))
-                .statut(valueAsString(project.get("status")))
-                .scoreAlignementSkills(align)
-                .raison(reason)
-                .build();
-    }
-
-    private static Set<String> buildFreelancerSkillTokens(List<Map<String, Object>> skills) {
-        Set<String> tokens = new HashSet<>();
-        for (Map<String, Object> s : skills) {
-            addTokens(tokens, valueAsString(s.get("name")));
-            addTokens(tokens, valueAsString(s.get("category")));
-            addTokens(tokens, valueAsString(s.get("level")));
-        }
-        return tokens;
-    }
-
-    private static void addTokens(Set<String> tokens, String value) {
-        if (value == null || value.isBlank()) {
-            return;
-        }
-        String up = value.toUpperCase(Locale.ROOT);
-        tokens.add(up);
-        for (String token : up.split("[^A-Z0-9]+")) {
-            if (token.length() >= 2) {
-                tokens.add(token);
-            }
-        }
-    }
-
-    /**
-     * 0-100 : part des skills requises couvertes par le profil.
-     */
-    private static int scoreAlignementProjet(Map<String, Object> project, Set<String> profileTokens) {
-        Object requiredSkills = project.get("requiredSkills");
-        if (!(requiredSkills instanceof List<?> list) || list.isEmpty()) {
-            return profileTokens.isEmpty() ? 0 : 20;
-        }
-        int matched = 0;
-        int total = 0;
-        for (Object req : list) {
-            String reqText = extractRequiredSkillText(req);
-            if (reqText == null || reqText.isBlank()) {
-                continue;
-            }
-            total++;
-            String up = reqText.toUpperCase(Locale.ROOT);
-            boolean ok = profileTokens.stream().anyMatch(tok -> up.contains(tok) || tok.contains(up));
-            if (ok) {
-                matched++;
-            }
-        }
-        if (total == 0) {
-            return profileTokens.isEmpty() ? 0 : 20;
-        }
-        return (int) Math.round(100.0 * matched / total);
-    }
-
-    private static String extractRequiredSkillText(Object req) {
-        if (req == null) {
-            return null;
-        }
-        if (req instanceof Map<?, ?> m) {
-            if (m.get("name") != null) {
-                return m.get("name").toString();
-            }
-            if (m.get("skillName") != null) {
-                return m.get("skillName").toString();
-            }
-            return m.toString();
-        }
-        return req.toString();
-    }
-
-    private static String valueAsString(Object o) {
-        return o != null ? o.toString() : null;
-    }
-
-    private static Long toLong(Object o) {
-        if (o == null) {
-            return null;
-        }
-        if (o instanceof Number n) {
-            return n.longValue();
-        }
-        try {
-            return Long.parseLong(o.toString());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private static Integer toInt(Object o) {
-        if (o == null) {
-            return null;
-        }
-        if (o instanceof Number n) {
-            return n.intValue();
-        }
-        try {
-            return Integer.parseInt(o.toString());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private static Double toDouble(Object o) {
-        if (o == null) {
-            return null;
-        }
-        if (o instanceof Number n) {
-            return n.doubleValue();
-        }
-        try {
-            return Double.parseDouble(o.toString());
-        } catch (NumberFormatException e) {
-            return null;
-        }
     }
 }

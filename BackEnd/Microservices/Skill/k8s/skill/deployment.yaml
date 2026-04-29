@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skill-ms
+  namespace: __NAMESPACE__
+  labels:
+    app: skill-ms
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: skill-ms
+  template:
+    metadata:
+      labels:
+        app: skill-ms
+    spec:
+      terminationGracePeriodSeconds: 15
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z mysql-skill 3306; do echo waiting for mysql-skill; sleep 3; done;']
+      containers:
+        - name: skill-ms
+          image: __IMAGE__
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8083
+          env:
+            - name: CONFIG_SERVER_HOST
+              value: config-server
+            - name: EUREKA_URL
+              value: http://eureka:8761/eureka/
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysql-skill:3306/skill_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: skill-mysql-secret
+                  key: MYSQL_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: skill-mysql-secret
+                  key: MYSQL_PASSWORD
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: update
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 80
+            periodSeconds: 20

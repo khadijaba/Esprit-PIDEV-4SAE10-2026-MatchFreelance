@@ -261,7 +261,7 @@ public class ProjectSupervisionService {
             return buildCopilot(recommendation, confidence, summary, reasons, actions);
         }
 
-        double acceptanceRatio = total == 0 ? 0.0 : (double) accepted / total;
+        double acceptanceRatio = (double) accepted / total;
         if (total >= 6 && acceptanceRatio < 0.4) {
             recommendation = "SPLIT_PHASE";
             confidence = 75;

@@ -1,31 +1,31 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: project-mysql-secret
+  name: skill-mysql-secret
   namespace: __NAMESPACE__
 type: Opaque
 stringData:
-  MYSQL_ROOT_PASSWORD: root123
-  MYSQL_DATABASE: projectdb
-  MYSQL_USER: project
-  MYSQL_PASSWORD: project123
+  MYSQL_DATABASE: skill_db
+  MYSQL_USER: skill_user
+  MYSQL_PASSWORD: skill_pwd
+  MYSQL_ROOT_PASSWORD: root
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mysql
+  name: mysql-skill
   namespace: __NAMESPACE__
   labels:
-    app: mysql
+    app: mysql-skill
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mysql
+      app: mysql-skill
   template:
     metadata:
       labels:
-        app: mysql
+        app: mysql-skill
     spec:
       containers:
         - name: mysql
@@ -33,44 +33,43 @@ spec:
           ports:
             - containerPort: 3306
           env:
-            - name: MYSQL_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: project-mysql-secret
-                  key: MYSQL_ROOT_PASSWORD
             - name: MYSQL_DATABASE
               valueFrom:
                 secretKeyRef:
-                  name: project-mysql-secret
+                  name: skill-mysql-secret
                   key: MYSQL_DATABASE
             - name: MYSQL_USER
               valueFrom:
                 secretKeyRef:
-                  name: project-mysql-secret
+                  name: skill-mysql-secret
                   key: MYSQL_USER
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: project-mysql-secret
+                  name: skill-mysql-secret
                   key: MYSQL_PASSWORD
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: skill-mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
           readinessProbe:
-            tcpSocket:
-              port: 3306
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD"]
             initialDelaySeconds: 20
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql
+  name: mysql-skill
   namespace: __NAMESPACE__
-  labels:
-    app: mysql
 spec:
   selector:
-    app: mysql
+    app: mysql-skill
   ports:
-    - name: mysql
+    - protocol: TCP
       port: 3306
       targetPort: 3306
-  type: ClusterIP

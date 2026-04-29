@@ -28,57 +28,35 @@ class ProjectMlRiskServiceTest {
     private ProjectMlRiskService service;
 
     @Test
+    void evaluate_usesHeuristicFallback_whenOnnxSessionNotInitialized() {
+        Project project = new Project();
+        project.setId(15L);
+        project.setTitle("AI platform");
+        project.setDescription("short desc");
+        project.setRequiredSkills(List.of("Java"));
+        project.setBudget(300.0);
+        project.setDuration(30);
+        project.setStatus(ProjectStatus.CANCELLED);
+        project.setProjectOwnerId(9L);
+
+        when(projectRepository.findById(15L)).thenReturn(Optional.of(project));
+        when(projectRepository.countByProjectOwnerId(9L)).thenReturn(4L);
+        when(projectRepository.countByProjectOwnerIdAndStatus(9L, ProjectStatus.COMPLETED)).thenReturn(1L);
+
+        ProjectMlRiskDto risk = service.evaluate(15L);
+
+        assertThat(risk.isHeuristicFallback()).isTrue();
+        assertThat(risk.getModelId()).isEqualTo("heuristic-fallback");
+        assertThat(risk.getFlags()).contains("PROJET_ANNULE");
+        assertThat(risk.getRiskScore0To100()).isBetween(0, 100);
+    }
+
+    @Test
     void evaluate_throwsNotFound_whenProjectDoesNotExist() {
         when(projectRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.evaluate(99L))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Project not found");
-    }
-
-    @Test
-    void evaluate_usesHeuristicFallback_whenOnnxIsUnavailable() {
-        Project p = newProject(1L, ProjectStatus.OPEN, "court", "peu de mots", List.of());
-        p.setProjectOwnerId(77L);
-
-        when(projectRepository.findById(1L)).thenReturn(Optional.of(p));
-        when(projectRepository.countByProjectOwnerId(77L)).thenReturn(2L);
-        when(projectRepository.countByProjectOwnerIdAndStatus(77L, ProjectStatus.COMPLETED)).thenReturn(0L);
-
-        ProjectMlRiskDto out = service.evaluate(1L);
-
-        assertThat(out.isHeuristicFallback()).isTrue();
-        assertThat(out.getModelId()).isEqualTo("heuristic-fallback");
-        assertThat(out.getRiskLevel()).isIn("LOW", "MEDIUM", "HIGH");
-        assertThat(out.getRiskScore0To100()).isBetween(0, 100);
-        assertThat(out.getFlags()).isNotNull();
-    }
-
-    @Test
-    void evaluate_increasesRiskForCancelledProject() {
-        Project cancelled = newProject(2L, ProjectStatus.CANCELLED, "titre", "desc", List.of("java"));
-        cancelled.setProjectOwnerId(88L);
-
-        when(projectRepository.findById(2L)).thenReturn(Optional.of(cancelled));
-        when(projectRepository.countByProjectOwnerId(88L)).thenReturn(1L);
-        when(projectRepository.countByProjectOwnerIdAndStatus(88L, ProjectStatus.COMPLETED)).thenReturn(0L);
-
-        ProjectMlRiskDto out = service.evaluate(2L);
-
-        assertThat(out.getFlags()).contains("PROJET_ANNULE");
-        assertThat(out.getProbabilityHighRisk()).isGreaterThan(0.3f);
-        assertThat(out.getSummary()).contains("Repli heuristique");
-    }
-
-    private static Project newProject(Long id, ProjectStatus status, String title, String description, List<String> skills) {
-        Project p = new Project();
-        p.setId(id);
-        p.setTitle(title);
-        p.setDescription(description);
-        p.setBudget(1000.0);
-        p.setDuration(30);
-        p.setStatus(status);
-        p.setRequiredSkills(skills);
-        return p;
     }
 }

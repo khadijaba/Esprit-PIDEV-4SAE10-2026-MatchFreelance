@@ -60,14 +60,8 @@ public class ProjectMlRiskService {
             onnxReady = true;
         } catch (Exception e) {
             onnxReady = false;
-            if (ortSession != null) {
-                try {
-                    ortSession.close();
-                } catch (Exception ignored) {
-                    /* ignore */
-                }
-                ortSession = null;
-            }
+            closeQuietly(ortSession);
+            ortSession = null;
             if (ortEnv != null) {
                 try {
                     ortEnv.close();
@@ -227,5 +221,16 @@ public class ProjectMlRiskService {
             p += 0.25f;
         }
         return Math.max(0.05f, Math.min(0.95f, p));
+    }
+
+    private static void closeQuietly(AutoCloseable resource) {
+        if (resource == null) {
+            return;
+        }
+        try {
+            resource.close();
+        } catch (Exception ignored) {
+            /* ignore */
+        }
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import tn.esprit.evaluation.client.FormationClient;
 import tn.esprit.evaluation.client.ProjectClient;
 import tn.esprit.evaluation.client.SkillClient;
+import tn.esprit.evaluation.dto.CertificatDto;
 import tn.esprit.evaluation.dto.CompetenceAttribueeDto;
 import tn.esprit.evaluation.dto.PassageExamenDto;
 import tn.esprit.evaluation.dto.ProjetMarcheDto;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -24,8 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Après obtention du certificat : niveau déduit du score, compétence(s) sur Skill, projets marché triés selon le niveau.
- * Les appels externes sont tolérants aux pannes (ne doit pas faire échouer la soumission d'examen).
+ * Après certificat : niveau, synthèse, synchronisation optionnelle vers Skill et suggestions Project.
  */
 @Service
 @RequiredArgsConstructor
@@ -37,13 +38,72 @@ public class CertificatCarriereService {
             "CYBERSECURITY", "DESIGN", "AI");
 
     private static final int MAX_THEMES_SKILLS = 3;
-    private static final int PROJETS_MARCHE_LIMIT = 5;
 
     private final CertificatService certificatService;
     private final FormationClient formationClient;
+    private final QuestionRepository questionRepository;
     private final SkillClient skillClient;
     private final ProjectClient projectClient;
-    private final QuestionRepository questionRepository;
+
+    /**
+     * Synchronisation de rattrapage : quand un certificat est consulté, on pousse aussi les compétences
+     * vers le microservice Skill (idempotent côté Skill par {freelancerId, name}).
+     */
+    public void synchroniserSkillsDepuisCertificat(CertificatDto cert) {
+        if (cert == null || cert.getFreelancerId() == null || cert.getExamenId() == null) {
+            return;
+        }
+        int score = cert.getScore() != null ? cert.getScore() : 0;
+        int seuil = cert.getSeuilReussi() != null ? cert.getSeuilReussi() : 60;
+        String niveau = calculerNiveau(score, seuil);
+        try {
+            String categorie = "WEB_DEVELOPMENT";
+            String titreFormation = cert.getExamenTitre() != null ? cert.getExamenTitre() : "Formation";
+            if (cert.getFormationId() != null) {
+                Map<String, Object> formation = formationClient.getFormationById(cert.getFormationId());
+                categorie = resolveCategorie(formation);
+                if (formation.get("titre") != null) {
+                    titreFormation = formation.get("titre").toString();
+                }
+            }
+
+            String nomSkillPrincipal = "Certifié — " + titreFormation + " (examen " + cert.getExamenId() + ")";
+            List<CompetenceAttribueeDto> competences = new ArrayList<>();
+            competences.add(CompetenceAttribueeDto.builder()
+                    .nom(nomSkillPrincipal)
+                    .categorie(categorie)
+                    .niveau(niveau)
+                    .statut("SYNTHESIS_LOCAL")
+                    .build());
+
+            int themesAjoutes = 0;
+            for (String themeBrut : questionRepository.findDistinctThemesByExamenId(cert.getExamenId())) {
+                if (themesAjoutes >= MAX_THEMES_SKILLS) {
+                    break;
+                }
+                String t = themeBrut != null ? themeBrut.trim() : "";
+                if (t.length() < 2) {
+                    continue;
+                }
+                String court = t.length() > 60 ? t.substring(0, 57) + "…" : t;
+                String nomTheme = "Thème certifié — " + court;
+                if (nomTheme.equalsIgnoreCase(nomSkillPrincipal)) {
+                    continue;
+                }
+                competences.add(CompetenceAttribueeDto.builder()
+                        .nom(nomTheme)
+                        .categorie(categorie)
+                        .niveau(niveau)
+                        .statut("SYNTHESIS_LOCAL")
+                        .build());
+                themesAjoutes++;
+            }
+            syncSkillsToProfile(cert.getFreelancerId(), competences, categorie);
+        } catch (Exception e) {
+            log.warn("Synchronisation Skill depuis certificat en échec (certificatId={}): {}",
+                    cert.getId(), e.getMessage());
+        }
+    }
 
     public void enrichirApresCertificat(PassageExamenDto dto, PassageExamen passage, Examen examen) {
         if (passage.getResultat() != PassageExamen.ResultatExamen.REUSSI) {
@@ -60,7 +120,7 @@ public class CertificatCarriereService {
         if (dto.getCertificat() == null) {
             dto.setMessageCarriere(String.format(
                     "Niveau « %s » calculé à partir de votre score (%d %%). "
-                            + "Sans certificat joint, aucune compétence ni projet n’est synchronisé pour cette réponse.",
+                            + "Sans certificat joint, aucune ligne de synthèse n’est ajoutée.",
                     niveau, score));
             dto.setCompetencesAttribuees(Collections.emptyList());
             dto.setProjetsMarcheRecommandes(Collections.emptyList());
@@ -74,18 +134,15 @@ public class CertificatCarriereService {
                     ? formation.get("titre").toString()
                     : examen.getTitre();
 
-            int annees = anneesPourNiveau(niveau);
             String nomSkillPrincipal = "Certifié — " + titreFormation + " (examen " + examen.getId() + ")";
 
             List<CompetenceAttribueeDto> competences = new ArrayList<>();
-
-            SkillClient.AttributionOutcome principal = skillClient.creerCompetenceFreelancer(
-                    passage.getFreelancerId(),
-                    nomSkillPrincipal,
-                    categorie,
-                    niveau,
-                    annees);
-            appendCompetence(competences, nomSkillPrincipal, categorie, niveau, principal);
+            competences.add(CompetenceAttribueeDto.builder()
+                    .nom(nomSkillPrincipal)
+                    .categorie(categorie)
+                    .niveau(niveau)
+                    .statut("SYNTHESIS_LOCAL")
+                    .build());
 
             int themesAjoutes = 0;
             for (String themeBrut : questionRepository.findDistinctThemesByExamenId(examen.getId())) {
@@ -101,59 +158,30 @@ public class CertificatCarriereService {
                 if (nomTheme.equalsIgnoreCase(nomSkillPrincipal)) {
                     continue;
                 }
-                SkillClient.AttributionOutcome th = skillClient.creerCompetenceFreelancer(
-                        passage.getFreelancerId(),
-                        nomTheme,
-                        categorie,
-                        niveau,
-                        Math.max(1, annees - 1));
-                appendCompetence(competences, nomTheme, categorie, niveau, th);
+                competences.add(CompetenceAttribueeDto.builder()
+                        .nom(nomTheme)
+                        .categorie(categorie)
+                        .niveau(niveau)
+                        .statut("SYNTHESIS_LOCAL")
+                        .build());
                 themesAjoutes++;
             }
 
             dto.setCompetencesAttribuees(competences);
-
-            List<Map<String, Object>> brut = projectClient.projetsPourMarcheApresCertificat(categorie, niveau, PROJETS_MARCHE_LIMIT);
-            Set<String> jetonsProfil = buildFreelancerSkillTokens(
-                    skillClient.getSkillsByFreelancer(passage.getFreelancerId()),
-                    categorie);
-
-            List<ProjetMarcheDto> projets = brut.stream()
-                    .map(m -> {
-                        int alignSkills = scoreAlignementProjet(m, jetonsProfil, categorie);
-                        return ProjetMarcheDto.builder()
-                                .id(toLong(m.get("id")))
-                                .titre(m.get("title") != null ? m.get("title").toString() : null)
-                                .budget(toDouble(m.get("budget")))
-                                .dureeJours(toInt(m.get("duration")))
-                                .statut(m.get("status") != null ? m.get("status").toString() : null)
-                                .scoreAlignementSkills(alignSkills)
-                                .raison(String.format(
-                                        "Adéquation des compétences requises avec votre profil Skill : %d/100. "
-                                                + "Domaine formation %s, niveau métier %s (examen %d %%).",
-                                        alignSkills, categorie, niveau, score))
-                                .build();
-                    })
-                    .sorted(Comparator.comparingInt(
-                            (ProjetMarcheDto projet) ->
-                                    projet.getScoreAlignementSkills() != null ? projet.getScoreAlignementSkills() : 0)
-                            .reversed())
-                    .collect(Collectors.toList());
-            dto.setProjetsMarcheRecommandes(projets);
+            syncSkillsToProfile(passage.getFreelancerId(), competences, categorie);
+            dto.setProjetsMarcheRecommandes(recommendProjectsMarche(categorie, titreFormation));
             dto.setMessageCarriere(String.format(
-                    "Niveau %s déduit du score (%d %%). %d compétence(s) enregistrée(s) ou signalée(s) sur Skill ; "
-                            + "%d projet(s) marché proposé(s), triés par score d’adéquation compétences (meilleur alignement en premier).",
-                    niveau, score, competences.size(), projets.size()));
+                    "Niveau %s déduit du score (%d %%). %d ligne(s) de synthèse ; profil Skill synchronisé si le service est disponible.",
+                    niveau, score, competences.size()));
         } catch (Exception e) {
             log.warn("Enrichissement carrière post-certificat partiel ou en échec: {}", e.getMessage(), e);
             dto.setMessageCarriere(String.format(
                     "Niveau « %s » calculé à partir de votre score. "
-                            + "La synchronisation avec Formation / Skill / Project a échoué : "
-                            + "lancez Eureka, les microservices concernés, puis rechargez cette page.",
+                            + "La synchronisation avec Formation a échoué : vérifiez le microservice Formation.",
                     niveau));
             if (dto.getCompetencesAttribuees() == null || dto.getCompetencesAttribuees().isEmpty()) {
                 dto.setCompetencesAttribuees(List.of(CompetenceAttribueeDto.builder()
-                        .nom("Synchronisation compétence indisponible")
+                        .nom("Synthèse indisponible")
                         .categorie("—")
                         .niveau(niveau)
                         .statut("SERVICE_INDISPONIBLE")
@@ -165,21 +193,115 @@ public class CertificatCarriereService {
         }
     }
 
-    private static void appendCompetence(
-            List<CompetenceAttribueeDto> competences,
-            String nom,
-            String categorie,
-            String niveau,
-            SkillClient.AttributionOutcome outcome) {
-        CompetenceAttribueeDto.CompetenceAttribueeDtoBuilder cb = CompetenceAttribueeDto.builder()
-                .nom(nom)
-                .categorie(categorie)
-                .niveau(niveau);
-        switch (outcome.getKind()) {
-            case CREATED -> competences.add(cb.skillId(outcome.getSkillId()).statut("CREE").build());
-            case ALREADY_EXISTS -> competences.add(cb.statut("DEJA_PRESENTE").build());
-            case FAILED -> competences.add(cb.statut("INDISPONIBLE").build());
+    private void syncSkillsToProfile(Long freelancerId, List<CompetenceAttribueeDto> competences, String categorieFormation) {
+        if (freelancerId == null) {
+            return;
         }
+        String skillMsCategory = toSkillMicroserviceCategory(categorieFormation);
+        for (CompetenceAttribueeDto c : competences) {
+            if (!"SYNTHESIS_LOCAL".equals(c.getStatut())) {
+                continue;
+            }
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("name", c.getNom());
+            body.put("category", skillMsCategory);
+            body.put("freelancerId", freelancerId);
+            body.put("level", niveauToSkillLevel(c.getNiveau()));
+            body.put("yearsOfExperience", 1);
+            skillClient.createSkill(body);
+        }
+    }
+
+    private List<ProjetMarcheDto> recommendProjectsMarche(String categorie, String titreFormation) {
+        List<Map<String, Object>> open = projectClient.getProjectsByStatus("OPEN");
+        return open.stream()
+                .map(p -> buildProjetMarche(p, categorie, titreFormation))
+                .sorted(Comparator.comparingInt(ProjetMarcheDto::getScoreAlignementSkills).reversed())
+                .limit(5)
+                .collect(Collectors.toList());
+    }
+
+    private static ProjetMarcheDto buildProjetMarche(Map<String, Object> p, String categorie, String titreFormation) {
+        int align = scoreOverlap(p, categorie, titreFormation);
+        Long id = toLong(p.get("id"));
+        String title = p.get("title") != null ? p.get("title").toString() : "";
+        Double budget = p.get("budget") instanceof Number nb ? nb.doubleValue() : null;
+        Integer duration = p.get("duration") instanceof Number nb ? nb.intValue() : null;
+        String statut = p.get("status") != null ? p.get("status").toString() : "";
+        return ProjetMarcheDto.builder()
+                .id(id)
+                .titre(title)
+                .budget(budget)
+                .dureeJours(duration)
+                .statut(statut)
+                .raison("Projet ouvert — proximité avec le domaine certifié")
+                .scoreAlignementSkills(align)
+                .scoreComposite(align)
+                .build();
+    }
+
+    private static int scoreOverlap(Map<String, Object> p, String categorie, String titreFormation) {
+        Set<String> tokens = new HashSet<>();
+        for (String part : (categorie + " " + titreFormation).toLowerCase(Locale.ROOT).split("\\W+")) {
+            if (part.length() >= 3) {
+                tokens.add(part);
+            }
+        }
+        if (tokens.isEmpty()) {
+            return 30;
+        }
+        String title = p.get("title") != null ? p.get("title").toString().toLowerCase(Locale.ROOT) : "";
+        @SuppressWarnings("unchecked")
+        List<String> req = (List<String>) p.get("requiredSkills");
+        int best = 0;
+        for (String t : tokens) {
+            if (title.contains(t)) {
+                best = Math.max(best, 80);
+            }
+            if (req != null) {
+                for (String r : req) {
+                    if (r != null && r.toLowerCase(Locale.ROOT).contains(t)) {
+                        best = Math.max(best, 70);
+                    }
+                }
+            }
+        }
+        return best == 0 ? 35 : best;
+    }
+
+    private static Long toLong(Object v) {
+        if (v == null) {
+            return null;
+        }
+        if (v instanceof Number n) {
+            return n.longValue();
+        }
+        try {
+            return Long.parseLong(v.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** Mappe la catégorie formation vers une catégorie supportée par Skill. */
+    private static String toSkillMicroserviceCategory(String formationCategorie) {
+        if (formationCategorie == null) {
+            return "WEB_DEVELOPMENT";
+        }
+        String u = formationCategorie.toUpperCase(Locale.ROOT);
+        return SKILL_CATEGORIES.contains(u) ? u : "WEB_DEVELOPMENT";
+    }
+
+    private static String niveauToSkillLevel(String niveau) {
+        if (niveau == null) {
+            return "INTERMEDIATE";
+        }
+        return switch (niveau) {
+            case "EXPERT" -> "EXPERT";
+            case "AVANCE" -> "ADVANCED";
+            case "INTERMEDIAIRE_SUPERIEUR" -> "INTERMEDIATE";
+            default -> "INTERMEDIATE";
+        };
     }
 
     private static String calculerNiveau(int score, int seuil) {
@@ -198,137 +320,10 @@ public class CertificatCarriereService {
 
     private static String resolveCategorie(Map<String, Object> formation) {
         Object tf = formation.get("typeFormation");
-        String raw = tf != null ? tf.toString().trim().toUpperCase() : "WEB_DEVELOPMENT";
+        String raw = tf != null ? tf.toString().trim().toUpperCase(Locale.ROOT) : "WEB_DEVELOPMENT";
         if (!SKILL_CATEGORIES.contains(raw)) {
             return "WEB_DEVELOPMENT";
         }
         return raw;
-    }
-
-    /**
-     * Jetons normalisés (catégorie, mots des noms de compétences, niveaux) pour comparer aux {@code requiredSkills} des projets.
-     */
-    private static Set<String> buildFreelancerSkillTokens(List<Map<String, Object>> skills, String domainCategory) {
-        Set<String> t = new HashSet<>();
-        if (domainCategory != null && !domainCategory.isBlank()) {
-            t.add(domainCategory.toUpperCase(Locale.ROOT));
-        }
-        for (Map<String, Object> s : skills) {
-            Object cat = s.get("category");
-            if (cat != null) {
-                t.add(cat.toString().toUpperCase(Locale.ROOT));
-            }
-            Object name = s.get("name");
-            if (name != null) {
-                for (String w : name.toString().toUpperCase(Locale.ROOT).split("[^A-Z0-9]+")) {
-                    if (w.length() > 2) {
-                        t.add(w);
-                    }
-                }
-            }
-            Object lvl = s.get("level");
-            if (lvl != null) {
-                t.add(lvl.toString().toUpperCase(Locale.ROOT));
-            }
-        }
-        return t;
-    }
-
-    /**
-     * 0–100 : part des compétences requises du projet couverte par le profil freelancer (nom / catégorie / domaine).
-     */
-    private static int scoreAlignementProjet(Map<String, Object> projet, Set<String> profilTokens, String domainCategory) {
-        String dom = domainCategory != null ? domainCategory.toUpperCase(Locale.ROOT) : "";
-        Object rs = projet.get("requiredSkills");
-        if (!(rs instanceof List<?> list) || list.isEmpty()) {
-            Object title = projet.get("title");
-            if (title != null && !dom.isEmpty() && title.toString().toUpperCase(Locale.ROOT).contains(dom)) {
-                return 35;
-            }
-            return profilTokens.isEmpty() ? 5 : 15;
-        }
-        int n = list.size();
-        int matched = 0;
-        for (Object o : list) {
-            if (o == null) {
-                continue;
-            }
-            String req = o.toString().toUpperCase(Locale.ROOT);
-            if (req.isBlank()) {
-                continue;
-            }
-            boolean ok = false;
-            for (String tok : profilTokens) {
-                if (tok.length() < 2) {
-                    continue;
-                }
-                if (req.contains(tok) || tok.contains(req)) {
-                    ok = true;
-                    break;
-                }
-            }
-            if (!ok && !dom.isEmpty() && req.contains(dom)) {
-                ok = true;
-            }
-            if (ok) {
-                matched++;
-            }
-        }
-        return (int) Math.round(100.0 * matched / n);
-    }
-
-    private static int anneesPourNiveau(String niveau) {
-        if ("EXPERT".equals(niveau)) {
-            return 4;
-        }
-        if ("AVANCE".equals(niveau)) {
-            return 3;
-        }
-        if ("INTERMEDIAIRE_SUPERIEUR".equals(niveau)) {
-            return 2;
-        }
-        return 1;
-    }
-
-    private static Long toLong(Object o) {
-        if (o == null) {
-            return null;
-        }
-        if (o instanceof Number n) {
-            return n.longValue();
-        }
-        try {
-            return Long.parseLong(o.toString());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private static Double toDouble(Object o) {
-        if (o == null) {
-            return null;
-        }
-        if (o instanceof Number n) {
-            return n.doubleValue();
-        }
-        try {
-            return Double.parseDouble(o.toString());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private static Integer toInt(Object o) {
-        if (o == null) {
-            return null;
-        }
-        if (o instanceof Number n) {
-            return n.intValue();
-        }
-        try {
-            return Integer.parseInt(o.toString());
-        } catch (NumberFormatException e) {
-            return null;
-        }
     }
 }
