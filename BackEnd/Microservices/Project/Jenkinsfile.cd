@@ -22,9 +22,21 @@ pipeline {
                         DEPLOY_IMAGE="${IMAGE_NAME}:${EFFECTIVE_TAG}"
 
                         if ! command -v kubectl >/dev/null 2>&1; then
-                          curl -fsSL -o /tmp/kubectl "https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl"
-                          chmod +x /tmp/kubectl
                           KUBECTL_CMD="/tmp/kubectl"
+                          if [ ! -x "${KUBECTL_CMD}" ]; then
+                            ok=0
+                            for i in 1 2 3; do
+                              curl -fL --retry 3 --retry-all-errors --connect-timeout 15 --max-time 180 \
+                                -o "${KUBECTL_CMD}" "https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl" && ok=1 && break
+                              echo "kubectl download attempt ${i} failed, retrying..."
+                              sleep 5
+                            done
+                            if [ "${ok}" -ne 1 ]; then
+                              curl -fL --retry 3 --retry-all-errors --connect-timeout 15 --max-time 180 \
+                                -o "${KUBECTL_CMD}" "https://storage.googleapis.com/kubernetes-release/release/v1.30.0/bin/linux/amd64/kubectl"
+                            fi
+                            chmod +x "${KUBECTL_CMD}"
+                          fi
                         else
                           KUBECTL_CMD="kubectl"
                         fi
@@ -47,7 +59,7 @@ pipeline {
                         export KUBECONFIG="${KUBECONFIG_FILE}"
                         "${KUBECTL_CMD}" apply -f "${TMP_NS}"
                         "${KUBECTL_CMD}" apply -f "${TMP_MYSQL}"
-                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" rollout status deployment/mysql --timeout=300s
+                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" rollout status deployment/mysql --timeout=900s
                         "${KUBECTL_CMD}" apply -f "${TMP_DEPLOY}" -f "${TMP_SVC}"
                         "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" rollout status deployment/project-ms --timeout=300s
                         "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" get pods,svc -l app=project-ms
