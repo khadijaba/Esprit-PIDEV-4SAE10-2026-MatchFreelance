@@ -20,9 +20,8 @@ Notes:
   - `sonar-token`
   - `kubeconfig-prod`
 - Required Jenkins tools (names must match **exactly** — see below):
-  - `JDK17`
-  - `Maven3`
-  - `Node20`
+  - `JDK17` and `Maven3` (backend CI/CD)
+  - `Node20` is optional for frontend jobs (they download Node via `scripts/ci/bootstrap-node.sh`); keep **Node20** only if you still use it elsewhere.
 
 ### Configure tools in Jenkins (fixes `Tool type "nodejs" does not have an install of "Node20"`)
 
