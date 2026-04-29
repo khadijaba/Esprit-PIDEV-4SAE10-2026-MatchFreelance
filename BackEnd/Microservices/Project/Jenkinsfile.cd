@@ -9,7 +9,7 @@ pipeline {
     environment {
         IMAGE_NAME = 'emna450/backend-project'
         MANIFESTS_DIR = 'BackEnd/Microservices/Project/k8s/project'
-        KUBECTL_IMAGE = 'bitnami/kubectl:1.30'
+        KUBECTL_IMAGE = 'bitnami/kubectl:latest'
     }
 
     stages {
@@ -18,7 +18,9 @@ pipeline {
                 withCredentials([file(credentialsId: 'kubeconfig-project', variable: 'KUBECONFIG_FILE')]) {
                     sh '''
                         set -e
-                        DEPLOY_IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
+                        EFFECTIVE_TAG="${IMAGE_TAG:-latest}"
+                        EFFECTIVE_NS="${K8S_NAMESPACE:-matchfreelance}"
+                        DEPLOY_IMAGE="${IMAGE_NAME}:${EFFECTIVE_TAG}"
 
                         TMP_DEPLOY="$(mktemp)"
                         TMP_SVC="$(mktemp)"
@@ -29,14 +31,14 @@ pipeline {
                         cp "${MANIFESTS_DIR}/namespace.yaml" "${TMP_NS}"
 
                         sed -i "s|__IMAGE__|${DEPLOY_IMAGE}|g" "${TMP_DEPLOY}"
-                        sed -i "s|__NAMESPACE__|${K8S_NAMESPACE}|g" "${TMP_DEPLOY}"
-                        sed -i "s|__NAMESPACE__|${K8S_NAMESPACE}|g" "${TMP_SVC}"
-                        sed -i "s|__NAMESPACE__|${K8S_NAMESPACE}|g" "${TMP_NS}"
+                        sed -i "s|__NAMESPACE__|${EFFECTIVE_NS}|g" "${TMP_DEPLOY}"
+                        sed -i "s|__NAMESPACE__|${EFFECTIVE_NS}|g" "${TMP_SVC}"
+                        sed -i "s|__NAMESPACE__|${EFFECTIVE_NS}|g" "${TMP_NS}"
 
                         docker run --rm -v "${KUBECONFIG_FILE}:/kubeconfig:ro" -v "${TMP_NS}:/ns.yaml:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} apply -f /ns.yaml
                         docker run --rm -v "${KUBECONFIG_FILE}:/kubeconfig:ro" -v "${TMP_DEPLOY}:/deployment.yaml:ro" -v "${TMP_SVC}:/service.yaml:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} apply -f /deployment.yaml -f /service.yaml
-                        docker run --rm -v "${KUBECONFIG_FILE}:/kubeconfig:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} -n "${K8S_NAMESPACE}" rollout status deployment/project-ms --timeout=300s
-                        docker run --rm -v "${KUBECONFIG_FILE}:/kubeconfig:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} -n "${K8S_NAMESPACE}" get pods,svc -l app=project-ms
+                        docker run --rm -v "${KUBECONFIG_FILE}:/kubeconfig:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} -n "${EFFECTIVE_NS}" rollout status deployment/project-ms --timeout=300s
+                        docker run --rm -v "${KUBECONFIG_FILE}:/kubeconfig:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} -n "${EFFECTIVE_NS}" get pods,svc -l app=project-ms
                     '''
                 }
             }
