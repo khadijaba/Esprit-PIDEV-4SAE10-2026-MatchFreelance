@@ -17,8 +17,17 @@ Notes:
 - Required Jenkins credentials:
   - `github-credentials`
   - `docker-hub-credentials`
-  - `sonar-token`
+  - `sonar-token` (see **Sonar credential** below — pipeline fails if this ID is missing)
   - `kubeconfig-prod`
+
+### Sonar credential (`Could not find credentials entry with ID 'sonar-token'`)
+
+1. In SonarQube: **My Account → Security → Generate Tokens** (user token is fine for analysis).
+2. In Jenkins: **Manage Jenkins → Credentials → (global) → Add Credentials**.
+3. Kind: **Secret text** → **Secret** = paste the Sonar token → **ID** = **`sonar-token`** (must match exactly unless you change the job parameter).
+4. **Save**, re-run **`frontend-ci`**.
+
+The **`frontend-ci`** job has a parameter **`SONAR_CREDENTIALS_ID`** (default `sonar-token`). If your credential uses another ID, set that parameter on **Build With Parameters** (or change the default in the job after the first run loads the Jenkinsfile).
 - Required Jenkins tools (names must match **exactly** — see below):
   - `JDK17` and `Maven3` (backend CI/CD)
   - `Node20` is optional for frontend jobs (they download Node via `scripts/ci/bootstrap-node.sh`); keep **Node20** only if you still use it elsewhere.

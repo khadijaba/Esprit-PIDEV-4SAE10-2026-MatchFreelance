@@ -6,6 +6,14 @@ pipeline {
         timeout(time: 60, unit: 'MINUTES')
     }
 
+    parameters {
+        string(
+            name: 'SONAR_CREDENTIALS_ID',
+            defaultValue: 'sonar-token',
+            description: 'Jenkins credential ID (Secret text) whose value is the SonarQube user token. Create it under Manage Jenkins → Credentials if missing.'
+        )
+    }
+
     environment {
         CI = 'true'
         REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
@@ -13,7 +21,6 @@ pipeline {
         MODULE_DIR = 'frontend'
         SONAR_PROJECT_KEY = 'matchfreelance-frontend'
         SONAR_HOST = "${env.SONAR_HOST_URL ?: 'http://host.docker.internal:9000'}"
-        SONAR_CREDENTIALS_ID = 'sonar-token'
         IMAGE_NAME = 'khadijabenayed/matchfreelance-frontend'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
     }
@@ -70,7 +77,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 dir("${MODULE_DIR}") {
-                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+                    withCredentials([string(credentialsId: "${params.SONAR_CREDENTIALS_ID ?: 'sonar-token'}", variable: 'SONAR_TOKEN')]) {
                         sh '''
                             npx sonar-scanner \
                               -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
