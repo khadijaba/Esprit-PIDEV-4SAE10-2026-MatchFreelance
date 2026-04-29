@@ -12,7 +12,6 @@ import tn.esprit.formation.repository.InscriptionRepository;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,25 +21,24 @@ public class InscriptionService {
     private final FormationRepository formationRepository;
     private final EvaluationClient evaluationClient;
 
+    private static List<InscriptionDto> mapToDto(List<Inscription> rows) {
+        return rows.stream().map(InscriptionDto::fromEntity).toList();
+    }
+
     @Transactional(readOnly = true)
     public List<InscriptionDto> findByFormation(Long formationId) {
-        return inscriptionRepository.findByFormationId(formationId).stream()
-                .map(InscriptionDto::fromEntity)
-                .collect(Collectors.toList());
+        return mapToDto(inscriptionRepository.findByFormationId(formationId));
     }
 
     @Transactional(readOnly = true)
     public List<InscriptionDto> findByFreelancer(Long freelancerId) {
-        return inscriptionRepository.findByFreelancerId(freelancerId).stream()
-                .map(InscriptionDto::fromEntity)
-                .collect(Collectors.toList());
+        return mapToDto(inscriptionRepository.findByFreelancerId(freelancerId));
     }
 
     @Transactional(readOnly = true)
     public List<InscriptionDto> findByStatutEnAttente() {
-        return inscriptionRepository.findByStatutOrderByDateInscriptionDesc(Inscription.StatutInscription.EN_ATTENTE).stream()
-                .map(InscriptionDto::fromEntity)
-                .collect(Collectors.toList());
+        return mapToDto(inscriptionRepository.findByStatutOrderByDateInscriptionDesc(
+                Inscription.StatutInscription.EN_ATTENTE));
     }
 
     @Transactional
@@ -59,12 +57,8 @@ public class InscriptionService {
         Long examenRequisId = formation.getExamenRequisId();
         if (examenRequisId != null) {
             List<Map<String, Object>> certificats = evaluationClient.getCertificatsByFreelancer(freelancerId);
-            boolean aLeCertificat = certificats.stream().anyMatch(c -> {
-                Object id = c.get("examenId");
-                if (id == null) return false;
-                if (id instanceof Number) return ((Number) id).longValue() == examenRequisId;
-                return id.toString().equals(examenRequisId.toString());
-            });
+            boolean aLeCertificat = certificats.stream()
+                    .anyMatch(c -> certificatCoversExamen(c, examenRequisId));
             if (!aLeCertificat) {
                 String examenTitre = evaluationClient.getExamenTitre(examenRequisId);
                 throw new RuntimeException("Accès réservé aux personnes ayant le certificat : " + examenTitre + ".");
@@ -93,5 +87,12 @@ public class InscriptionService {
                 .orElseThrow(() -> new RuntimeException("Inscription non trouvée: " + inscriptionId));
         ins.setStatut(Inscription.StatutInscription.ANNULEE);
         inscriptionRepository.save(ins);
+    }
+
+    private static boolean certificatCoversExamen(Map<String, Object> certificat, Long examenRequisId) {
+        Object id = certificat.get("examenId");
+        if (id == null) return false;
+        if (id instanceof Number) return ((Number) id).longValue() == examenRequisId;
+        return id.toString().equals(examenRequisId.toString());
     }
 }

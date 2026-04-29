@@ -8,7 +8,6 @@ import tn.esprit.formation.entity.Formation;
 import tn.esprit.formation.repository.FormationRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -17,18 +16,18 @@ public class FormationService {
     private final FormationRepository formationRepository;
     private final FormationNotificationService notificationService;
 
+    private static List<FormationDto> mapToDto(List<Formation> formations) {
+        return formations.stream().map(FormationDto::fromEntity).toList();
+    }
+
     @Transactional(readOnly = true)
     public List<FormationDto> findAll() {
-        return formationRepository.findAll().stream()
-                .map(FormationDto::fromEntity)
-                .collect(Collectors.toList());
+        return mapToDto(formationRepository.findAll());
     }
 
     @Transactional(readOnly = true)
     public List<FormationDto> findOuvertes() {
-        return formationRepository.findFormationsOuvertes().stream()
-                .map(FormationDto::fromEntity)
-                .collect(Collectors.toList());
+        return mapToDto(formationRepository.findFormationsOuvertes());
     }
 
     @Transactional(readOnly = true)
@@ -78,10 +77,11 @@ public class FormationService {
      * @param freelancerId conservé pour l’API REST ; non utilisé tant que Skill est absent.
      */
     @Transactional(readOnly = true)
-    @SuppressWarnings("unused")
     public List<FormationDto> getRecommandationsForFreelancer(Long freelancerId) {
-        return formationRepository.findFormationsOuvertes().stream()
-                .map(FormationDto::fromEntity)
-                .collect(Collectors.toList());
+        // Paramètre conservé pour l’API ; le filtrage par compétences Skill n’est pas branché ici.
+        if (freelancerId == null || freelancerId <= 0) {
+            return List.of();
+        }
+        return findOuvertes();
     }
 }

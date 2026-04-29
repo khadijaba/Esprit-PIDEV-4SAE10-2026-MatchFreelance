@@ -2,7 +2,6 @@ package esprit.skill.Service;
 
 import esprit.skill.Repositories.FreelancerBioRepository;
 import esprit.skill.entities.FreelancerBio;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -10,8 +9,11 @@ import java.util.Optional;
 @Service
 public class FreelancerBioServiceImpl implements FreelancerBioService {
 
-    @Autowired
-    private FreelancerBioRepository repository;
+    private final FreelancerBioRepository repository;
+
+    public FreelancerBioServiceImpl(FreelancerBioRepository repository) {
+        this.repository = repository;
+    }
 
     @Override
     public FreelancerBio getOrEmpty(Long freelancerId) {

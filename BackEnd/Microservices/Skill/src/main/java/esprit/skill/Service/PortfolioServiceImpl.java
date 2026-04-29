@@ -2,7 +2,6 @@ package esprit.skill.Service;
 
 import esprit.skill.Repositories.PortfolioRepository;
 import esprit.skill.entities.Portfolio;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,8 +9,11 @@ import java.util.List;
 @Service
 public class PortfolioServiceImpl implements PortfolioService {
 
-    @Autowired
-    private PortfolioRepository portfolioRepository;
+    private final PortfolioRepository portfolioRepository;
+
+    public PortfolioServiceImpl(PortfolioRepository portfolioRepository) {
+        this.portfolioRepository = portfolioRepository;
+    }
 
     @Override
     public Portfolio addPortfolio(Long freelancerId, String portfolioUrl, String portfolioDescription) {

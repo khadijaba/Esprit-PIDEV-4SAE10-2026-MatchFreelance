@@ -10,7 +10,6 @@ import tn.esprit.formation.repository.FormationRepository;
 import tn.esprit.formation.repository.ModuleRepository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +22,7 @@ public class ModuleService {
     public List<ModuleDto> findByFormationId(Long formationId) {
         return moduleRepository.findByFormationIdOrderByOrdreAsc(formationId).stream()
                 .map(ModuleDto::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)

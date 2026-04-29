@@ -2,7 +2,6 @@ package esprit.skill.Service;
 
 import esprit.skill.Repositories.CVRepository;
 import esprit.skill.entities.CV;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,11 +17,14 @@ import java.util.Optional;
 @Service
 public class CVServiceImpl implements CVService {
 
-    @Autowired
-    private CVRepository cvRepository;
+    private final CVRepository cvRepository;
 
     @Value("${file.upload.dir:}")
     private String uploadDirBase;
+
+    public CVServiceImpl(CVRepository cvRepository) {
+        this.cvRepository = cvRepository;
+    }
 
     /** Répertoire d'upload en chemin absolu pour éviter les erreurs avec le répertoire de travail Tomcat. */
     private Path uploadDirPath() throws IOException {

@@ -4,7 +4,6 @@ package esprit.skill.Service;
 import esprit.skill.Repositories.SkillRepository;
 import esprit.skill.entities.Skill;
 import esprit.skill.entities.SkillCategory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,8 +11,11 @@ import java.util.List;
 @Service
 public class SkillServiceImpl implements SkillService {
 
-    @Autowired
-    private SkillRepository skillRepository;
+    private final SkillRepository skillRepository;
+
+    public SkillServiceImpl(SkillRepository skillRepository) {
+        this.skillRepository = skillRepository;
+    }
 
     @Override
     public Skill addSkill(Skill skill) {

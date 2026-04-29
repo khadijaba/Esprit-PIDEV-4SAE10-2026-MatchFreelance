@@ -34,6 +34,7 @@
         <spring-cloud.version>2025.1.0</spring-cloud.version>
         <!-- Version explicite pour annotationProcessorPaths (Lombok / génération des builders). -->
         <lombok.version>1.18.36</lombok.version>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
     <dependencyManagement>
         <dependencies>
