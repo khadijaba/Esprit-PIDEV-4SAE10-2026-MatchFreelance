@@ -7,4 +7,3 @@ node_modules/
 dist/
 .angular/
 .ci-node/
-.ci-chrome/

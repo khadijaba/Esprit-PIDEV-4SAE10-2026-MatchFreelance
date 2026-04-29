@@ -35,7 +35,7 @@ Notes:
 
 **Frontend pipelines:** Node is provisioned with **`scripts/ci/bootstrap-node.sh`** (default **20.19.2**, meets Angular 21’s **≥ 20.19** requirement). You do **not** need the Jenkins **Node20** tool for `frontend-ci` / `frontend-cd`. Override the version with env **`NODE_CI_VERSION`** on the agent if needed.
 
-**Karma / ChromeHeadless:** `frontend-ci` runs **`scripts/ci/bootstrap-chromium.sh`** (Chrome for Testing, default **131.0.6778.204**) and sets **`CHROME_BIN`**. Karma uses **`ChromeHeadlessCI`** when Jenkins sets **`CI=true`** (Docker-friendly `--no-sandbox`). Override Chrome version with **`CHROME_CI_VERSION`** if the download URL returns 404.
+**Karma in CI:** When **`CI=true`**, **`karma.conf.cjs`** uses the **`jsdom`** browser via **`karma-jsdom-launcher`** (no Chrome/Chromium or `libglib` on the agent). Locally (no **`CI`**), tests still use **`ChromeHeadless`** with your installed Chrome.
 
 If you see **`EnvVarsForToolStep` / `getName()` is null**: under **Tools**, delete any **empty** JDK/Maven/Node rows (every installation must have a non-blank **Name**). Backend jobs still use Declarative `tools { jdk … maven … }`.
 
