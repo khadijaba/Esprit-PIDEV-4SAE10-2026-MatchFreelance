@@ -34,7 +34,9 @@ Notes:
    - Enable **Install automatically** and pick a **20.x** version from the list, *or* point **Installation directory** at a folder that already contains Node 20 on the agent.
 6. **Save**, then re-run **`frontend-ci`** / **`frontend-cd`**.
 
-If you see **`EnvVarsForToolStep` / `getName()` is null**: under **Tools**, delete any **empty** JDK/Maven/Node rows (every installation must have a non-blank **Name**). Backend jobs still use Declarative `tools { jdk … maven … }`; frontend jobs use the `tool` step for Node only to avoid that failure mode.
+**Frontend pipelines:** Node is provisioned with **`scripts/ci/bootstrap-node.sh`** (default **20.19.2**, meets Angular 21’s **≥ 20.19** requirement). You do **not** need the Jenkins **Node20** tool for `frontend-ci` / `frontend-cd`. Override the version with env **`NODE_CI_VERSION`** on the agent if needed.
+
+If you see **`EnvVarsForToolStep` / `getName()` is null**: under **Tools**, delete any **empty** JDK/Maven/Node rows (every installation must have a non-blank **Name**). Backend jobs still use Declarative `tools { jdk … maven … }`.
 
 ## 2) SonarQube URL (why `localhost:9000` works in the browser but not in Jenkins)
 

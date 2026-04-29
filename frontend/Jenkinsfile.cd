@@ -21,13 +21,19 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                script {
-                    def nodeHome = tool name: 'Node20', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
-                    env.PATH = "${nodeHome}/bin:${env.PATH}"
-                }
                 git credentialsId: 'github-credentials',
                     url: "${REPO_URL}",
                     branch: "${params.GIT_BRANCH}"
+            }
+        }
+
+        stage('Setup Node') {
+            steps {
+                script {
+                    def nodeBin = sh(script: 'bash scripts/ci/bootstrap-node.sh', returnStdout: true).trim()
+                    env.PATH = "${nodeBin}:${env.PATH}"
+                    sh 'node -v && npm -v'
+                }
             }
         }
 

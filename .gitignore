@@ -6,3 +6,4 @@ kubeconfig-prod.yaml
 node_modules/
 dist/
 .angular/
+.ci-node/
