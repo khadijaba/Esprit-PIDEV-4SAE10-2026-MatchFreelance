@@ -9,7 +9,6 @@ pipeline {
     environment {
         IMAGE_NAME = 'emna450/backend-project'
         MANIFESTS_DIR = 'BackEnd/Microservices/Project/k8s/project'
-        KUBECTL_IMAGE = 'bitnami/kubectl:latest'
     }
 
     stages {
@@ -21,25 +20,18 @@ pipeline {
                         EFFECTIVE_TAG="${IMAGE_TAG:-latest}"
                         EFFECTIVE_NS="${K8S_NAMESPACE:-matchfreelance}"
                         DEPLOY_IMAGE="${IMAGE_NAME}:${EFFECTIVE_TAG}"
-                        KCFG_TMP="$(mktemp)"
+
+                        if ! command -v kubectl >/dev/null 2>&1; then
+                          curl -fsSL -o /tmp/kubectl "https://dl.k8s.io/release/v1.30.0/bin/linux/amd64/kubectl"
+                          chmod +x /tmp/kubectl
+                          KUBECTL_CMD="/tmp/kubectl"
+                        else
+                          KUBECTL_CMD="kubectl"
+                        fi
 
                         TMP_DEPLOY="$(mktemp)"
                         TMP_SVC="$(mktemp)"
                         TMP_NS="$(mktemp)"
-
-                        if [ -d "${KUBECONFIG_FILE}" ]; then
-                          if [ -f "${KUBECONFIG_FILE}/kubeconfig" ]; then
-                            cp "${KUBECONFIG_FILE}/kubeconfig" "${KCFG_TMP}"
-                          elif [ -f "${KUBECONFIG_FILE}/config" ]; then
-                            cp "${KUBECONFIG_FILE}/config" "${KCFG_TMP}"
-                          else
-                            echo "Invalid kubeconfig credential: expected a file but got directory ${KUBECONFIG_FILE}"
-                            exit 1
-                          fi
-                        else
-                          cp "${KUBECONFIG_FILE}" "${KCFG_TMP}"
-                        fi
-
                         cp "${MANIFESTS_DIR}/deployment.yaml" "${TMP_DEPLOY}"
                         cp "${MANIFESTS_DIR}/service.yaml" "${TMP_SVC}"
                         cp "${MANIFESTS_DIR}/namespace.yaml" "${TMP_NS}"
@@ -49,10 +41,11 @@ pipeline {
                         sed -i "s|__NAMESPACE__|${EFFECTIVE_NS}|g" "${TMP_SVC}"
                         sed -i "s|__NAMESPACE__|${EFFECTIVE_NS}|g" "${TMP_NS}"
 
-                        docker run --rm -v "${KCFG_TMP}:/kubeconfig:ro" -v "${TMP_NS}:/ns.yaml:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} apply -f /ns.yaml
-                        docker run --rm -v "${KCFG_TMP}:/kubeconfig:ro" -v "${TMP_DEPLOY}:/deployment.yaml:ro" -v "${TMP_SVC}:/service.yaml:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} apply -f /deployment.yaml -f /service.yaml
-                        docker run --rm -v "${KCFG_TMP}:/kubeconfig:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} -n "${EFFECTIVE_NS}" rollout status deployment/project-ms --timeout=300s
-                        docker run --rm -v "${KCFG_TMP}:/kubeconfig:ro" -e KUBECONFIG=/kubeconfig ${KUBECTL_IMAGE} -n "${EFFECTIVE_NS}" get pods,svc -l app=project-ms
+                        export KUBECONFIG="${KUBECONFIG_FILE}"
+                        "${KUBECTL_CMD}" apply -f "${TMP_NS}"
+                        "${KUBECTL_CMD}" apply -f "${TMP_DEPLOY}" -f "${TMP_SVC}"
+                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" rollout status deployment/project-ms --timeout=300s
+                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" get pods,svc -l app=project-ms
                     '''
                 }
             }
