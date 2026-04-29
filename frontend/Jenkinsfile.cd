@@ -12,10 +12,6 @@ pipeline {
         string(name: 'IMAGE_TAG', defaultValue: '', description: 'Docker image tag from CI')
     }
 
-    tools {
-        nodejs 'Node20'
-    }
-
     environment {
         REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
         MODULE_DIR = 'frontend'
@@ -25,6 +21,10 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                script {
+                    def nodeHome = tool name: 'Node20', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
+                    env.PATH = "${nodeHome}/bin:${env.PATH}"
+                }
                 git credentialsId: 'github-credentials',
                     url: "${REPO_URL}",
                     branch: "${params.GIT_BRANCH}"

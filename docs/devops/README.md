@@ -34,6 +34,8 @@ Notes:
    - Enable **Install automatically** and pick a **20.x** version from the list, *or* point **Installation directory** at a folder that already contains Node 20 on the agent.
 6. **Save**, then re-run **`frontend-ci`** / **`frontend-cd`**.
 
+If you see **`EnvVarsForToolStep` / `getName()` is null**: under **Tools**, delete any **empty** JDK/Maven/Node rows (every installation must have a non-blank **Name**). Backend jobs still use Declarative `tools { jdk … maven … }`; frontend jobs use the `tool` step for Node only to avoid that failure mode.
+
 ## 2) SonarQube URL (why `localhost:9000` works in the browser but not in Jenkins)
 
 - **`http://sonarqube:9000`** only resolves when Jenkins and SonarQube share the same Docker network and the Sonar container is named `sonarqube`.
