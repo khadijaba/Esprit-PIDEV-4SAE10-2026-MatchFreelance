@@ -1,5 +1,4 @@
 node {
-    def jdkHome = tool(name: 'JDK17', type: 'hudson.model.JDK')
     def repoUrl = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
     def branch = 'douja'
     def moduleDir = 'backend/microservices/Formation'
@@ -7,9 +6,20 @@ node {
     def sonarHost = 'http://host.docker.internal:9000'
     def sonarCredentialsId = 'sonar-token-backend'
 
+    def jdkHome = tool(name: 'JDK17', type: 'hudson.model.JDK')
+    if (!jdkHome?.trim()) {
+        jdkHome = (env.JAVA_HOME ?: '').trim()
+    }
+    if (!jdkHome?.trim()) {
+        error 'JDK17 (Global Tool Configuration) a un chemin vide : sous JDK17, clique « Ajouter un installateur », choisis par ex. Adoptium Temurin 17, enregistre. Sans installateur, Jenkins ne télécharge pas le JDK.'
+    }
+
+    def mvnHome = tool(name: 'Maven3', type: 'hudson.tasks.Maven_MavenInstallation')
+
     withEnv([
         "JAVA_HOME=${jdkHome}",
-        "PATH+JDK=${jdkHome}/bin"
+        "PATH+JDK=${jdkHome}/bin",
+        "PATH+MAVEN=${mvnHome}/bin"
     ]) {
         properties([
             disableConcurrentBuilds(),
