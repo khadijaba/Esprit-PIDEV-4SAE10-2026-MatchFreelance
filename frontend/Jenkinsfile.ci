@@ -12,7 +12,7 @@ pipeline {
 
     environment {
         REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
-        BRANCH = 'douja'
+        BRANCH = 'azizdevops'
         MODULE_DIR = 'frontend'
         SONAR_PROJECT_KEY = 'matchfreelance-frontend'
         SONAR_HOST = 'http://sonarqube:9000'
