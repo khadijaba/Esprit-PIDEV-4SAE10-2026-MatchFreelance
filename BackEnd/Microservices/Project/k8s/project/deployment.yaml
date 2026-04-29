@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: project-ms
+  namespace: __NAMESPACE__
+  labels:
+    app: project-ms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: project-ms
+  template:
+    metadata:
+      labels:
+        app: project-ms
+    spec:
+      containers:
+        - name: project-ms
+          image: __IMAGE__
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8084
+          env:
+            - name: SERVER_PORT
+              value: "8084"
+          readinessProbe:
+            tcpSocket:
+              port: 8084
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8084
+            initialDelaySeconds: 40
+            periodSeconds: 15

@@ -12,7 +12,6 @@ pipeline {
 
     options {
         skipDefaultCheckout(true)
-        timeout(time: 90, unit: 'MINUTES')
     }
 
     environment {
@@ -21,6 +20,8 @@ pipeline {
         SONAR_HOST = 'http://host.docker.internal:9000'
         IMAGE_NAME = 'emna450/backend-project'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
+        CD_JOB_NAME = 'pipeline-CD-project-ms'
+        K8S_NAMESPACE = 'matchfreelance'
     }
 
     stages {
@@ -91,9 +92,6 @@ pipeline {
         }
 
         stage('Docker Push') {
-            options {
-                timeout(time: 20, unit: 'MINUTES')
-            }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
@@ -113,5 +111,16 @@ pipeline {
                 }
             }
        }
+
+        stage('Trigger CD') {
+            steps {
+                build job: "${env.CD_JOB_NAME}",
+                      wait: false,
+                      parameters: [
+                          string(name: 'IMAGE_TAG', value: "${env.IMAGE_TAG}"),
+                          string(name: 'K8S_NAMESPACE', value: "${env.K8S_NAMESPACE}")
+                      ]
+            }
+        }
     }
 }
