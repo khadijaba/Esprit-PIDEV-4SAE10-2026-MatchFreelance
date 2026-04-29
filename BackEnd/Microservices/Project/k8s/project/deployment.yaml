@@ -7,6 +7,8 @@ metadata:
     app: project-ms
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: project-ms
@@ -15,6 +17,14 @@ spec:
       labels:
         app: project-ms
     spec:
+      terminationGracePeriodSeconds: 15
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until nc -z mysql 3306; do echo waiting for mysql; sleep 2; done
       containers:
         - name: project-ms
           image: __IMAGE__
@@ -24,6 +34,20 @@ spec:
           env:
             - name: SERVER_PORT
               value: "8084"
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysql:3306/projectdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: project-mysql-secret
+                  key: MYSQL_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: project-mysql-secret
+                  key: MYSQL_PASSWORD
+            - name: CONFIG_SERVER_HOST
+              value: config-server
           readinessProbe:
             tcpSocket:
               port: 8084
