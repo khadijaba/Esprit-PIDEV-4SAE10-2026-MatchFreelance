@@ -59,10 +59,9 @@ public class ApiGatewayApplication {
                         .filters(f -> f.stripPrefix(1))
                         .uri("lb://PROJECT"))
 
-                // USER SERVICE
+                // USER SERVICE — ne pas retirer /api, les endpoints du service sont /api/users/**
                 .route("user-service", r -> r
                         .path("/api/users/**")
-                        .filters(f -> f.stripPrefix(1))
                         .uri("lb://USER"))
 
                 // FORMATION SERVICE

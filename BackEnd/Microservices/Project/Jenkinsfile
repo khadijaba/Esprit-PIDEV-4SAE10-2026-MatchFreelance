@@ -1,3 +1,6 @@
+/* Docker : CLI docker + socket — voir jenkins-docker/. Docker Hub : dockerhub-creds.
+   Sonar : credential Secret text « sonar-token-backend » (token d’analyse, sans espace ni guillemets).
+   SonarQube 9.9.x + sonar-maven-plugin : passer le token en -Dsonar.login (pas sonar.token). */
 pipeline {
     agent any
 
@@ -64,7 +67,7 @@ pipeline {
                             mvn -B clean verify sonar:sonar \\
                               -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
                               -Dsonar.host.url=${env.SONAR_HOST} \\
-                              -Dsonar.token=\${SONAR_TOKEN}
+                              -Dsonar.login=\${SONAR_TOKEN}
                         """
                     }
                 }
@@ -88,14 +91,27 @@ pipeline {
         }
 
         stage('Docker Push') {
+            options {
+                timeout(time: 20, unit: 'MINUTES')
+            }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
+                        set -e
+                        docker image inspect ${env.IMAGE_NAME}:${env.IMAGE_TAG} > /dev/null
                         echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
                         docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+                        CURRENT_BRANCH="\${BRANCH_NAME:-\$(git rev-parse --abbrev-ref HEAD)}"
+                        if [ "\${CURRENT_BRANCH}" = "main" ]; then
+                            docker image inspect ${env.IMAGE_NAME}:latest > /dev/null
+                            docker push ${env.IMAGE_NAME}:latest
+                        else
+                            echo "Skip latest push on branch \${CURRENT_BRANCH}"
+                        fi
+                        docker logout
                     """
                 }
             }
-        }
+       }
     }
 }
