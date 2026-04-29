@@ -7,6 +7,7 @@ pipeline {
     }
 
     environment {
+        CI = 'true'
         REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
         BRANCH = 'azizdevops'
         MODULE_DIR = 'frontend'
