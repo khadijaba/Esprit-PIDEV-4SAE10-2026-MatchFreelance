@@ -48,7 +48,7 @@ pipeline {
         stage('Unit Tests + Coverage') {
             steps {
                 dir("${MODULE_DIR}") {
-                    sh 'npm run test -- --watch=false --code-coverage'
+                    sh 'npm run test:ci'
                 }
             }
             post {

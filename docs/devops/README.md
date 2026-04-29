@@ -35,7 +35,7 @@ Notes:
 
 **Frontend pipelines:** Node is provisioned with **`scripts/ci/bootstrap-node.sh`** (default **20.19.2**, meets Angular 21’s **≥ 20.19** requirement). You do **not** need the Jenkins **Node20** tool for `frontend-ci` / `frontend-cd`. Override the version with env **`NODE_CI_VERSION`** on the agent if needed.
 
-**Karma in CI:** When **`CI=true`**, **`karma.conf.cjs`** uses the **`jsdom`** browser via **`karma-jsdom-launcher`** (no Chrome/Chromium or `libglib` on the agent). Locally (no **`CI`**), tests still use **`ChromeHeadless`** with your installed Chrome.
+**Frontend tests in Jenkins:** **`npm run test:ci`** runs **`ng run angular:unit-test`** (Angular **`@angular/build:unit-test`** with **Vitest** in Node — no Chrome). Local **`npm test`** still uses **Karma** + **ChromeHeadless**. Coverage for Sonar stays **`coverage/angular/lcov.info`**; JUnit is **`test-results/unit-tests.xml`**. Requires **`@vitest/coverage-v8`** (already in **`package.json`**).
 
 If you see **`EnvVarsForToolStep` / `getName()` is null**: under **Tools**, delete any **empty** JDK/Maven/Node rows (every installation must have a non-blank **Name**). Backend jobs still use Declarative `tools { jdk … maven … }`.
 

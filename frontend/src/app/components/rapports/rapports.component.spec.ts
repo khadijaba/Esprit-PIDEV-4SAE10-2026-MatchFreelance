@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { describe, beforeEach, it, expect, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { RapportsComponent } from './rapports.component';
 import { ExamenService } from '../../services/examen.service';
@@ -8,30 +9,38 @@ import { Examen, PassageExamen } from '../../models/examen.model';
 describe('RapportsComponent', () => {
   let component: RapportsComponent;
 
-  let examenServiceMock: jasmine.SpyObj<ExamenService>;
-  let reportsServiceMock: jasmine.SpyObj<EvaluationReportsService>;
+  let examenServiceMock: {
+    getAll: ReturnType<typeof vi.fn>;
+    getResultatsByExamen: ReturnType<typeof vi.fn>;
+  };
+  let reportsServiceMock: {
+    histogram: ReturnType<typeof vi.fn>;
+    evolution: ReturnType<typeof vi.fn>;
+    pdfReport: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
-    examenServiceMock = jasmine.createSpyObj<ExamenService>('ExamenService', ['getAll', 'getResultatsByExamen']);
-    reportsServiceMock = jasmine.createSpyObj<EvaluationReportsService>('EvaluationReportsService', [
-      'histogram',
-      'evolution',
-      'pdfReport',
-    ]);
-
-    examenServiceMock.getAll.and.returnValue(of([]));
-    examenServiceMock.getResultatsByExamen.and.returnValue(of([]));
-    reportsServiceMock.histogram.and.returnValue(of(new Blob(['histo'])));
-    reportsServiceMock.evolution.and.returnValue(of(new Blob(['evo'])));
-    reportsServiceMock.pdfReport.and.returnValue(of(new Blob(['pdf'])));
+    examenServiceMock = {
+      getAll: vi.fn().mockReturnValue(of([])),
+      getResultatsByExamen: vi.fn().mockReturnValue(of([])),
+    };
+    reportsServiceMock = {
+      histogram: vi.fn().mockReturnValue(of(new Blob(['histo']))),
+      evolution: vi.fn().mockReturnValue(of(new Blob(['evo']))),
+      pdfReport: vi.fn().mockReturnValue(of(new Blob(['pdf']))),
+    };
 
     await TestBed.configureTestingModule({
       imports: [RapportsComponent],
       providers: [
-        { provide: ExamenService, useValue: examenServiceMock },
-        { provide: EvaluationReportsService, useValue: reportsServiceMock },
+        { provide: ExamenService, useValue: examenServiceMock as unknown as ExamenService },
+        { provide: EvaluationReportsService, useValue: reportsServiceMock as unknown as EvaluationReportsService },
       ],
-    }).compileComponents();
+    })
+      .overrideComponent(RapportsComponent, {
+        set: { template: '<div></div>' },
+      })
+      .compileComponents();
 
     const fixture = TestBed.createComponent(RapportsComponent);
     component = fixture.componentInstance;
@@ -39,7 +48,7 @@ describe('RapportsComponent', () => {
 
   it('loads examens on init', () => {
     const examens: Examen[] = [{ id: 1, formationId: 2, titre: 'Examen A', seuilReussi: 60, questions: [] }];
-    examenServiceMock.getAll.and.returnValue(of(examens));
+    examenServiceMock.getAll.mockReturnValue(of(examens));
 
     component.ngOnInit();
 
@@ -58,7 +67,7 @@ describe('RapportsComponent', () => {
 
   it('shows empty state when selected exam has no passages', () => {
     component.selectedExamenId = 10;
-    examenServiceMock.getResultatsByExamen.and.returnValue(of([]));
+    examenServiceMock.getResultatsByExamen.mockReturnValue(of([]));
 
     component.genererRapportsEvaluation();
 
@@ -78,7 +87,7 @@ describe('RapportsComponent', () => {
       },
     ];
     component.selectedExamenId = 10;
-    examenServiceMock.getResultatsByExamen.and.returnValue(of(passages));
+    examenServiceMock.getResultatsByExamen.mockReturnValue(of(passages));
 
     component.onExamenSelectionChange();
 
@@ -99,8 +108,8 @@ describe('RapportsComponent', () => {
       },
     ];
     component.selectedExamenId = 10;
-    examenServiceMock.getResultatsByExamen.and.returnValue(of(passages));
-    reportsServiceMock.histogram.and.returnValue(throwError(() => ({ status: 0 })));
+    examenServiceMock.getResultatsByExamen.mockReturnValue(of(passages));
+    reportsServiceMock.histogram.mockReturnValue(throwError(() => ({ status: 0 })));
 
     component.genererRapportsEvaluation();
 

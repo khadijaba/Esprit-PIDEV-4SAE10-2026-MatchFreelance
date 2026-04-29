@@ -117,6 +117,21 @@
               }
             ]
           }
+        },
+        "unit-test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "buildTarget": "angular:build:development",
+            "runner": "vitest",
+            "coverage": true,
+            "coverageReporters": ["lcov", "text-summary"],
+            "include": ["src/**/*.spec.ts"],
+            "reporters": [
+              "default",
+              ["junit", { "outputFile": "test-results/unit-tests.xml" }]
+            ]
+          }
         }
       }
     }
