@@ -25,18 +25,21 @@ node {
         timeout(time: 90, unit: 'MINUTES') {
             stage('Checkout') {
                 retry(3) {
-                    sh """
-                        set -eux
-                        rm -rf .git
-                        git init .
-                        git remote add origin '${repoUrl}' || git remote set-url origin '${repoUrl}'
-                        git config core.sparseCheckout true
-                        mkdir -p .git/info
-                        printf '${moduleDir}\\n' > .git/info/sparse-checkout
-                        git -c protocol.version=2 fetch --no-tags --depth=1 origin '${branch}'
-                        git -c advice.detachedHead=false checkout --force --detach FETCH_HEAD
-                        test -d '${moduleDir}'
-                    """
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: "*/${branch}"]],
+                        userRemoteConfigs: [[
+                            credentialsId: 'github-credentials',
+                            url: "${repoUrl}",
+                            refspec: "+refs/heads/${branch}:refs/remotes/origin/${branch}"
+                        ]],
+                        extensions: [
+                            [$class: 'CleanBeforeCheckout'],
+                            [$class: 'PruneStaleBranch'],
+                            [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: moduleDir]]],
+                            [$class: 'CloneOption', shallow: true, depth: 1, noTags: true, timeout: 30, honorRefspec: true, reference: '']
+                        ]
+                    ])
                 }
             }
 
