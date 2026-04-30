@@ -6,6 +6,8 @@ pipeline {
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
         SONAR_HOST = 'http://host.docker.internal:9000'
         MODULE_DIR = 'BackEnd/Microservices/Project'
+        CD_JOB_NAME = 'pipeline-CD-project-ms'
+        K8S_NAMESPACE = 'matchfreelance'
     }
 
     stages {
@@ -58,6 +60,17 @@ pipeline {
                         docker push ${IMAGE_NAME}:latest
                     '''
                 }
+            }
+        }
+
+        stage('Trigger CD') {
+            steps {
+                build job: "${CD_JOB_NAME}",
+                      wait: false,
+                      parameters: [
+                          string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}"),
+                          string(name: 'K8S_NAMESPACE', value: "${K8S_NAMESPACE}")
+                      ]
             }
         }
     }
