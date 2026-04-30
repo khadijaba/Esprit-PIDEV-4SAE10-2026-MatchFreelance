@@ -65,7 +65,7 @@ class ContractHealthServiceTest {
         when(contractRepository.findById(3L)).thenReturn(Optional.of(c));
 
         ContractHealthDTO dto = contractHealthService.getContractHealth(3L);
-        assertThat(dto.getHealthScore()).isEqualTo(0);
+        assertThat(dto.getHealthScore()).isZero();
         assertThat(dto.getFlags()).containsExactly("CANCELLED");
     }
 
