@@ -53,6 +53,9 @@ public class GatewayApplication {
     @Value("${gateway.service.blog:BLOG}")
     private String blogServiceId;
 
+    @Value("${gateway.service.productivity:PRODUCTIVITY}")
+    private String productivityServiceId;
+
     /** UI blog Angular (hors Eureka), proxifiee via /blog/** */
     @Value("${gateway.blog-web.url:http://localhost:4201}")
     private String blogWebUrl;
@@ -149,6 +152,17 @@ public class GatewayApplication {
                         .uri("lb://" + contractServiceId))
                 .route("interview-api", r -> r.path("/api/interviews", "/api/interviews/**")
                         .uri("lb://" + interviewServiceId))
+                // Productivity : goals, tasks, todos, decisions
+                .route("productivity-goals", r -> r.path("/api/productivity/goals", "/api/productivity/goals/**")
+                        .uri("lb://" + productivityServiceId))
+                .route("productivity-tasks", r -> r.path("/api/productivity/tasks", "/api/productivity/tasks/**")
+                        .uri("lb://" + productivityServiceId))
+                .route("productivity-todos", r -> r.path("/api/productivity/todos", "/api/productivity/todos/**")
+                        .uri("lb://" + productivityServiceId))
+                .route("productivity-decisions", r -> r.path("/api/productivity/decisions", "/api/productivity/decisions/**")
+                        .uri("lb://" + productivityServiceId))
+                .route("productivity-api", r -> r.path("/api/productivity", "/api/productivity/**")
+                        .uri("lb://" + productivityServiceId))
                 // Racine : uniquement / et /api (pas /api/xxx) -> reponse JSON
                 .route("gateway-welcome", r -> r.path("/", "/api")
                         .and().method(org.springframework.http.HttpMethod.GET)

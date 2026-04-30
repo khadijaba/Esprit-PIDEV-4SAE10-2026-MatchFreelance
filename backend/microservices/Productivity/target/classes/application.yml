@@ -1,0 +1,46 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: productivity-service
+  profiles:
+    active: mysql
+  datasource:
+    url: jdbc:h2:mem:productivity
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+
+  h2:
+    console:
+      enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+productivity:
+  ai:
+    ollama:
+      enabled: true
+      base-url: http://localhost:11434
+      model: llama3.2
+      temperature: 0.2
+      fallback-enabled: true
+

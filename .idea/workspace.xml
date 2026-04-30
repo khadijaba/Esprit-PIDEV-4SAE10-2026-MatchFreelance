@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="7dd3bd0a-f5e7-45bf-b0c6-b93d212dc174" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/angular/src/app/components/productivity-board/productivity-board.component.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/angular/src/app/components/productivity-board/productivity-board.component.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/angular/src/app/models/productivity.model.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/angular/src/app/services/interview.service.spec.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/angular/src/app/services/productivity.service.spec.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/angular/src/app/services/productivity.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/angular/src/test-setup.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/angular/vitest.config.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/api-gateway/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/global/instruction.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/interview-service/src/test/java/com/freelancing/interview/service/AvailabilityServiceTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/PRODUCTIVITY_SERVICE_DEEP_DIVE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/TESTING_GUIDE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/ProductivityServiceApplication.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/config/ProductivityDataInitializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/controller/ProductivityController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/AdaptiveRescheduleRequestDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/AdaptiveRescheduleResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/AiDecomposeRequestDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/AiDecomposeResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/ConflictResolutionRequestDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/ConflictResolutionResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/ContextSuggestionDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/DailyPlanDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/DailyTaskAllocationDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/DecisionLogCreateRequestDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/DecisionLogResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/DependencyCreateRequestDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/DependencyResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/GoalCreateRequestDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/GoalResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/PageResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/PlanningSuggestionDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/ProductivityInsightsDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/ProgressSummaryDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/TaskCreateRequestDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/TaskOrderResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/TaskResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/TaskUpdateRequestDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/TodoItemCreateRequestDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/TodoItemResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/TodoItemUpdateRequestDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/TodoListCreateRequestDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/TodoListResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/dto/WeeklyReviewDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/entity/DecisionLogEntry.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/entity/ProductivityGoal.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/entity/ProductivityTask.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/entity/TaskDependency.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/entity/TodoItem.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/entity/TodoList.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/enums/ProductivityPriority.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/enums/ProductivityTaskStatus.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/exception/ValidationExceptionHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/repository/DecisionLogEntryRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/repository/ProductivityGoalRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/repository/ProductivityTaskRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/repository/TaskDependencyRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/repository/TodoItemRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/repository/TodoListRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/service/AdaptivePlanningService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/service/CognitiveAssistService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/service/DecisionIntelligenceService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/service/DecisionLogService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/service/DependencyService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/service/GoalService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/service/IcsUtils.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/service/InsightsService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/service/PlanningService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/service/ProgressService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/service/TaskService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/java/com/freelancing/productivity/service/TodoService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/resources/application-mysql.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/main/resources/application.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/productivity-service/src/test/java/com/freelancing/productivity/service/TaskServiceTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/project-service/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/user-service/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/angular/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/angular/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/angular/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/angular/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/angular/src/app/app.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/angular/src/app/app.routes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/angular/src/app/components/freelancer-layout/freelancer-layout.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/angular/src/app/components/freelancer-layout/freelancer-layout.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/angular/src/app/components/interview-list/interview-list.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/angular/src/app/components/interview-list/interview-list.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/angular/src/app/components/interview-list/interview-list.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/angular/src/app/components/interview-list/interview-list.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/angular/src/app/components/layout/layout.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/angular/src/app/components/layout/layout.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/angular/src/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/angular/src/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/angular/tsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/angular/tsconfig.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-gateway/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/api-gateway/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api-gateway/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/api-gateway/target/classes/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/candidature-service/data/candidatures.mv.db" beforeDir="false" afterPath="$PROJECT_DIR$/candidature-service/data/candidatures.mv.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/INTERVIEW_CRUD_AND_ADVANCED_FUNCTIONS.txt" beforeDir="false" afterPath="$PROJECT_DIR$/docs/INTERVIEW_CRUD_AND_ADVANCED_FUNCTIONS.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/JITSI_SELF_HOSTED.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/cd" beforeDir="false" afterPath="$PROJECT_DIR$/candidature-service/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/.editorconfig" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/.postcssrc.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/.vscode/extensions.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/.vscode/launch.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/.vscode/mcp.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/.vscode/tasks.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/README-DEMARRAGE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/angular.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/docs/api-gateway-urls.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/proxy.conf.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/public/.gitkeep" beforeDir="false" afterPath="$PROJECT_DIR$/contract-service/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/public/favicon.ico" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/public/logo-matchfreelance.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/api-auth-contract.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/app.config.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/app.css" beforeDir="false" afterPath="$PROJECT_DIR$/eureka-server/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/app.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/app.routes.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/app.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/admin-user-profile/admin-user-profile.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/admin-user-profile/admin-user-profile.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/admin-users-list/admin-users-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/admin-users-list/admin-users-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/auth/login/login.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/auth/login/login.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/auth/register/register.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/auth/register/register.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/career-path/career-path.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/career-path/career-path.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/certificat-view/certificat-view.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/certificat-view/certificat-view.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/confirm-dialog/confirm-dialog.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/cv-supervision/cv-supervision.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/cv-supervision/cv-supervision.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/dashboard/dashboard.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/dashboard/dashboard.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/discussion/discussion.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/discussion/discussion.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/discussions-list/discussions-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/discussions-list/discussions-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/examen-details/examen-details.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/examen-details/examen-details.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/examen-form/examen-form.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/examen-form/examen-form.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/examen-list/examen-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/examen-list/examen-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/formation-details/formation-details.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/formation-details/formation-details.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/formation-form/formation-form.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/formation-form/formation-form.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/formation-list/formation-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/formation-list/formation-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/freelancer-notifications/freelancer-notifications.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/freelancer-notifications/freelancer-notifications.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/freelancer-skills/freelancer-skills.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/freelancer-skills/freelancer-skills.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/front-formation-detail/front-formation-detail.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/front-formation-detail/front-formation-detail.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/front-formation-list/front-formation-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/front-formation-list/front-formation-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/front-home/front-home.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/front-home/front-home.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/front-layout/front-layout.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/front-layout/front-layout.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/front-project-detail/front-project-detail.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/front-project-detail/front-project-detail.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/front-project-list/front-project-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/front-project-list/front-project-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/intelligence-dashboard/intelligence-dashboard.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/intelligence-dashboard/intelligence-dashboard.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/layout/layout.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/layout/layout.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/passer-examen/passer-examen.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/passer-examen/passer-examen.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/portfolio-supervision/portfolio-supervision.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/portfolio-supervision/portfolio-supervision.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/project-details/project-details.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/project-details/project-details.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/project-form/project-form.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/project-form/project-form.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/project-list/project-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/project-list/project-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/skills-list/skills-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/skills-list/skills-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/components/toast/toast.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/docs/compatibilite-top5-skillgap.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/guards/auth.guard.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/guards/role.guard.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/interceptors/auth.interceptor.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/auth.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/career-path.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/chat.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/examen.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/formation.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/inscription.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/matching.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/notification.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/project.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/skill-gap.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/skill.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/team-ai.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/models/user.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/auth.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/career-path.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/chat.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/confirm.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/discussion-navigation.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/examen.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/formation.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/inscription.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/notification.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/project.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/skill-gap.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/skill.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/talent-matching.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/team-ai.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/toast.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/services/user.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/utils/http-error.util.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/utils/project-skill.util.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/app/utils/skill-taxonomy.util.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/main.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/src/styles.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/tsconfig.app.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/tsconfig.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontend/tsconfig.spec.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/.editorconfig" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/.postcssrc.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/.vscode/extensions.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/.vscode/launch.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/.vscode/mcp.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/.vscode/tasks.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/angular.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/proxy.conf.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/public/.gitkeep" beforeDir="false" afterPath="$PROJECT_DIR$/interview-service/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/public/favicon.ico" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/public/logo-matchfreelance.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/app.config.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/app.css" beforeDir="false" afterPath="$PROJECT_DIR$/productivity-service/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/app.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/app.routes.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/app.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/certificat-view/certificat-view.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/certificat-view/certificat-view.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/dashboard/dashboard.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/dashboard/dashboard.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/examen-details/examen-details.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/examen-details/examen-details.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/examen-form/examen-form.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/examen-form/examen-form.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/examen-list/examen-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/examen-list/examen-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/formation-details/formation-details.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/formation-details/formation-details.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/formation-form/formation-form.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/formation-form/formation-form.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/formation-list/formation-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/formation-list/formation-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/front-formation-detail/front-formation-detail.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/front-formation-detail/front-formation-detail.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/front-formation-list/front-formation-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/front-formation-list/front-formation-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/front-home/front-home.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/front-home/front-home.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/front-layout/front-layout.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/front-layout/front-layout.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/front-project-detail/front-project-detail.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/front-project-detail/front-project-detail.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/front-project-list/front-project-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/front-project-list/front-project-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/layout/layout.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/layout/layout.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/passer-examen/passer-examen.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/passer-examen/passer-examen.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/project-details/project-details.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/project-details/project-details.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/project-form/project-form.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/project-form/project-form.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/project-list/project-list.component.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/project-list/project-list.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/components/toast/toast.component.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/models/examen.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/models/formation.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/models/inscription.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/models/project.model.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/services/examen.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/services/formation.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/services/inscription.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/services/project.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/app/services/toast.service.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/main.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/src/styles.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/tsconfig.app.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/tsconfig.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/frontendformation/tsconfig.spec.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/pip" beforeDir="false" afterPath="$PROJECT_DIR$/productivity-service/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/start-backend.ps1" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/.env.example" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/app/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/app/api/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/app/api/routes.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/app/config.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/app/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/app/models/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/app/models/schemas.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/app/services/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/app/services/analyzer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/app/services/team_builder.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontendd/team-ai/run.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/interview-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/interview-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interview-service/src/main/java/com/freelancing/interview/service/InterviewService.java" beforeDir="false" afterPath="$PROJECT_DIR$/interview-service/src/main/java/com/freelancing/interview/service/InterviewService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interview-service/target/classes/com/freelancing/interview/controller/InterviewController.class" beforeDir="false" afterPath="$PROJECT_DIR$/interview-service/target/classes/com/freelancing/interview/controller/InterviewController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interview-service/target/classes/com/freelancing/interview/repository/InterviewSpecifications.class" beforeDir="false" afterPath="$PROJECT_DIR$/interview-service/target/classes/com/freelancing/interview/repository/InterviewSpecifications.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interview-service/target/classes/com/freelancing/interview/service/InterviewService.class" beforeDir="false" afterPath="$PROJECT_DIR$/interview-service/target/classes/com/freelancing/interview/service/InterviewService.class" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_D:/study/4SAE/Semestre 2/PIDEV/spring-task-planning" value="39sJZZFcddn1xSXHinHviBT5u43" />
+    </persistenceIdMap>
+  </component>
+  <component name="CopilotUserSelectedChatMode">
+    <option name="chatModeId" value="Agent" />
+  </component>
+  <component name="CopilotUserSelectedModel">
+    <selectedModels>
+      <entry key="chat-panel" value="GPT-5.3-Codex" />
+      <entry key="agent-panel" value="GPT-5.3-Codex" />
+    </selectedModels>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="39sJZZFcddn1xSXHinHviBT5u43" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Ahmed&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/mrbhd/Desktop/PI_test_integration&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.github.copilot.settings.chat.ChatConfigurable&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;D:\\study\\4SAE\\Semestre 2\\PIDEV\\spring-task-planning\\angular\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RunDashboard">
+    <option name="configurationTypes">
+      <set>
+        <option value="KtorApplicationConfigurationType" />
+        <option value="MicronautRunConfigurationType" />
+        <option value="QuarkusRunConfigurationType" />
+        <option value="SpringBootApplicationConfigurationType" />
+      </set>
+    </option>
+  </component>
+  <component name="RunManager" selected="Spring Boot.ApiGatewayApplication">
+    <configuration name="ApiGatewayApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="api-gateway" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.freelancing.gateway.ApiGatewayApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="CandidatureServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="candidature-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.freelancing.candidature.CandidatureServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ContractServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="contract-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.freelancing.contract.ContractServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ProjectServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="project-service" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.freelancing.project.ProjectServiceApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-28b599e66164-intellij.indexing.shared.core-IU-242.26775.15" />
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-IU-242.26775.15" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="7dd3bd0a-f5e7-45bf-b0c6-b93d212dc174" name="Changes" comment="" />
+      <created>1771478902408</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1771478902408</updated>
+      <workItem from="1771478903475" duration="2097000" />
+      <workItem from="1771481011863" duration="11858000" />
+      <workItem from="1775482998465" duration="784000" />
+      <workItem from="1775484040684" duration="2419000" />
+      <workItem from="1776190326047" duration="1009000" />
+      <workItem from="1776191784500" duration="200000" />
+      <workItem from="1776192032852" duration="374000" />
+      <workItem from="1776245070631" duration="4748000" />
+      <workItem from="1776250916369" duration="29600000" />
+      <workItem from="1776300475556" duration="4925000" />
+      <workItem from="1776733047156" duration="2581000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/angular/src/app/services/interview.service.ts</url>
+          <line>153</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>
