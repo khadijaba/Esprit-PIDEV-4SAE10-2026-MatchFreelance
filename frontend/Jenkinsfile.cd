@@ -15,7 +15,9 @@ pipeline {
     environment {
         REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
         MODULE_DIR = 'frontend'
-        EFFECTIVE_TAG = "${params.IMAGE_TAG ?: "1.0.${BUILD_NUMBER}"}"
+        // Must be in environment: sh '''...''' does not Groovy-interpolate; shell needs exported IMAGE_NAME.
+        IMAGE_NAME = "${params.IMAGE_NAME?.trim() ?: 'khadijabenayed/matchfreelance-frontend'}"
+        EFFECTIVE_TAG = "${params.IMAGE_TAG?.trim() ?: "1.0.${BUILD_NUMBER}"}"
     }
 
     stages {

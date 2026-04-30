@@ -20,7 +20,8 @@ pipeline {
     environment {
         REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
         MODULE_DIR = 'backend/microservices/Candidature'
-        EFFECTIVE_TAG = "${params.IMAGE_TAG ?: "1.0.${BUILD_NUMBER}"}"
+        IMAGE_NAME = "${params.IMAGE_NAME?.trim() ?: 'khadijabenayed/candidature'}"
+        EFFECTIVE_TAG = "${params.IMAGE_TAG?.trim() ?: "1.0.${BUILD_NUMBER}"}"
     }
 
     stages {
