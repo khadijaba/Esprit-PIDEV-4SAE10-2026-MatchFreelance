@@ -1,8 +1,19 @@
 pipeline {
     agent any
 
+    tools {
+        jdk 'JDK17'
+        maven 'Maven3'
+        git 'Default'
+    }
+
+    options {
+        skipDefaultCheckout(true)
+    }
+
     environment {
         MODULE_DIR = 'BackEnd/Microservices/Project'
+        SONAR_PROJECT_KEY = 'project'
         SONAR_HOST = 'http://host.docker.internal:9000'
         IMAGE_NAME = 'emna450/project'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
@@ -60,9 +71,10 @@ pipeline {
                     withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                         sh '''
                             mvn sonar:sonar \
-                              -Dsonar.projectKey=project \
+                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
                               -Dsonar.host.url=${SONAR_HOST} \
-                              -Dsonar.login=${SONAR_TOKEN}
+                              -Dsonar.login=${SONAR_TOKEN} \
+                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                         '''
                     }
                 }
@@ -78,8 +90,30 @@ pipeline {
                             docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
                             docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
                             echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
-                            docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                            docker push ${IMAGE_NAME}:latest
+
+                            # Docker Hub peut répondre 400/EOF sur un blob : jusqu'à 4 tentatives par tag.
+                            push_with_retry() {
+                                img="$1"
+                                n=0
+                                until docker push "$img"; do
+                                    n=$((n + 1))
+                                    if [ "$n" -ge 4 ]; then
+                                        echo "docker push failed for $img after $n attempts"
+                                        exit 1
+                                    fi
+                                    echo "docker push $img failed (attempt $n), waiting 25s..."
+                                    sleep 25
+                                done
+                            }
+
+                            push_with_retry ${IMAGE_NAME}:${IMAGE_TAG}
+                            CURRENT_BRANCH="${BRANCH_NAME:-$(git rev-parse --abbrev-ref HEAD)}"
+                            if [ "${CURRENT_BRANCH}" = "main" ]; then
+                                push_with_retry ${IMAGE_NAME}:latest
+                            else
+                                echo "Skip latest push on branch ${CURRENT_BRANCH}"
+                            fi
+                            docker logout
                         '''
                     }
                 }
