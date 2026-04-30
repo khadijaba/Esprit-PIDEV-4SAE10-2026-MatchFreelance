@@ -63,12 +63,18 @@ pipeline {
 
         stage('Deploy Kubernetes') {
             steps {
+                script {
+                    env.KUBECTL = sh(
+                        script: "bash '${env.WORKSPACE}/scripts/ci/ensure-kubectl.sh'",
+                        returnStdout: true
+                    ).trim()
+                }
                 withKubeConfig([credentialsId: 'kubeconfig-prod']) {
                     sh '''
-                        kubectl apply -f k8s/namespace.yaml
-                        kubectl apply -f k8s/contract/
-                        kubectl -n matchfreelance set image deployment/contract-deployment contract=${IMAGE_NAME}:${EFFECTIVE_TAG}
-                        kubectl -n matchfreelance rollout status deployment/contract-deployment --timeout=180s
+                        "${KUBECTL}" apply -f k8s/namespace.yaml
+                        "${KUBECTL}" apply -f k8s/contract/
+                        "${KUBECTL}" -n matchfreelance set image deployment/contract-deployment contract=${IMAGE_NAME}:${EFFECTIVE_TAG}
+                        "${KUBECTL}" -n matchfreelance rollout status deployment/contract-deployment --timeout=180s
                     '''
                 }
             }
