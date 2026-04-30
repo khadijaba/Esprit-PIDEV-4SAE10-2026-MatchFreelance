@@ -2,8 +2,6 @@ node {
     def repoUrl = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
     def branch = 'douja'
     def moduleDir = 'backend/microservices/Formation'
-    def imageName = 'khadijabenayed/formation'
-    def imageTag = "1.0.${env.BUILD_NUMBER}"
 
     def jdkHome = tool(name: 'JDK17', type: 'hudson.model.JDK')
     if (!jdkHome?.trim()) {
@@ -41,61 +39,25 @@ node {
                 }
             }
 
-            stage('Build Jar') {
-                dir(moduleDir) {
-                    sh """
-                        set -ex
-                        test -x '${jdkHome}/bin/javac'
-                        '${jdkHome}/bin/java' -version
-                        chmod +x mvnw
-                        ./mvnw -B clean package -DskipTests \
-                          -Dmaven.compiler.fork=true \
-                          -Dmaven.compiler.executable='${jdkHome}/bin/javac'
-                    """
-                }
-            }
-
-            stage('Docker Build & Push') {
-                dir(moduleDir) {
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh """
-                            set -eux
-                            getent hosts registry-1.docker.io || true
-                            echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
-                            docker build -t '${imageName}:${imageTag}' .
-                            docker tag '${imageName}:${imageTag}' '${imageName}:latest'
-
-                            # Retry pushes because Docker Hub DNS/network can be temporarily unavailable.
-                            n=0
-                            until [ "\$n" -ge 3 ]
-                            do
-                                docker push '${imageName}:${imageTag}' && break
-                                n=\$((n+1))
-                                echo "docker push tag failed (attempt \$n/3), retry in 15s..."
-                                sleep 15
-                            done
-                            [ "\$n" -lt 3 ] || { echo "Echec push image tag vers Docker Hub"; exit 1; }
-
-                            n=0
-                            until [ "\$n" -ge 3 ]
-                            do
-                                docker push '${imageName}:latest' && break
-                                n=\$((n+1))
-                                echo "docker push latest failed (attempt \$n/3), retry in 15s..."
-                                sleep 15
-                            done
-                            [ "\$n" -lt 3 ] || { echo "Echec push image latest vers Docker Hub"; exit 1; }
-                        """
-                    }
-                }
-            }
-
             stage('Deploy Kubernetes') {
                 dir(moduleDir) {
                     withKubeConfig([credentialsId: 'kubeconfig-prod']) {
                         sh """
                             set -eux
                             kubectl apply -f k8s/
+                        """
+                    }
+                }
+            }
+
+            stage('Monitoring') {
+                dir(moduleDir) {
+                    withKubeConfig([credentialsId: 'kubeconfig-prod']) {
+                        sh """
+                            set -eux
+                            kubectl rollout status deployment/formation --timeout=120s
+                            kubectl get pods -l app=formation -o wide
+                            kubectl get svc formation
                         """
                     }
                 }

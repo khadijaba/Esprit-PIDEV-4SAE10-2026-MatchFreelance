@@ -2,6 +2,8 @@ node {
     def repoUrl = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
     def branch = 'douja'
     def moduleDir = 'backend/microservices/Formation'
+    def imageName = 'khadijabenayed/formation'
+    def imageTag = "1.0.${env.BUILD_NUMBER}"
     def sonarProjectKey = 'formation'
     def sonarHost = (env.SONAR_HOST_URL ?: 'http://sonarqube:9000')
     def sonarCredentialsId = 'sonar-token-backend'
@@ -94,6 +96,26 @@ node {
                         }
                     }
                 }
+            }
+
+            stage('Docker Build & Push') {
+                dir(moduleDir) {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                            set -eux
+                            getent hosts registry-1.docker.io || true
+                            echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
+                            docker build -t '${imageName}:${imageTag}' .
+                            docker tag '${imageName}:${imageTag}' '${imageName}:latest'
+                            docker push '${imageName}:${imageTag}'
+                            docker push '${imageName}:latest'
+                        """
+                    }
+                }
+            }
+
+            stage('Trigger CD') {
+                build job: 'formation-cd', wait: false
             }
         }
     }
