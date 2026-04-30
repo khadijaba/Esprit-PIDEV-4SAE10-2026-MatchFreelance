@@ -81,7 +81,7 @@ Only these workloads are in this scope:
 - Contract
 - Monitoring stack (Prometheus, Grafana, Alertmanager)
 
-Apply in this order:
+Apply in this order (**from the repository root**, the directory that contains the `k8s/` folder — not `~` unless you cloned the repo there):
 
 1. `kubectl apply -f k8s/namespace.yaml`
 2. `kubectl apply -f k8s/frontend/`
