@@ -5,17 +5,14 @@ node {
     def sonarProjectKey = 'evaluation'
     def sonarHost = 'http://host.docker.internal:9000'
     def sonarCredentialsId = 'sonar-token-backend'
-
     def jdkHome = tool(name: 'JDK17', type: 'hudson.model.JDK')
     if (!jdkHome?.trim()) {
         jdkHome = (env.JAVA_HOME ?: '').trim()
     }
     if (!jdkHome?.trim()) {
-        error 'JDK17 (Global Tool Configuration) a un chemin vide : sous JDK17, clique « Ajouter un installateur », choisis par ex. Adoptium Temurin 17, enregistre. Sans installateur, Jenkins ne télécharge pas le JDK.'
+        error 'JDK17 non configuré'
     }
-
-    def mvnHome = tool(name: 'Maven3', type: 'hudson.tasks.Maven_MavenInstallation')
-
+    def mvnHome = tool(name: 'Maven3', type: 'hudson.tasks.Maven$MavenInstallation')
     withEnv([
         "JAVA_HOME=${jdkHome}",
         "PATH+JDK=${jdkHome}/bin",
@@ -25,7 +22,6 @@ node {
             disableConcurrentBuilds(),
             buildDiscarder(logRotator(numToKeepStr: '20'))
         ])
-
         timeout(time: 90, unit: 'MINUTES') {
             stage('Checkout') {
                 retry(3) {
@@ -44,7 +40,6 @@ node {
                     """
                 }
             }
-
             stage('Build, Test, JaCoCo') {
                 dir(moduleDir) {
                     sh """
@@ -52,17 +47,15 @@ node {
                         test -x '${jdkHome}/bin/javac'
                         '${jdkHome}/bin/java' -version
                         '${jdkHome}/bin/javac' -version
-                        mvn -B clean verify \\
-                          -Dmaven.compiler.fork=true \\
+                        mvn -B clean verify \
+                          -Dmaven.compiler.fork=true \
                           -Dmaven.compiler.executable='${jdkHome}/bin/javac'
                     """
                 }
             }
-
             stage('JUnit reports') {
                 junit allowEmptyResults: true, testResults: "${moduleDir}/target/surefire-reports/*.xml"
             }
-
             stage('SonarQube Analysis') {
                 dir(moduleDir) {
                     withEnv([
@@ -74,11 +67,11 @@ node {
                                 retry(2) {
                                     timeout(time: 4, unit: 'MINUTES') {
                                         sh """
-                                            mvn -B sonar:sonar \\
-                                              -Dmaven.compiler.fork=true \\
-                                              -Dmaven.compiler.executable='${jdkHome}/bin/javac' \\
-                                              -Dsonar.projectKey=\${SONAR_PROJECT_KEY} \\
-                                              -Dsonar.host.url=\${SONAR_HOST} \\
+                                            mvn -B sonar:sonar \
+                                              -Dmaven.compiler.fork=true \
+                                              -Dmaven.compiler.executable='${jdkHome}/bin/javac' \
+                                              -Dsonar.projectKey=\${SONAR_PROJECT_KEY} \
+                                              -Dsonar.host.url=\${SONAR_HOST} \
                                               -Dsonar.token=\${SONAR_TOKEN}
                                         """
                                     }
