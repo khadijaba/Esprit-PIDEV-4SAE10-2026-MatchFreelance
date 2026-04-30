@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: contract
-          image: khadijabenayed/contract:latest
+          image: azizbf/contract:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8088

@@ -25,7 +25,7 @@ pipeline {
         BRANCH = 'azizdevops'
         MODULE_DIR = 'backend/microservices/Contract'
         SONAR_PROJECT_KEY = 'matchfreelance-contract'
-        IMAGE_NAME = 'khadijabenayed/contract'
+        IMAGE_NAME = 'azizbf/contract'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
     }
 

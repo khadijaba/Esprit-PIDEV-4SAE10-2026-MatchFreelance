@@ -25,7 +25,7 @@ pipeline {
         BRANCH = 'azizdevops'
         MODULE_DIR = 'backend/microservices/Candidature'
         SONAR_PROJECT_KEY = 'matchfreelance-candidature'
-        IMAGE_NAME = 'khadijabenayed/candidature'
+        IMAGE_NAME = 'azizbf/candidature'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
     }
 

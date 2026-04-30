@@ -13,14 +13,14 @@ pipeline {
 
     parameters {
         string(name: 'GIT_BRANCH', defaultValue: 'azizdevops', description: 'Git branch to deploy')
-        string(name: 'IMAGE_NAME', defaultValue: 'khadijabenayed/contract', description: 'Docker image name')
+        string(name: 'IMAGE_NAME', defaultValue: 'azizbf/contract', description: 'Docker image name')
         string(name: 'IMAGE_TAG', defaultValue: '', description: 'Docker image tag from CI')
     }
 
     environment {
         REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
         MODULE_DIR = 'backend/microservices/Contract'
-        IMAGE_NAME = "${params.IMAGE_NAME?.trim() ?: 'khadijabenayed/contract'}"
+        IMAGE_NAME = "${params.IMAGE_NAME?.trim() ?: 'azizbf/contract'}"
         EFFECTIVE_TAG = "${params.IMAGE_TAG?.trim() ?: "1.0.${BUILD_NUMBER}"}"
     }
 

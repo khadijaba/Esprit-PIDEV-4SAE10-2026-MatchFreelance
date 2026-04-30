@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: candidature
-          image: khadijabenayed/candidature:latest
+          image: azizbf/candidature:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8091
