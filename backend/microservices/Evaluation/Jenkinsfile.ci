@@ -15,6 +15,8 @@ pipeline {
         SONAR_PROJECT_KEY = 'evaluation'
         SONAR_HOST = 'http://sonarqube:9000'
         SONAR_CREDENTIALS_ID = 'sonar-token'
+        IMAGE_NAME = 'khadijabenayed/evaluation'
+        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
     }
     stages {
         stage('Checkout') {
@@ -67,6 +69,32 @@ pipeline {
                                 '''
                             }
                         }
+                    }
+                }
+            }
+        }
+        stage('Build Jar') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    sh '''
+                        mvn -B clean package -DskipTests
+                    '''
+                }
+            }
+        }
+        stage('Docker Build & Push') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh '''
+                            set -eux
+                            getent hosts registry-1.docker.io || true
+                            echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                            docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                            docker push ${IMAGE_NAME}:latest
+                        '''
                     }
                 }
             }
