@@ -1,73 +1,101 @@
-pipeline {
-    agent any
+node {
+    def repoUrl = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+    def branch = 'douja'
+    def moduleDir = 'backend/microservices/Evaluation'
+    def imageName = 'khadijabenayed/evaluation'
+    def imageTag = "1.0.${env.BUILD_NUMBER}"
 
-    tools {
-        jdk 'JDK17'
-        maven 'Maven3'
+    def jdkHome = tool(name: 'JDK17', type: 'hudson.model.JDK')
+    if (!jdkHome?.trim()) {
+        jdkHome = (env.JAVA_HOME ?: '').trim()
+    }
+    if (!jdkHome?.trim()) {
+        error 'JDK17 (Global Tool Configuration) a un chemin vide : sous JDK17, clique « Ajouter un installateur », choisis par ex. Adoptium Temurin 17, enregistre. Sans installateur, Jenkins ne telecharge pas le JDK.'
     }
 
-    options {
-        skipDefaultCheckout(true)
-        timeout(time: 90, unit: 'MINUTES')
-    }
+    withEnv([
+        "JAVA_HOME=${jdkHome}",
+        "PATH+JDK=${jdkHome}/bin"
+    ]) {
+        properties([
+            disableConcurrentBuilds(),
+            buildDiscarder(logRotator(numToKeepStr: '20'))
+        ])
 
-    environment {
-        REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
-        BRANCH = 'douja'
-        MODULE_DIR = 'backend/microservices/Evaluation'
-        IMAGE_NAME = 'khadijabenayed/evaluation'
-        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-    }
-
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: "*/${BRANCH}"]],
-                    userRemoteConfigs: [[
-                        url: "${REPO_URL}",
-                        refspec: "+refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}"
-                    ]],
-                    extensions: [
-                        [$class: 'CleanBeforeCheckout'],
-                        [$class: 'PruneStaleBranch'],
-                        [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'backend/microservices/Evaluation']]],
-                        [$class: 'CloneOption', shallow: true, depth: 1, noTags: true, timeout: 30, honorRefspec: true, reference: '']
-                    ]
-                ])
-            }
-        }
-
-        stage('Build Jar') {
-            steps {
-                dir("${MODULE_DIR}") {
-                    bat 'mvn -B clean package -DskipTests'
+        timeout(time: 90, unit: 'MINUTES') {
+            stage('Checkout') {
+                retry(3) {
+                    sh """
+                        set -eux
+                        rm -rf .git
+                        git init .
+                        git remote add origin '${repoUrl}' || git remote set-url origin '${repoUrl}'
+                        git config core.sparseCheckout true
+                        git config remote.origin.promisor true
+                        git config remote.origin.partialclonefilter blob:none
+                        mkdir -p .git/info
+                        printf '${moduleDir}\\n' > .git/info/sparse-checkout
+                        git -c protocol.version=2 fetch --no-tags --depth=1 origin '${branch}'
+                        git checkout -f FETCH_HEAD
+                    """
                 }
             }
-        }
 
-        stage('Docker Build & Push') {
-            steps {
-                dir("${MODULE_DIR}") {
+            stage('Build Jar') {
+                dir(moduleDir) {
+                    sh """
+                        set -ex
+                        test -x '${jdkHome}/bin/javac'
+                        '${jdkHome}/bin/java' -version
+                        mvn -B clean package -DskipTests \
+                          -Dmaven.compiler.fork=true \
+                          -Dmaven.compiler.executable='${jdkHome}/bin/javac'
+                    """
+                }
+            }
+
+            stage('Docker Build & Push') {
+                dir(moduleDir) {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        bat """
-                            echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
-                            docker build -t %IMAGE_NAME%:%IMAGE_TAG% .
-                            docker tag %IMAGE_NAME%:%IMAGE_TAG% %IMAGE_NAME%:latest
-                            docker push %IMAGE_NAME%:%IMAGE_TAG%
-                            docker push %IMAGE_NAME%:latest
+                        sh """
+                            set -eux
+                            getent hosts registry-1.docker.io || true
+                            echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
+                            docker build -t '${imageName}:${imageTag}' .
+                            docker tag '${imageName}:${imageTag}' '${imageName}:latest'
+
+                            # Retry pushes because Docker Hub DNS/network can be temporarily unavailable.
+                            n=0
+                            until [ "\$n" -ge 3 ]
+                            do
+                                docker push '${imageName}:${imageTag}' && break
+                                n=\$((n+1))
+                                echo "docker push tag failed (attempt \$n/3), retry in 15s..."
+                                sleep 15
+                            done
+                            [ "\$n" -lt 3 ] || { echo "Echec push image tag vers Docker Hub"; exit 1; }
+
+                            n=0
+                            until [ "\$n" -ge 3 ]
+                            do
+                                docker push '${imageName}:latest' && break
+                                n=\$((n+1))
+                                echo "docker push latest failed (attempt \$n/3), retry in 15s..."
+                                sleep 15
+                            done
+                            [ "\$n" -lt 3 ] || { echo "Echec push image latest vers Docker Hub"; exit 1; }
                         """
                     }
                 }
             }
-        }
 
-        stage('Deploy Kubernetes') {
-            steps {
-                dir("${MODULE_DIR}") {
+            stage('Deploy Kubernetes') {
+                dir(moduleDir) {
                     withKubeConfig([credentialsId: 'kubeconfig-prod']) {
-                        bat 'kubectl apply -f k8s/'
+                        sh """
+                            set -eux
+                            kubectl apply -f k8s/
+                        """
                     }
                 }
             }

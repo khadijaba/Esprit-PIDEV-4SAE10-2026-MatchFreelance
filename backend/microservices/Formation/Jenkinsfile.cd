@@ -13,12 +13,9 @@ node {
         error 'JDK17 (Global Tool Configuration) a un chemin vide : sous JDK17, clique « Ajouter un installateur », choisis par ex. Adoptium Temurin 17, enregistre. Sans installateur, Jenkins ne telecharge pas le JDK.'
     }
 
-    def mvnHome = tool(name: 'Maven3', type: 'hudson.tasks.Maven_MavenInstallation')
-
     withEnv([
         "JAVA_HOME=${jdkHome}",
-        "PATH+JDK=${jdkHome}/bin",
-        "PATH+MAVEN=${mvnHome}/bin"
+        "PATH+JDK=${jdkHome}/bin"
     ]) {
         properties([
             disableConcurrentBuilds(),
@@ -50,7 +47,8 @@ node {
                         set -ex
                         test -x '${jdkHome}/bin/javac'
                         '${jdkHome}/bin/java' -version
-                        mvn -B clean package -DskipTests \
+                        chmod +x mvnw
+                        ./mvnw -B clean package -DskipTests \
                           -Dmaven.compiler.fork=true \
                           -Dmaven.compiler.executable='${jdkHome}/bin/javac'
                     """
@@ -62,11 +60,31 @@ node {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh """
                             set -eux
+                            getent hosts registry-1.docker.io || true
                             echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
                             docker build -t '${imageName}:${imageTag}' .
                             docker tag '${imageName}:${imageTag}' '${imageName}:latest'
-                            docker push '${imageName}:${imageTag}'
-                            docker push '${imageName}:latest'
+
+                            # Retry pushes because Docker Hub DNS/network can be temporarily unavailable.
+                            n=0
+                            until [ "\$n" -ge 3 ]
+                            do
+                                docker push '${imageName}:${imageTag}' && break
+                                n=\$((n+1))
+                                echo "docker push tag failed (attempt \$n/3), retry in 15s..."
+                                sleep 15
+                            done
+                            [ "\$n" -lt 3 ] || { echo "Echec push image tag vers Docker Hub"; exit 1; }
+
+                            n=0
+                            until [ "\$n" -ge 3 ]
+                            do
+                                docker push '${imageName}:latest' && break
+                                n=\$((n+1))
+                                echo "docker push latest failed (attempt \$n/3), retry in 15s..."
+                                sleep 15
+                            done
+                            [ "\$n" -lt 3 ] || { echo "Echec push image latest vers Docker Hub"; exit 1; }
                         """
                     }
                 }
