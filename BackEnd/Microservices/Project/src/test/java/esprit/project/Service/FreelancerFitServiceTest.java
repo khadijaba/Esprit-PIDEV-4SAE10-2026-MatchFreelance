@@ -130,6 +130,25 @@ class FreelancerFitServiceTest {
                 .hasMessageContaining("Project not found");
     }
 
+    @Test
+    void computeFit_returnsLowConfidenceAndNoClientRatingSummary_whenNoPastProjects() {
+        Project target = newProject(33L);
+        target.setRequiredSkills(List.of("Java", "Angular"));
+        target.setDuration(25);
+
+        when(projectRepository.findById(33L)).thenReturn(Optional.of(target));
+        when(candidatureClient.listByFreelancer(50L)).thenReturn(List.of());
+        when(ratingRepository.averageRatingByFreelancerId(50L)).thenReturn(null);
+
+        var batch = service.computeFit(33L, List.of(50L));
+
+        assertThat(batch.getFreelancers()).hasSize(1);
+        var fit = batch.getFreelancers().get(0);
+        assertThat(fit.getConfidence()).isEqualTo("LOW");
+        assertThat(fit.getPastMissionsConsidered()).isEqualTo(0);
+        assertThat(fit.getSummary()).contains("pas encore de notes clients en base");
+    }
+
     private static Project newProject(Long id) {
         Project p = new Project();
         p.setId(id);

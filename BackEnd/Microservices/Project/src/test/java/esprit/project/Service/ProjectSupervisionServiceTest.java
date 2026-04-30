@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -187,6 +188,35 @@ class ProjectSupervisionServiceTest {
 
         assertThat(response.getRecommendation()).isEqualTo("ESCALATE_RISK");
         assertThat(response.getSuggestedActions()).anyMatch(a -> a.contains("24h"));
+    }
+
+    @Test
+    void closePhase_throwsWhenDeliverablesMissing() {
+        Project project = newProject(41L, ProjectStatus.IN_PROGRESS);
+        ProjectPhase phase = newPhase(42L, project, 1, ProjectPhaseStatus.IN_PROGRESS);
+
+        when(projectRepository.findById(41L)).thenReturn(Optional.of(project));
+        when(projectPhaseRepository.findById(42L)).thenReturn(Optional.of(phase));
+        when(phaseDeliverableRepository.findByPhase(phase)).thenReturn(List.of());
+
+        assertThatThrownBy(() -> service.closePhase(41L, 42L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("At least one deliverable is required");
+
+        verify(projectPhaseRepository, never()).save(any(ProjectPhase.class));
+    }
+
+    @Test
+    void deletePhase_deletesWhenPlannedAndProjectInProgress() {
+        Project project = newProject(50L, ProjectStatus.IN_PROGRESS);
+        ProjectPhase phase = newPhase(51L, project, 1, ProjectPhaseStatus.PLANNED);
+
+        when(projectRepository.findById(50L)).thenReturn(Optional.of(project));
+        when(projectPhaseRepository.findById(51L)).thenReturn(Optional.of(phase));
+
+        service.deletePhase(50L, 51L);
+
+        verify(projectPhaseRepository, times(1)).delete(phase);
     }
 
     private static Project newProject(Long id, ProjectStatus status) {

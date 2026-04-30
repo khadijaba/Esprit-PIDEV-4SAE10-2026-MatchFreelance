@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,5 +59,28 @@ class ProjectMlRiskServiceTest {
         assertThatThrownBy(() -> service.evaluate(99L))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Project not found");
+    }
+
+    @Test
+    void evaluate_handlesNullOwnerId_andKeepsScoreInRange() {
+        Project project = new Project();
+        project.setId(22L);
+        project.setTitle("Migration project");
+        project.setDescription("A very detailed description for reliable heuristic scoring.");
+        project.setRequiredSkills(List.of("Java", "Spring", "SQL"));
+        project.setBudget(4000.0);
+        project.setDuration(40);
+        project.setStatus(ProjectStatus.IN_PROGRESS);
+        project.setProjectOwnerId(null);
+
+        when(projectRepository.findById(22L)).thenReturn(Optional.of(project));
+
+        ProjectMlRiskDto risk = service.evaluate(22L);
+
+        assertThat(risk.isHeuristicFallback()).isTrue();
+        assertThat(risk.getRiskScore0To100()).isBetween(0, 100);
+        assertThat(risk.getProbabilityHighRisk()).isBetween(0.05f, 0.95f);
+        assertThat(risk.getRiskLevel()).isIn("LOW", "MEDIUM", "HIGH");
+        verify(projectRepository).findById(22L);
     }
 }
