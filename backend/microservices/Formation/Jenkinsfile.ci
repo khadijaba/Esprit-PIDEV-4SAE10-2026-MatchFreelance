@@ -3,7 +3,7 @@ node {
     def branch = 'douja'
     def moduleDir = 'backend/microservices/Formation'
     def sonarProjectKey = 'formation'
-    def sonarHost = 'http://host.docker.internal:9000'
+    def sonarHost = (env.SONAR_HOST_URL ?: 'http://sonarqube:9000')
     def sonarCredentialsId = 'sonar-token-backend'
 
     def jdkHome = tool(name: 'JDK17', type: 'hudson.model.JDK')
