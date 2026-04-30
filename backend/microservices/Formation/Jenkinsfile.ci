@@ -14,13 +14,20 @@ node {
         error 'JDK17 (Global Tool Configuration) a un chemin vide : sous JDK17, clique « Ajouter un installateur », choisis par ex. Adoptium Temurin 17, enregistre. Sans installateur, Jenkins ne télécharge pas le JDK.'
     }
 
-    def mvnHome = tool(name: 'Maven3', type: 'hudson.tasks.Maven_MavenInstallation')
-
-    withEnv([
+    def envVars = [
         "JAVA_HOME=${jdkHome}",
-        "PATH+JDK=${jdkHome}/bin",
-        "PATH+MAVEN=${mvnHome}/bin"
-    ]) {
+        "PATH+JDK=${jdkHome}/bin"
+    ]
+    try {
+        def mvnHome = tool(name: 'Maven3', type: 'hudson.tasks.Maven_MavenInstallation')
+        if (mvnHome?.trim()) {
+            envVars << "PATH+MAVEN=${mvnHome}/bin"
+        }
+    } catch (ignored) {
+        echo "Maven3 tool not found in Jenkins, fallback to mvn from PATH."
+    }
+
+    withEnv(envVars) {
         properties([
             disableConcurrentBuilds(),
             buildDiscarder(logRotator(numToKeepStr: '20'))
