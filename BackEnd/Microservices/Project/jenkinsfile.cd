@@ -35,15 +35,3 @@ pipeline {
 
                         kubectl -n "${EFFECTIVE_NS}" rollout status deployment/project-ms --timeout=300s
                         kubectl -n "${EFFECTIVE_NS}" get pods,svc -l app=project-ms
-                    '''
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "CD OK: ${IMAGE_NAME}:${params.IMAGE_TAG} deploye dans ${params.K8S_NAMESPACE}."
-        }
-    }
-}

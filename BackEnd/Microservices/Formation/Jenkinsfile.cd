@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Tag image a deployer (ex: 1.0.30)')
+        string(name: 'K8S_NAMESPACE', defaultValue: 'matchfreelance', description: 'Namespace Kubernetes')
+    }
+
+    environment {
+        IMAGE_NAME = 'emna450/backend-formation'
+        MANIFESTS_DIR = 'BackEnd/Microservices/Formation/k8s/formation'
+    }
+
+    stages {
+        stage('Deploy') {
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig-project', variable: 'KUBECONFIG_FILE')]) {
+                    sh '''
+                        set -e
+                        EFFECTIVE_TAG="${IMAGE_TAG:-latest}"
+                        EFFECTIVE_NS="${K8S_NAMESPACE:-matchfreelance}"
+                        DEPLOY_IMAGE="${IMAGE_NAME}:${EFFECTIVE_TAG}"
+
+                        export KUBECONFIG="${KUBECONFIG_FILE}"
+
+                        if [ -d "${MANIFESTS_DIR}" ] && [ -f "${MANIFESTS_DIR}/deployment.yaml" ]; then
+                          kubectl apply -f "${MANIFESTS_DIR}/namespace.yaml"
+                          kubectl apply -f "${MANIFESTS_DIR}/mysql.yaml"
+                          kubectl -n "${EFFECTIVE_NS}" rollout status deployment/mysql-formation --timeout=900s
+                          kubectl apply -f "${MANIFESTS_DIR}/deployment.yaml" -f "${MANIFESTS_DIR}/service.yaml"
+                          kubectl -n "${EFFECTIVE_NS}" set image deployment/formation-ms formation-ms="${DEPLOY_IMAGE}"
+                        else
+                          kubectl -n "${EFFECTIVE_NS}" set image deployment/formation-ms formation-ms="${DEPLOY_IMAGE}"
+                        fi
+
+                        kubectl -n "${EFFECTIVE_NS}" rollout status deployment/formation-ms --timeout=300s
+                        kubectl -n "${EFFECTIVE_NS}" get pods,svc -l app=formation-ms
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "CD OK: ${IMAGE_NAME}:${params.IMAGE_TAG} deploye dans ${params.K8S_NAMESPACE}."
+        }
+    }
+}
