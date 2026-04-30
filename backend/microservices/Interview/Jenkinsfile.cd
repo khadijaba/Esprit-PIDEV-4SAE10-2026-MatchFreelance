@@ -1,0 +1,90 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK17'
+    }
+
+    options {
+        skipDefaultCheckout(true)
+        timeout(time: 90, unit: 'MINUTES')
+    }
+
+    parameters {
+        string(name: 'GIT_BRANCH', defaultValue: 'azizdevops', description: 'Git branch to deploy')
+        string(name: 'IMAGE_NAME', defaultValue: 'azizbf/interview', description: 'Docker image name')
+        string(name: 'IMAGE_TAG', defaultValue: '', description: 'Docker image tag from CI')
+        booleanParam(name: 'DEPLOY_TO_K8S', defaultValue: false, description: 'Deploy to Kubernetes if k8s/interview manifests exist')
+    }
+
+    environment {
+        REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        MODULE_DIR = 'backend/microservices/Interview'
+        IMAGE_NAME = "${params.IMAGE_NAME?.trim() ?: 'azizbf/interview'}"
+        EFFECTIVE_TAG = "${params.IMAGE_TAG?.trim() ?: "1.0.${BUILD_NUMBER}"}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git credentialsId: 'github-credentials',
+                    url: "${REPO_URL}",
+                    branch: "${params.GIT_BRANCH}"
+            }
+        }
+
+        stage('Build Jar') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    sh 'chmod +x mvnw && ./mvnw -B clean package -DskipTests'
+                }
+            }
+        }
+
+        stage('Docker Build + Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-hub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    dir("${MODULE_DIR}") {
+                        sh '''
+                            echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+                            docker build -t ${IMAGE_NAME}:${EFFECTIVE_TAG} .
+                            docker tag ${IMAGE_NAME}:${EFFECTIVE_TAG} ${IMAGE_NAME}:latest
+                            docker push ${IMAGE_NAME}:${EFFECTIVE_TAG}
+                            docker push ${IMAGE_NAME}:latest
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Kubernetes') {
+            when {
+                expression { return params.DEPLOY_TO_K8S }
+            }
+            steps {
+                script {
+                    if (!fileExists('k8s/interview')) {
+                        unstable('Skipping deploy: k8s/interview manifests not found in repository.')
+                        return
+                    }
+                    env.KUBECTL = sh(
+                        script: "bash '${env.WORKSPACE}/scripts/ci/ensure-kubectl.sh'",
+                        returnStdout: true
+                    ).trim()
+                }
+                withKubeConfig([credentialsId: 'kubeconfig-prod']) {
+                    sh '''
+                        "${KUBECTL}" apply -f k8s/namespace.yaml
+                        "${KUBECTL}" apply -f k8s/interview/
+                        "${KUBECTL}" -n matchfreelance set image deployment/interview-deployment interview=${IMAGE_NAME}:${EFFECTIVE_TAG}
+                        "${KUBECTL}" -n matchfreelance rollout status deployment/interview-deployment --timeout=180s
+                    '''
+                }
+            }
+        }
+    }
+}

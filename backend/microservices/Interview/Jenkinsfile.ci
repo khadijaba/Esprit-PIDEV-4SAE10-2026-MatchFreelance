@@ -1,0 +1,105 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK17'
+    }
+
+    options {
+        skipDefaultCheckout(true)
+        timeout(time: 90, unit: 'MINUTES')
+    }
+
+    parameters {
+        string(name: 'SONAR_CREDENTIALS_ID', defaultValue: 'sonar-token', description: 'Jenkins Secret text credential ID for Sonar token')
+        string(
+            name: 'SONAR_HOST_URL',
+            defaultValue: 'AUTO',
+            description: 'AUTO = scripts/ci/detect-sonar-host.sh. Or explicit URL. Env SONAR_HOST_URL overrides if set.'
+        )
+    }
+
+    environment {
+        REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        BRANCH = 'azizdevops'
+        MODULE_DIR = 'backend/microservices/Interview'
+        SONAR_PROJECT_KEY = 'matchfreelance-interview'
+        IMAGE_NAME = 'azizbf/interview'
+        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git credentialsId: 'github-credentials',
+                    url: "${REPO_URL}",
+                    branch: "${BRANCH}"
+            }
+        }
+
+        stage('Build, Unit Tests') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    sh 'chmod +x mvnw && ./mvnw -B clean verify'
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true,
+                        testResults: "${MODULE_DIR}/target/surefire-reports/*.xml"
+                    archiveArtifacts allowEmptyArchive: true,
+                        artifacts: "${MODULE_DIR}/target/site/jacoco/jacoco.xml"
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir("${MODULE_DIR}") {
+                    script {
+                        def fromEnv = env.SONAR_HOST_URL?.trim()
+                        def fromParam = params.SONAR_HOST_URL?.trim()
+                        def chosen = null
+                        if (fromEnv && !fromEnv.equalsIgnoreCase('auto') && fromEnv.startsWith('http')) {
+                            chosen = fromEnv
+                        } else if (fromParam && !fromParam.equalsIgnoreCase('auto') && fromParam.startsWith('http')) {
+                            chosen = fromParam
+                        }
+                        env.SONAR_HOST = chosen ?: sh(
+                            script: "bash '${env.WORKSPACE}/scripts/ci/detect-sonar-host.sh'",
+                            returnStdout: true
+                        ).trim()
+                        echo "Sonar host URL: ${env.SONAR_HOST}"
+                    }
+                    withCredentials([string(credentialsId: "${params.SONAR_CREDENTIALS_ID ?: 'sonar-token'}", variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            chmod +x mvnw
+                            ./mvnw -B sonar:sonar \
+                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                              -Dsonar.host.url=${SONAR_HOST} \
+                              -Dsonar.token=${SONAR_TOKEN} \
+                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Trigger Interview CD') {
+            steps {
+                script {
+                    // Do not fail CI if the CD job is not created yet (Jenkins: "No item named …").
+                    catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                        build job: 'interview-cd',
+                              wait: false,
+                              parameters: [
+                                  string(name: 'GIT_BRANCH', value: "${BRANCH}"),
+                                  string(name: 'IMAGE_NAME', value: "${IMAGE_NAME}"),
+                                  string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
+                              ]
+                    }
+                }
+            }
+        }
+    }
+}
