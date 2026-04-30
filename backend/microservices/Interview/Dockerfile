@@ -1,5 +1,11 @@
-FROM eclipse-temurin:17-jre
+FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /app
-EXPOSE 8089
-ADD target/*.jar app.jar
-ENTRYPOINT ["java","-jar","app.jar"]
+COPY pom.xml ./
+COPY src ./src
+RUN mvn -q -DskipTests clean package
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/target/interview-service-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8085
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
