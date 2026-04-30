@@ -3,7 +3,6 @@ pipeline {
 
     tools {
         jdk 'JDK17'
-        maven 'Maven3'
     }
 
     options {
@@ -36,7 +35,7 @@ pipeline {
         stage('Build Jar') {
             steps {
                 dir("${MODULE_DIR}") {
-                    sh 'mvn -B clean package -DskipTests'
+                    sh 'chmod +x mvnw && ./mvnw -B clean package -DskipTests'
                 }
             }
         }

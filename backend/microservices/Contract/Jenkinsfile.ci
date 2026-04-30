@@ -3,7 +3,6 @@ pipeline {
 
     tools {
         jdk 'JDK17'
-        maven 'Maven3'
     }
 
     options {
@@ -41,7 +40,7 @@ pipeline {
         stage('Build, Unit Tests, JaCoCo') {
             steps {
                 dir("${MODULE_DIR}") {
-                    sh 'mvn -B clean verify'
+                    sh 'chmod +x mvnw && ./mvnw -B clean verify'
                 }
             }
             post {
@@ -74,7 +73,8 @@ pipeline {
                     }
                     withCredentials([string(credentialsId: "${params.SONAR_CREDENTIALS_ID ?: 'sonar-token'}", variable: 'SONAR_TOKEN')]) {
                         sh '''
-                            mvn -B sonar:sonar \
+                            chmod +x mvnw
+                            ./mvnw -B sonar:sonar \
                               -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
                               -Dsonar.host.url=${SONAR_HOST} \
                               -Dsonar.token=${SONAR_TOKEN} \
