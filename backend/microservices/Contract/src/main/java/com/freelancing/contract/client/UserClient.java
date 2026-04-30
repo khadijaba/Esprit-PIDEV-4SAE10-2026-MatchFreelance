@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -31,8 +30,12 @@ public class UserClient {
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();
         }
-        return ids.stream().filter(Objects::nonNull).distinct().map(this::getUserById).filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        return ids.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .map(this::getUserById)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     private static UserResponse toResponse(UserRemoteDto u) {
