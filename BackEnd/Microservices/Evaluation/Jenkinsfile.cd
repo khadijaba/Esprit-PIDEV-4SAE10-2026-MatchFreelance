@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+
     parameters {
         string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag to deploy')
         string(name: 'K8S_NAMESPACE', defaultValue: 'matchfreelance', description: 'Kubernetes namespace')
@@ -12,6 +16,41 @@ pipeline {
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    def branch = env.BRANCH_NAME ?: 'projectskills'
+                    def exts = []
+                    if (scm.extensions != null && !scm.extensions.isEmpty()) {
+                        exts.addAll(scm.extensions)
+                    }
+                    exts.add([
+                        $class       : 'CloneOption',
+                        shallow      : true,
+                        depth        : 1,
+                        timeout      : 120,
+                        honorRefspec : true,
+                        noTags       : true,
+                        reference    : ''
+                    ])
+                    def remotes = scm.userRemoteConfigs.collect { cfg ->
+                        def m = [url: cfg.url]
+                        if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
+                            m.credentialsId = cfg.credentialsId
+                        }
+                        m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
+                        m
+                    }
+                    checkout([
+                        $class            : 'GitSCM',
+                        branches          : [[name: "*/${branch}"]],
+                        extensions        : exts,
+                        userRemoteConfigs : remotes
+                    ])
+                }
+            }
+        }
+
         stage('Deploy') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-project', variable: 'KUBECONFIG_FILE')]) {
