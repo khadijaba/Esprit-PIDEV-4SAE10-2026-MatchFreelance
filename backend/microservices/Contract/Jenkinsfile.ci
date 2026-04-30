@@ -85,18 +85,21 @@ pipeline {
             }
         }
 
-        stage('Trigger Contract CD') {
+        stage('Docker Build + Push') {
             steps {
-                script {
-                    // Do not fail CI if the CD job is not created yet (Jenkins: "No item named …").
-                    catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                        build job: 'contract-cd',
-                              wait: false,
-                              parameters: [
-                                  string(name: 'GIT_BRANCH', value: "${BRANCH}"),
-                                  string(name: 'IMAGE_NAME', value: "${IMAGE_NAME}"),
-                                  string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
-                              ]
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-hub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    dir("${MODULE_DIR}") {
+                        sh '''
+                            echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                            docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                            docker push ${IMAGE_NAME}:latest
+                        '''
                     }
                 }
             }

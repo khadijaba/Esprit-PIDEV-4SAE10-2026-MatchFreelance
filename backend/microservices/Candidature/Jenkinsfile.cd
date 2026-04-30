@@ -14,6 +14,8 @@ pipeline {
         string(name: 'GIT_BRANCH', defaultValue: 'azizdevops', description: 'Git branch to deploy')
         string(name: 'IMAGE_NAME', defaultValue: 'azizbf/candidature', description: 'Docker image name')
         string(name: 'IMAGE_TAG', defaultValue: '', description: 'Docker image tag from CI')
+        string(name: 'CONTAINER_NAME', defaultValue: 'candidature-service', description: 'Docker container name on deployment host')
+        string(name: 'HOST_PORT', defaultValue: '8091', description: 'Host port mapped to container port 8091')
     }
 
     environment {
@@ -21,6 +23,8 @@ pipeline {
         MODULE_DIR = 'backend/microservices/Candidature'
         IMAGE_NAME = "${params.IMAGE_NAME?.trim() ?: 'azizbf/candidature'}"
         EFFECTIVE_TAG = "${params.IMAGE_TAG?.trim() ?: "1.0.${BUILD_NUMBER}"}"
+        CONTAINER_NAME = "${params.CONTAINER_NAME?.trim() ?: 'candidature-service'}"
+        HOST_PORT = "${params.HOST_PORT?.trim() ?: '8091'}"
     }
 
     stages {
@@ -29,6 +33,28 @@ pipeline {
                 git credentialsId: 'github-credentials',
                     url: "${REPO_URL}",
                     branch: "${params.GIT_BRANCH}"
+            }
+        }
+
+        stage('Validate Parameters') {
+            steps {
+                script {
+                    if (!params.GIT_BRANCH?.trim()) {
+                        error('GIT_BRANCH must not be empty.')
+                    }
+                    if (!env.IMAGE_NAME?.trim()) {
+                        error('IMAGE_NAME must not be empty.')
+                    }
+                    if (!env.EFFECTIVE_TAG?.trim()) {
+                        error('IMAGE_TAG must not be empty.')
+                    }
+                    if (!env.CONTAINER_NAME?.trim()) {
+                        error('CONTAINER_NAME must not be empty.')
+                    }
+                    if (!(env.HOST_PORT ==~ /^[0-9]+$/)) {
+                        error("HOST_PORT must be numeric. Got: ${env.HOST_PORT}")
+                    }
+                }
             }
         }
 
@@ -57,6 +83,40 @@ pipeline {
                         '''
                     }
                 }
+            }
+        }
+
+        stage('Pull Docker Image') {
+            steps {
+                sh 'docker pull ${IMAGE_NAME}:${EFFECTIVE_TAG}'
+            }
+        }
+
+        stage('Stop Old Container') {
+            steps {
+                sh '''
+                    docker rm -f ${CONTAINER_NAME} 2>/dev/null || true
+                '''
+            }
+        }
+
+        stage('Run New Container') {
+            steps {
+                sh '''
+                    docker run -d --name ${CONTAINER_NAME} \
+                      -p ${HOST_PORT}:8091 \
+                      ${IMAGE_NAME}:${EFFECTIVE_TAG}
+                '''
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                sh '''
+                    docker ps --filter "name=^/${CONTAINER_NAME}$" --filter "status=running" --format "{{.Names}}" | grep -qx "${CONTAINER_NAME}"
+                    docker inspect --format '{{.State.Status}}' ${CONTAINER_NAME} | grep -qx running
+                    docker logs --tail 40 ${CONTAINER_NAME} || true
+                '''
             }
         }
 
