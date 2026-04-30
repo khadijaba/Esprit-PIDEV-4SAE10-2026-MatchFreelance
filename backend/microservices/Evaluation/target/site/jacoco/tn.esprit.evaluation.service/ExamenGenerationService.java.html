@@ -18,6 +18,7 @@ import tn.esprit.evaluation.dto.QuestionDto;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -29,13 +30,13 @@ import java.util.regex.Pattern;
  */
 @Service
 @RequiredArgsConstructor
-<span class="fc" id="L32">@Slf4j</span>
+<span class="fc" id="L33">@Slf4j</span>
 public class ExamenGenerationService {
 
     private static final int MAX_ENONCE = 1000;
     private static final int MAX_OPTION = 500;
     private static final int MAX_EXPLICATION = 2000;
-<span class="fc" id="L38">    private static final Pattern SENTENCE_END = Pattern.compile(&quot;(?&lt;=[.!?])\\s+&quot;);</span>
+<span class="fc" id="L39">    private static final Pattern SENTENCE_END = Pattern.compile(&quot;(?&lt;=[.!?])\\s+&quot;);</span>
 
     private final FormationClient formationClient;
     private final ExamenService examenService;
@@ -51,261 +52,277 @@ public class ExamenGenerationService {
 
     @Transactional
     public ExamenDto genererDepuisFormation(Long formationId, AutoGenerateExamenRequest req) {
-<span class="nc bnc" id="L54" title="All 2 branches missed.">        if (req == null) {</span>
-<span class="nc" id="L55">            req = AutoGenerateExamenRequest.builder().build();</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        if (req == null) {</span>
+<span class="nc" id="L56">            req = AutoGenerateExamenRequest.builder().build();</span>
         }
-<span class="nc" id="L57">        Map&lt;String, Object&gt; formation = formationClient.getFormationById(formationId);</span>
-<span class="nc bnc" id="L58" title="All 4 branches missed.">        if (formation == null || formation.isEmpty()) {</span>
-<span class="nc" id="L59">            throw new RuntimeException(&quot;Formation introuvable ou service Formation indisponible (id=&quot; + formationId + &quot;).&quot;);</span>
+<span class="nc" id="L58">        Map&lt;String, Object&gt; formation = formationClient.getFormationById(formationId);</span>
+<span class="nc bnc" id="L59" title="All 4 branches missed.">        if (formation == null || formation.isEmpty()) {</span>
+<span class="nc" id="L60">            throw new RuntimeException(&quot;Formation introuvable ou service Formation indisponible (id=&quot; + formationId + &quot;).&quot;);</span>
         }
-<span class="nc" id="L61">        List&lt;Map&lt;String, Object&gt;&gt; modules = formationClient.getModulesByFormation(formationId);</span>
-<span class="nc bnc" id="L62" title="All 4 branches missed.">        if (modules == null || modules.isEmpty()) {</span>
-<span class="nc" id="L63">            throw new RuntimeException(</span>
-                    &quot;Aucun module pour cette formation : impossible de générer un examen automatique. Ajoutez des modules côté Formation.&quot;);
+<span class="nc" id="L62">        List&lt;Map&lt;String, Object&gt;&gt; modules = formationClient.getModulesByFormation(formationId);</span>
+<span class="nc bnc" id="L63" title="All 4 branches missed.">        if (modules == null || modules.isEmpty()) {</span>
+            // Fallback robuste : certaines intégrations ne remontent pas les modules malgré leur présence.
+            // On construit alors un module synthétique à partir de la formation pour éviter un blocage total.
+<span class="nc" id="L66">            String titreFormationFallback = str(formation.get(&quot;titre&quot;));</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">            if (titreFormationFallback.isBlank()) {</span>
+<span class="nc" id="L68">                titreFormationFallback = &quot;Formation &quot; + formationId;</span>
+            }
+<span class="nc" id="L70">            String descriptionFallback = str(formation.get(&quot;description&quot;));</span>
+
+<span class="nc" id="L72">            Map&lt;String, Object&gt; synthetic = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L73">            synthetic.put(&quot;titre&quot;, &quot;Synthèse - &quot; + titreFormationFallback);</span>
+<span class="nc" id="L74">            synthetic.put(&quot;description&quot;, descriptionFallback);</span>
+<span class="nc" id="L75">            synthetic.put(&quot;ordre&quot;, 0);</span>
+<span class="nc" id="L76">            modules = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L77">            modules.add(synthetic);</span>
+
+<span class="nc" id="L79">            log.warn(</span>
+                    &quot;Aucun module récupéré pour formationId={} ; génération via module synthétique basé sur la description de la formation.&quot;,
+                    formationId);
         }
 
-<span class="nc" id="L67">        modules.sort(Comparator.comparingInt(m -&gt; parseOrdre(m.get(&quot;ordre&quot;))));</span>
+<span class="nc" id="L84">        modules.sort(Comparator.comparingInt(m -&gt; parseOrdre(m.get(&quot;ordre&quot;))));</span>
 
-<span class="nc" id="L69">        String titreFormation = str(formation.get(&quot;titre&quot;));</span>
-<span class="nc bnc" id="L70" title="All 2 branches missed.">        if (titreFormation.isBlank()) {</span>
-<span class="nc" id="L71">            titreFormation = &quot;Formation &quot; + formationId;</span>
+<span class="nc" id="L86">        String titreFormation = str(formation.get(&quot;titre&quot;));</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if (titreFormation.isBlank()) {</span>
+<span class="nc" id="L88">            titreFormation = &quot;Formation &quot; + formationId;</span>
         }
         /*
          * Si le LLM Java (Ollama / OpenAI) est disponible et demandé, ne pas appeler Python en premier :
          * sinon Python renvoie souvent un examen heuristique (sans son propre LLM) et on retournait tout de suite,
          * sans jamais exécuter le LLM Java — d’où questions « Variante 1…9 » et « Sans descriptif de module ».
          */
-<span class="nc bnc" id="L78" title="All 4 branches missed.">        boolean useJavaLlmPath = shouldUseLlm(req) &amp;&amp; examenLlmClient.isAvailable();</span>
-<span class="nc" id="L79">        log.info(</span>
+<span class="nc bnc" id="L95" title="All 4 branches missed.">        boolean useJavaLlmPath = shouldUseLlm(req) &amp;&amp; examenLlmClient.isAvailable();</span>
+<span class="nc" id="L96">        log.info(</span>
                 &quot;Génération examen formationId={} preview={} useLlm(demande)={} shouldUseLlm={} llmDisponible={} pythonUrlConfigure={} cheminJavaLlmPrioritaire={}&quot;,
                 formationId,
-<span class="nc" id="L82">                req.getPreview(),</span>
-<span class="nc" id="L83">                req.getUseLlm(),</span>
-<span class="nc" id="L84">                shouldUseLlm(req),</span>
-<span class="nc" id="L85">                examenLlmClient.isAvailable(),</span>
-<span class="nc" id="L86">                examenPythonGeneratorClient.isConfigured(),</span>
-<span class="nc" id="L87">                useJavaLlmPath);</span>
-<span class="nc bnc" id="L88" title="All 2 branches missed.">        if (useJavaLlmPath) {</span>
-<span class="nc" id="L89">            log.info(</span>
+<span class="nc" id="L99">                req.getPreview(),</span>
+<span class="nc" id="L100">                req.getUseLlm(),</span>
+<span class="nc" id="L101">                shouldUseLlm(req),</span>
+<span class="nc" id="L102">                examenLlmClient.isAvailable(),</span>
+<span class="nc" id="L103">                examenPythonGeneratorClient.isConfigured(),</span>
+<span class="nc" id="L104">                useJavaLlmPath);</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        if (useJavaLlmPath) {</span>
+<span class="nc" id="L106">            log.info(</span>
                     &quot;Génération examen : LLM Java activé pour cette requête — le générateur Python n'est pas utilisé (évite un examen 100 % heuristique).&quot;);
         }
-<span class="nc bnc" id="L92" title="All 4 branches missed.">        if (!useJavaLlmPath &amp;&amp; examenPythonGeneratorClient.isConfigured()) {</span>
-<span class="nc" id="L93">            Boolean useLlmForPython = req.getUseLlm();</span>
-<span class="nc bnc" id="L94" title="All 4 branches missed.">            if (useLlmForPython == null &amp;&amp; examenLlmClient.isUseByDefault()) {</span>
-<span class="nc" id="L95">                useLlmForPython = Boolean.TRUE;</span>
+<span class="nc bnc" id="L109" title="All 4 branches missed.">        if (!useJavaLlmPath &amp;&amp; examenPythonGeneratorClient.isConfigured()) {</span>
+<span class="nc" id="L110">            Boolean useLlmForPython = req.getUseLlm();</span>
+<span class="nc bnc" id="L111" title="All 4 branches missed.">            if (useLlmForPython == null &amp;&amp; examenLlmClient.isUseByDefault()) {</span>
+<span class="nc" id="L112">                useLlmForPython = Boolean.TRUE;</span>
             }
-<span class="nc" id="L97">            ExamenDto fromPython = examenPythonGeneratorClient.generate(</span>
+<span class="nc" id="L114">            ExamenDto fromPython = examenPythonGeneratorClient.generate(</span>
                     formationId,
                     titreFormation,
                     modules,
-<span class="nc" id="L101">                    req.getSuffixeTitre(),</span>
-<span class="nc" id="L102">                    req.getSeuilReussi(),</span>
+<span class="nc" id="L118">                    req.getSuffixeTitre(),</span>
+<span class="nc" id="L119">                    req.getSeuilReussi(),</span>
                     useLlmForPython);
-<span class="nc bnc" id="L104" title="All 2 branches missed.">            if (fromPython != null</span>
-<span class="nc bnc" id="L105" title="All 2 branches missed.">                    &amp;&amp; fromPython.getQuestions() != null</span>
-<span class="nc bnc" id="L106" title="All 2 branches missed.">                    &amp;&amp; !fromPython.getQuestions().isEmpty()) {</span>
-<span class="nc" id="L107">                fromPython.setFormationId(formationId);</span>
-<span class="nc" id="L108">                return persistOrPreview(fromPython, req);</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">            if (fromPython != null</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">                    &amp;&amp; fromPython.getQuestions() != null</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">                    &amp;&amp; !fromPython.getQuestions().isEmpty()) {</span>
+<span class="nc" id="L124">                fromPython.setFormationId(formationId);</span>
+<span class="nc" id="L125">                return persistOrPreview(fromPython, req);</span>
             }
         }
 
-<span class="nc" id="L112">        String titreExamen = &quot;Examen — &quot; + titreFormation;</span>
-<span class="nc bnc" id="L113" title="All 4 branches missed.">        if (req.getSuffixeTitre() != null &amp;&amp; !req.getSuffixeTitre().isBlank()) {</span>
-<span class="nc" id="L114">            titreExamen = titreExamen + &quot; &quot; + req.getSuffixeTitre().trim();</span>
+<span class="nc" id="L129">        String titreExamen = &quot;Examen — &quot; + titreFormation;</span>
+<span class="nc bnc" id="L130" title="All 4 branches missed.">        if (req.getSuffixeTitre() != null &amp;&amp; !req.getSuffixeTitre().isBlank()) {</span>
+<span class="nc" id="L131">            titreExamen = titreExamen + &quot; &quot; + req.getSuffixeTitre().trim();</span>
         }
 
-<span class="nc" id="L117">        int nbModulesSource = modules.size();</span>
-<span class="nc" id="L118">        List&lt;ExamenLlmClient.QuestionGenMeta&gt; metas = collectMetas(modules);</span>
-<span class="nc" id="L119">        boolean llmUsed = false;</span>
+<span class="nc" id="L134">        int nbModulesSource = modules.size();</span>
+<span class="nc" id="L135">        List&lt;ExamenLlmClient.QuestionGenMeta&gt; metas = collectMetas(modules);</span>
+<span class="nc" id="L136">        boolean llmUsed = false;</span>
         List&lt;QuestionDto&gt; questions;
-<span class="nc bnc" id="L121" title="All 2 branches missed.">        if (shouldUseLlm(req)) {</span>
-<span class="nc" id="L122">            List&lt;QuestionDto&gt; fromLlm = examenLlmClient.generateQuestions(titreFormation, metas);</span>
-<span class="nc bnc" id="L123" title="All 4 branches missed.">            if (fromLlm != null &amp;&amp; fromLlm.size() == metas.size()) {</span>
-<span class="nc" id="L124">                questions = fromLlm;</span>
-<span class="nc" id="L125">                llmUsed = true;</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">        if (shouldUseLlm(req)) {</span>
+<span class="nc" id="L139">            List&lt;QuestionDto&gt; fromLlm = examenLlmClient.generateQuestions(titreFormation, metas);</span>
+<span class="nc bnc" id="L140" title="All 4 branches missed.">            if (fromLlm != null &amp;&amp; fromLlm.size() == metas.size()) {</span>
+<span class="nc" id="L141">                questions = fromLlm;</span>
+<span class="nc" id="L142">                llmUsed = true;</span>
             } else {
-<span class="nc bnc" id="L127" title="All 2 branches missed.">                if (shouldUseLlm(req)) {</span>
-<span class="nc" id="L128">                    String msg =</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">                if (shouldUseLlm(req)) {</span>
+<span class="nc" id="L145">                    String msg =</span>
                             &quot;Génération examen : le LLM n'a pas renvoyé un jeu complet valide. Consultez les logs Evaluation (lignes « LLM: »). &quot;
                                     + &quot;Vérifiez Ollama (URL, modèle), la réponse HTTP et le JSON des questions.&quot;;
-<span class="nc" id="L131">                    log.error(msg);</span>
-<span class="nc bnc" id="L132" title="All 2 branches missed.">                    if (rejectOnLlmFailure) {</span>
-<span class="nc" id="L133">                        throw new IllegalStateException(msg);</span>
+<span class="nc" id="L148">                    log.error(msg);</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">                    if (rejectOnLlmFailure) {</span>
+<span class="nc" id="L150">                        throw new IllegalStateException(msg);</span>
                     }
-<span class="nc" id="L135">                    log.warn(&quot;Repli sur le modèle heuristique (désactivez app.examen.llm.reject-on-llm-failure pour autoriser ce repli).&quot;);</span>
+<span class="nc" id="L152">                    log.warn(&quot;Repli sur le modèle heuristique (désactivez app.examen.llm.reject-on-llm-failure pour autoriser ce repli).&quot;);</span>
                 }
-<span class="nc" id="L137">                questions = heuristicFromMetas(metas, nbModulesSource);</span>
+<span class="nc" id="L154">                questions = heuristicFromMetas(metas, nbModulesSource);</span>
             }
-<span class="nc" id="L139">        } else {</span>
-<span class="nc" id="L140">            questions = heuristicFromMetas(metas, nbModulesSource);</span>
+<span class="nc" id="L156">        } else {</span>
+<span class="nc" id="L157">            questions = heuristicFromMetas(metas, nbModulesSource);</span>
         }
 
-<span class="nc" id="L143">        String descExamen = &quot;Examen généré automatiquement à partir des titres et descriptifs des modules. &quot;</span>
+<span class="nc" id="L160">        String descExamen = &quot;Examen généré automatiquement à partir des titres et descriptifs des modules. &quot;</span>
                 + &quot;Au moins &quot; + ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN
                 + &quot; questions par parcours (Standard et Renforcement). &quot;;
-<span class="nc bnc" id="L146" title="All 2 branches missed.">        if (llmUsed) {</span>
-<span class="nc" id="L147">            descExamen += &quot;Questions rédigées avec assistance LLM (relecture obligatoire). &quot;;</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">        if (llmUsed) {</span>
+<span class="nc" id="L164">            descExamen += &quot;Questions rédigées avec assistance LLM (relecture obligatoire). &quot;;</span>
         }
-<span class="nc" id="L149">        descExamen += &quot;Relecture formateur recommandée avant usage certifiant.&quot;;</span>
+<span class="nc" id="L166">        descExamen += &quot;Relecture formateur recommandée avant usage certifiant.&quot;;</span>
 
-<span class="nc" id="L151">        ExamenDto dto = ExamenDto.builder()</span>
-<span class="nc" id="L152">                .formationId(formationId)</span>
-<span class="nc" id="L153">                .titre(titreExamen)</span>
-<span class="nc" id="L154">                .description(descExamen)</span>
-<span class="nc bnc" id="L155" title="All 2 branches missed.">                .seuilReussi(req.getSeuilReussi() != null ? req.getSeuilReussi() : 60)</span>
-<span class="nc" id="L156">                .questions(questions)</span>
-<span class="nc" id="L157">                .build();</span>
+<span class="nc" id="L168">        ExamenDto dto = ExamenDto.builder()</span>
+<span class="nc" id="L169">                .formationId(formationId)</span>
+<span class="nc" id="L170">                .titre(titreExamen)</span>
+<span class="nc" id="L171">                .description(descExamen)</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">                .seuilReussi(req.getSeuilReussi() != null ? req.getSeuilReussi() : 60)</span>
+<span class="nc" id="L173">                .questions(questions)</span>
+<span class="nc" id="L174">                .build();</span>
 
-<span class="nc" id="L159">        return persistOrPreview(dto, req);</span>
+<span class="nc" id="L176">        return persistOrPreview(dto, req);</span>
     }
 
     private static boolean isPreview(AutoGenerateExamenRequest req) {
-<span class="nc" id="L163">        return Boolean.TRUE.equals(req.getPreview());</span>
+<span class="nc" id="L180">        return Boolean.TRUE.equals(req.getPreview());</span>
     }
 
     private ExamenDto persistOrPreview(ExamenDto dto, AutoGenerateExamenRequest req) {
-<span class="nc bnc" id="L167" title="All 2 branches missed.">        if (isPreview(req)) {</span>
-<span class="nc" id="L168">            return stripIdsForPreview(dto);</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">        if (isPreview(req)) {</span>
+<span class="nc" id="L185">            return stripIdsForPreview(dto);</span>
         }
-<span class="nc" id="L170">        return examenService.create(dto);</span>
+<span class="nc" id="L187">        return examenService.create(dto);</span>
     }
 
     private static ExamenDto stripIdsForPreview(ExamenDto dto) {
-<span class="nc bnc" id="L174" title="All 2 branches missed.">        if (dto == null) {</span>
-<span class="nc" id="L175">            return null;</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">        if (dto == null) {</span>
+<span class="nc" id="L192">            return null;</span>
         }
-<span class="nc" id="L177">        dto.setId(null);</span>
-<span class="nc bnc" id="L178" title="All 2 branches missed.">        if (dto.getQuestions() != null) {</span>
-<span class="nc" id="L179">            dto.getQuestions().forEach(q -&gt; {</span>
-<span class="nc" id="L180">                q.setId(null);</span>
-<span class="nc" id="L181">                q.setExamenId(null);</span>
-<span class="nc" id="L182">            });</span>
+<span class="nc" id="L194">        dto.setId(null);</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">        if (dto.getQuestions() != null) {</span>
+<span class="nc" id="L196">            dto.getQuestions().forEach(q -&gt; {</span>
+<span class="nc" id="L197">                q.setId(null);</span>
+<span class="nc" id="L198">                q.setExamenId(null);</span>
+<span class="nc" id="L199">            });</span>
         }
-<span class="nc" id="L184">        return dto;</span>
+<span class="nc" id="L201">        return dto;</span>
     }
 
     private boolean shouldUseLlm(AutoGenerateExamenRequest req) {
-<span class="nc bnc" id="L188" title="All 2 branches missed.">        if (!examenLlmClient.isAvailable()) {</span>
-<span class="nc" id="L189">            return false;</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        if (!examenLlmClient.isAvailable()) {</span>
+<span class="nc" id="L206">            return false;</span>
         }
-<span class="nc bnc" id="L191" title="All 2 branches missed.">        if (Boolean.FALSE.equals(req.getUseLlm())) {</span>
-<span class="nc" id="L192">            return false;</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">        if (Boolean.FALSE.equals(req.getUseLlm())) {</span>
+<span class="nc" id="L209">            return false;</span>
         }
-<span class="nc bnc" id="L194" title="All 2 branches missed.">        if (Boolean.TRUE.equals(req.getUseLlm())) {</span>
-<span class="nc" id="L195">            return true;</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">        if (Boolean.TRUE.equals(req.getUseLlm())) {</span>
+<span class="nc" id="L212">            return true;</span>
         }
-<span class="nc" id="L197">        return examenLlmClient.isUseByDefault();</span>
+<span class="nc" id="L214">        return examenLlmClient.isUseByDefault();</span>
     }
 
     private List&lt;ExamenLlmClient.QuestionGenMeta&gt; collectMetas(List&lt;Map&lt;String, Object&gt;&gt; modules) {
-<span class="nc" id="L201">        List&lt;ExamenLlmClient.QuestionGenMeta&gt; metas = new ArrayList&lt;&gt;();</span>
-<span class="nc" id="L202">        int ordre = 0;</span>
-<span class="nc" id="L203">        int nMod = modules.size();</span>
-<span class="nc bnc" id="L204" title="All 2 branches missed.">        for (Map&lt;String, Object&gt; mod : modules) {</span>
-<span class="nc" id="L205">            String modTitre = str(mod.get(&quot;titre&quot;));</span>
-<span class="nc bnc" id="L206" title="All 2 branches missed.">            if (modTitre.isBlank()) {</span>
-<span class="nc" id="L207">                modTitre = &quot;Module &quot; + (ordre + 1);</span>
+<span class="nc" id="L218">        List&lt;ExamenLlmClient.QuestionGenMeta&gt; metas = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L219">        int ordre = 0;</span>
+<span class="nc" id="L220">        int nMod = modules.size();</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">        for (Map&lt;String, Object&gt; mod : modules) {</span>
+<span class="nc" id="L222">            String modTitre = str(mod.get(&quot;titre&quot;));</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">            if (modTitre.isBlank()) {</span>
+<span class="nc" id="L224">                modTitre = &quot;Module &quot; + (ordre + 1);</span>
             }
-<span class="nc" id="L209">            String desc = str(mod.get(&quot;description&quot;));</span>
-<span class="nc" id="L210">            metas.add(new ExamenLlmClient.QuestionGenMeta(</span>
+<span class="nc" id="L226">            String desc = str(mod.get(&quot;description&quot;));</span>
+<span class="nc" id="L227">            metas.add(new ExamenLlmClient.QuestionGenMeta(</span>
                     ordre,
                     modTitre,
                     desc,
-<span class="nc" id="L214">                    parcoursPourOrdre(ordre),</span>
-<span class="nc" id="L215">                    difficultePourOrdre(ordre).name(),</span>
-<span class="nc" id="L216">                    shorten(modTitre, 120)));</span>
-<span class="nc" id="L217">            ordre++;</span>
-<span class="nc" id="L218">        }</span>
-<span class="nc bnc" id="L219" title="All 2 branches missed.">        while (metas.size() &lt; ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN) {</span>
-<span class="nc" id="L220">            Map&lt;String, Object&gt; mod = modules.get(ordre % nMod);</span>
-<span class="nc" id="L221">            String modTitre = str(mod.get(&quot;titre&quot;));</span>
-<span class="nc bnc" id="L222" title="All 2 branches missed.">            if (modTitre.isBlank()) {</span>
-<span class="nc" id="L223">                modTitre = &quot;Module &quot; + (ordre % nMod + 1);</span>
+<span class="nc" id="L231">                    parcoursPourOrdre(ordre),</span>
+<span class="nc" id="L232">                    difficultePourOrdre(ordre).name(),</span>
+<span class="nc" id="L233">                    shorten(modTitre, 120)));</span>
+<span class="nc" id="L234">            ordre++;</span>
+<span class="nc" id="L235">        }</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">        while (metas.size() &lt; ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN) {</span>
+<span class="nc" id="L237">            Map&lt;String, Object&gt; mod = modules.get(ordre % nMod);</span>
+<span class="nc" id="L238">            String modTitre = str(mod.get(&quot;titre&quot;));</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">            if (modTitre.isBlank()) {</span>
+<span class="nc" id="L240">                modTitre = &quot;Module &quot; + (ordre % nMod + 1);</span>
             }
-<span class="nc" id="L225">            String desc = str(mod.get(&quot;description&quot;));</span>
-<span class="nc" id="L226">            metas.add(new ExamenLlmClient.QuestionGenMeta(</span>
+<span class="nc" id="L242">            String desc = str(mod.get(&quot;description&quot;));</span>
+<span class="nc" id="L243">            metas.add(new ExamenLlmClient.QuestionGenMeta(</span>
                     ordre,
                     modTitre,
                     desc,
-<span class="nc" id="L230">                    parcoursPourOrdre(ordre),</span>
-<span class="nc" id="L231">                    difficultePourOrdre(ordre).name(),</span>
-<span class="nc" id="L232">                    shorten(modTitre, 120)));</span>
-<span class="nc" id="L233">            ordre++;</span>
-<span class="nc" id="L234">        }</span>
-<span class="nc bnc" id="L235" title="All 2 branches missed.">        while (countMetaPourParcours(metas, TypeParcours.STANDARD) &lt; ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN</span>
-<span class="nc bnc" id="L236" title="All 2 branches missed.">                || countMetaPourParcours(metas, TypeParcours.RENFORCEMENT)</span>
+<span class="nc" id="L247">                    parcoursPourOrdre(ordre),</span>
+<span class="nc" id="L248">                    difficultePourOrdre(ordre).name(),</span>
+<span class="nc" id="L249">                    shorten(modTitre, 120)));</span>
+<span class="nc" id="L250">            ordre++;</span>
+<span class="nc" id="L251">        }</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">        while (countMetaPourParcours(metas, TypeParcours.STANDARD) &lt; ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">                || countMetaPourParcours(metas, TypeParcours.RENFORCEMENT)</span>
                         &lt; ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN) {
-<span class="nc" id="L238">            Map&lt;String, Object&gt; mod = modules.get(ordre % nMod);</span>
-<span class="nc" id="L239">            String modTitre = str(mod.get(&quot;titre&quot;));</span>
-<span class="nc bnc" id="L240" title="All 2 branches missed.">            if (modTitre.isBlank()) {</span>
-<span class="nc" id="L241">                modTitre = &quot;Module &quot; + (ordre % nMod + 1);</span>
+<span class="nc" id="L255">            Map&lt;String, Object&gt; mod = modules.get(ordre % nMod);</span>
+<span class="nc" id="L256">            String modTitre = str(mod.get(&quot;titre&quot;));</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">            if (modTitre.isBlank()) {</span>
+<span class="nc" id="L258">                modTitre = &quot;Module &quot; + (ordre % nMod + 1);</span>
             }
-<span class="nc" id="L243">            String desc = str(mod.get(&quot;description&quot;));</span>
-<span class="nc" id="L244">            metas.add(new ExamenLlmClient.QuestionGenMeta(</span>
+<span class="nc" id="L260">            String desc = str(mod.get(&quot;description&quot;));</span>
+<span class="nc" id="L261">            metas.add(new ExamenLlmClient.QuestionGenMeta(</span>
                     ordre,
                     modTitre,
                     desc,
                     &quot;COMMUN&quot;,
-<span class="nc" id="L249">                    difficultePourOrdre(ordre).name(),</span>
-<span class="nc" id="L250">                    shorten(modTitre, 120)));</span>
-<span class="nc" id="L251">            ordre++;</span>
-<span class="nc" id="L252">        }</span>
-<span class="nc" id="L253">        return metas;</span>
+<span class="nc" id="L266">                    difficultePourOrdre(ordre).name(),</span>
+<span class="nc" id="L267">                    shorten(modTitre, 120)));</span>
+<span class="nc" id="L268">            ordre++;</span>
+<span class="nc" id="L269">        }</span>
+<span class="nc" id="L270">        return metas;</span>
     }
 
     private static long countMetaPourParcours(List&lt;ExamenLlmClient.QuestionGenMeta&gt; metas, TypeParcours typeParcours) {
-<span class="nc" id="L257">        return metas.stream()</span>
-<span class="nc" id="L258">                .filter(m -&gt; QuestionParcoursFilter.matches(parseInclusionDto(m.inclusion()), typeParcours))</span>
-<span class="nc" id="L259">                .count();</span>
+<span class="nc" id="L274">        return metas.stream()</span>
+<span class="nc" id="L275">                .filter(m -&gt; QuestionParcoursFilter.matches(parseInclusionDto(m.inclusion()), typeParcours))</span>
+<span class="nc" id="L276">                .count();</span>
     }
 
     private List&lt;QuestionDto&gt; heuristicFromMetas(List&lt;ExamenLlmClient.QuestionGenMeta&gt; metas, int nbModulesSource) {
-<span class="nc" id="L263">        List&lt;QuestionDto&gt; questions = new ArrayList&lt;&gt;();</span>
-<span class="nc bnc" id="L264" title="All 2 branches missed.">        for (ExamenLlmClient.QuestionGenMeta m : metas) {</span>
-<span class="nc bnc" id="L265" title="All 2 branches missed.">            boolean variante = m.ordre() &gt;= nbModulesSource;</span>
-<span class="nc" id="L266">            questions.add(construireQuestionDepuisModule(</span>
-<span class="nc" id="L267">                    m.modTitre(),</span>
-<span class="nc" id="L268">                    m.desc(),</span>
-<span class="nc" id="L269">                    m.ordre(),</span>
-<span class="nc" id="L270">                    m.inclusion(),</span>
-<span class="nc" id="L271">                    NiveauDifficulteQuestion.valueOf(m.niveauDifficulte()),</span>
-<span class="nc" id="L272">                    m.theme(),</span>
+<span class="nc" id="L280">        List&lt;QuestionDto&gt; questions = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        for (ExamenLlmClient.QuestionGenMeta m : metas) {</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">            boolean variante = m.ordre() &gt;= nbModulesSource;</span>
+<span class="nc" id="L283">            questions.add(construireQuestionDepuisModule(</span>
+<span class="nc" id="L284">                    m.modTitre(),</span>
+<span class="nc" id="L285">                    m.desc(),</span>
+<span class="nc" id="L286">                    m.ordre(),</span>
+<span class="nc" id="L287">                    m.inclusion(),</span>
+<span class="nc" id="L288">                    NiveauDifficulteQuestion.valueOf(m.niveauDifficulte()),</span>
+<span class="nc" id="L289">                    m.theme(),</span>
                     variante));
-<span class="nc" id="L274">        }</span>
-<span class="nc" id="L275">        return questions;</span>
+<span class="nc" id="L291">        }</span>
+<span class="nc" id="L292">        return questions;</span>
     }
 
     private static ParcoursInclusion parseInclusionDto(String raw) {
-<span class="nc bnc" id="L279" title="All 4 branches missed.">        if (raw == null || raw.isBlank()) {</span>
-<span class="nc" id="L280">            return ParcoursInclusion.COMMUN;</span>
+<span class="nc bnc" id="L296" title="All 4 branches missed.">        if (raw == null || raw.isBlank()) {</span>
+<span class="nc" id="L297">            return ParcoursInclusion.COMMUN;</span>
         }
         try {
-<span class="nc" id="L283">            return ParcoursInclusion.valueOf(raw.trim().toUpperCase());</span>
-<span class="nc" id="L284">        } catch (IllegalArgumentException e) {</span>
-<span class="nc" id="L285">            return ParcoursInclusion.COMMUN;</span>
+<span class="nc" id="L300">            return ParcoursInclusion.valueOf(raw.trim().toUpperCase());</span>
+<span class="nc" id="L301">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L302">            return ParcoursInclusion.COMMUN;</span>
         }
     }
 
     private static long countDtoPourParcours(List&lt;QuestionDto&gt; qs, TypeParcours typeParcours) {
-<span class="nc" id="L290">        return qs.stream()</span>
-<span class="nc" id="L291">                .filter(q -&gt; QuestionParcoursFilter.matches(parseInclusionDto(q.getParcoursInclusion()), typeParcours))</span>
-<span class="nc" id="L292">                .count();</span>
+<span class="nc" id="L307">        return qs.stream()</span>
+<span class="nc" id="L308">                .filter(q -&gt; QuestionParcoursFilter.matches(parseInclusionDto(q.getParcoursInclusion()), typeParcours))</span>
+<span class="nc" id="L309">                .count();</span>
     }
 
     private static String parcoursPourOrdre(int ordre) {
-<span class="nc bnc" id="L296" title="All 3 branches missed.">        return switch (ordre % 3) {</span>
-<span class="nc" id="L297">            case 0 -&gt; &quot;COMMUN&quot;;</span>
-<span class="nc" id="L298">            case 1 -&gt; &quot;STANDARD&quot;;</span>
-<span class="nc" id="L299">            default -&gt; &quot;RENFORCEMENT&quot;;</span>
+<span class="nc bnc" id="L313" title="All 3 branches missed.">        return switch (ordre % 3) {</span>
+<span class="nc" id="L314">            case 0 -&gt; &quot;COMMUN&quot;;</span>
+<span class="nc" id="L315">            case 1 -&gt; &quot;STANDARD&quot;;</span>
+<span class="nc" id="L316">            default -&gt; &quot;RENFORCEMENT&quot;;</span>
         };
     }
 
     /** Répartition cyclique FACILE / MOYEN / DIFFICILE pour l’examen adaptatif. */
     private static NiveauDifficulteQuestion difficultePourOrdre(int ordre) {
-<span class="nc bnc" id="L305" title="All 3 branches missed.">        return switch (ordre % 3) {</span>
-<span class="nc" id="L306">            case 0 -&gt; NiveauDifficulteQuestion.FACILE;</span>
-<span class="nc" id="L307">            case 1 -&gt; NiveauDifficulteQuestion.MOYEN;</span>
-<span class="nc" id="L308">            default -&gt; NiveauDifficulteQuestion.DIFFICILE;</span>
+<span class="nc bnc" id="L322" title="All 3 branches missed.">        return switch (ordre % 3) {</span>
+<span class="nc" id="L323">            case 0 -&gt; NiveauDifficulteQuestion.FACILE;</span>
+<span class="nc" id="L324">            case 1 -&gt; NiveauDifficulteQuestion.MOYEN;</span>
+<span class="nc" id="L325">            default -&gt; NiveauDifficulteQuestion.DIFFICILE;</span>
         };
     }
 
@@ -317,92 +334,92 @@ public class ExamenGenerationService {
             NiveauDifficulteQuestion niveau,
             String theme,
             boolean variante) {
-<span class="nc" id="L320">        List&lt;String&gt; phrases = extrairePhrases(description);</span>
-<span class="nc bnc" id="L321" title="All 2 branches missed.">        int idx = phrases.isEmpty() ? 0 : ordre % phrases.size();</span>
+<span class="nc" id="L337">        List&lt;String&gt; phrases = extrairePhrases(description);</span>
+<span class="nc bnc" id="L338" title="All 2 branches missed.">        int idx = phrases.isEmpty() ? 0 : ordre % phrases.size();</span>
         String enonceBase;
-<span class="nc bnc" id="L323" title="All 2 branches missed.">        if (phrases.isEmpty()) {</span>
-<span class="nc" id="L324">            enonceBase = &quot;Concernant le module « &quot; + modTitre + &quot; », quelle proposition reflète le mieux le rôle attendu de cette séquence dans le parcours ?&quot;;</span>
+<span class="nc bnc" id="L340" title="All 2 branches missed.">        if (phrases.isEmpty()) {</span>
+<span class="nc" id="L341">            enonceBase = &quot;Concernant le module « &quot; + modTitre + &quot; », quelle proposition reflète le mieux le rôle attendu de cette séquence dans le parcours ?&quot;;</span>
         } else {
-<span class="nc bnc" id="L326" title="All 3 branches missed.">            enonceBase = switch (ordre % 3) {</span>
-<span class="nc" id="L327">                case 0 -&gt; &quot;À propos du module « &quot; + modTitre + &quot; », quelle proposition est la plus fidèle au contenu prévu pour les apprenants ?&quot;;</span>
-<span class="nc" id="L328">                case 1 -&gt; &quot;Pour la séquence « &quot; + modTitre + &quot; », laquelle des affirmations correspond le mieux à ce qui est décrit dans le programme ?&quot;;</span>
-<span class="nc" id="L329">                default -&gt; &quot;Dans le cadre du module « &quot; + modTitre + &quot; », identifiez l'affirmation qui repose correctement sur le descriptif publié.&quot;;</span>
+<span class="nc bnc" id="L343" title="All 3 branches missed.">            enonceBase = switch (ordre % 3) {</span>
+<span class="nc" id="L344">                case 0 -&gt; &quot;À propos du module « &quot; + modTitre + &quot; », quelle proposition est la plus fidèle au contenu prévu pour les apprenants ?&quot;;</span>
+<span class="nc" id="L345">                case 1 -&gt; &quot;Pour la séquence « &quot; + modTitre + &quot; », laquelle des affirmations correspond le mieux à ce qui est décrit dans le programme ?&quot;;</span>
+<span class="nc" id="L346">                default -&gt; &quot;Dans le cadre du module « &quot; + modTitre + &quot; », identifiez l'affirmation qui repose correctement sur le descriptif publié.&quot;;</span>
             };
         }
-<span class="nc bnc" id="L332" title="All 2 branches missed.">        if (variante) {</span>
-<span class="nc" id="L333">            enonceBase = enonceBase + &quot; (Variante &quot; + (ordre + 1) + &quot;.)&quot;;</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">        if (variante) {</span>
+<span class="nc" id="L350">            enonceBase = enonceBase + &quot; (Variante &quot; + (ordre + 1) + &quot;.)&quot;;</span>
         }
         String optA;
         String optB;
         String optC;
         String optD;
         String explication;
-<span class="nc bnc" id="L340" title="All 2 branches missed.">        if (!phrases.isEmpty()) {</span>
-<span class="nc" id="L341">            String s0 = phrases.get(idx % phrases.size()).replace(&quot;\&quot;&quot;, &quot;'&quot;);</span>
-<span class="nc" id="L342">            optA = &quot;D'après le descriptif, on peut retenir notamment : « &quot; + shorten(s0, 380) + &quot; ».&quot;;</span>
-<span class="nc" id="L343">            optB = &quot;Le module est présenté comme sans lien avec « &quot; + shorten(modTitre, 80) + &quot; » et n'aborde aucun objectif du programme.&quot;;</span>
-<span class="nc" id="L344">            optC = &quot;Il est indiqué qu'aucune notion de « &quot; + shorten(modTitre, 100) + &quot; » n'y est travaillée : séance purement informative, hors compétences visées.&quot;;</span>
-<span class="nc bnc" id="L345" title="All 2 branches missed.">            if (phrases.size() &gt; 1) {</span>
-<span class="nc" id="L346">                String s1 = phrases.get((idx + 1) % phrases.size()).replace(&quot;\&quot;&quot;, &quot;'&quot;);</span>
-<span class="nc" id="L347">                optD = &quot;Le programme exclut explicitement tout contenu du type : « &quot; + shorten(s1, 360) + &quot; ».&quot;;</span>
-<span class="nc" id="L348">            } else {</span>
-<span class="nc" id="L349">                optD = &quot;Le descriptif précise qu'aucune mise en pratique n'est prévue pour « &quot; + shorten(modTitre, 120) + &quot; ».&quot;;</span>
+<span class="nc bnc" id="L357" title="All 2 branches missed.">        if (!phrases.isEmpty()) {</span>
+<span class="nc" id="L358">            String s0 = phrases.get(idx % phrases.size()).replace(&quot;\&quot;&quot;, &quot;'&quot;);</span>
+<span class="nc" id="L359">            optA = &quot;D'après le descriptif, on peut retenir notamment : « &quot; + shorten(s0, 380) + &quot; ».&quot;;</span>
+<span class="nc" id="L360">            optB = &quot;Le module est présenté comme sans lien avec « &quot; + shorten(modTitre, 80) + &quot; » et n'aborde aucun objectif du programme.&quot;;</span>
+<span class="nc" id="L361">            optC = &quot;Il est indiqué qu'aucune notion de « &quot; + shorten(modTitre, 100) + &quot; » n'y est travaillée : séance purement informative, hors compétences visées.&quot;;</span>
+<span class="nc bnc" id="L362" title="All 2 branches missed.">            if (phrases.size() &gt; 1) {</span>
+<span class="nc" id="L363">                String s1 = phrases.get((idx + 1) % phrases.size()).replace(&quot;\&quot;&quot;, &quot;'&quot;);</span>
+<span class="nc" id="L364">                optD = &quot;Le programme exclut explicitement tout contenu du type : « &quot; + shorten(s1, 360) + &quot; ».&quot;;</span>
+<span class="nc" id="L365">            } else {</span>
+<span class="nc" id="L366">                optD = &quot;Le descriptif précise qu'aucune mise en pratique n'est prévue pour « &quot; + shorten(modTitre, 120) + &quot; ».&quot;;</span>
             }
-<span class="nc" id="L351">            explication = &quot;La bonne réponse s'appuie sur une formulation du descriptif du module « &quot; + shorten(modTitre, 80) + &quot; ». Contrôlez l'exactitude avant certification.&quot;;</span>
-<span class="nc" id="L352">        } else {</span>
-<span class="nc" id="L353">            optA = &quot;Le module « &quot; + shorten(modTitre, 220) + &quot; » fait partie du parcours et contribue aux objectifs de la formation sur ce thème.&quot;;</span>
-<span class="nc" id="L354">            optB = &quot;Ce module est optionnel : on peut omettre cette séquence sans impact sur la suite du parcours.&quot;;</span>
-<span class="nc" id="L355">            optC = &quot;Il est réservé aux apprenants ayant déjà une certification externe équivalente, et non à tous les inscrits.&quot;;</span>
-<span class="nc" id="L356">            optD = &quot;Il remplace l'ensemble des autres modules et annule les évaluations déjà réalisées dans la formation.&quot;;</span>
-<span class="nc" id="L357">            explication = &quot;Sans descriptif de module, la réponse attendue reflète le fait que la séquence est bien au programme. Enrichissez les textes des modules pour des QCM plus précis.&quot;;</span>
+<span class="nc" id="L368">            explication = &quot;La bonne réponse s'appuie sur une formulation du descriptif du module « &quot; + shorten(modTitre, 80) + &quot; ». Contrôlez l'exactitude avant certification.&quot;;</span>
+<span class="nc" id="L369">        } else {</span>
+<span class="nc" id="L370">            optA = &quot;Le module « &quot; + shorten(modTitre, 220) + &quot; » fait partie du parcours et contribue aux objectifs de la formation sur ce thème.&quot;;</span>
+<span class="nc" id="L371">            optB = &quot;Ce module est optionnel : on peut omettre cette séquence sans impact sur la suite du parcours.&quot;;</span>
+<span class="nc" id="L372">            optC = &quot;Il est réservé aux apprenants ayant déjà une certification externe équivalente, et non à tous les inscrits.&quot;;</span>
+<span class="nc" id="L373">            optD = &quot;Il remplace l'ensemble des autres modules et annule les évaluations déjà réalisées dans la formation.&quot;;</span>
+<span class="nc" id="L374">            explication = &quot;Sans descriptif de module, la réponse attendue reflète le fait que la séquence est bien au programme. Enrichissez les textes des modules pour des QCM plus précis.&quot;;</span>
         }
-<span class="nc" id="L359">        return QuestionDto.builder()</span>
-<span class="nc" id="L360">                .ordre(ordre)</span>
-<span class="nc" id="L361">                .enonce(shorten(enonceBase, MAX_ENONCE))</span>
-<span class="nc" id="L362">                .optionA(shorten(optA, MAX_OPTION))</span>
-<span class="nc" id="L363">                .optionB(shorten(optB, MAX_OPTION))</span>
-<span class="nc" id="L364">                .optionC(shorten(optC, MAX_OPTION))</span>
-<span class="nc" id="L365">                .optionD(shorten(optD, MAX_OPTION))</span>
-<span class="nc" id="L366">                .bonneReponse(&quot;A&quot;)</span>
-<span class="nc" id="L367">                .parcoursInclusion(inclusion)</span>
-<span class="nc" id="L368">                .niveauDifficulte(niveau.name())</span>
-<span class="nc" id="L369">                .theme(theme)</span>
-<span class="nc" id="L370">                .skill(theme)</span>
-<span class="nc" id="L371">                .explication(shorten(explication, MAX_EXPLICATION))</span>
-<span class="nc" id="L372">                .build();</span>
+<span class="nc" id="L376">        return QuestionDto.builder()</span>
+<span class="nc" id="L377">                .ordre(ordre)</span>
+<span class="nc" id="L378">                .enonce(shorten(enonceBase, MAX_ENONCE))</span>
+<span class="nc" id="L379">                .optionA(shorten(optA, MAX_OPTION))</span>
+<span class="nc" id="L380">                .optionB(shorten(optB, MAX_OPTION))</span>
+<span class="nc" id="L381">                .optionC(shorten(optC, MAX_OPTION))</span>
+<span class="nc" id="L382">                .optionD(shorten(optD, MAX_OPTION))</span>
+<span class="nc" id="L383">                .bonneReponse(&quot;A&quot;)</span>
+<span class="nc" id="L384">                .parcoursInclusion(inclusion)</span>
+<span class="nc" id="L385">                .niveauDifficulte(niveau.name())</span>
+<span class="nc" id="L386">                .theme(theme)</span>
+<span class="nc" id="L387">                .skill(theme)</span>
+<span class="nc" id="L388">                .explication(shorten(explication, MAX_EXPLICATION))</span>
+<span class="nc" id="L389">                .build();</span>
     }
 
     private static List&lt;String&gt; extrairePhrases(String text) {
-<span class="nc bnc" id="L376" title="All 4 branches missed.">        if (text == null || text.isBlank()) {</span>
-<span class="nc" id="L377">            return List.of();</span>
+<span class="nc bnc" id="L393" title="All 4 branches missed.">        if (text == null || text.isBlank()) {</span>
+<span class="nc" id="L394">            return List.of();</span>
         }
-<span class="nc" id="L379">        String[] morceaux = SENTENCE_END.split(text.trim());</span>
-<span class="nc" id="L380">        List&lt;String&gt; out = new ArrayList&lt;&gt;();</span>
-<span class="nc bnc" id="L381" title="All 2 branches missed.">        for (String p : morceaux) {</span>
-<span class="nc" id="L382">            String t = p.trim();</span>
-<span class="nc bnc" id="L383" title="All 2 branches missed.">            if (t.length() &gt; 12) {</span>
-<span class="nc" id="L384">                out.add(t);</span>
+<span class="nc" id="L396">        String[] morceaux = SENTENCE_END.split(text.trim());</span>
+<span class="nc" id="L397">        List&lt;String&gt; out = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L398" title="All 2 branches missed.">        for (String p : morceaux) {</span>
+<span class="nc" id="L399">            String t = p.trim();</span>
+<span class="nc bnc" id="L400" title="All 2 branches missed.">            if (t.length() &gt; 12) {</span>
+<span class="nc" id="L401">                out.add(t);</span>
             }
         }
-<span class="nc" id="L387">        return out;</span>
+<span class="nc" id="L404">        return out;</span>
     }
 
     private static int parseOrdre(Object o) {
-<span class="nc bnc" id="L391" title="All 2 branches missed.">        if (o == null) return 0;</span>
+<span class="nc bnc" id="L408" title="All 2 branches missed.">        if (o == null) return 0;</span>
         try {
-<span class="nc" id="L393">            return Integer.parseInt(o.toString());</span>
-<span class="nc" id="L394">        } catch (NumberFormatException e) {</span>
-<span class="nc" id="L395">            return 0;</span>
+<span class="nc" id="L410">            return Integer.parseInt(o.toString());</span>
+<span class="nc" id="L411">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L412">            return 0;</span>
         }
     }
 
     private static String str(Object o) {
-<span class="nc bnc" id="L400" title="All 2 branches missed.">        return o != null ? o.toString() : &quot;&quot;;</span>
+<span class="nc bnc" id="L417" title="All 2 branches missed.">        return o != null ? o.toString() : &quot;&quot;;</span>
     }
 
     private static String shorten(String s, int max) {
-<span class="nc bnc" id="L404" title="All 4 branches missed.">        if (s == null || s.length() &lt;= max) return s;</span>
-<span class="nc" id="L405">        return s.substring(0, Math.max(0, max - 3)) + &quot;...&quot;;</span>
+<span class="nc bnc" id="L421" title="All 4 branches missed.">        if (s == null || s.length() &lt;= max) return s;</span>
+<span class="nc" id="L422">        return s.substring(0, Math.max(0, max - 3)) + &quot;...&quot;;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

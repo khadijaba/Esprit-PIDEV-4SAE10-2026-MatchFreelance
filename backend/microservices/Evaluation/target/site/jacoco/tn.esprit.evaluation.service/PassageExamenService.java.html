@@ -52,33 +52,33 @@ public class PassageExamenService {
      */
     @Transactional
     public PassageExamenDto soumettreExamen(Long examenId, ReponseExamenRequest request) {
-<span class="fc" id="L55">        Examen examen = examenRepository.findById(examenId)</span>
-<span class="pc" id="L56">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Examen&quot;, examenId));</span>
+<span class="nc" id="L55">        Examen examen = examenRepository.findById(examenId)</span>
+<span class="nc" id="L56">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Examen&quot;, examenId));</span>
 
-<span class="pc bpc" id="L58" title="1 of 2 branches missed.">        ReponseExamenRequest.ModePassage mode = request.getMode() != null</span>
-<span class="fc" id="L59">                ? request.getMode()</span>
-<span class="pc" id="L60">                : ReponseExamenRequest.ModePassage.CERTIFIANT;</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">        ReponseExamenRequest.ModePassage mode = request.getMode() != null</span>
+<span class="nc" id="L59">                ? request.getMode()</span>
+<span class="nc" id="L60">                : ReponseExamenRequest.ModePassage.CERTIFIANT;</span>
 
-<span class="fc" id="L62">        boolean revisionCiblee = Boolean.TRUE.equals(request.getRevisionCiblee());</span>
-<span class="pc bpc" id="L63" title="3 of 4 branches missed.">        if (revisionCiblee &amp;&amp; mode != ReponseExamenRequest.ModePassage.ENTRAINEMENT) {</span>
+<span class="nc" id="L62">        boolean revisionCiblee = Boolean.TRUE.equals(request.getRevisionCiblee());</span>
+<span class="nc bnc" id="L63" title="All 4 branches missed.">        if (revisionCiblee &amp;&amp; mode != ReponseExamenRequest.ModePassage.ENTRAINEMENT) {</span>
 <span class="nc" id="L64">            throw new RuntimeException(&quot;La révision ciblée est réservée au mode ENTRAINEMENT.&quot;);</span>
         }
 
-<span class="fc bfc" id="L67" title="All 2 branches covered.">        if (mode == ReponseExamenRequest.ModePassage.CERTIFIANT</span>
-<span class="pc bpc" id="L68" title="1 of 2 branches missed.">                &amp;&amp; passageExamenRepository.existsByExamenIdAndFreelancerId(examenId, request.getFreelancerId())) {</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (mode == ReponseExamenRequest.ModePassage.CERTIFIANT</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">                &amp;&amp; passageExamenRepository.existsByExamenIdAndFreelancerId(examenId, request.getFreelancerId())) {</span>
 <span class="nc" id="L69">            throw new RuntimeException(&quot;Ce freelancer a déjà passé cet examen.&quot;);</span>
         }
 
-<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        TypeParcours typeParcours = request.getTypeParcours() != null ? request.getTypeParcours() : TypeParcours.STANDARD;</span>
-<span class="fc" id="L73">        List&lt;Question&gt; allQuestions = questionRepository.findByExamenIdOrderByOrdreAsc(examenId);</span>
-<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        if (allQuestions.isEmpty()) {</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        TypeParcours typeParcours = request.getTypeParcours() != null ? request.getTypeParcours() : TypeParcours.STANDARD;</span>
+<span class="nc" id="L73">        List&lt;Question&gt; allQuestions = questionRepository.findByExamenIdOrderByOrdreAsc(examenId);</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (allQuestions.isEmpty()) {</span>
 <span class="nc" id="L75">            throw new RuntimeException(&quot;Cet examen n'a pas de questions.&quot;);</span>
         }
-<span class="fc" id="L77">        List&lt;Question&gt; questions = QuestionParcoursFilter.filterForParcours(allQuestions, typeParcours);</span>
-<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (questions.isEmpty()) {</span>
+<span class="nc" id="L77">        List&lt;Question&gt; questions = QuestionParcoursFilter.filterForParcours(allQuestions, typeParcours);</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        if (questions.isEmpty()) {</span>
 <span class="nc" id="L79">            throw new RuntimeException(&quot;Aucune question pour ce parcours. Vérifiez les lots COMMUN/STANDARD/RENFORCEMENT.&quot;);</span>
         }
-<span class="pc bpc" id="L81" title="1 of 2 branches missed.">        if (revisionCiblee) {</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">        if (revisionCiblee) {</span>
 <span class="nc" id="L82">            Set&lt;Long&gt; ratées = new HashSet&lt;&gt;(</span>
 <span class="nc" id="L83">                    freelancerQuestionTraceService.listerQuestionIdsRatéesHistoriquement(request.getFreelancerId(), examenId));</span>
 <span class="nc" id="L84">            questions = questions.stream()</span>
@@ -91,8 +91,8 @@ public class PassageExamenService {
             }
         }
         /* Le minimum de questions ne s'applique qu'au passage certifiant (l'entraînement / révision peut être partiel). */
-<span class="fc bfc" id="L94" title="All 2 branches covered.">        boolean skipMinParcours = mode == ReponseExamenRequest.ModePassage.ENTRAINEMENT;</span>
-<span class="pc bpc" id="L95" title="1 of 4 branches missed.">        if (!skipMinParcours &amp;&amp; questions.size() &lt; ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN) {</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        boolean skipMinParcours = mode == ReponseExamenRequest.ModePassage.ENTRAINEMENT;</span>
+<span class="nc bnc" id="L95" title="All 4 branches missed.">        if (!skipMinParcours &amp;&amp; questions.size() &lt; ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN) {</span>
 <span class="nc" id="L96">            throw new RuntimeException(&quot;Cet examen doit contenir au moins &quot;</span>
                     + ExamenMetierConstants.MIN_QUESTIONS_PAR_EXAMEN
                     + &quot; questions pour ce parcours (actuellement : &quot;
@@ -100,12 +100,12 @@ public class PassageExamenService {
                     + &quot;). Complétez l'examen côté administration, ou utilisez le mode Entraînement pour réviser sans ce minimum.&quot;);
         }
 
-<span class="fc" id="L103">        List&lt;String&gt; reponses = request.getReponses();</span>
-<span class="pc bpc" id="L104" title="2 of 4 branches missed.">        if (reponses == null || reponses.size() != questions.size()) {</span>
+<span class="nc" id="L103">        List&lt;String&gt; reponses = request.getReponses();</span>
+<span class="nc bnc" id="L104" title="All 4 branches missed.">        if (reponses == null || reponses.size() != questions.size()) {</span>
 <span class="nc" id="L105">            throw new RuntimeException(&quot;Nombre de réponses incorrect. Attendu: &quot; + questions.size());</span>
         }
 
-<span class="fc" id="L108">        return construireResultatPassage(examen, examenId, request.getFreelancerId(), typeParcours, mode, questions, reponses);</span>
+<span class="nc" id="L108">        return construireResultatPassage(examen, examenId, request.getFreelancerId(), typeParcours, mode, questions, reponses);</span>
     }
 
     /**
@@ -153,113 +153,113 @@ public class PassageExamenService {
             List&lt;Question&gt; questions,
             List&lt;String&gt; reponses) {
 
-<span class="fc" id="L156">        int bonnes = 0;</span>
-<span class="fc" id="L157">        int pointsMax = 0;</span>
-<span class="fc" id="L158">        int pointsObtenus = 0;</span>
-<span class="fc" id="L159">        List&lt;CorrectionItemDto&gt; correction = new java.util.ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L160" title="All 2 branches covered.">        for (int i = 0; i &lt; questions.size(); i++) {</span>
-<span class="fc" id="L161">            Question q = questions.get(i);</span>
-<span class="pc bpc" id="L162" title="1 of 2 branches missed.">            String brute = i &lt; reponses.size() ? reponses.get(i) : null;</span>
-<span class="fc" id="L163">            String rep = QcmReponseNormalizer.extraireLettreReponse(brute);</span>
-<span class="fc" id="L164">            String bonne = QcmReponseNormalizer.extraireLettreBonneReponse(q.getBonneReponse());</span>
-<span class="fc" id="L165">            boolean ok = QcmReponseNormalizer.reponseQcmCorrecte(brute, q.getBonneReponse());</span>
-<span class="fc" id="L166">            int poids = QuestionDifficultyPonderation.poids(q.getNiveauDifficulte());</span>
-<span class="fc" id="L167">            pointsMax += poids;</span>
-<span class="fc bfc" id="L168" title="All 2 branches covered.">            if (ok) {</span>
-<span class="fc" id="L169">                bonnes++;</span>
-<span class="fc" id="L170">                pointsObtenus += poids;</span>
+<span class="nc" id="L156">        int bonnes = 0;</span>
+<span class="nc" id="L157">        int pointsMax = 0;</span>
+<span class="nc" id="L158">        int pointsObtenus = 0;</span>
+<span class="nc" id="L159">        List&lt;CorrectionItemDto&gt; correction = new java.util.ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        for (int i = 0; i &lt; questions.size(); i++) {</span>
+<span class="nc" id="L161">            Question q = questions.get(i);</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">            String brute = i &lt; reponses.size() ? reponses.get(i) : null;</span>
+<span class="nc" id="L163">            String rep = QcmReponseNormalizer.extraireLettreReponse(brute);</span>
+<span class="nc" id="L164">            String bonne = QcmReponseNormalizer.extraireLettreBonneReponse(q.getBonneReponse());</span>
+<span class="nc" id="L165">            boolean ok = QcmReponseNormalizer.reponseQcmCorrecte(brute, q.getBonneReponse());</span>
+<span class="nc" id="L166">            int poids = QuestionDifficultyPonderation.poids(q.getNiveauDifficulte());</span>
+<span class="nc" id="L167">            pointsMax += poids;</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">            if (ok) {</span>
+<span class="nc" id="L169">                bonnes++;</span>
+<span class="nc" id="L170">                pointsObtenus += poids;</span>
             }
-<span class="pc bpc" id="L172" title="1 of 2 branches missed.">            String nd = q.getNiveauDifficulte() != null ? q.getNiveauDifficulte().name() : &quot;MOYEN&quot;;</span>
-<span class="pc bpc" id="L173" title="1 of 2 branches missed.">            String explication = q.getExplication() != null ? q.getExplication().trim() : null;</span>
-<span class="pc bpc" id="L174" title="3 of 4 branches missed.">            if (explication != null &amp;&amp; explication.isEmpty()) {</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">            String nd = q.getNiveauDifficulte() != null ? q.getNiveauDifficulte().name() : &quot;MOYEN&quot;;</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">            String explication = q.getExplication() != null ? q.getExplication().trim() : null;</span>
+<span class="nc bnc" id="L174" title="All 4 branches missed.">            if (explication != null &amp;&amp; explication.isEmpty()) {</span>
 <span class="nc" id="L175">                explication = null;</span>
             }
-<span class="fc" id="L177">            correction.add(CorrectionItemDto.builder()</span>
-<span class="fc" id="L178">                    .questionId(q.getId())</span>
-<span class="fc" id="L179">                    .ordre(q.getOrdre())</span>
-<span class="fc" id="L180">                    .theme(q.getTheme())</span>
-<span class="fc" id="L181">                    .skill(effectiveSkillLabel(q))</span>
-<span class="fc" id="L182">                    .enonce(q.getEnonce())</span>
-<span class="fc bfc" id="L183" title="All 2 branches covered.">                    .reponseChoisie(rep.isEmpty() ? &quot;&quot; : rep)</span>
-<span class="pc bpc" id="L184" title="1 of 2 branches missed.">                    .bonneReponse(bonne.isEmpty() ? &quot;&quot; : bonne)</span>
-<span class="fc" id="L185">                    .correct(ok)</span>
-<span class="fc" id="L186">                    .niveauDifficulte(nd)</span>
-<span class="fc" id="L187">                    .poids(poids)</span>
-<span class="fc bfc" id="L188" title="All 2 branches covered.">                    .pointsSurQuestion(ok ? poids : 0)</span>
-<span class="fc" id="L189">                    .explication(explication)</span>
-<span class="fc" id="L190">                    .build());</span>
+<span class="nc" id="L177">            correction.add(CorrectionItemDto.builder()</span>
+<span class="nc" id="L178">                    .questionId(q.getId())</span>
+<span class="nc" id="L179">                    .ordre(q.getOrdre())</span>
+<span class="nc" id="L180">                    .theme(q.getTheme())</span>
+<span class="nc" id="L181">                    .skill(effectiveSkillLabel(q))</span>
+<span class="nc" id="L182">                    .enonce(q.getEnonce())</span>
+<span class="nc bnc" id="L183" title="All 2 branches missed.">                    .reponseChoisie(rep.isEmpty() ? &quot;&quot; : rep)</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">                    .bonneReponse(bonne.isEmpty() ? &quot;&quot; : bonne)</span>
+<span class="nc" id="L185">                    .correct(ok)</span>
+<span class="nc" id="L186">                    .niveauDifficulte(nd)</span>
+<span class="nc" id="L187">                    .poids(poids)</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">                    .pointsSurQuestion(ok ? poids : 0)</span>
+<span class="nc" id="L189">                    .explication(explication)</span>
+<span class="nc" id="L190">                    .build());</span>
         }
-<span class="fc" id="L192">        int scoreSansPonderation = QcmReponseNormalizer.pourcentagePlancher(bonnes, questions.size());</span>
-<span class="fc" id="L193">        int score = QuestionDifficultyPonderation.pourcentagePlancher(pointsObtenus, pointsMax);</span>
-<span class="fc" id="L194">        int erreurs = questions.size() - bonnes;</span>
-<span class="fc bfc" id="L195" title="All 2 branches covered.">        PassageExamen.ResultatExamen resultat = score &gt;= examen.getSeuilReussi()</span>
-<span class="fc" id="L196">                ? PassageExamen.ResultatExamen.REUSSI</span>
-<span class="fc" id="L197">                : PassageExamen.ResultatExamen.ECHOUE;</span>
+<span class="nc" id="L192">        int scoreSansPonderation = QcmReponseNormalizer.pourcentagePlancher(bonnes, questions.size());</span>
+<span class="nc" id="L193">        int score = QuestionDifficultyPonderation.pourcentagePlancher(pointsObtenus, pointsMax);</span>
+<span class="nc" id="L194">        int erreurs = questions.size() - bonnes;</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">        PassageExamen.ResultatExamen resultat = score &gt;= examen.getSeuilReussi()</span>
+<span class="nc" id="L196">                ? PassageExamen.ResultatExamen.REUSSI</span>
+<span class="nc" id="L197">                : PassageExamen.ResultatExamen.ECHOUE;</span>
 
         PassageExamenDto dto;
 
-<span class="fc bfc" id="L201" title="All 2 branches covered.">        if (mode == ReponseExamenRequest.ModePassage.CERTIFIANT) {</span>
-<span class="fc" id="L202">            PassageExamen passage = PassageExamen.builder()</span>
-<span class="fc" id="L203">                    .freelancerId(freelancerId)</span>
-<span class="fc" id="L204">                    .examen(examen)</span>
-<span class="fc" id="L205">                    .score(score)</span>
-<span class="fc" id="L206">                    .resultat(resultat)</span>
-<span class="fc" id="L207">                    .typeParcours(typeParcours)</span>
-<span class="fc" id="L208">                    .build();</span>
-<span class="fc" id="L209">            passage = passageExamenRepository.save(passage);</span>
-<span class="fc" id="L210">            dto = PassageExamenDto.fromEntity(passage);</span>
-<span class="pc bpc" id="L211" title="1 of 2 branches missed.">            if (passage.getResultat() == PassageExamen.ResultatExamen.REUSSI) {</span>
-<span class="fc" id="L212">                dto.setCertificat(certificatService.creerSiReussi(passage));</span>
-<span class="fc" id="L213">                certificatCarriereService.enrichirApresCertificat(dto, passage, examen);</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        if (mode == ReponseExamenRequest.ModePassage.CERTIFIANT) {</span>
+<span class="nc" id="L202">            PassageExamen passage = PassageExamen.builder()</span>
+<span class="nc" id="L203">                    .freelancerId(freelancerId)</span>
+<span class="nc" id="L204">                    .examen(examen)</span>
+<span class="nc" id="L205">                    .score(score)</span>
+<span class="nc" id="L206">                    .resultat(resultat)</span>
+<span class="nc" id="L207">                    .typeParcours(typeParcours)</span>
+<span class="nc" id="L208">                    .build();</span>
+<span class="nc" id="L209">            passage = passageExamenRepository.save(passage);</span>
+<span class="nc" id="L210">            dto = PassageExamenDto.fromEntity(passage);</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">            if (passage.getResultat() == PassageExamen.ResultatExamen.REUSSI) {</span>
+<span class="nc" id="L212">                dto.setCertificat(certificatService.creerSiReussi(passage));</span>
+<span class="nc" id="L213">                certificatCarriereService.enrichirApresCertificat(dto, passage, examen);</span>
             }
-<span class="fc" id="L215">        } else {</span>
-<span class="fc" id="L216">            dto = PassageExamenDto.builder()</span>
-<span class="fc" id="L217">                    .id(null)</span>
-<span class="fc" id="L218">                    .freelancerId(freelancerId)</span>
-<span class="fc" id="L219">                    .examenId(examen.getId())</span>
-<span class="fc" id="L220">                    .examenTitre(examen.getTitre())</span>
-<span class="fc" id="L221">                    .score(score)</span>
-<span class="fc" id="L222">                    .resultat(resultat)</span>
-<span class="fc" id="L223">                    .datePassage(java.time.LocalDateTime.now())</span>
-<span class="fc" id="L224">                    .typeParcours(typeParcours)</span>
-<span class="fc" id="L225">                    .build();</span>
+<span class="nc" id="L215">        } else {</span>
+<span class="nc" id="L216">            dto = PassageExamenDto.builder()</span>
+<span class="nc" id="L217">                    .id(null)</span>
+<span class="nc" id="L218">                    .freelancerId(freelancerId)</span>
+<span class="nc" id="L219">                    .examenId(examen.getId())</span>
+<span class="nc" id="L220">                    .examenTitre(examen.getTitre())</span>
+<span class="nc" id="L221">                    .score(score)</span>
+<span class="nc" id="L222">                    .resultat(resultat)</span>
+<span class="nc" id="L223">                    .datePassage(java.time.LocalDateTime.now())</span>
+<span class="nc" id="L224">                    .typeParcours(typeParcours)</span>
+<span class="nc" id="L225">                    .build();</span>
         }
 
-<span class="fc" id="L228">        dto.setCorrection(correction);</span>
-<span class="fc" id="L229">        dto.setScoreParSkill(buildScoreParSkill(questions, reponses));</span>
-<span class="fc" id="L230">        dto.setMode(mode);</span>
-<span class="fc" id="L231">        dto.setTotalQuestions(questions.size());</span>
-<span class="fc" id="L232">        dto.setBonnesReponses(bonnes);</span>
-<span class="fc" id="L233">        dto.setScoreSansPonderation(scoreSansPonderation);</span>
-<span class="fc" id="L234">        dto.setPointsMax(pointsMax);</span>
-<span class="fc" id="L235">        dto.setPointsObtenus(pointsObtenus);</span>
-<span class="fc" id="L236">        dto.setTypeParcours(typeParcours);</span>
-<span class="fc" id="L237">        dto.setAnalyseErreurs(buildAnalyseErreurs(questions, reponses));</span>
-<span class="fc" id="L238">        dto.setMessageFeedback(buildMessageFeedback(score, examen.getSeuilReussi(), erreurs));</span>
-<span class="fc" id="L239">        dto.setEvaluationRisque(parcoursApprenantService.evaluerRisque(freelancerId, examenId));</span>
-<span class="fc bfc" id="L240" title="All 2 branches covered.">        if (bonnes &lt; questions.size()) {</span>
-<span class="fc" id="L241">            dto.setModulesRevisionCibles(</span>
-<span class="fc" id="L242">                    parcoursApprenantService.proposerModulesRevision(questions, reponses, examen.getFormationId()));</span>
+<span class="nc" id="L228">        dto.setCorrection(correction);</span>
+<span class="nc" id="L229">        dto.setScoreParSkill(buildScoreParSkill(questions, reponses));</span>
+<span class="nc" id="L230">        dto.setMode(mode);</span>
+<span class="nc" id="L231">        dto.setTotalQuestions(questions.size());</span>
+<span class="nc" id="L232">        dto.setBonnesReponses(bonnes);</span>
+<span class="nc" id="L233">        dto.setScoreSansPonderation(scoreSansPonderation);</span>
+<span class="nc" id="L234">        dto.setPointsMax(pointsMax);</span>
+<span class="nc" id="L235">        dto.setPointsObtenus(pointsObtenus);</span>
+<span class="nc" id="L236">        dto.setTypeParcours(typeParcours);</span>
+<span class="nc" id="L237">        dto.setAnalyseErreurs(buildAnalyseErreurs(questions, reponses));</span>
+<span class="nc" id="L238">        dto.setMessageFeedback(buildMessageFeedback(score, examen.getSeuilReussi(), erreurs));</span>
+<span class="nc" id="L239">        dto.setEvaluationRisque(parcoursApprenantService.evaluerRisque(freelancerId, examenId));</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">        if (bonnes &lt; questions.size()) {</span>
+<span class="nc" id="L241">            dto.setModulesRevisionCibles(</span>
+<span class="nc" id="L242">                    parcoursApprenantService.proposerModulesRevision(questions, reponses, examen.getFormationId()));</span>
         }
 
-<span class="fc" id="L245">        List&lt;Map&lt;String, Object&gt;&gt; formations = formationClient.getRecommandationsForFreelancer(freelancerId);</span>
-<span class="fc" id="L246">        dto.setFormationsRecommandees(formations.stream().map(f -&gt; FormationRecoDto.builder()</span>
-<span class="pc bpc" id="L247" title="1 of 2 branches missed.">                .id(f.get(&quot;id&quot;) != null ? Long.valueOf(f.get(&quot;id&quot;).toString()) : null)</span>
-<span class="pc bpc" id="L248" title="1 of 2 branches missed.">                .titre(f.get(&quot;titre&quot;) != null ? f.get(&quot;titre&quot;).toString() : null)</span>
-<span class="pc bpc" id="L249" title="1 of 2 branches missed.">                .typeFormation(f.get(&quot;typeFormation&quot;) != null ? f.get(&quot;typeFormation&quot;).toString() : null)</span>
-<span class="pc bpc" id="L250" title="1 of 2 branches missed.">                .niveau(f.get(&quot;niveau&quot;) != null ? f.get(&quot;niveau&quot;).toString() : null)</span>
-<span class="pc bpc" id="L251" title="1 of 2 branches missed.">                .statut(f.get(&quot;statut&quot;) != null ? f.get(&quot;statut&quot;).toString() : null)</span>
-<span class="pc bpc" id="L252" title="1 of 2 branches missed.">                .dateDebut(f.get(&quot;dateDebut&quot;) != null ? f.get(&quot;dateDebut&quot;).toString() : null)</span>
-<span class="pc bpc" id="L253" title="1 of 2 branches missed.">                .dateFin(f.get(&quot;dateFin&quot;) != null ? f.get(&quot;dateFin&quot;).toString() : null)</span>
-<span class="fc" id="L254">                .lienDirect(buildFormationLink(f.get(&quot;id&quot;)))</span>
-<span class="fc" id="L255">                .build()).collect(Collectors.toList()));</span>
+<span class="nc" id="L245">        List&lt;Map&lt;String, Object&gt;&gt; formations = formationClient.getRecommandationsForFreelancer(freelancerId);</span>
+<span class="nc" id="L246">        dto.setFormationsRecommandees(formations.stream().map(f -&gt; FormationRecoDto.builder()</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">                .id(f.get(&quot;id&quot;) != null ? Long.valueOf(f.get(&quot;id&quot;).toString()) : null)</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">                .titre(f.get(&quot;titre&quot;) != null ? f.get(&quot;titre&quot;).toString() : null)</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">                .typeFormation(f.get(&quot;typeFormation&quot;) != null ? f.get(&quot;typeFormation&quot;).toString() : null)</span>
+<span class="nc bnc" id="L250" title="All 2 branches missed.">                .niveau(f.get(&quot;niveau&quot;) != null ? f.get(&quot;niveau&quot;).toString() : null)</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">                .statut(f.get(&quot;statut&quot;) != null ? f.get(&quot;statut&quot;).toString() : null)</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">                .dateDebut(f.get(&quot;dateDebut&quot;) != null ? f.get(&quot;dateDebut&quot;).toString() : null)</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">                .dateFin(f.get(&quot;dateFin&quot;) != null ? f.get(&quot;dateFin&quot;).toString() : null)</span>
+<span class="nc" id="L254">                .lienDirect(buildFormationLink(f.get(&quot;id&quot;)))</span>
+<span class="nc" id="L255">                .build()).collect(Collectors.toList()));</span>
 
-<span class="fc" id="L257">        freelancerQuestionTraceService.enregistrerResultats(freelancerId, questions, reponses);</span>
-<span class="fc bfc" id="L258" title="All 2 branches covered.">        if (mode == ReponseExamenRequest.ModePassage.ENTRAINEMENT) {</span>
-<span class="fc" id="L259">            freelancerThemeScoreLogService.enregistrerScoresParTheme(freelancerId, examen.getId(), questions, reponses);</span>
+<span class="nc" id="L257">        freelancerQuestionTraceService.enregistrerResultats(freelancerId, questions, reponses);</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">        if (mode == ReponseExamenRequest.ModePassage.ENTRAINEMENT) {</span>
+<span class="nc" id="L259">            freelancerThemeScoreLogService.enregistrerScoresParTheme(freelancerId, examen.getId(), questions, reponses);</span>
         }
 
-<span class="fc" id="L262">        return dto;</span>
+<span class="nc" id="L262">        return dto;</span>
     }
 
     @Transactional(readOnly = true)
@@ -289,66 +289,66 @@ public class PassageExamenService {
     }
 
     private static String effectiveSkillLabel(Question q) {
-<span class="pc bpc" id="L292" title="3 of 4 branches missed.">        if (q.getSkill() != null &amp;&amp; !q.getSkill().isBlank()) {</span>
+<span class="nc bnc" id="L292" title="All 4 branches missed.">        if (q.getSkill() != null &amp;&amp; !q.getSkill().isBlank()) {</span>
 <span class="nc" id="L293">            return q.getSkill().trim();</span>
         }
-<span class="pc bpc" id="L295" title="3 of 4 branches missed.">        if (q.getTheme() != null &amp;&amp; !q.getTheme().isBlank()) {</span>
+<span class="nc bnc" id="L295" title="All 4 branches missed.">        if (q.getTheme() != null &amp;&amp; !q.getTheme().isBlank()) {</span>
 <span class="nc" id="L296">            return q.getTheme().trim();</span>
         }
-<span class="fc" id="L298">        return &quot;Autres&quot;;</span>
+<span class="nc" id="L298">        return &quot;Autres&quot;;</span>
     }
 
     private List&lt;SkillScoreDto&gt; buildScoreParSkill(List&lt;Question&gt; questions, List&lt;String&gt; reponses) {
-<span class="fc" id="L302">        Map&lt;String, int[]&gt; agg = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L303" title="All 2 branches covered.">        for (int i = 0; i &lt; questions.size(); i++) {</span>
-<span class="fc" id="L304">            Question q = questions.get(i);</span>
-<span class="fc" id="L305">            String skill = effectiveSkillLabel(q);</span>
-<span class="pc bpc" id="L306" title="1 of 2 branches missed.">            String brute = i &lt; reponses.size() ? reponses.get(i) : null;</span>
-<span class="fc" id="L307">            boolean ok = QcmReponseNormalizer.reponseQcmCorrecte(brute, q.getBonneReponse());</span>
-<span class="fc" id="L308">            int poids = QuestionDifficultyPonderation.poids(q.getNiveauDifficulte());</span>
-<span class="fc" id="L309">            int[] row = agg.computeIfAbsent(skill, k -&gt; new int[4]);</span>
-<span class="fc" id="L310">            row[1] += poids;</span>
-<span class="fc" id="L311">            row[3] += 1;</span>
-<span class="fc bfc" id="L312" title="All 2 branches covered.">            if (ok) {</span>
-<span class="fc" id="L313">                row[0] += poids;</span>
-<span class="fc" id="L314">                row[2] += 1;</span>
+<span class="nc" id="L302">        Map&lt;String, int[]&gt; agg = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L303" title="All 2 branches missed.">        for (int i = 0; i &lt; questions.size(); i++) {</span>
+<span class="nc" id="L304">            Question q = questions.get(i);</span>
+<span class="nc" id="L305">            String skill = effectiveSkillLabel(q);</span>
+<span class="nc bnc" id="L306" title="All 2 branches missed.">            String brute = i &lt; reponses.size() ? reponses.get(i) : null;</span>
+<span class="nc" id="L307">            boolean ok = QcmReponseNormalizer.reponseQcmCorrecte(brute, q.getBonneReponse());</span>
+<span class="nc" id="L308">            int poids = QuestionDifficultyPonderation.poids(q.getNiveauDifficulte());</span>
+<span class="nc" id="L309">            int[] row = agg.computeIfAbsent(skill, k -&gt; new int[4]);</span>
+<span class="nc" id="L310">            row[1] += poids;</span>
+<span class="nc" id="L311">            row[3] += 1;</span>
+<span class="nc bnc" id="L312" title="All 2 branches missed.">            if (ok) {</span>
+<span class="nc" id="L313">                row[0] += poids;</span>
+<span class="nc" id="L314">                row[2] += 1;</span>
             }
         }
-<span class="fc" id="L317">        return agg.entrySet().stream()</span>
-<span class="fc" id="L318">                .map(e -&gt; {</span>
-<span class="fc" id="L319">                    int[] r = e.getValue();</span>
-<span class="fc" id="L320">                    int pct = QuestionDifficultyPonderation.pourcentagePlancher(r[0], r[1]);</span>
-<span class="fc" id="L321">                    return SkillScoreDto.builder()</span>
-<span class="fc" id="L322">                            .skill(e.getKey())</span>
-<span class="fc" id="L323">                            .pointsObtenus(r[0])</span>
-<span class="fc" id="L324">                            .pointsMax(r[1])</span>
-<span class="fc" id="L325">                            .pourcentage(pct)</span>
-<span class="fc" id="L326">                            .bonnesReponses(r[2])</span>
-<span class="fc" id="L327">                            .totalQuestions(r[3])</span>
-<span class="fc" id="L328">                            .build();</span>
+<span class="nc" id="L317">        return agg.entrySet().stream()</span>
+<span class="nc" id="L318">                .map(e -&gt; {</span>
+<span class="nc" id="L319">                    int[] r = e.getValue();</span>
+<span class="nc" id="L320">                    int pct = QuestionDifficultyPonderation.pourcentagePlancher(r[0], r[1]);</span>
+<span class="nc" id="L321">                    return SkillScoreDto.builder()</span>
+<span class="nc" id="L322">                            .skill(e.getKey())</span>
+<span class="nc" id="L323">                            .pointsObtenus(r[0])</span>
+<span class="nc" id="L324">                            .pointsMax(r[1])</span>
+<span class="nc" id="L325">                            .pourcentage(pct)</span>
+<span class="nc" id="L326">                            .bonnesReponses(r[2])</span>
+<span class="nc" id="L327">                            .totalQuestions(r[3])</span>
+<span class="nc" id="L328">                            .build();</span>
                 })
-<span class="fc" id="L330">                .sorted(Comparator.comparing(SkillScoreDto::getSkill, String.CASE_INSENSITIVE_ORDER))</span>
-<span class="fc" id="L331">                .collect(Collectors.toList());</span>
+<span class="nc" id="L330">                .sorted(Comparator.comparing(SkillScoreDto::getSkill, String.CASE_INSENSITIVE_ORDER))</span>
+<span class="nc" id="L331">                .collect(Collectors.toList());</span>
     }
 
     private String buildFormationLink(Object formationIdRaw) {
-<span class="pc bpc" id="L335" title="1 of 2 branches missed.">        if (formationIdRaw == null) return null;</span>
-<span class="pc bpc" id="L336" title="1 of 2 branches missed.">        String base = frontendBaseUrl == null ? &quot;&quot; : frontendBaseUrl.replaceAll(&quot;/+$&quot;, &quot;&quot;);</span>
-<span class="fc" id="L337">        return base + &quot;/formations/&quot; + formationIdRaw;</span>
+<span class="nc bnc" id="L335" title="All 2 branches missed.">        if (formationIdRaw == null) return null;</span>
+<span class="nc bnc" id="L336" title="All 2 branches missed.">        String base = frontendBaseUrl == null ? &quot;&quot; : frontendBaseUrl.replaceAll(&quot;/+$&quot;, &quot;&quot;);</span>
+<span class="nc" id="L337">        return base + &quot;/formations/&quot; + formationIdRaw;</span>
     }
 
     private List&lt;String&gt; buildAnalyseErreurs(List&lt;Question&gt; questions, List&lt;String&gt; reponses) {
-<span class="fc" id="L341">        List&lt;String&gt; axes = new java.util.ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L342" title="All 2 branches covered.">        for (int i = 0; i &lt; questions.size(); i++) {</span>
-<span class="pc bpc" id="L343" title="1 of 2 branches missed.">            String brute = i &lt; reponses.size() ? reponses.get(i) : null;</span>
-<span class="fc bfc" id="L344" title="All 2 branches covered.">            if (!QcmReponseNormalizer.reponseQcmCorrecte(brute, questions.get(i).getBonneReponse())) {</span>
-<span class="fc" id="L345">                axes.add(libelleAxeRevisionPourApprenant(questions.get(i), i + 1));</span>
+<span class="nc" id="L341">        List&lt;String&gt; axes = new java.util.ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L342" title="All 2 branches missed.">        for (int i = 0; i &lt; questions.size(); i++) {</span>
+<span class="nc bnc" id="L343" title="All 2 branches missed.">            String brute = i &lt; reponses.size() ? reponses.get(i) : null;</span>
+<span class="nc bnc" id="L344" title="All 2 branches missed.">            if (!QcmReponseNormalizer.reponseQcmCorrecte(brute, questions.get(i).getBonneReponse())) {</span>
+<span class="nc" id="L345">                axes.add(libelleAxeRevisionPourApprenant(questions.get(i), i + 1));</span>
             }
         }
-<span class="fc bfc" id="L348" title="All 2 branches covered.">        if (axes.isEmpty()) {</span>
-<span class="fc" id="L349">            axes.add(&quot;Aucun axe critique: excellentes réponses.&quot;);</span>
+<span class="nc bnc" id="L348" title="All 2 branches missed.">        if (axes.isEmpty()) {</span>
+<span class="nc" id="L349">            axes.add(&quot;Aucun axe critique: excellentes réponses.&quot;);</span>
         }
-<span class="fc" id="L351">        return axes.stream().distinct().limit(5).collect(Collectors.toList());</span>
+<span class="nc" id="L351">        return axes.stream().distinct().limit(5).collect(Collectors.toList());</span>
     }
 
     /**
@@ -356,11 +356,11 @@ public class PassageExamenService {
      * extrait d’énoncé un peu plus long, et thème en rappel si ce n’est pas déjà dans l’énoncé.
      */
     private String libelleAxeRevisionPourApprenant(Question q, int numeroQuestionDansExamen) {
-<span class="pc bpc" id="L359" title="1 of 2 branches missed.">        String enonce = q.getEnonce() != null ? q.getEnonce().trim() : &quot;&quot;;</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">        String enonce = q.getEnonce() != null ? q.getEnonce().trim() : &quot;&quot;;</span>
         String corps;
-<span class="pc bpc" id="L361" title="1 of 2 branches missed.">        if (!isEnoncePlaceholderOuNonFinalise(enonce)) {</span>
-<span class="fc" id="L362">            corps = shorten(enonce, 120);</span>
-<span class="pc bpc" id="L363" title="3 of 4 branches missed.">            if (q.getTheme() != null &amp;&amp; !q.getTheme().isBlank()) {</span>
+<span class="nc bnc" id="L361" title="All 2 branches missed.">        if (!isEnoncePlaceholderOuNonFinalise(enonce)) {</span>
+<span class="nc" id="L362">            corps = shorten(enonce, 120);</span>
+<span class="nc bnc" id="L363" title="All 4 branches missed.">            if (q.getTheme() != null &amp;&amp; !q.getTheme().isBlank()) {</span>
 <span class="nc" id="L364">                String theme = q.getTheme().trim();</span>
 <span class="nc bnc" id="L365" title="All 2 branches missed.">                if (!contientIgnoreCase(enonce, theme)) {</span>
 <span class="nc" id="L366">                    corps = corps + &quot; · thème : &quot; + shorten(theme, 48);</span>
@@ -376,7 +376,7 @@ public class PassageExamenService {
 <span class="nc" id="L376">                corps = &quot;énoncé ou support encore à finaliser côté formation — rapprochez-vous du formateur ou du programme&quot;;</span>
             }
         }
-<span class="fc" id="L379">        return &quot;Question n°&quot; + numeroQuestionDansExamen + &quot; — À revoir : &quot; + corps;</span>
+<span class="nc" id="L379">        return &quot;Question n°&quot; + numeroQuestionDansExamen + &quot; — À revoir : &quot; + corps;</span>
     }
 
     private static boolean contientIgnoreCase(String enonce, String fragment) {
@@ -387,17 +387,17 @@ public class PassageExamenService {
     }
 
     private static boolean isEnoncePlaceholderOuNonFinalise(String enonce) {
-<span class="pc bpc" id="L390" title="2 of 4 branches missed.">        if (enonce == null || enonce.isBlank()) {</span>
+<span class="nc bnc" id="L390" title="All 4 branches missed.">        if (enonce == null || enonce.isBlank()) {</span>
 <span class="nc" id="L391">            return true;</span>
         }
-<span class="fc" id="L393">        String lower = enonce.toLowerCase();</span>
-<span class="pc bpc" id="L394" title="1 of 2 branches missed.">        if (lower.contains(&quot;à compléter par le formateur&quot;)) {</span>
+<span class="nc" id="L393">        String lower = enonce.toLowerCase();</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">        if (lower.contains(&quot;à compléter par le formateur&quot;)) {</span>
 <span class="nc" id="L395">            return true;</span>
         }
-<span class="pc bpc" id="L397" title="3 of 4 branches missed.">        if (lower.contains(&quot;(option a)&quot;) &amp;&amp; lower.contains(&quot;(option b)&quot;)) {</span>
+<span class="nc bnc" id="L397" title="All 4 branches missed.">        if (lower.contains(&quot;(option a)&quot;) &amp;&amp; lower.contains(&quot;(option b)&quot;)) {</span>
 <span class="nc" id="L398">            return true;</span>
         }
-<span class="fc" id="L400">        return enonce.matches(&quot;(?i)Question\\s+\\d+\\s*[—\\-–]\\s*à compléter.*&quot;);</span>
+<span class="nc" id="L400">        return enonce.matches(&quot;(?i)Question\\s+\\d+\\s*[—\\-–]\\s*à compléter.*&quot;);</span>
     }
 
     private static String extraireTitreModuleDepuisEnonce(String enonce) {
@@ -420,20 +420,20 @@ public class PassageExamenService {
     }
 
     private String buildMessageFeedback(int score, Integer seuil, int erreurs) {
-<span class="pc bpc" id="L423" title="1 of 2 branches missed.">        int seuilSafe = seuil != null ? seuil : 60;</span>
-<span class="fc bfc" id="L424" title="All 2 branches covered.">        if (score &gt;= seuilSafe) {</span>
-<span class="fc bfc" id="L425" title="All 2 branches covered.">            if (score &gt;= 85) return &quot;Excellent resultat. Continue avec des formations avancees pour renforcer ton expertise.&quot;;</span>
-<span class="fc" id="L426">            return &quot;Bon resultat. Tu es admis, mais quelques revisions ciblees peuvent te faire passer au niveau superieur.&quot;;</span>
+<span class="nc bnc" id="L423" title="All 2 branches missed.">        int seuilSafe = seuil != null ? seuil : 60;</span>
+<span class="nc bnc" id="L424" title="All 2 branches missed.">        if (score &gt;= seuilSafe) {</span>
+<span class="nc bnc" id="L425" title="All 2 branches missed.">            if (score &gt;= 85) return &quot;Excellent resultat. Continue avec des formations avancees pour renforcer ton expertise.&quot;;</span>
+<span class="nc" id="L426">            return &quot;Bon resultat. Tu es admis, mais quelques revisions ciblees peuvent te faire passer au niveau superieur.&quot;;</span>
         }
-<span class="pc bpc" id="L428" title="1 of 2 branches missed.">        if (erreurs &gt;= 3) {</span>
-<span class="fc" id="L429">            return &quot;Resultat insuffisant. Recommande: refaire en mode entrainement et suivre les formations suggerees avant une nouvelle tentative.&quot;;</span>
+<span class="nc bnc" id="L428" title="All 2 branches missed.">        if (erreurs &gt;= 3) {</span>
+<span class="nc" id="L429">            return &quot;Resultat insuffisant. Recommande: refaire en mode entrainement et suivre les formations suggerees avant une nouvelle tentative.&quot;;</span>
         }
 <span class="nc" id="L431">        return &quot;Resultat proche du seuil. Revois les points faibles identifies puis repasse en mode certifiant.&quot;;</span>
     }
 
     private String shorten(String value, int max) {
-<span class="pc bpc" id="L435" title="1 of 2 branches missed.">        if (value == null) return &quot;&quot;;</span>
-<span class="pc bpc" id="L436" title="1 of 2 branches missed.">        if (value.length() &lt;= max) return value;</span>
+<span class="nc bnc" id="L435" title="All 2 branches missed.">        if (value == null) return &quot;&quot;;</span>
+<span class="nc bnc" id="L436" title="All 2 branches missed.">        if (value.length() &lt;= max) return value;</span>
 <span class="nc" id="L437">        return value.substring(0, Math.max(0, max - 3)) + &quot;...&quot;;</span>
     }
 }

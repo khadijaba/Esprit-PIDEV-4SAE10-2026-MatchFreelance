@@ -31,12 +31,11 @@ node {
                         git init .
                         git remote add origin '${repoUrl}' || git remote set-url origin '${repoUrl}'
                         git config core.sparseCheckout true
-                        git config remote.origin.promisor true
-                        git config remote.origin.partialclonefilter blob:none
                         mkdir -p .git/info
                         printf '${moduleDir}\\n' > .git/info/sparse-checkout
                         git -c protocol.version=2 fetch --no-tags --depth=1 origin '${branch}'
-                        git checkout -f FETCH_HEAD
+                        git -c advice.detachedHead=false checkout --force --detach FETCH_HEAD
+                        test -d '${moduleDir}'
                     """
                 }
             }
