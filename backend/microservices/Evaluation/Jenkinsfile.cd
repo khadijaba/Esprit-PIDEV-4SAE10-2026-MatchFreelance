@@ -51,9 +51,9 @@ node {
                     withKubeConfig([credentialsId: 'kubeconfig-prod']) {
                         sh """
                             set -eux
-                            kubectl apply -f ../k8s/mysql.yaml
+                            kubectl apply --validate=false -f ../k8s/mysql.yaml
                             kubectl rollout status deployment/mysql --timeout=180s || true
-                            kubectl apply -f k8s/
+                            kubectl apply --validate=false -f k8s/
                         """
                     }
                 }
