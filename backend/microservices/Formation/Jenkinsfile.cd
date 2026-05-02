@@ -4,6 +4,8 @@ node {
     def moduleDir = 'backend/microservices/Formation'
     def k8sSshRemote = 'ubuntu@192.168.246.132'
     def k8sSshCredentials = 'vm-k8s-ssh'
+    def nsMysql = 'mysql'
+    def nsApp = 'formation'
 
     def jdkHome = tool(name: 'JDK17', type: 'hudson.model.JDK')
     if (!jdkHome?.trim()) {
@@ -51,7 +53,7 @@ node {
                             \${SCP} ../k8s/mysql.yaml ${k8sSshRemote}:/tmp/mysql.yaml
                             \${SSH} ${k8sSshRemote} 'mkdir -p /tmp/jenkins-formation-k8s'
                             \${SCP} k8s/deployment.yaml k8s/service.yaml ${k8sSshRemote}:/tmp/jenkins-formation-k8s/
-                            \${SSH} ${k8sSshRemote} 'kubectl apply --validate=false -f /tmp/mysql.yaml && (kubectl rollout status deployment/mysql --timeout=180s || true) && kubectl apply --validate=false -f /tmp/jenkins-formation-k8s/'
+                            \${SSH} ${k8sSshRemote} 'kubectl apply --validate=false -f /tmp/mysql.yaml && kubectl rollout status deployment/mysql -n ${nsMysql} --timeout=180s && kubectl apply --validate=false -f /tmp/jenkins-formation-k8s/'
                         """
                     }
                 }
@@ -61,7 +63,7 @@ node {
                 sshagent([k8sSshCredentials]) {
                     sh """
                         set -eux
-                        ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 ${k8sSshRemote} 'kubectl rollout status deployment/formation --timeout=120s && kubectl get pods -l app=formation -o wide && kubectl get svc formation'
+                        ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 ${k8sSshRemote} 'kubectl rollout status deployment/formation -n ${nsApp} --timeout=120s && kubectl get pods -n ${nsApp} -l app=formation -o wide && kubectl get svc formation -n ${nsApp}'
                     """
                 }
             }
