@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: evaluation
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/manifest-generate-timeout: 600s
 spec:
   project: default
   source:

@@ -24,4 +24,21 @@ resource "helm_release" "argocd" {
     name  = "server.service.nodePortHttps"
     value = "30809"
   }
+
+  # Gros dépôt Git (~300 Mo+) : sans ça, le repo-server dépasse souvent le délai → ComparisonError / DeadlineExceeded.
+  values = [
+    yamlencode({
+      controller = {
+        extraArgs = ["--repo-server-timeout-seconds=600"]
+      }
+      repoServer = {
+        env = [
+          {
+            name  = "ARGOCD_EXEC_TIMEOUT"
+            value = "900s"
+          }
+        ]
+      }
+    })
+  ]
 }

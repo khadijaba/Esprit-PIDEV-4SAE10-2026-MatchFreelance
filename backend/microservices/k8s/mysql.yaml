@@ -21,8 +21,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
+  namespace: mysql
   labels:
     app: mysql
+    env: production
+    team: khadijaba
+    version: "1.0"
 spec:
   selector:
     matchLabels:
@@ -43,5 +47,18 @@ spec:
           env:
             - name: MYSQL_ROOT_PASSWORD
               value: "root"
+          # VM / petit nœud : sans ça MySQL ~350Mi+ et le kubelet évince le pod (mémoire nœud saturée).
+          args:
+            - --innodb_buffer_pool_size=64M
+            - --performance_schema=OFF
+            - --max_connections=50
+            - --table_open_cache=64
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
           ports:
             - containerPort: 3306

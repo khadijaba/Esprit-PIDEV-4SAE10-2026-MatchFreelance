@@ -5,6 +5,8 @@ kind: Application
 metadata:
   name: mysql
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/manifest-generate-timeout: 600s
 spec:
   project: default
   source:
