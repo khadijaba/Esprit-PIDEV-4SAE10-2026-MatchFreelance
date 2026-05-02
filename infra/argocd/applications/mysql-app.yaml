@@ -1,0 +1,22 @@
+# kubectl apply -n argocd -f mysql-app.yaml
+# (après installation d'Argo CD et création du secret repo si dépôt privé)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mysql
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git
+    targetRevision: douja
+    path: backend/microservices/k8s
+    directory:
+      include: mysql.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

@@ -58,7 +58,7 @@ node {
                             \${SCP} ../k8s/mysql.yaml ${k8sSshRemote}:/tmp/mysql.yaml
                             \${SSH} ${k8sSshRemote} 'mkdir -p /tmp/jenkins-eval-k8s'
                             \${SCP} k8s/deployment.yaml k8s/service.yaml ${k8sSshRemote}:/tmp/jenkins-eval-k8s/
-                            \${SSH} ${k8sSshRemote} 'kubectl apply -f /tmp/mysql.yaml && (kubectl rollout status deployment/mysql --timeout=180s || true) && kubectl apply -f /tmp/jenkins-eval-k8s/'
+                            \${SSH} ${k8sSshRemote} 'kubectl apply --validate=false -f /tmp/mysql.yaml && (kubectl rollout status deployment/mysql --timeout=180s || true) && kubectl apply --validate=false -f /tmp/jenkins-eval-k8s/'
                         """
                     }
                 }
