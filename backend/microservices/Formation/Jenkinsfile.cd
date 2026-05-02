@@ -2,6 +2,8 @@ node {
     def repoUrl = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
     def branch = 'douja'
     def moduleDir = 'backend/microservices/Formation'
+    def k8sSshRemote = 'ubuntu@192.168.246.132'
+    def k8sSshCredentials = 'vm-k8s-ssh'
 
     def jdkHome = tool(name: 'JDK17', type: 'hudson.model.JDK')
     if (!jdkHome?.trim()) {
@@ -41,27 +43,26 @@ node {
 
             stage('Deploy Kubernetes') {
                 dir(moduleDir) {
-                    withKubeConfig([credentialsId: 'kubeconfig-prod']) {
+                    sshagent([k8sSshCredentials]) {
                         sh """
                             set -eux
-                            kubectl apply --validate=false -f ../k8s/mysql.yaml
-                            kubectl rollout status deployment/mysql --timeout=180s || true
-                            kubectl apply --validate=false -f k8s/
+                            SSH='ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30'
+                            SCP='scp -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30'
+                            \${SCP} ../k8s/mysql.yaml ${k8sSshRemote}:/tmp/mysql.yaml
+                            \${SSH} ${k8sSshRemote} 'mkdir -p /tmp/jenkins-formation-k8s'
+                            \${SCP} k8s/deployment.yaml k8s/service.yaml ${k8sSshRemote}:/tmp/jenkins-formation-k8s/
+                            \${SSH} ${k8sSshRemote} 'kubectl apply -f /tmp/mysql.yaml && (kubectl rollout status deployment/mysql --timeout=180s || true) && kubectl apply -f /tmp/jenkins-formation-k8s/'
                         """
                     }
                 }
             }
 
             stage('Monitoring') {
-                dir(moduleDir) {
-                    withKubeConfig([credentialsId: 'kubeconfig-prod']) {
-                        sh """
-                            set -eux
-                            kubectl rollout status deployment/formation --timeout=120s
-                            kubectl get pods -l app=formation -o wide
-                            kubectl get svc formation
-                        """
-                    }
+                sshagent([k8sSshCredentials]) {
+                    sh """
+                        set -eux
+                        ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 ${k8sSshRemote} 'kubectl rollout status deployment/formation --timeout=120s && kubectl get pods -l app=formation -o wide && kubectl get svc formation'
+                    """
                 }
             }
         }
