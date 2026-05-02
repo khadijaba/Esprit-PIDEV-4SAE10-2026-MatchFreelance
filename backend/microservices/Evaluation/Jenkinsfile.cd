@@ -36,7 +36,10 @@ node {
                         extensions: [
                             [$class: 'CleanBeforeCheckout'],
                             [$class: 'PruneStaleBranch'],
-                            [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: moduleDir]]],
+                            [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [
+                                [path: moduleDir],
+                                [path: 'backend/microservices/k8s']
+                            ]],
                             [$class: 'CloneOption', shallow: true, depth: 1, noTags: true, timeout: 30, honorRefspec: true, reference: '']
                         ]
                     ])
@@ -48,6 +51,8 @@ node {
                     withKubeConfig([credentialsId: 'kubeconfig-prod']) {
                         sh """
                             set -eux
+                            kubectl apply -f ../k8s/mysql.yaml
+                            kubectl rollout status deployment/mysql --timeout=180s || true
                             kubectl apply -f k8s/
                         """
                     }

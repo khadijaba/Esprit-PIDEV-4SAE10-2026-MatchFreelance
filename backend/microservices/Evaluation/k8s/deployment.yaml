@@ -24,7 +24,7 @@ spec:
             - name: SPRING_DATASOURCE_USERNAME
               value: root
             - name: SPRING_DATASOURCE_PASSWORD
-              value: ""
+              value: "root"
             - name: EUREKA_CLIENT_ENABLED
               value: "false"
             - name: SPRING_CLOUD_CONFIG_ENABLED

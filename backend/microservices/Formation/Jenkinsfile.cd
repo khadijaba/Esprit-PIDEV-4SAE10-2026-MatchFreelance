@@ -32,7 +32,7 @@ node {
                         git config remote.origin.promisor true
                         git config remote.origin.partialclonefilter blob:none
                         mkdir -p .git/info
-                        printf '${moduleDir}\\n' > .git/info/sparse-checkout
+                        printf '%s\\n' '${moduleDir}' 'backend/microservices/k8s' > .git/info/sparse-checkout
                         git -c protocol.version=2 fetch --no-tags --depth=1 origin '${branch}'
                         git checkout -f FETCH_HEAD
                     """
@@ -44,6 +44,8 @@ node {
                     withKubeConfig([credentialsId: 'kubeconfig-prod']) {
                         sh """
                             set -eux
+                            kubectl apply -f ../k8s/mysql.yaml
+                            kubectl rollout status deployment/mysql --timeout=180s || true
                             kubectl apply -f k8s/
                         """
                     }
