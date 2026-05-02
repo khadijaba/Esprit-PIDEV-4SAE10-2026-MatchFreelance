@@ -29,13 +29,13 @@ resource "helm_release" "argocd" {
   values = [
     yamlencode({
       controller = {
-        extraArgs = ["--repo-server-timeout-seconds=600"]
+        extraArgs = ["--repo-server-timeout-seconds=900"]
       }
       repoServer = {
         env = [
           {
             name  = "ARGOCD_EXEC_TIMEOUT"
-            value = "900s"
+            value = "1200s"
           }
         ]
       }

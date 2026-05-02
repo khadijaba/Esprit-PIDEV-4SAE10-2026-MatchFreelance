@@ -6,7 +6,13 @@ metadata:
   name: mysql
   namespace: argocd
   annotations:
-    argocd.argoproj.io/manifest-generate-timeout: 600s
+    argocd.argoproj.io/manifest-generate-timeout: 900s
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/part-of: match-freelance
+    app.kubernetes.io/managed-by: argocd
+    team: khadijaba
+    env: production
 spec:
   project: default
   source:
@@ -22,6 +28,12 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
     automated:
       prune: true
       selfHeal: true
