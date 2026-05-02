@@ -1,0 +1,111 @@
+# Installation (sur la VM ou toute machine avec kubectl + helm vers ton cluster) :
+#
+#   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#   helm repo update
+#   helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
+#     --namespace monitoring --create-namespace \
+#     -f helm-values-kube-prometheus.yaml
+#
+# Accès Grafana (mot de passe ci-dessous la première fois) :
+#   kubectl -n monitoring get svc kube-prom-grafana
+#   Si NodePort : http://<IP_VM>:30080  (login admin / voir grafana.adminPassword)
+#   Sinon : kubectl -n monitoring port-forward svc/kube-prom-grafana 3000:80
+#
+# Prometheus UI (optionnel) :
+#   kubectl -n monitoring port-forward svc/kube-prom-kube-prometheus-prometheus 9090:9090
+
+global:
+  rbac:
+    create: true
+
+# Moins de règles/alerts = moins de charge sur Prometheus (VM petite / 1 nœud)
+defaultRules:
+  create: false
+
+alertmanager:
+  enabled: false
+
+grafana:
+  enabled: true
+  adminPassword: admin
+  service:
+    type: NodePort
+    nodePort: 30080
+  persistence:
+    enabled: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      cpu: 300m
+      memory: 384Mi
+  sidecar:
+    dashboards:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+    datasources:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+
+prometheus:
+  enabled: true
+  service:
+    type: NodePort
+    nodePort: 30090
+  prometheusSpec:
+    retention: 3d
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 800m
+        memory: 768Mi
+    scrapeInterval: 60s
+
+# Clé officielle du sous-chart (camelCase était ignorée)
+kube-state-metrics:
+  enabled: true
+  resources:
+    requests:
+      cpu: 25m
+      memory: 48Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# Sur 1 seul nœud, désactiver libère CPU/RAM (perte des métriques "node")
+nodeExporter:
+  enabled: false
+
+kubeApiServer:
+  enabled: true
+
+kubeControllerManager:
+  enabled: false
+
+kubeScheduler:
+  enabled: false
+
+kubeEtcd:
+  enabled: false
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
