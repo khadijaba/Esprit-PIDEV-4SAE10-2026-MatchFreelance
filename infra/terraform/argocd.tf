@@ -11,9 +11,17 @@ resource "helm_release" "argocd" {
   chart      = "argo-cd"
   # version  = "x.y.z"  # optionnel : figer une version du chart
 
-  # Valeurs minimales pour petit cluster ; ajuster via fichier values si besoin
+  # NodePort : ne pas utiliser 30080 / 30090 (réservés à Grafana / Prometheus dans kube-prometheus-stack).
   set {
     name  = "server.service.type"
     value = "NodePort"
+  }
+  set {
+    name  = "server.service.nodePortHttp"
+    value = "30808"
+  }
+  set {
+    name  = "server.service.nodePortHttps"
+    value = "30809"
   }
 }
