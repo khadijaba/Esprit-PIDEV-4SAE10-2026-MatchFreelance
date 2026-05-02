@@ -11,8 +11,11 @@ spec:
     path: backend/microservices/Evaluation/k8s
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: evaluation
   syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
     automated:
       prune: true
       selfHeal: true

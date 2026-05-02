@@ -2,8 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: evaluation
+  namespace: evaluation
   labels:
     app: evaluation
+    env: production
+    team: khadijaba
+    version: "1.0"
 spec:
   replicas: 2
   selector:
@@ -13,6 +17,9 @@ spec:
     metadata:
       labels:
         app: evaluation
+        env: production
+        team: khadijaba
+        version: "1.0"
     spec:
       containers:
         - name: evaluation
@@ -20,7 +27,7 @@ spec:
           imagePullPolicy: Always
           env:
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:mysql://mysql:3306/EvaluationDB?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+              value: jdbc:mysql://mysql.mysql.svc.cluster.local:3306/EvaluationDB?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
             - name: SPRING_DATASOURCE_USERNAME
               value: root
             - name: SPRING_DATASOURCE_PASSWORD

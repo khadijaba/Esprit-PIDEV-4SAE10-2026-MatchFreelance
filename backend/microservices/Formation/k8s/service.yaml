@@ -2,8 +2,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: formation
+  namespace: formation
   labels:
     app: formation
+    env: production
+    team: khadijaba
+    version: "1.0"
 spec:
   selector:
     app: formation

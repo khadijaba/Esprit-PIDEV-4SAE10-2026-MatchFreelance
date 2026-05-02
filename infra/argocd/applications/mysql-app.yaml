@@ -15,8 +15,11 @@ spec:
       include: mysql.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: mysql
   syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
     automated:
       prune: true
       selfHeal: true

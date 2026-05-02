@@ -1,11 +1,15 @@
 # Appliquer avant Formation / Evaluation : kubectl apply -f mysql.yaml
-# Service name must be "mysql" so jdbc:mysql://mysql:3306 resolves in-cluster.
+# Service DNS cluster : mysql.mysql.svc.cluster.local (namespace mysql) pour les apps en autre namespace.
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql
+  namespace: mysql
   labels:
     app: mysql
+    env: production
+    team: khadijaba
+    version: "1.0"
 spec:
   ports:
     - port: 3306
@@ -29,6 +33,9 @@ spec:
     metadata:
       labels:
         app: mysql
+        env: production
+        team: khadijaba
+        version: "1.0"
     spec:
       containers:
         - name: mysql
