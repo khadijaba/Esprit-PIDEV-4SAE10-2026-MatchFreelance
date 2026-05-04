@@ -14,7 +14,9 @@ pipeline {
     environment {
         MODULE_DIR = 'BackEnd/Microservices/Skill'
         SONAR_PROJECT_KEY = 'skill'
+        // Sonar sur la machine hôte (Docker Desktop). Si l’upload du rapport CE time out, augmenter SONAR_WS_TIMEOUT (secondes).
         SONAR_HOST = 'http://host.docker.internal:9000'
+        SONAR_WS_TIMEOUT = '600'
         IMAGE_NAME = 'emna450/backend-skill'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
         CD_JOB_NAME = 'pipeline-CD-skill-ms'
@@ -65,7 +67,8 @@ pipeline {
                             mvn -B clean verify sonar:sonar \\
                               -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
                               -Dsonar.host.url=${env.SONAR_HOST} \\
-                              -Dsonar.login=\${SONAR_TOKEN} \\
+                              -Dsonar.token=\${SONAR_TOKEN} \\
+                              -Dsonar.ws.timeout=${env.SONAR_WS_TIMEOUT} \\
                               -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                         """
                     }
