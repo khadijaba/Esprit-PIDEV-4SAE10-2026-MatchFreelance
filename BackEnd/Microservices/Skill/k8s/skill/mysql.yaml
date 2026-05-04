@@ -5,10 +5,10 @@ metadata:
   namespace: __NAMESPACE__
 type: Opaque
 stringData:
-  MYSQL_DATABASE: skill_db
-  MYSQL_USER: skill_user
-  MYSQL_PASSWORD: skill_pwd
-  MYSQL_ROOT_PASSWORD: root
+  MYSQL_DATABASE: skilldb
+  MYSQL_USER: skill
+  MYSQL_PASSWORD: skill123
+  MYSQL_ROOT_PASSWORD: root123
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -27,11 +27,13 @@ spec:
       labels:
         app: mysql-skill
     spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: mysql
           image: mysql:8.0
-          ports:
-            - containerPort: 3306
           env:
             - name: MYSQL_DATABASE
               valueFrom:
@@ -53,13 +55,18 @@ spec:
                 secretKeyRef:
                   name: skill-mysql-secret
                   key: MYSQL_ROOT_PASSWORD
-          readinessProbe:
-            exec:
-              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD"]
-            initialDelaySeconds: 20
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 12
+          ports:
+            - containerPort: 3306
+          args:
+            - --innodb-buffer-pool-size=64M
+            - --performance-schema=OFF
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -70,6 +77,6 @@ spec:
   selector:
     app: mysql-skill
   ports:
-    - protocol: TCP
-      port: 3306
+    - port: 3306
       targetPort: 3306
+  type: ClusterIP
