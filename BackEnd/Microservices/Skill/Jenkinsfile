@@ -59,7 +59,7 @@ pipeline {
 
         stage('Build & Sonar') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token-backend', variable: 'SONAR_TOKEN')]) {
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                     dir("${env.MODULE_DIR}") {
                         sh """
                             mvn -B clean verify sonar:sonar \\
@@ -92,7 +92,7 @@ pipeline {
 
         stage('Docker Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
                         set -e
                         docker image inspect ${env.IMAGE_NAME}:${env.IMAGE_TAG} > /dev/null
