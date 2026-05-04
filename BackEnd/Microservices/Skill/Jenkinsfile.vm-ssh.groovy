@@ -6,7 +6,8 @@ node {
     def repoUrl = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
     def branch = 'projectskills'
     def moduleDir = 'BackEnd/Microservices/Skill'
-    def k8sSshRemote = 'ubuntu@192.168.246.132'
+    // IP de la VM où tournent kubeadm + kubectl (adapter si DHCP change).
+    def k8sSshRemote = 'ubuntu@192.168.17.130'
     def k8sSshCredentials = 'vm-k8s-ssh'
     def nsMysql = 'mysql'
     def IMAGE_NAME = 'emna450/backend-skill'
