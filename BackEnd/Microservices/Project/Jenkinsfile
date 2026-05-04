@@ -18,7 +18,7 @@ pipeline {
         IMAGE_NAME = 'emna450/project'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
         CD_JOB_NAME = 'pipeline-CD-project-ms'
-        K8S_NAMESPACE = 'matchfreelance'
+        K8S_NAMESPACE = 'project'
     }
 
     stages {

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: project-ms
+  namespace: project
+  labels:
+    app.kubernetes.io/name: project-ms
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: matchfreelance
+    app.kubernetes.io/version: "0.0.1"
+    app: project-ms
+    env: dev
+    team: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: project-ms
+  ports:
+    - name: http
+      port: 8084
+      targetPort: 8084

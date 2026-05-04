@@ -3,12 +3,14 @@ pipeline {
 
     parameters {
         string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Tag image a deployer (ex: 1.0.30)')
-        string(name: 'K8S_NAMESPACE', defaultValue: 'matchfreelance', description: 'Namespace Kubernetes')
+        string(name: 'K8S_NAMESPACE', defaultValue: 'project', description: 'Namespace applicatif du microservice Project')
     }
 
     environment {
         IMAGE_NAME = 'emna450/project'
         MANIFESTS_DIR = 'BackEnd/Microservices/Project/k8s/project'
+        INFRA_DIR = 'BackEnd/infra/k8s'
+        MYSQL_NAMESPACE = 'mysql'
     }
 
     stages {
@@ -18,20 +20,28 @@ pipeline {
                     sh '''
                         set -e
                         EFFECTIVE_TAG="${IMAGE_TAG:-latest}"
-                        EFFECTIVE_NS="${K8S_NAMESPACE:-matchfreelance}"
+                        APP_NS="${K8S_NAMESPACE:-project}"
                         DEPLOY_IMAGE="${IMAGE_NAME}:${EFFECTIVE_TAG}"
 
                         export KUBECONFIG="${KUBECONFIG_FILE}"
 
+                        kubectl apply -f "${INFRA_DIR}/namespaces-labels.yaml"
+                        kubectl apply -f "${INFRA_DIR}/mysql/mysql.yaml"
+                        kubectl -n "${MYSQL_NAMESPACE}" rollout status deployment/mysql --timeout=900s
+
                         if [ -d "${MANIFESTS_DIR}" ] && [ -f "${MANIFESTS_DIR}/deployment.yaml" ]; then
-                          kubectl apply -f "${MANIFESTS_DIR}/namespace.yaml"
-                          kubectl apply -f "${MANIFESTS_DIR}/mysql.yaml"
-                          kubectl -n "${EFFECTIVE_NS}" rollout status deployment/mysql-project --timeout=900s
+                          kubectl apply -f "${MANIFESTS_DIR}/secret.yaml"
                           kubectl apply -f "${MANIFESTS_DIR}/deployment.yaml" -f "${MANIFESTS_DIR}/service.yaml"
-                          kubectl -n "${EFFECTIVE_NS}" set image deployment/project-ms project-ms="${DEPLOY_IMAGE}"
+                          kubectl -n "${APP_NS}" set image deployment/project-ms project-ms="${DEPLOY_IMAGE}"
                         else
-                          kubectl -n "${EFFECTIVE_NS}" set image deployment/project-ms project-ms="${DEPLOY_IMAGE}"
+                          kubectl -n "${APP_NS}" set image deployment/project-ms project-ms="${DEPLOY_IMAGE}"
                         fi
 
-                        kubectl -n "${EFFECTIVE_NS}" rollout status deployment/project-ms --timeout=300s
-                        kubectl -n "${EFFECTIVE_NS}" get pods,svc -l app=project-ms
+                        kubectl -n "${APP_NS}" rollout status deployment/project-ms --timeout=300s
+                        kubectl -n "${APP_NS}" get pods,svc -l app.kubernetes.io/name=project-ms
+                    '''
+                }
+            }
+        }
+    }
+}
