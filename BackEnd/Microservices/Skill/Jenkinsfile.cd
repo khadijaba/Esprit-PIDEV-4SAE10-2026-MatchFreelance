@@ -1,15 +1,15 @@
 node {
-    def repoUrl   = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
-    def branch    = 'projectskills'
-    def moduleDir = 'BackEnd/Microservices/Skill'
-    def k8sSshRemote      = 'ubuntu@192.168.17.130'
+    def repoUrl          = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+    def branch           = 'projectskills'
+    def moduleDir        = 'BackEnd/Microservices/Skill'
+    def k8sSshRemote     = 'ubuntu@192.168.17.130'
     def k8sSshCredentials = 'vm-k8s-ssh'
-    def IMAGE_NAME = 'emna450/backend-skill'
+    def IMAGE_NAME       = 'emna450/backend-skill'
 
     properties([
         parameters([
-            string(name: 'IMAGE_TAG',      defaultValue: 'latest', description: 'Docker image tag'),
-            string(name: 'K8S_NAMESPACE',  defaultValue: 'skill',  description: 'Kubernetes namespace')
+            string(name: 'IMAGE_TAG',     defaultValue: 'latest', description: 'Docker image tag'),
+            string(name: 'K8S_NAMESPACE', defaultValue: 'skill',  description: 'Kubernetes namespace')
         ]),
         disableConcurrentBuilds(),
         buildDiscarder(logRotator(numToKeepStr: '20'))
@@ -62,18 +62,7 @@ metadata:
     team: matchfreelance
 NSEOF
 
-                        # Secret + deployment + service
-                        sed "s|__NAMESPACE__|${nsApp}|g" k8s/skill/secret.yaml \
-                            > /tmp/jenkins-skill-k8s-local/secret.yaml
-
-                        sed "s|__NAMESPACE__|${nsApp}|g" k8s/skill/deployment.yaml \
-                            | sed "s|__IMAGE__|${skillImage}|g" \
-                            > /tmp/jenkins-skill-k8s-local/deployment.yaml
-
-                        sed "s|__NAMESPACE__|${nsApp}|g" k8s/skill/service.yaml \
-                            > /tmp/jenkins-skill-k8s-local/service.yaml
-
-                        # MySQL — créer inline
+                        # MySQL
                         cat > /tmp/jenkins-skill-k8s-local/mysql.yaml << 'MYSQLEOF'
 apiVersion: apps/v1
 kind: Deployment
@@ -128,44 +117,15 @@ spec:
       targetPort: 3306
 MYSQLEOF
 
+                        # Secret + deployment + service depuis les fichiers Git
+                        sed "s|__NAMESPACE__|${nsApp}|g" k8s/skill/secret.yaml \
+                            > /tmp/jenkins-skill-k8s-local/secret.yaml
+
+                        sed "s|__NAMESPACE__|${nsApp}|g" k8s/skill/deployment.yaml \
+                            | sed "s|__IMAGE__|${skillImage}|g" \
+                            > /tmp/jenkins-skill-k8s-local/deployment.yaml
+
+                        sed "s|__NAMESPACE__|${nsApp}|g" k8s/skill/service.yaml \
+                            > /tmp/jenkins-skill-k8s-local/service.yaml
+
                         # Copier sur la VM
-                        \${SCP} /tmp/jenkins-skill-k8s-local/namespace.yaml \
-                                /tmp/jenkins-skill-k8s-local/secret.yaml \
-                                /tmp/jenkins-skill-k8s-local/mysql.yaml \
-                                /tmp/jenkins-skill-k8s-local/deployment.yaml \
-                                /tmp/jenkins-skill-k8s-local/service.yaml \
-                                ${k8sSshRemote}:/tmp/jenkins-skill-k8s/
-
-                        # Appliquer sur le cluster
-                        \${SSH} ${k8sSshRemote} '
-                            # Enlever taint control-plane
-                            kubectl taint nodes --all node-role.kubernetes.io/control-plane:NoSchedule- 2>/dev/null || true
-
-                            # Appliquer
-                            kubectl apply --validate=false -f /tmp/jenkins-skill-k8s/namespace.yaml
-                            kubectl apply --validate=false -f /tmp/jenkins-skill-k8s/secret.yaml
-                            kubectl apply --validate=false -f /tmp/jenkins-skill-k8s/mysql.yaml
-                            kubectl apply --validate=false -f /tmp/jenkins-skill-k8s/deployment.yaml
-                            kubectl apply --validate=false -f /tmp/jenkins-skill-k8s/service.yaml
-
-                            # Attendre MySQL
-                            kubectl rollout status deployment/mysql-skill -n ${nsApp} --timeout=300s
-                        '
-                    """
-                }
-            }
-        }
-
-        stage('Monitoring') {
-            sshagent([k8sSshCredentials]) {
-                sh """
-                    ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 ${k8sSshRemote} '
-                        kubectl rollout status deployment/skill-ms -n ${nsApp} --timeout=120s
-                        kubectl get pods -n ${nsApp} -l app=skill-ms -o wide
-                        kubectl get svc skill-ms -n ${nsApp}
-                    '
-                """
-            }
-        }
-    }
-}
