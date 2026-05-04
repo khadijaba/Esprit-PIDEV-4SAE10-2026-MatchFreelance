@@ -86,7 +86,21 @@ pipeline {
                 dir("${env.MODULE_DIR}") {
                     sh """
                         docker image prune -f || true
-                        docker build --pull --no-cache -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} .
+                        # BuildKit peut échouer en CI avec "forwarding Ping: no such job" (moby/buildkit) : builder classique + retries.
+                        export DOCKER_BUILDKIT=0
+                        build_with_retry() {
+                            n=0
+                            until docker build --pull --no-cache -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} .; do
+                                n=\$((n + 1))
+                                if [ "\$n" -ge 3 ]; then
+                                    echo "docker build failed after \$n attempts"
+                                    exit 1
+                                fi
+                                echo "docker build failed (attempt \$n), waiting 20s..."
+                                sleep 20
+                            done
+                        }
+                        build_with_retry
                         docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest
                     """
                 }
