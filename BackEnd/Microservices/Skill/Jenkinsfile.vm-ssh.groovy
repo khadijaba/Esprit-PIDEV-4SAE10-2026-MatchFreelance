@@ -4,7 +4,7 @@
 
 node {
     def repoUrl = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
-    def branch = 'douja'
+    def branch = 'projectskills'
     def moduleDir = 'BackEnd/Microservices/Skill'
     def k8sSshRemote = 'ubuntu@192.168.246.132'
     def k8sSshCredentials = 'vm-k8s-ssh'
