@@ -42,9 +42,19 @@ public class UserClient {
         UserResponse r = new UserResponse();
         r.setId(u.getId());
         r.setEmail(u.getEmail());
-        r.setName(u.getFullName());
+        r.setName(resolveDisplayName(u));
         r.setRole(u.getRole());
         return r;
+    }
+
+    private static String resolveDisplayName(UserRemoteDto u) {
+        if (u.getFullName() != null && !u.getFullName().isBlank()) {
+            return u.getFullName().trim();
+        }
+        String a = u.getFirstName() != null ? u.getFirstName().trim() : "";
+        String b = u.getLastName() != null ? u.getLastName().trim() : "";
+        String joined = (a + " " + b).trim();
+        return joined.isEmpty() ? null : joined;
     }
 
     @Data

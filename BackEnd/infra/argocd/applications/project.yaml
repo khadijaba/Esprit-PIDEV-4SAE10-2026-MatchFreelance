@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: project
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: project-ms
+    app.kubernetes.io/part-of: matchfreelance
+    app.kubernetes.io/managed-by: argocd
+    team: backend
+    env: dev
+  annotations:
+    argocd.argoproj.io/manifest-generate-timeout: 600s
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git
+    targetRevision: projectskills
+    path: BackEnd/Microservices/Project/k8s/project
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: project
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

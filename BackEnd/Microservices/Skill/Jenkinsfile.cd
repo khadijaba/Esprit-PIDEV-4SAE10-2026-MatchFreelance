@@ -1,171 +1,114 @@
-node {
-    def repoUrl   = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
-    def branch    = 'projectskills'
-    def moduleDir = 'BackEnd/Microservices/Skill'
-    def k8sSshRemote      = 'ubuntu@192.168.17.130'
-    def k8sSshCredentials = 'vm-k8s-ssh'
-    def IMAGE_NAME = 'emna450/backend-skill'
+pipeline {
+    agent any
 
-    properties([
-        parameters([
-            string(name: 'IMAGE_TAG',      defaultValue: 'latest', description: 'Docker image tag'),
-            string(name: 'K8S_NAMESPACE',  defaultValue: 'skill',  description: 'Kubernetes namespace')
-        ]),
-        disableConcurrentBuilds(),
-        buildDiscarder(logRotator(numToKeepStr: '20'))
-    ])
+    options {
+        skipDefaultCheckout(true)
+    }
 
-    def deployTag  = (params?.IMAGE_TAG?.toString()?.trim())     ?: 'latest'
-    def nsApp      = (params?.K8S_NAMESPACE?.toString()?.trim()) ?: 'skill'
-    def skillImage = "${IMAGE_NAME}:${deployTag}"
+    parameters {
+        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag to deploy')
+        string(name: 'K8S_NAMESPACE', defaultValue: 'skill', description: 'Namespace applicatif du microservice Skill')
+    }
 
-    timeout(time: 60, unit: 'MINUTES') {
+    environment {
+        IMAGE_NAME = 'emna450/backend-skill'
+        MANIFESTS_DIR = 'BackEnd/Microservices/Skill/k8s/skill'
+        INFRA_DIR = 'BackEnd/infra/k8s'
+        MYSQL_NAMESPACE = 'mysql'
+    }
 
+    stages {
         stage('Checkout') {
-            retry(3) {
-                sh """
-                    set -eux
-                    rm -rf .git
-                    git init .
-                    git remote add origin '${repoUrl}' || git remote set-url origin '${repoUrl}'
-                    git config core.sparseCheckout true
-                    mkdir -p .git/info
-                    printf '%s\\n' '${moduleDir}' > .git/info/sparse-checkout
-                    git fetch --no-tags --depth=1 origin '${branch}'
-                    git checkout -f FETCH_HEAD
-                """
-            }
-        }
-
-        stage('Deploy Kubernetes') {
-            dir(moduleDir) {
-                sshagent([k8sSshCredentials]) {
-                    sh """
-                        set -eux
-                        SSH='ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30'
-                        SCP='scp -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30'
-
-                        # Créer dossier temporaire sur la VM
-                        \${SSH} ${k8sSshRemote} 'mkdir -p /tmp/jenkins-skill-k8s'
-
-                        # Préparer les manifests localement
-                        mkdir -p /tmp/jenkins-skill-k8s-local
-
-                        # Namespace
-                        cat > /tmp/jenkins-skill-k8s-local/namespace.yaml << 'NSEOF'
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ${nsApp}
-  labels:
-    app: skill-ms
-    team: matchfreelance
-NSEOF
-
-                        # Secret + deployment + service
-                        sed "s|__NAMESPACE__|${nsApp}|g" k8s/skill/secret.yaml \
-                            > /tmp/jenkins-skill-k8s-local/secret.yaml
-
-                        sed "s|__NAMESPACE__|${nsApp}|g" k8s/skill/deployment.yaml \
-                            | sed "s|__IMAGE__|${skillImage}|g" \
-                            > /tmp/jenkins-skill-k8s-local/deployment.yaml
-
-                        sed "s|__NAMESPACE__|${nsApp}|g" k8s/skill/service.yaml \
-                            > /tmp/jenkins-skill-k8s-local/service.yaml
-
-                        # MySQL — créer inline
-                        cat > /tmp/jenkins-skill-k8s-local/mysql.yaml << 'MYSQLEOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mysql-skill
-  namespace: ${nsApp}
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mysql-skill
-  template:
-    metadata:
-      labels:
-        app: mysql-skill
-    spec:
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-      containers:
-        - name: mysql
-          image: mysql:8.0
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              value: root123
-            - name: MYSQL_DATABASE
-              value: skilldb
-          ports:
-            - containerPort: 3306
-          args:
-            - --innodb-buffer-pool-size=64M
-            - --performance-schema=OFF
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "100m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql-skill
-  namespace: ${nsApp}
-spec:
-  selector:
-    app: mysql-skill
-  ports:
-    - port: 3306
-      targetPort: 3306
-MYSQLEOF
-
-                        # Copier sur la VM
-                        \${SCP} /tmp/jenkins-skill-k8s-local/namespace.yaml \
-                                /tmp/jenkins-skill-k8s-local/secret.yaml \
-                                /tmp/jenkins-skill-k8s-local/mysql.yaml \
-                                /tmp/jenkins-skill-k8s-local/deployment.yaml \
-                                /tmp/jenkins-skill-k8s-local/service.yaml \
-                                ${k8sSshRemote}:/tmp/jenkins-skill-k8s/
-
-                        # Appliquer sur le cluster
-                        \${SSH} ${k8sSshRemote} '
-                            # Enlever taint control-plane
-                            kubectl taint nodes --all node-role.kubernetes.io/control-plane:NoSchedule- 2>/dev/null || true
-
-                            # Appliquer
-                            kubectl apply --validate=false -f /tmp/jenkins-skill-k8s/namespace.yaml
-                            kubectl apply --validate=false -f /tmp/jenkins-skill-k8s/secret.yaml
-                            kubectl apply --validate=false -f /tmp/jenkins-skill-k8s/mysql.yaml
-                            kubectl apply --validate=false -f /tmp/jenkins-skill-k8s/deployment.yaml
-                            kubectl apply --validate=false -f /tmp/jenkins-skill-k8s/service.yaml
-
-                            # Attendre MySQL
-                            kubectl rollout status deployment/mysql-skill -n ${nsApp} --timeout=300s
-                        '
-                    """
+            steps {
+                script {
+                    def branch = env.BRANCH_NAME ?: 'projectskills'
+                    def exts = []
+                    if (scm.extensions != null && !scm.extensions.isEmpty()) {
+                        exts.addAll(scm.extensions)
+                    }
+                    exts.add([
+                        $class       : 'CloneOption',
+                        shallow      : true,
+                        depth        : 1,
+                        timeout      : 120,
+                        honorRefspec : true,
+                        noTags       : true,
+                        reference    : ''
+                    ])
+                    def remotes = scm.userRemoteConfigs.collect { cfg ->
+                        def m = [url: cfg.url]
+                        if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
+                            m.credentialsId = cfg.credentialsId
+                        }
+                        m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
+                        m
+                    }
+                    checkout([
+                        $class            : 'GitSCM',
+                        branches          : [[name: "*/${branch}"]],
+                        extensions        : exts,
+                        userRemoteConfigs : remotes
+                    ])
                 }
             }
         }
 
-        stage('Monitoring') {
-            sshagent([k8sSshCredentials]) {
-                sh """
-                    ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 ${k8sSshRemote} '
-                        kubectl rollout status deployment/skill-ms -n ${nsApp} --timeout=120s
-                        kubectl get pods -n ${nsApp} -l app=skill-ms -o wide
-                        kubectl get svc skill-ms -n ${nsApp}
-                    '
-                """
+        stage('Deploy') {
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig-project', variable: 'KUBECONFIG_FILE')]) {
+                    sh '''
+                        set -e
+                        EFFECTIVE_TAG="${IMAGE_TAG:-latest}"
+                        APP_NS="${K8S_NAMESPACE:-skill}"
+                        DEPLOY_IMAGE="${IMAGE_NAME}:${EFFECTIVE_TAG}"
+
+                        if command -v kubectl >/dev/null 2>&1; then
+                          KUBECTL_CMD="$(command -v kubectl)"
+                        else
+                          KUBECTL_CMD="/tmp/kubectl"
+                        fi
+
+                        if [ -x "${KUBECTL_CMD}" ]; then
+                          "${KUBECTL_CMD}" version --client >/dev/null 2>&1 || rm -f "${KUBECTL_CMD}"
+                        fi
+
+                        if [ ! -x "${KUBECTL_CMD}" ]; then
+                          curl -fsSL -o /tmp/kubectl "https://dl.k8s.io/release/v1.31.3/bin/linux/amd64/kubectl"
+                          chmod +x /tmp/kubectl
+                          KUBECTL_CMD="/tmp/kubectl"
+                        fi
+
+                        TMP_DEPLOY="$(mktemp)"
+                        TMP_SVC="$(mktemp)"
+                        TMP_SECRET="$(mktemp)"
+
+                        cp "${MANIFESTS_DIR}/deployment.yaml" "${TMP_DEPLOY}"
+                        cp "${MANIFESTS_DIR}/service.yaml" "${TMP_SVC}"
+                        cp "${MANIFESTS_DIR}/secret.yaml" "${TMP_SECRET}"
+
+                        sed -i "s|__IMAGE__|${DEPLOY_IMAGE}|g" "${TMP_DEPLOY}"
+                        sed -i "s|__NAMESPACE__|${APP_NS}|g" "${TMP_DEPLOY}"
+                        sed -i "s|__NAMESPACE__|${APP_NS}|g" "${TMP_SVC}"
+                        sed -i "s|__NAMESPACE__|${APP_NS}|g" "${TMP_SECRET}"
+
+                        export KUBECONFIG="${KUBECONFIG_FILE}"
+                        "${KUBECTL_CMD}" apply -f "${INFRA_DIR}/namespaces-labels.yaml"
+                        "${KUBECTL_CMD}" apply -f "${INFRA_DIR}/mysql/mysql.yaml"
+                        "${KUBECTL_CMD}" -n "${MYSQL_NAMESPACE}" rollout status deployment/mysql --timeout=900s
+
+                        "${KUBECTL_CMD}" apply -f "${TMP_SECRET}"
+                        "${KUBECTL_CMD}" apply -f "${TMP_DEPLOY}" -f "${TMP_SVC}"
+                        "${KUBECTL_CMD}" -n "${APP_NS}" rollout status deployment/skill-ms --timeout=300s
+                        "${KUBECTL_CMD}" -n "${APP_NS}" get pods,svc -l app.kubernetes.io/name=skill-ms
+                    '''
+                }
             }
+        }
+    }
+
+    post {
+        success {
+            echo "CD OK: ${IMAGE_NAME}:${params.IMAGE_TAG} deploye dans ${params.K8S_NAMESPACE}."
         }
     }
 }

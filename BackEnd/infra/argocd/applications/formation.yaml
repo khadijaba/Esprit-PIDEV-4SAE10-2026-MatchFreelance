@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: formation
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: formation-ms
+    app.kubernetes.io/part-of: matchfreelance
+    app.kubernetes.io/managed-by: argocd
+    team: backend
+    env: dev
+  annotations:
+    argocd.argoproj.io/manifest-generate-timeout: 600s
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git
+    targetRevision: projectskills
+    path: BackEnd/Microservices/Formation/k8s/formation
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: formation
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

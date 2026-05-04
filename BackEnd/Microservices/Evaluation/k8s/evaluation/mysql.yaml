@@ -1,75 +1,19 @@
+# Anciennement MySQL in-cluster : les identifiants restent dans le namespace evaluation
+# pour l’application ; le serveur MySQL est désormais dans le namespace mysql (DNS mysql.mysql.svc.cluster.local).
 apiVersion: v1
 kind: Secret
 metadata:
   name: evaluation-mysql-secret
-  namespace: __NAMESPACE__
+  namespace: evaluation
+  labels:
+    app.kubernetes.io/name: evaluation-ms
+    app.kubernetes.io/component: database-client
+    app.kubernetes.io/part-of: matchfreelance
+    env: dev
+    team: backend
 type: Opaque
 stringData:
   MYSQL_DATABASE: EvaluationDB
   MYSQL_USER: evaluation_user
   MYSQL_PASSWORD: evaluation_pwd
   MYSQL_ROOT_PASSWORD: root
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mysql-evaluation
-  namespace: __NAMESPACE__
-  labels:
-    app: mysql-evaluation
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mysql-evaluation
-  template:
-    metadata:
-      labels:
-        app: mysql-evaluation
-    spec:
-      containers:
-        - name: mysql
-          image: mysql:8.0
-          ports:
-            - containerPort: 3306
-          env:
-            - name: MYSQL_DATABASE
-              valueFrom:
-                secretKeyRef:
-                  name: evaluation-mysql-secret
-                  key: MYSQL_DATABASE
-            - name: MYSQL_USER
-              valueFrom:
-                secretKeyRef:
-                  name: evaluation-mysql-secret
-                  key: MYSQL_USER
-            - name: MYSQL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: evaluation-mysql-secret
-                  key: MYSQL_PASSWORD
-            - name: MYSQL_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: evaluation-mysql-secret
-                  key: MYSQL_ROOT_PASSWORD
-          readinessProbe:
-            exec:
-              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD"]
-            initialDelaySeconds: 20
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 12
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql-evaluation
-  namespace: __NAMESPACE__
-spec:
-  selector:
-    app: mysql-evaluation
-  ports:
-    - protocol: TCP
-      port: 3306
-      targetPort: 3306

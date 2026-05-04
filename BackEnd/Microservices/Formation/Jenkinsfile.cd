@@ -3,12 +3,14 @@ pipeline {
 
     parameters {
         string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Tag image a deployer (ex: 1.0.30)')
-        string(name: 'K8S_NAMESPACE', defaultValue: 'matchfreelance', description: 'Namespace Kubernetes')
+        string(name: 'K8S_NAMESPACE', defaultValue: 'formation', description: 'Namespace applicatif Formation')
     }
 
     environment {
         IMAGE_NAME = 'emna450/backend-formation'
         MANIFESTS_DIR = 'BackEnd/Microservices/Formation/k8s/formation'
+        INFRA_DIR = 'BackEnd/infra/k8s'
+        MYSQL_NAMESPACE = 'mysql'
     }
 
     stages {
@@ -18,23 +20,38 @@ pipeline {
                     sh '''
                         set -e
                         EFFECTIVE_TAG="${IMAGE_TAG:-latest}"
-                        EFFECTIVE_NS="${K8S_NAMESPACE:-matchfreelance}"
+                        APP_NS="${K8S_NAMESPACE:-formation}"
                         DEPLOY_IMAGE="${IMAGE_NAME}:${EFFECTIVE_TAG}"
 
                         export KUBECONFIG="${KUBECONFIG_FILE}"
 
+                        kubectl apply -f "${INFRA_DIR}/namespaces-labels.yaml"
+                        kubectl apply -f "${INFRA_DIR}/mysql/mysql.yaml"
+                        kubectl -n "${MYSQL_NAMESPACE}" rollout status deployment/mysql --timeout=900s
+
                         if [ -d "${MANIFESTS_DIR}" ] && [ -f "${MANIFESTS_DIR}/deployment.yaml" ]; then
-                          kubectl apply -f "${MANIFESTS_DIR}/namespace.yaml"
-                          kubectl apply -f "${MANIFESTS_DIR}/mysql.yaml"
-                          kubectl -n "${EFFECTIVE_NS}" rollout status deployment/mysql-formation --timeout=900s
-                          kubectl apply -f "${MANIFESTS_DIR}/deployment.yaml" -f "${MANIFESTS_DIR}/service.yaml"
-                          kubectl -n "${EFFECTIVE_NS}" set image deployment/formation-ms formation-ms="${DEPLOY_IMAGE}"
+                          TMP_DEPLOY="$(mktemp)"
+                          TMP_SVC="$(mktemp)"
+                          TMP_SECRET="$(mktemp)"
+
+                          cp "${MANIFESTS_DIR}/deployment.yaml" "${TMP_DEPLOY}"
+                          cp "${MANIFESTS_DIR}/service.yaml" "${TMP_SVC}"
+                          cp "${MANIFESTS_DIR}/mysql.yaml" "${TMP_SECRET}"
+
+                          sed -i "s|__IMAGE__|${DEPLOY_IMAGE}|g" "${TMP_DEPLOY}"
+                          sed -i "s|__NAMESPACE__|${APP_NS}|g" "${TMP_DEPLOY}"
+                          sed -i "s|__NAMESPACE__|${APP_NS}|g" "${TMP_SVC}"
+                          sed -i "s|__NAMESPACE__|${APP_NS}|g" "${TMP_SECRET}"
+
+                          kubectl apply -f "${TMP_SECRET}"
+                          kubectl apply -f "${TMP_DEPLOY}" -f "${TMP_SVC}"
+                          kubectl -n "${APP_NS}" set image deployment/formation-ms formation-ms="${DEPLOY_IMAGE}"
                         else
-                          kubectl -n "${EFFECTIVE_NS}" set image deployment/formation-ms formation-ms="${DEPLOY_IMAGE}"
+                          kubectl -n "${APP_NS}" set image deployment/formation-ms formation-ms="${DEPLOY_IMAGE}"
                         fi
 
-                        kubectl -n "${EFFECTIVE_NS}" rollout status deployment/formation-ms --timeout=300s
-                        kubectl -n "${EFFECTIVE_NS}" get pods,svc -l app=formation-ms
+                        kubectl -n "${APP_NS}" rollout status deployment/formation-ms --timeout=300s
+                        kubectl -n "${APP_NS}" get pods,svc -l app.kubernetes.io/name=formation-ms
                     '''
                 }
             }

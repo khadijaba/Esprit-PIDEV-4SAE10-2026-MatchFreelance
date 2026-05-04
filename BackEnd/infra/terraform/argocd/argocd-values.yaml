@@ -1,0 +1,23 @@
+# Argo CD (chart argo-helm) — NodePorts distincts de Grafana (30080).
+# Timeouts : gros dépôt Git / génération Helm lente.
+server:
+  service:
+    type: NodePort
+    nodePortHttp: 30808
+    nodePortHttps: 30809
+
+configs:
+  params:
+    server.insecure: "true"
+    controller.repo.server.timeout.seconds: "600"
+
+repoServer:
+  env:
+    - name: ARGOCD_EXEC_TIMEOUT
+      value: 600s
+
+applicationSet:
+  enabled: false
+
+notifications:
+  enabled: false

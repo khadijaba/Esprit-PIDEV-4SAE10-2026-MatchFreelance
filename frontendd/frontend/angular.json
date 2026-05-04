@@ -91,6 +91,18 @@
             }
           },
           "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "runner": "vitest",
+            "watch": true,
+            "include": ["src/**/*.spec.ts"],
+            "coverage": true,
+            "coverageReporters": ["text-summary", "lcov", "html"],
+            "coverageExclude": ["**/*.spec.ts", "src/main.ts"]
+          }
         }
       }
     }

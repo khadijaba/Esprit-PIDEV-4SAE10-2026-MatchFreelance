@@ -1,0 +1,149 @@
+# MySQL central (namespace mysql) — DNS : mysql.mysql.svc.cluster.local
+# Empreinte RAM réduite (petite VM) : innodb_buffer_pool_size, performance_schema OFF.
+# Création des bases : projectdb, skill_db, EvaluationDB, FormationDB (init script).
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-root
+  namespace: mysql
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/component: database
+    env: dev
+    team: platform
+type: Opaque
+stringData:
+  root-password: changeme
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-tuned
+  namespace: mysql
+  labels:
+    app.kubernetes.io/name: mysql
+    env: dev
+    team: platform
+data:
+  tuned.cnf: |
+    [mysqld]
+    performance_schema = OFF
+    innodb_buffer_pool_size = 128M
+    innodb_log_buffer_size = 8M
+    max_connections = 80
+    table_open_cache = 200
+    tmp_table_size = 16M
+    max_heap_table_size = 16M
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb
+  namespace: mysql
+  labels:
+    app.kubernetes.io/name: mysql
+    env: dev
+    team: platform
+data:
+  01-databases.sql: |
+    CREATE DATABASE IF NOT EXISTS projectdb;
+    CREATE DATABASE IF NOT EXISTS skill_db;
+    CREATE DATABASE IF NOT EXISTS EvaluationDB;
+    CREATE DATABASE IF NOT EXISTS FormationDB;
+    CREATE USER IF NOT EXISTS 'evaluation_user'@'%' IDENTIFIED BY 'evaluation_pwd';
+    GRANT ALL PRIVILEGES ON EvaluationDB.* TO 'evaluation_user'@'%';
+    CREATE USER IF NOT EXISTS 'skill_user'@'%' IDENTIFIED BY 'skill_pwd';
+    GRANT ALL PRIVILEGES ON skill_db.* TO 'skill_user'@'%';
+    FLUSH PRIVILEGES;
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: mysql
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/component: database
+    app.kubernetes.io/version: "8.0"
+    app: mysql
+    env: dev
+    team: platform
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mysql
+        app.kubernetes.io/component: database
+        app.kubernetes.io/version: "8.0"
+        app: mysql
+        env: dev
+        team: platform
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mysql
+              containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-root
+                  key: root-password
+          args:
+            - "--default-authentication-plugin=mysql_native_password"
+          volumeMounts:
+            - name: tuned
+              mountPath: /etc/mysql/conf.d/tuned.cnf
+              subPath: tuned.cnf
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            tcpSocket:
+              port: 3306
+            initialDelaySeconds: 25
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: tuned
+          configMap:
+            name: mysql-tuned
+        - name: initdb
+          configMap:
+            name: mysql-initdb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: mysql
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/component: database
+    app: mysql
+    env: dev
+    team: platform
+spec:
+  type: ClusterIP
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+  selector:
+    app: mysql

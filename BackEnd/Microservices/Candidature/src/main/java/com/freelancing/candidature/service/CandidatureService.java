@@ -79,8 +79,16 @@ public class CandidatureService {
     public CandidatureResponseDTO createCandidature(CandidatureRequestDTO dto) {
         UserClient.UserResponse applicant = userClient.getUserById(dto.getFreelancerId());
         if (applicant == null) {
+            Long fid = dto.getFreelancerId();
             throw new RuntimeException(
-                    "Profil utilisateur introuvable (service User indisponible ou accès refusé — vérifiez Eureka et le JWT).");
+                    "Profil utilisateur introuvable pour freelancerId="
+                            + fid
+                            + ". Causes fréquentes : (1) cet id n’existe pas dans la base USER (ex. session navigateur "
+                            + "avec un ancien userId après reset BDD — déconnectez-vous puis reconnectez-vous) ; "
+                            + "(2) le microservice USER renvoie une erreur — testez GET /api/users/"
+                            + fid
+                            + " sur USER et consultez les logs Candidature (lignes WARN « USER: »). "
+                            + "Eureka/JWT sont rarement en cause pour cet appel inter-service.");
         }
         String role = applicant.getRole();
         if (role == null || role.isBlank()) {

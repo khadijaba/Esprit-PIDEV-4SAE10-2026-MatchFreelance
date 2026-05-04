@@ -4,8 +4,15 @@ metadata:
   name: skill-ms
   namespace: __NAMESPACE__
   labels:
+    app.kubernetes.io/name: skill-ms
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: matchfreelance
+    app.kubernetes.io/version: "0.0.1"
     app: skill-ms
+    env: dev
+    team: backend
 spec:
+  type: ClusterIP
   selector:
     app: skill-ms
   ports:
@@ -13,4 +20,3 @@ spec:
       protocol: TCP
       port: 8083
       targetPort: 8083
-  type: ClusterIP

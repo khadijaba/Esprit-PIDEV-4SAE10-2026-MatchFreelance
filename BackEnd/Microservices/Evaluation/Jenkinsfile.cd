@@ -7,12 +7,14 @@ pipeline {
 
     parameters {
         string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag to deploy')
-        string(name: 'K8S_NAMESPACE', defaultValue: 'matchfreelance', description: 'Kubernetes namespace')
+        string(name: 'K8S_NAMESPACE', defaultValue: 'evaluation', description: 'Namespace applicatif Evaluation')
     }
 
     environment {
         IMAGE_NAME = 'emna450/backend-evaluation'
         MANIFESTS_DIR = 'BackEnd/Microservices/Evaluation/k8s/evaluation'
+        INFRA_DIR = 'BackEnd/infra/k8s'
+        MYSQL_NAMESPACE = 'mysql'
     }
 
     stages {
@@ -28,7 +30,6 @@ pipeline {
                         $class       : 'CloneOption',
                         shallow      : true,
                         depth        : 1,
-                        timeout      : 120,
                         honorRefspec : true,
                         noTags       : true,
                         reference    : ''
@@ -57,7 +58,7 @@ pipeline {
                     sh '''
                         set -e
                         EFFECTIVE_TAG="${IMAGE_TAG:-latest}"
-                        EFFECTIVE_NS="${K8S_NAMESPACE:-matchfreelance}"
+                        APP_NS="${K8S_NAMESPACE:-evaluation}"
                         DEPLOY_IMAGE="${IMAGE_NAME}:${EFFECTIVE_TAG}"
 
                         if command -v kubectl >/dev/null 2>&1; then
@@ -78,27 +79,26 @@ pipeline {
 
                         TMP_DEPLOY="$(mktemp)"
                         TMP_SVC="$(mktemp)"
-                        TMP_NS="$(mktemp)"
-                        TMP_MYSQL="$(mktemp)"
+                        TMP_MYSQL_SECRET="$(mktemp)"
 
                         cp "${MANIFESTS_DIR}/deployment.yaml" "${TMP_DEPLOY}"
                         cp "${MANIFESTS_DIR}/service.yaml" "${TMP_SVC}"
-                        cp "${MANIFESTS_DIR}/namespace.yaml" "${TMP_NS}"
-                        cp "${MANIFESTS_DIR}/mysql.yaml" "${TMP_MYSQL}"
+                        cp "${MANIFESTS_DIR}/mysql.yaml" "${TMP_MYSQL_SECRET}"
 
                         sed -i "s|__IMAGE__|${DEPLOY_IMAGE}|g" "${TMP_DEPLOY}"
-                        sed -i "s|__NAMESPACE__|${EFFECTIVE_NS}|g" "${TMP_DEPLOY}"
-                        sed -i "s|__NAMESPACE__|${EFFECTIVE_NS}|g" "${TMP_SVC}"
-                        sed -i "s|__NAMESPACE__|${EFFECTIVE_NS}|g" "${TMP_NS}"
-                        sed -i "s|__NAMESPACE__|${EFFECTIVE_NS}|g" "${TMP_MYSQL}"
+                        sed -i "s|__NAMESPACE__|${APP_NS}|g" "${TMP_DEPLOY}"
+                        sed -i "s|__NAMESPACE__|${APP_NS}|g" "${TMP_SVC}"
+                        sed -i "s|__NAMESPACE__|${APP_NS}|g" "${TMP_MYSQL_SECRET}"
 
                         export KUBECONFIG="${KUBECONFIG_FILE}"
-                        "${KUBECTL_CMD}" apply -f "${TMP_NS}"
-                        "${KUBECTL_CMD}" apply -f "${TMP_MYSQL}"
-                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" rollout status deployment/mysql-evaluation --timeout=900s
+                        "${KUBECTL_CMD}" apply -f "${INFRA_DIR}/namespaces-labels.yaml"
+                        "${KUBECTL_CMD}" apply -f "${INFRA_DIR}/mysql/mysql.yaml"
+                        "${KUBECTL_CMD}" -n "${MYSQL_NAMESPACE}" rollout status deployment/mysql --timeout=900s
+
+                        "${KUBECTL_CMD}" apply -f "${TMP_MYSQL_SECRET}"
                         "${KUBECTL_CMD}" apply -f "${TMP_DEPLOY}" -f "${TMP_SVC}"
-                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" rollout status deployment/evaluation-ms --timeout=300s
-                        "${KUBECTL_CMD}" -n "${EFFECTIVE_NS}" get pods,svc -l app=evaluation-ms
+                        "${KUBECTL_CMD}" -n "${APP_NS}" rollout status deployment/evaluation-ms --timeout=300s
+                        "${KUBECTL_CMD}" -n "${APP_NS}" get pods,svc -l app.kubernetes.io/name=evaluation-ms
                     '''
                 }
             }

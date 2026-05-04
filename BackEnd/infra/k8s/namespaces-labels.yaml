@@ -1,0 +1,79 @@
+# Namespaces métier + labels communs (app.kubernetes.io, env, team).
+# Appliquer une fois par cluster ou via Argo CD : kubectl apply -f BackEnd/infra/k8s/namespaces-labels.yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mysql
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/part-of: platform
+    app.kubernetes.io/managed-by: gitops
+    env: dev
+    team: platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: project
+  labels:
+    app.kubernetes.io/name: project
+    app.kubernetes.io/part-of: matchfreelance
+    app.kubernetes.io/managed-by: gitops
+    env: dev
+    team: backend
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: skill
+  labels:
+    app.kubernetes.io/name: skill
+    app.kubernetes.io/part-of: matchfreelance
+    app.kubernetes.io/managed-by: gitops
+    env: dev
+    team: backend
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: evaluation
+  labels:
+    app.kubernetes.io/name: evaluation
+    app.kubernetes.io/part-of: matchfreelance
+    app.kubernetes.io/managed-by: gitops
+    env: dev
+    team: backend
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: formation
+  labels:
+    app.kubernetes.io/name: formation
+    app.kubernetes.io/part-of: matchfreelance
+    app.kubernetes.io/managed-by: gitops
+    env: dev
+    team: backend
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+    app.kubernetes.io/part-of: platform
+    app.kubernetes.io/managed-by: terraform
+    env: dev
+    team: platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/part-of: platform
+    app.kubernetes.io/managed-by: gitops
+    env: dev
+    team: platform

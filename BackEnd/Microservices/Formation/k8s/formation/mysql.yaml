@@ -1,0 +1,16 @@
+# Identifiants JDBC (MySQL central : mysql.mysql.svc.cluster.local).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: formation-mysql-secret
+  namespace: formation
+  labels:
+    app.kubernetes.io/name: formation-ms
+    app.kubernetes.io/component: database-client
+    app.kubernetes.io/part-of: matchfreelance
+    env: dev
+    team: backend
+type: Opaque
+stringData:
+  MYSQL_USER: root
+  MYSQL_PASSWORD: changeme

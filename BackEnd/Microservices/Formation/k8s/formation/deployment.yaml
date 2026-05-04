@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: evaluation-ms
-  namespace: evaluation
+  name: formation-ms
+  namespace: formation
   labels:
-    app.kubernetes.io/name: evaluation-ms
+    app.kubernetes.io/name: formation-ms
     app.kubernetes.io/component: api
     app.kubernetes.io/part-of: matchfreelance
     app.kubernetes.io/version: "0.0.1"
-    app: evaluation-ms
+    app: formation-ms
     env: dev
     team: backend
 spec:
@@ -17,15 +17,15 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: evaluation-ms
+      app: formation-ms
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: evaluation-ms
+        app.kubernetes.io/name: formation-ms
         app.kubernetes.io/component: api
         app.kubernetes.io/part-of: matchfreelance
         app.kubernetes.io/version: "0.0.1"
-        app: evaluation-ms
+        app: formation-ms
         env: dev
         team: backend
     spec:
@@ -38,12 +38,12 @@ spec:
             - -c
             - "until nc -z mysql.mysql.svc.cluster.local 3306; do echo waiting for mysql; sleep 3; done"
       containers:
-        - name: evaluation-ms
-          image: emna450/backend-evaluation:latest
+        - name: formation-ms
+          image: emna450/backend-formation:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
-              containerPort: 8083
+              containerPort: 8081
           env:
             - name: CONFIG_SERVER_HOST
               value: config-server
@@ -54,12 +54,12 @@ spec:
             - name: MYSQL_USER
               valueFrom:
                 secretKeyRef:
-                  name: evaluation-mysql-secret
+                  name: formation-mysql-secret
                   key: MYSQL_USER
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: evaluation-mysql-secret
+                  name: formation-mysql-secret
                   key: MYSQL_PASSWORD
           resources:
             requests:
@@ -71,12 +71,12 @@ spec:
           readinessProbe:
             httpGet:
               path: /actuator/health
-              port: 8083
+              port: 8081
             initialDelaySeconds: 40
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /actuator/health
-              port: 8083
+              port: 8081
             initialDelaySeconds: 80
             periodSeconds: 20

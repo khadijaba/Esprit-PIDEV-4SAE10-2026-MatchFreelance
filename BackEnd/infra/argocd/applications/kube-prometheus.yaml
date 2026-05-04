@@ -1,0 +1,44 @@
+# Multi-source : chart officiel + values depuis Git (pas de helm dependency update local).
+# Adapter repoURL / targetRevision. Chart version : vérifier compatibilité sur https://github.com/prometheus-community/helm-charts
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: kube-prometheus-stack
+    app.kubernetes.io/part-of: platform
+    app.kubernetes.io/managed-by: argocd
+    team: platform
+    env: dev
+  annotations:
+    argocd.argoproj.io/manifest-generate-timeout: 900s
+spec:
+  project: default
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: 59.1.0
+      helm:
+        releaseName: kube-prometheus
+        valueFiles:
+          - $values/BackEnd/infra/monitoring/helm-values-kube-prometheus.yaml
+    - repoURL: https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git
+      targetRevision: projectskills
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 5m

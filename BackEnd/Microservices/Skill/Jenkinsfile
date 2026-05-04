@@ -13,12 +13,12 @@ pipeline {
 
     environment {
         MODULE_DIR = 'BackEnd/Microservices/Skill'
-        SONAR_PROJECT_KEY = 'sonar-token-skill'
+        SONAR_PROJECT_KEY = 'skill'
         SONAR_HOST = 'http://host.docker.internal:9000'
         IMAGE_NAME = 'emna450/backend-skill'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
         CD_JOB_NAME = 'pipeline-CD-skill-ms'
-        K8S_NAMESPACE = 'matchfreelance'
+        K8S_NAMESPACE = 'skill'
     }
 
     stages {
