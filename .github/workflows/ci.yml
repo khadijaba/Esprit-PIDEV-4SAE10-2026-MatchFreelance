@@ -1,16 +1,8 @@
-name: 🚀 CI/CD Pipeline - User Microservice
+name: 🚀 CI/CD Pipeline - User Microservice (DISABLED)
 
+# Temporarily disabled - use test-simple.yml instead
 on:
-  push:
-    branches: [ main, develop, User ]
-    paths:
-      - 'User/**'
-      - '.github/workflows/ci.yml'
-  pull_request:
-    branches: [ main, develop, User ]
-    paths:
-      - 'User/**'
-      - '.github/workflows/ci.yml'
+  workflow_dispatch:  # Manual trigger only
 
 env:
   JAVA_VERSION: '17'
