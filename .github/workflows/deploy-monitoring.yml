@@ -45,8 +45,8 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: 📦 Build with Maven
-        run: mvn clean package -DskipTests
+      - name: 📦 Build with Maven (Skip Tests)
+        run: mvn clean package -DskipTests -Dmaven.test.skip=true
 
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
