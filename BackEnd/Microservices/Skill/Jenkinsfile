@@ -85,12 +85,24 @@ pipeline {
             steps {
                 dir("${env.MODULE_DIR}") {
                     sh """
-                        docker image prune -f || true
+                        set -e
+                        DOCKER_CMD='docker'
+                        if ! docker info > /dev/null 2>&1; then
+                            if sudo -n docker info > /dev/null 2>&1; then
+                                DOCKER_CMD='sudo -n docker'
+                                echo "Docker socket inaccessible for jenkins user, using sudo -n docker."
+                            else
+                                echo "Docker daemon inaccessible (permission denied on /var/run/docker.sock)."
+                                echo "Fix Jenkins agent rights: add jenkins user to docker group or allow passwordless sudo docker."
+                                exit 1
+                            fi
+                        fi
+                        \${DOCKER_CMD} image prune -f || true
                         # BuildKit peut échouer en CI avec "forwarding Ping: no such job" (moby/buildkit) : builder classique + retries.
                         export DOCKER_BUILDKIT=0
                         build_with_retry() {
                             n=0
-                            until docker build --pull --no-cache -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} .; do
+                            until \${DOCKER_CMD} build --pull --no-cache -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} .; do
                                 n=\$((n + 1))
                                 if [ "\$n" -ge 3 ]; then
                                     echo "docker build failed after \$n attempts"
@@ -101,7 +113,7 @@ pipeline {
                             done
                         }
                         build_with_retry
-                        docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest
+                        \${DOCKER_CMD} tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest
                     """
                 }
             }
@@ -112,14 +124,25 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
                         set -e
-                        docker image inspect ${env.IMAGE_NAME}:${env.IMAGE_TAG} > /dev/null
-                        echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
+                        DOCKER_CMD='docker'
+                        if ! docker info > /dev/null 2>&1; then
+                            if sudo -n docker info > /dev/null 2>&1; then
+                                DOCKER_CMD='sudo -n docker'
+                                echo "Docker socket inaccessible for jenkins user, using sudo -n docker."
+                            else
+                                echo "Docker daemon inaccessible (permission denied on /var/run/docker.sock)."
+                                echo "Fix Jenkins agent rights: add jenkins user to docker group or allow passwordless sudo docker."
+                                exit 1
+                            fi
+                        fi
+                        \${DOCKER_CMD} image inspect ${env.IMAGE_NAME}:${env.IMAGE_TAG} > /dev/null
+                        echo "\${DOCKER_PASS}" | \${DOCKER_CMD} login -u "\${DOCKER_USER}" --password-stdin
 
                         # Docker Hub peut répondre 400 sur un blob (réseau, couche volumineuse) : jusqu'à 4 tentatives par tag.
                         push_with_retry() {
                             img="\$1"
                             n=0
-                            until docker push "\$img"; do
+                            until \${DOCKER_CMD} push "\$img"; do
                                 n=\$((n + 1))
                                 if [ "\$n" -ge 4 ]; then
                                     echo "docker push failed for \$img after \$n attempts"
@@ -133,12 +156,12 @@ pipeline {
                         push_with_retry ${env.IMAGE_NAME}:${env.IMAGE_TAG}
                         CURRENT_BRANCH="\${BRANCH_NAME:-\$(git rev-parse --abbrev-ref HEAD)}"
                         if [ "\${CURRENT_BRANCH}" = "main" ]; then
-                            docker image inspect ${env.IMAGE_NAME}:latest > /dev/null
+                            \${DOCKER_CMD} image inspect ${env.IMAGE_NAME}:latest > /dev/null
                             push_with_retry ${env.IMAGE_NAME}:latest
                         else
                             echo "Skip latest push on branch \${CURRENT_BRANCH}"
                         fi
-                        docker logout
+                        \${DOCKER_CMD} logout
                     """
                 }
             }
