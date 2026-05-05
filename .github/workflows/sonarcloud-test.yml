@@ -1,0 +1,136 @@
+name: 🧪 Test SonarCloud Configuration
+
+# Workflow de test pour vérifier la configuration SonarCloud
+# À exécuter manuellement pour tester avant le vrai workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests (for quick config check)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+env:
+  JAVA_VERSION: '17'
+  MAVEN_OPTS: '-Xmx1024m'
+
+jobs:
+  test-config:
+    name: 🧪 Test SonarCloud Configuration
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./User
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 🔍 Check SONAR_TOKEN Secret
+        run: |
+          if [ -z "${{ secrets.SONAR_TOKEN }}" ]; then
+            echo "❌ ERROR: SONAR_TOKEN secret is not configured!"
+            echo "Please add SONAR_TOKEN in GitHub Settings → Secrets"
+            exit 1
+          else
+            echo "✅ SONAR_TOKEN is configured"
+          fi
+
+      - name: 📋 Display Configuration
+        run: |
+          echo "## 📋 SonarCloud Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### From pom.xml:" >> $GITHUB_STEP_SUMMARY
+          echo '```xml' >> $GITHUB_STEP_SUMMARY
+          grep -A 2 "sonar.projectKey\|sonar.organization" pom.xml || echo "Not found in pom.xml" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### From sonar-project.properties:" >> $GITHUB_STEP_SUMMARY
+          echo '```properties' >> $GITHUB_STEP_SUMMARY
+          grep "sonar.projectKey\|sonar.organization" sonar-project.properties || echo "File not found" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: 🔨 Compile Project
+        run: |
+          echo "🔨 Compiling project..."
+          mvn clean compile -B
+
+      - name: 🧪 Run Tests (if not skipped)
+        if: inputs.skip_tests == 'false'
+        run: |
+          echo "🧪 Running tests..."
+          mvn test -B -Dmaven.test.failure.ignore=true
+        continue-on-error: true
+
+      - name: 📊 Generate JaCoCo Report (if not skipped)
+        if: inputs.skip_tests == 'false'
+        run: |
+          echo "📊 Generating coverage report..."
+          mvn jacoco:report
+        continue-on-error: true
+
+      - name: 🔍 Dry Run SonarCloud Analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          echo "🔍 Testing SonarCloud connection..."
+          mvn sonar:sonar -B \
+            -Dsonar.projectKey=user-microservice \
+            -Dsonar.organization=your-org \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.java.binaries=target/classes \
+            -Dsonar.sources=src/main/java \
+            -Dsonar.tests=src/test/java \
+            -X || echo "⚠️ SonarCloud analysis failed - check logs above"
+
+      - name: 📊 Test Summary
+        if: always()
+        run: |
+          echo "## 🧪 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "target/site/jacoco/jacoco.xml" ]; then
+            echo "✅ JaCoCo report generated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ JaCoCo report not found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -d "target/surefire-reports" ]; then
+            TEST_COUNT=$(find target/surefire-reports -name "*.xml" | wc -l)
+            echo "✅ Test reports found: $TEST_COUNT files" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Test reports not found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Check the logs above for any errors" >> $GITHUB_STEP_SUMMARY
+          echo "2. Verify your organization key in the configuration files" >> $GITHUB_STEP_SUMMARY
+          echo "3. Check SonarCloud dashboard: https://sonarcloud.io/dashboard?id=user-microservice" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📤 Upload Test Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-artifacts
+          path: |
+            User/target/site/jacoco/
+            User/target/surefire-reports/
+          retention-days: 7

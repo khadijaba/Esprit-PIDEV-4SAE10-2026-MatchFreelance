@@ -1,0 +1,137 @@
+name: 🔍 SonarCloud Analysis - User Microservice
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - User
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - develop
+      - master
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '17'
+  MAVEN_OPTS: '-Xmx1024m'
+
+jobs:
+  sonarcloud:
+    name: 🔍 SonarCloud Analysis
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./User
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 📦 Cache SonarCloud Packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: 📦 Cache Maven Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: 🧪 Run Tests with Coverage
+        run: |
+          mvn clean verify -B \
+            -Dspring.profiles.active=test \
+            -Dmaven.test.failure.ignore=true
+        env:
+          SPRING_PROFILES_ACTIVE: test
+        continue-on-error: true
+
+      - name: 🔍 SonarCloud Scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn sonar:sonar -B \
+            -Dsonar.projectKey=user-microservice \
+            -Dsonar.organization=aminepidevops123 \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.java.binaries=target/classes \
+            -Dsonar.sources=src/main/java \
+            -Dsonar.tests=src/test/java \
+            -Dsonar.junit.reportPaths=target/surefire-reports \
+            -Dsonar.java.coveragePlugin=jacoco
+
+      - name: 📊 SonarCloud Quality Gate Check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          scanMetadataReportFile: User/target/sonar/report-task.txt
+        continue-on-error: true
+
+      - name: 📈 Upload Coverage Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: |
+            User/target/site/jacoco/
+            User/target/surefire-reports/
+          retention-days: 30
+
+      - name: 💬 Comment PR with SonarCloud Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const projectKey = 'user-microservice';
+            const org = 'your-org';
+            const prNumber = context.payload.pull_request.number;
+            
+            const comment = `## 🔍 SonarCloud Analysis Results
+            
+            📊 [View Detailed Report](https://sonarcloud.io/dashboard?id=${projectKey})
+            
+            The code quality analysis has been completed. Please review the results on SonarCloud.
+            
+            ---
+            *Automated comment by SonarCloud Analysis workflow*`;
+            
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: 📢 Post Summary
+        if: always()
+        run: |
+          echo "## 🔍 SonarCloud Analysis Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Analysis completed for User Microservice" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **View detailed results:** [SonarCloud Dashboard](https://sonarcloud.io/dashboard?id=user-microservice)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
