@@ -24,12 +24,13 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         // Créer l'admin uniquement s'il n'existe pas
         if (!userRepository.existsByRole(Role.ADMIN)) {
-            // Récupérer le mot de passe depuis les variables d'environnement
+            // Récupérer le mot de passe depuis les variables d'environnement (OBLIGATOIRE)
             String adminPassword = System.getenv("ADMIN_DEFAULT_PASSWORD");
             if (adminPassword == null || adminPassword.isEmpty()) {
-                // NOSONAR - Mot de passe temporaire pour développement uniquement
-                adminPassword = "ChangeMe@123"; // Mot de passe temporaire par défaut
-                System.out.println("⚠️ WARNING: Using default admin password. Set ADMIN_DEFAULT_PASSWORD environment variable!");
+                System.err.println("❌ ERROR: ADMIN_DEFAULT_PASSWORD environment variable is not set!");
+                System.err.println("Please set it before starting the application:");
+                System.err.println("  export ADMIN_DEFAULT_PASSWORD='YourSecurePassword123!'");
+                throw new IllegalStateException("ADMIN_DEFAULT_PASSWORD environment variable must be set");
             }
             
             User admin = User.builder()
