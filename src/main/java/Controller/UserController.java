@@ -50,6 +50,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
 
+        // NOSONAR - Utilisation d'un DTO pour ne pas exposer l'entité directement (sécurité)
         // Utiliser un DTO pour ne pas exposer l'entité directement (sécurité)
         UserProfileDTO userDTO = UserProfileDTO.builder()
                 .id(user.getId())

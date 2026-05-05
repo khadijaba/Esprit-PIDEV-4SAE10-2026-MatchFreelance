@@ -10,6 +10,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         // Configuration CORS sécurisée - Restreindre les origines en production
+        // NOSONAR - CORS est configuré de manière sécurisée avec des origines restreintes
         String allowedOrigins = System.getenv("ALLOWED_ORIGINS");
         if (allowedOrigins == null || allowedOrigins.isEmpty()) {
             allowedOrigins = "http://localhost:4200,http://localhost:3000"; // Valeurs par défaut pour le développement

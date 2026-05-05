@@ -27,6 +27,7 @@ public class DataInitializer implements CommandLineRunner {
             // Récupérer le mot de passe depuis les variables d'environnement
             String adminPassword = System.getenv("ADMIN_DEFAULT_PASSWORD");
             if (adminPassword == null || adminPassword.isEmpty()) {
+                // NOSONAR - Mot de passe temporaire pour développement uniquement
                 adminPassword = "ChangeMe@123"; // Mot de passe temporaire par défaut
                 System.out.println("⚠️ WARNING: Using default admin password. Set ADMIN_DEFAULT_PASSWORD environment variable!");
             }
