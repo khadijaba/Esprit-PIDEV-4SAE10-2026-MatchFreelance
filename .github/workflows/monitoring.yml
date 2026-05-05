@@ -1,14 +1,10 @@
 name: 📊 Monitoring & Health Checks - User Microservice
 
+name: 📊 Monitoring & Health Checks - User Microservice (DISABLED)
+
+# Temporarily disabled - requires deployed application
 on:
-  push:
-    branches: [ main, develop, User ]
-  pull_request:
-    branches: [ main, develop ]
-  schedule:
-    # Health checks every 6 hours
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger only
     inputs:
       environment:
         description: 'Environment to monitor'

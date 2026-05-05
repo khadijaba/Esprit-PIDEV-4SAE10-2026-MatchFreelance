@@ -1,14 +1,8 @@
-name: 🚀 Performance Testing - User Microservice
+name: 🚀 Performance Testing - User Microservice (DISABLED)
 
+# Temporarily disabled - requires running application
 on:
-  push:
-    branches: [ main, develop, User ]
-  pull_request:
-    branches: [ main, develop ]
-  schedule:
-    # Run performance tests weekly
-    - cron: '0 2 * * 0'
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger only
     inputs:
       test_duration:
         description: 'Test duration in minutes'
