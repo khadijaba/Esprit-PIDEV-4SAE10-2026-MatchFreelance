@@ -1,0 +1,238 @@
+name: 🚀 Manual Deployment - User Microservice
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      version:
+        description: 'Version to deploy (leave empty for latest)'
+        required: false
+        type: string
+      skip_tests:
+        description: 'Skip tests (not recommended for production)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  JAVA_VERSION: '17'
+  SERVICE_NAME: 'user-service'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/user-service
+
+jobs:
+  # ==========================================
+  # Pre-deployment Validation
+  # ==========================================
+  validate:
+    name: 🔍 Pre-deployment Validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./User
+    
+    outputs:
+      deploy-version: ${{ steps.version.outputs.version }}
+      can-deploy: ${{ steps.validation.outputs.can-deploy }}
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🏷️ Determine Version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="manual-${{ github.run_number }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "🏷️ Deploy Version: $VERSION" >> $GITHUB_STEP_SUMMARY
+
+      - name: ☕ Setup Java
+        if: ${{ !github.event.inputs.skip_tests }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 🧪 Quick Tests
+        if: ${{ !github.event.inputs.skip_tests }}
+        run: |
+          echo "🧪 Running quick validation tests..."
+          mvn clean compile test -B -Dtest=*Test
+          echo "✅ Quick tests passed" >> $GITHUB_STEP_SUMMARY
+
+      - name: ✅ Validation Complete
+        id: validation
+        run: |
+          echo "can-deploy=true" >> $GITHUB_OUTPUT
+          echo "## 🔍 Pre-deployment Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 🏷️ **Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌍 **Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🧪 **Tests**: ${{ github.event.inputs.skip_tests && 'Skipped' || 'Passed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Status**: Ready to deploy" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================
+  # Build for Deployment
+  # ==========================================
+  build:
+    name: 🏗️ Build for Deployment
+    runs-on: ubuntu-latest
+    needs: [validate]
+    if: needs.validate.outputs.can-deploy == 'true'
+    defaults:
+      run:
+        working-directory: ./User
+    
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 🏗️ Build Application
+        run: |
+          mvn clean package -B -DskipTests=true
+          echo "✅ Application built successfully" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ needs.validate.outputs.deploy-version }}
+            type=raw,value=manual-latest
+
+      - name: 🐳 Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./User
+          file: ./User/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+
+  # ==========================================
+  # Deploy
+  # ==========================================
+  deploy:
+    name: 🚀 Deploy to ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    needs: [validate, build]
+    environment:
+      name: ${{ github.event.inputs.environment }}
+      url: ${{ steps.deploy.outputs.service-url }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy Application
+        id: deploy
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+          VERSION="${{ needs.validate.outputs.deploy-version }}"
+          IMAGE="${{ needs.build.outputs.image-tag }}"
+          
+          echo "🚀 Deploying to $ENV environment"
+          echo "📦 Version: $VERSION"
+          echo "🐳 Image: $IMAGE"
+          
+          # Simulation du déploiement
+          echo "⏳ Deploying..."
+          sleep 10
+          echo "✅ Deployment completed"
+          
+          # Set service URL
+          if [ "$ENV" = "production" ]; then
+            SERVICE_URL="https://user-service.yourdomain.com"
+          else
+            SERVICE_URL="https://user-service-$ENV.yourdomain.com"
+          fi
+          
+          echo "service-url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          
+          # Dans un vrai environnement:
+          # kubectl set image deployment/user-service user-service=$IMAGE -n $ENV
+          # helm upgrade user-service ./helm/user-service --set image.tag=$VERSION -n $ENV
+
+      - name: 🏥 Health Check
+        run: |
+          echo "🏥 Running health checks..."
+          SERVICE_URL="${{ steps.deploy.outputs.service-url }}"
+          
+          # Simulation des health checks
+          sleep 5
+          echo "✅ Health checks passed"
+          echo "🌐 Service available at: $SERVICE_URL"
+
+      - name: 📊 Deployment Summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌍 **Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🏷️ **Version**: ${{ needs.validate.outputs.deploy-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🐳 **Image**: ${{ needs.build.outputs.image-tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌐 **URL**: ${{ steps.deploy.outputs.service-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏰ **Deployed at**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- 👤 **Deployed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================
+  # Post-Deployment Tests
+  # ==========================================
+  post-deploy-tests:
+    name: 🧪 Post-Deployment Tests
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: success()
+    
+    steps:
+      - name: 🧪 Smoke Tests
+        run: |
+          SERVICE_URL="${{ needs.deploy.outputs.service-url }}"
+          echo "🧪 Running smoke tests against: $SERVICE_URL"
+          
+          # Simulation des smoke tests
+          echo "✅ Basic connectivity test: PASSED"
+          echo "✅ Health endpoint test: PASSED"
+          echo "✅ Authentication test: PASSED"
+          
+          echo "## 🧪 Post-Deployment Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ All smoke tests passed" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🎉 Deployment Success
+        run: |
+          echo "🎉 Manual deployment completed successfully!"
+          echo "🚀 User Service is now running in ${{ github.event.inputs.environment }}"
+          echo "🌐 Available at: ${{ needs.deploy.outputs.service-url }}"

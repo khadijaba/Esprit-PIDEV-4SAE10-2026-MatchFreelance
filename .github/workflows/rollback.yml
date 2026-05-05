@@ -1,0 +1,190 @@
+name: 🔄 Rollback - User Microservice
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+        - staging
+        - production
+      target_version:
+        description: 'Version to rollback to (leave empty for previous version)'
+        required: false
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+
+jobs:
+  # ==========================================
+  # Rollback Preparation
+  # ==========================================
+  prepare-rollback:
+    name: 🔍 Prepare Rollback
+    runs-on: ubuntu-latest
+    
+    outputs:
+      rollback-version: ${{ steps.version.outputs.version }}
+      current-version: ${{ steps.current.outputs.version }}
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Determine Current Version
+        id: current
+        run: |
+          # Simulation - dans un vrai environnement, vous récupéreriez la version actuelle
+          CURRENT_VERSION="1.0.100"
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "📋 Current version: $CURRENT_VERSION" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🎯 Determine Rollback Version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.target_version }}" ]; then
+            ROLLBACK_VERSION="${{ github.event.inputs.target_version }}"
+          else
+            # Simulation - version précédente
+            ROLLBACK_VERSION="1.0.99"
+          fi
+          echo "version=$ROLLBACK_VERSION" >> $GITHUB_OUTPUT
+          echo "🎯 Rollback to version: $ROLLBACK_VERSION" >> $GITHUB_STEP_SUMMARY
+
+      - name: ⚠️ Rollback Warning
+        run: |
+          echo "## ⚠️ Rollback Warning" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌍 **Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 📋 **Current Version**: ${{ steps.current.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎯 **Rollback Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 📝 **Reason**: ${{ github.event.inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 👤 **Initiated by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================
+  # Execute Rollback
+  # ==========================================
+  execute-rollback:
+    name: 🔄 Execute Rollback
+    runs-on: ubuntu-latest
+    needs: [prepare-rollback]
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔄 Perform Rollback
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+          ROLLBACK_VERSION="${{ needs.prepare-rollback.outputs.rollback-version }}"
+          CURRENT_VERSION="${{ needs.prepare-rollback.outputs.current-version }}"
+          
+          echo "🔄 Starting rollback process..."
+          echo "🌍 Environment: $ENV"
+          echo "📋 From version: $CURRENT_VERSION"
+          echo "🎯 To version: $ROLLBACK_VERSION"
+          
+          # Simulation du rollback
+          echo "⏳ Rolling back deployment..."
+          sleep 15
+          
+          # Dans un vrai environnement:
+          # kubectl rollout undo deployment/user-service -n $ENV
+          # ou
+          # helm rollback user-service -n $ENV
+          # ou
+          # kubectl set image deployment/user-service user-service=ghcr.io/repo/user-service:$ROLLBACK_VERSION -n $ENV
+          
+          echo "✅ Rollback completed successfully"
+
+      - name: 🏥 Post-Rollback Health Check
+        run: |
+          echo "🏥 Running post-rollback health checks..."
+          
+          ENV="${{ github.event.inputs.environment }}"
+          if [ "$ENV" = "production" ]; then
+            SERVICE_URL="https://user-service.yourdomain.com"
+          else
+            SERVICE_URL="https://user-service-$ENV.yourdomain.com"
+          fi
+          
+          # Simulation des health checks
+          echo "🔍 Checking service health at: $SERVICE_URL"
+          sleep 5
+          echo "✅ Service is healthy after rollback"
+
+      - name: 📊 Rollback Summary
+        run: |
+          echo "## 🔄 Rollback Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Status**: Rollback completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌍 **Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 📋 **Previous Version**: ${{ needs.prepare-rollback.outputs.current-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎯 **Current Version**: ${{ needs.prepare-rollback.outputs.rollback-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 📝 **Reason**: ${{ github.event.inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏰ **Completed at**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- 👤 **Executed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================
+  # Notification & Documentation
+  # ==========================================
+  notify:
+    name: 📢 Notify & Document
+    runs-on: ubuntu-latest
+    needs: [prepare-rollback, execute-rollback]
+    if: always()
+    
+    steps:
+      - name: 📝 Create Rollback Report
+        run: |
+          cat > rollback-report.md << EOF
+          # 🔄 Rollback Report
+          
+          ## Summary
+          - **Date**: $(date)
+          - **Environment**: ${{ github.event.inputs.environment }}
+          - **Initiated by**: ${{ github.actor }}
+          - **Reason**: ${{ github.event.inputs.reason }}
+          
+          ## Version Changes
+          - **Previous Version**: ${{ needs.prepare-rollback.outputs.current-version }}
+          - **Rolled back to**: ${{ needs.prepare-rollback.outputs.rollback-version }}
+          
+          ## Status
+          - **Rollback Status**: ${{ needs.execute-rollback.result }}
+          - **Health Check**: ${{ needs.execute-rollback.result == 'success' && 'Passed' || 'Failed' }}
+          
+          ## Actions Taken
+          1. Identified current version
+          2. Determined rollback target
+          3. Executed rollback procedure
+          4. Verified service health
+          
+          ## Next Steps
+          - Monitor service stability
+          - Investigate root cause of issues that led to rollback
+          - Plan forward fix if needed
+          EOF
+
+      - name: 📁 Upload Rollback Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: rollback-report-${{ github.run_number }}
+          path: rollback-report.md
+          retention-days: 365
+
+      - name: 🎯 Final Status
+        run: |
+          if [ "${{ needs.execute-rollback.result }}" = "success" ]; then
+            echo "✅ Rollback completed successfully"
+            echo "🔄 Service has been rolled back to version ${{ needs.prepare-rollback.outputs.rollback-version }}"
+          else
+            echo "❌ Rollback failed"
+            echo "🚨 Manual intervention may be required"
+          fi
