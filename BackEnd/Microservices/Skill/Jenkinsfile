@@ -38,11 +38,12 @@ pipeline {
             }
         }
 
-        stage('Setup Java 17') {
+        stage('Setup Java / Maven (wrapper)') {
             steps {
                 dir("${SERVICE_DIR}") {
                     sh 'java -version'
-                    sh 'mvn -version'
+                    sh 'chmod +x ./mvnw'
+                    sh './mvnw -version'
                 }
             }
         }
@@ -50,7 +51,7 @@ pipeline {
         stage('Clean package') {
             steps {
                 dir("${SERVICE_DIR}") {
-                    sh 'mvn -B -ntp clean package -DskipTests'
+                    sh './mvnw -B -ntp clean package -DskipTests'
                 }
             }
         }
@@ -58,7 +59,7 @@ pipeline {
         stage('Tests + JaCoCo') {
             steps {
                 dir("${SERVICE_DIR}") {
-                    sh 'mvn -B -ntp verify'
+                    sh './mvnw -B -ntp verify'
                 }
             }
             post {
@@ -73,7 +74,7 @@ pipeline {
                 dir("${SERVICE_DIR}") {
                     withSonarQubeEnv('sonarqube-server') {
                         sh '''
-                          mvn -B -ntp sonar:sonar \
+                          ./mvnw -B -ntp sonar:sonar \
                             -Dsonar.projectKey=skill \
                             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                         '''
