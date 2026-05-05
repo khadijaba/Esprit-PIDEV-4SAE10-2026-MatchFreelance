@@ -1,8 +1,14 @@
-name: 🛡️ Security & Compliance - User Microservice (DISABLED)
+name: 🛡️ Security & Compliance - User Microservice
 
-# Temporarily disabled due to permission issues
 on:
-  workflow_dispatch:  # Manual trigger only
+  push:
+    branches: [ main, develop, User ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 3 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:  # Manual trigger
 
 env:
   JAVA_VERSION: '17'

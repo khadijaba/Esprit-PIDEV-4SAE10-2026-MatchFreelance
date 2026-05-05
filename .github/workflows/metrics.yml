@@ -1,6 +1,10 @@
 name: 📊 Metrics & Reports - User Microservice
 
 on:
+  push:
+    branches: [ main, develop, User ]
+  pull_request:
+    branches: [ main, develop ]
   schedule:
     # Run every day at 8 AM UTC
     - cron: '0 8 * * *'

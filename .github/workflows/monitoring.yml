@@ -1,9 +1,13 @@
 name: 📊 Monitoring & Health Checks - User Microservice
 
 on:
+  push:
+    branches: [ main, develop, User ]
+  pull_request:
+    branches: [ main, develop ]
   schedule:
-    # Health checks every 15 minutes
-    - cron: '*/15 * * * *'
+    # Health checks every 6 hours
+    - cron: '0 */6 * * *'
   workflow_dispatch:
     inputs:
       environment:
