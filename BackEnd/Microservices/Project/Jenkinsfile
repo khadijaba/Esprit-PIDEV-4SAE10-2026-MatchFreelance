@@ -1,98 +1,124 @@
-pipeline {
-    agent any
-
-    environment {
-        IMAGE_TAG = "${env.BUILD_NUMBER}"
-        DOCKER_REGISTRY_HOST = 'docker.io'
-        DOCKERHUB_REGISTRY_URL = 'https://index.docker.io/v1/'
-        REGISTRY_CREDENTIALS = 'docker-registry-creds'
-        DOCKERHUB_NAMESPACE = 'emna450'
-        IMAGE_REPOSITORY = 'backend-project'
-    }
-
-    options {
-        timestamps()
-        disableConcurrentBuilds()
-    }
-
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Setup Java 17') {
-            steps {
-                sh 'java -version'
-                sh 'mvn -version'
-            }
-        }
-
-        stage('Clean package') {
-            steps {
-                sh 'mvn -B -ntp clean package -DskipTests'
-            }
-        }
-
-        stage('Tests + JaCoCo') {
-            steps {
-                sh 'mvn -B -ntp verify'
-            }
-            post {
-                always {
-                    junit testResults: 'target/surefire-reports/*.xml', allowEmptyResults: true
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonarqube-server') {
-                    sh '''
-                      mvn -B -ntp sonar:sonar \
-                        -Dsonar.projectKey=project \
-                        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                    '''
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} .'
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                withDockerRegistry(credentialsId: "${REGISTRY_CREDENTIALS}", url: "${DOCKERHUB_REGISTRY_URL}") {
-                    sh 'docker push ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG}'
-                    sh 'docker tag ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:latest'
-                    sh 'docker push ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:latest'
-                }
-            }
-        }
-
-        stage('Trigger CD Pipeline') {
-            when {
-                branch 'projectskills'
-            }
-            steps {
-                build job: 'Project-CD',
-                      wait: false,
-                      parameters: [
-                          string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
-                      ]
-            }
-        }
-    }
-}
+pipeline {
+    agent any
+
+    environment {
+        GIT_REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        SERVICE_DIR = 'BackEnd/Microservices/Project'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        DOCKER_REGISTRY_HOST = 'docker.io'
+        DOCKERHUB_REGISTRY_URL = 'https://index.docker.io/v1/'
+        REGISTRY_CREDENTIALS = 'docker-registry-creds'
+        DOCKERHUB_NAMESPACE = 'emna450'
+        IMAGE_REPOSITORY = 'backend-project'
+    }
+
+    options {
+        skipDefaultCheckout(true)
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/projectskills']],
+                    extensions: [
+                        [$class: 'CloneOption', depth: 1, honorRefspec: true, noTags: true, shallow: true, timeout: 60],
+                        [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [
+                            [$class: 'SparseCheckoutPath', path: "${SERVICE_DIR}"]
+                        ]]
+                    ],
+                    userRemoteConfigs: [[
+                        url: "${GIT_REPO_URL}",
+                        refspec: '+refs/heads/projectskills:refs/remotes/origin/projectskills'
+                    ]]
+                ])
+            }
+        }
+
+        stage('Setup Java 17') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh 'java -version'
+                    sh 'mvn -version'
+                }
+            }
+        }
+
+        stage('Clean package') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh 'mvn -B -ntp clean package -DskipTests'
+                }
+            }
+        }
+
+        stage('Tests + JaCoCo') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh 'mvn -B -ntp verify'
+                }
+            }
+            post {
+                always {
+                    junit testResults: "${SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyResults: true
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    withSonarQubeEnv('sonarqube-server') {
+                        sh '''
+                          mvn -B -ntp sonar:sonar \
+                            -Dsonar.projectKey=project \
+                            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh 'docker build -t ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} .'
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withDockerRegistry(credentialsId: "${REGISTRY_CREDENTIALS}", url: "${DOCKERHUB_REGISTRY_URL}") {
+                    sh 'docker push ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG}'
+                    sh 'docker tag ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:latest'
+                    sh 'docker push ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:latest'
+                }
+            }
+        }
+
+        stage('Trigger CD Pipeline') {
+            when {
+                branch 'projectskills'
+            }
+            steps {
+                build job: 'Project-CD',
+                      wait: false,
+                      parameters: [
+                          string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
+                      ]
+            }
+        }
+    }
+}

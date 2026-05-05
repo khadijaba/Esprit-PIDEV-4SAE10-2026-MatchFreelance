@@ -2,6 +2,8 @@ pipeline {
     agent any
 
     environment {
+        GIT_REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        SERVICE_DIR = 'BackEnd/Microservices/Skill'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         DOCKER_REGISTRY_HOST = 'docker.io'
         DOCKERHUB_REGISTRY_URL = 'https://index.docker.io/v1/'
@@ -11,6 +13,7 @@ pipeline {
     }
 
     options {
+        skipDefaultCheckout(true)
         timestamps()
         disableConcurrentBuilds()
     }
@@ -18,42 +21,63 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/projectskills']],
+                    extensions: [
+                        [$class: 'CloneOption', depth: 1, honorRefspec: true, noTags: true, shallow: true, timeout: 60],
+                        [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [
+                            [$class: 'SparseCheckoutPath', path: "${SERVICE_DIR}"]
+                        ]]
+                    ],
+                    userRemoteConfigs: [[
+                        url: "${GIT_REPO_URL}",
+                        refspec: '+refs/heads/projectskills:refs/remotes/origin/projectskills'
+                    ]]
+                ])
             }
         }
 
         stage('Setup Java 17') {
             steps {
-                sh 'java -version'
-                sh 'mvn -version'
+                dir("${SERVICE_DIR}") {
+                    sh 'java -version'
+                    sh 'mvn -version'
+                }
             }
         }
 
         stage('Clean package') {
             steps {
-                sh 'mvn -B -ntp clean package -DskipTests'
+                dir("${SERVICE_DIR}") {
+                    sh 'mvn -B -ntp clean package -DskipTests'
+                }
             }
         }
 
         stage('Tests + JaCoCo') {
             steps {
-                sh 'mvn -B -ntp verify'
+                dir("${SERVICE_DIR}") {
+                    sh 'mvn -B -ntp verify'
+                }
             }
             post {
                 always {
-                    junit testResults: 'target/surefire-reports/*.xml', allowEmptyResults: true
+                    junit testResults: "${SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyResults: true
                 }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube-server') {
-                    sh '''
-                      mvn -B -ntp sonar:sonar \
-                        -Dsonar.projectKey=skill \
-                        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                    '''
+                dir("${SERVICE_DIR}") {
+                    withSonarQubeEnv('sonarqube-server') {
+                        sh '''
+                          mvn -B -ntp sonar:sonar \
+                            -Dsonar.projectKey=skill \
+                            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                        '''
+                    }
                 }
             }
         }
@@ -68,7 +92,9 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} .'
+                dir("${SERVICE_DIR}") {
+                    sh 'docker build -t ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} .'
+                }
             }
         }
 

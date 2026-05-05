@@ -17,17 +17,12 @@ pipeline {
     }
 
     options {
+        skipDefaultCheckout(true)
         timestamps()
         disableConcurrentBuilds()
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
