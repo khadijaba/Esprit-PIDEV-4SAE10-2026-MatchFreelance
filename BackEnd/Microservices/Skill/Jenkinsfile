@@ -94,107 +94,20 @@ pipeline {
             }
         }
 
-        stage('Docker Build') {
-            steps {
-                dir("${env.MODULE_DIR}") {
-                    sh """
-                        set -e
-                        resolve_docker_cmd() {
-                            if docker info > /dev/null 2>&1; then
-                                echo "docker"
-                                return 0
-                            fi
-                            if sudo -n docker info > /dev/null 2>&1; then
-                                echo "sudo -n docker"
-                                return 0
-                            fi
-                            return 1
-                        }
-
-                        DOCKER_CMD=\$(resolve_docker_cmd) || {
-                            echo "Docker daemon inaccessible (/var/run/docker.sock permission denied)."
-                            echo "Fix Jenkins agent rights: docker group for jenkins or passwordless sudo docker."
-                            exit 1
-                        }
-                        echo "Using Docker command: \${DOCKER_CMD}"
-
-                        \${DOCKER_CMD} image prune -f || true
-
-                        # BuildKit peut provoquer des erreurs sporadiques en CI : fallback legacy builder.
-                        export DOCKER_BUILDKIT=0
-                        build_with_retry() {
-                            n=0
-                            until \${DOCKER_CMD} build --pull --no-cache -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} .; do
-                                n=\$((n + 1))
-                                if [ "\$n" -ge 3 ]; then
-                                    echo "docker build failed after \$n attempts"
-                                    exit 1
-                                fi
-                                echo "docker build failed (attempt \$n), waiting 20s..."
-                                sleep 20
-                            done
-                        }
-
-                        build_with_retry
-                        \${DOCKER_CMD} tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest
-                    """
-                }
-            }
-        }
-
-        stage('Docker Push') {
+        stage('Image Build & Push (Jib)') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        set -e
-                        resolve_docker_cmd() {
-                            if docker info > /dev/null 2>&1; then
-                                echo "docker"
-                                return 0
-                            fi
-                            if sudo -n docker info > /dev/null 2>&1; then
-                                echo "sudo -n docker"
-                                return 0
-                            fi
-                            return 1
-                        }
-
-                        DOCKER_CMD=\$(resolve_docker_cmd) || {
-                            echo "Docker daemon inaccessible (/var/run/docker.sock permission denied)."
-                            echo "Fix Jenkins agent rights: docker group for jenkins or passwordless sudo docker."
-                            exit 1
-                        }
-                        echo "Using Docker command: \${DOCKER_CMD}"
-
-                        \${DOCKER_CMD} image inspect ${env.IMAGE_NAME}:${env.IMAGE_TAG} > /dev/null
-                        echo "\${DOCKER_PASS}" | \${DOCKER_CMD} login -u "\${DOCKER_USER}" --password-stdin
-
-                        push_with_retry() {
-                            img="\$1"
-                            n=0
-                            until \${DOCKER_CMD} push "\$img"; do
-                                n=\$((n + 1))
-                                if [ "\$n" -ge 4 ]; then
-                                    echo "docker push failed for \$img after \$n attempts"
-                                    exit 1
-                                fi
-                                echo "docker push \$img failed (attempt \$n), waiting 25s..."
-                                sleep 25
-                            done
-                        }
-
-                        push_with_retry ${env.IMAGE_NAME}:${env.IMAGE_TAG}
-
-                        CURRENT_BRANCH="\${BRANCH_NAME:-\$(git rev-parse --abbrev-ref HEAD)}"
-                        if [ "\${CURRENT_BRANCH}" = "main" ]; then
-                            \${DOCKER_CMD} image inspect ${env.IMAGE_NAME}:latest > /dev/null
-                            push_with_retry ${env.IMAGE_NAME}:latest
-                        else
-                            echo "Skip latest push on branch \${CURRENT_BRANCH}"
-                        fi
-
-                        \${DOCKER_CMD} logout
-                    """
+                    dir("${env.MODULE_DIR}") {
+                        sh """
+                            set -e
+                            # Build/push image sans daemon Docker local (évite /var/run/docker.sock permission denied).
+                            mvn -B com.google.cloud.tools:jib-maven-plugin:3.4.3:build \\
+                              -Dimage=${env.IMAGE_NAME}:${env.IMAGE_TAG} \\
+                              -Djib.from.image=eclipse-temurin:17-jre \\
+                              -Djib.to.auth.username=\${DOCKER_USER} \\
+                              -Djib.to.auth.password=\${DOCKER_PASS}
+                        """
+                    }
                 }
             }
         }
