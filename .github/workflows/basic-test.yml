@@ -1,0 +1,27 @@
+name: ✅ Basic Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      - name: Test Maven
+        run: |
+          cd User
+          mvn --version
+          echo "✅ Maven is working!"
+      
+      - name: Success
+        run: echo "🎉 Workflow completed successfully!"
