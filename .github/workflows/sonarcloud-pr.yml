@@ -63,8 +63,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           mvn sonar:sonar -B \
-            -Dsonar.projectKey=user-microservice \
-            -Dsonar.organization=aminepidevops123 \
+            -Dsonar.projectKey=aminebejaouiet_user-service \
+            -Dsonar.organization=aminebejaouiet \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
             -Dsonar.pullrequest.branch=${{ github.head_ref }} \
@@ -77,8 +77,8 @@ jobs:
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
-            const projectKey = 'user-microservice';
-            const org = 'aminepidevops123';
+            const projectKey = 'aminebejaouiet_user-service';
+            const org = 'aminebejaouiet';
             
             const comment = `## 🔍 SonarCloud Analysis Results
             
