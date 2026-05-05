@@ -1,0 +1,126 @@
+# Configuration Alertmanager pour User Microservice
+
+global:
+  resolve_timeout: 5m
+  # Configuration SMTP pour les emails (optionnel)
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alertmanager@yourdomain.com'
+  smtp_auth_username: 'your-email@gmail.com'
+  smtp_auth_password: 'your-app-password'
+  smtp_require_tls: true
+
+# Templates pour les notifications
+templates:
+  - '/etc/alertmanager/*.tmpl'
+
+# Route principale
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default-receiver'
+  
+  # Routes spécifiques par sévérité
+  routes:
+    # Alertes critiques
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: true
+      group_wait: 10s
+      repeat_interval: 5m
+    
+    # Alertes warning
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      repeat_interval: 1h
+    
+    # Alertes de sécurité
+    - match:
+        component: security
+      receiver: 'security-alerts'
+      continue: true
+      group_wait: 10s
+      repeat_interval: 30m
+
+# Inhibition rules (empêcher certaines alertes si d'autres sont actives)
+inhibit_rules:
+  # Si le service est down, ne pas alerter sur les autres problèmes
+  - source_match:
+      severity: 'critical'
+      alertname: 'UserServiceDown'
+    target_match:
+      severity: 'warning'
+    equal: ['service']
+  
+  # Si MySQL est down, ne pas alerter sur les connexions DB
+  - source_match:
+      alertname: 'MySQLDown'
+    target_match:
+      component: 'database'
+    equal: ['service']
+
+# Receivers (destinations des alertes)
+receivers:
+  # Receiver par défaut (console)
+  - name: 'default-receiver'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+
+  # Alertes critiques (email + webhook)
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'admin@yourdomain.com'
+        subject: '🚨 CRITICAL ALERT: {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>🚨 Alerte Critique</h2>
+          <p><strong>Service:</strong> {{ .GroupLabels.service }}</p>
+          <p><strong>Alerte:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Sévérité:</strong> {{ .CommonLabels.severity }}</p>
+          <p><strong>Description:</strong> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
+          <p><strong>Heure:</strong> {{ .CommonAnnotations.timestamp }}</p>
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/critical'
+        send_resolved: true
+    # Slack (optionnel - décommenter et configurer)
+    # slack_configs:
+    #   - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+    #     channel: '#alerts-critical'
+    #     title: '🚨 Critical Alert: {{ .GroupLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+  # Alertes warning (email)
+  - name: 'warning-alerts'
+    email_configs:
+      - to: 'team@yourdomain.com'
+        subject: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>⚠️ Alerte Warning</h2>
+          <p><strong>Service:</strong> {{ .GroupLabels.service }}</p>
+          <p><strong>Alerte:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Description:</strong> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
+    # Slack (optionnel)
+    # slack_configs:
+    #   - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+    #     channel: '#alerts-warning'
+    #     title: '⚠️ Warning: {{ .GroupLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+  # Alertes de sécurité
+  - name: 'security-alerts'
+    email_configs:
+      - to: 'security@yourdomain.com'
+        subject: '🔒 SECURITY ALERT: {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>🔒 Alerte de Sécurité</h2>
+          <p><strong>Service:</strong> {{ .GroupLabels.service }}</p>
+          <p><strong>Alerte:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Description:</strong> {{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
+          <p><strong>Action requise:</strong> Vérifier les logs immédiatement</p>
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/security'
+        send_resolved: true

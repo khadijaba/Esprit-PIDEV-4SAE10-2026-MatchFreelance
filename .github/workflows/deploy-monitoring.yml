@@ -1,0 +1,409 @@
+name: 📊 Deploy Monitoring Stack
+
+on:
+  push:
+    branches:
+      - User
+      - main
+      - master
+      - develop
+    paths:
+      - 'monitoring/**'
+      - 'docker-compose-monitoring.yml'
+      - '.github/workflows/deploy-monitoring.yml'
+      - 'src/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/user-service
+
+jobs:
+  # ==========================================
+  # Job 1: Build and Push Docker Image
+  # ==========================================
+  build-image:
+    name: 🐳 Build Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 📦 Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📝 Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🏗️ Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ==========================================
+  # Job 2: Deploy Monitoring Stack
+  # ==========================================
+  deploy-monitoring:
+    name: 🚀 Deploy Monitoring Stack
+    runs-on: ubuntu-latest
+    needs: build-image
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📊 Validate Monitoring Configuration
+        run: |
+          echo "🔍 Validation des fichiers de configuration..."
+          
+          # Vérifier que les fichiers existent
+          if [ ! -f "docker-compose-monitoring.yml" ]; then
+            echo "❌ docker-compose-monitoring.yml manquant"
+            exit 1
+          fi
+          
+          if [ ! -f "monitoring/prometheus/prometheus.yml" ]; then
+            echo "❌ prometheus.yml manquant"
+            exit 1
+          fi
+          
+          if [ ! -f "monitoring/prometheus/alerts.yml" ]; then
+            echo "❌ alerts.yml manquant"
+            exit 1
+          fi
+          
+          if [ ! -f "monitoring/alertmanager/alertmanager.yml" ]; then
+            echo "❌ alertmanager.yml manquant"
+            exit 1
+          fi
+          
+          echo "✅ Tous les fichiers de configuration sont présents"
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🚀 Deploy Monitoring Stack (Development)
+        if: github.ref == 'refs/heads/User' || github.ref == 'refs/heads/develop'
+        run: |
+          echo "🚀 Déploiement du stack de monitoring (Development)..."
+          
+          # Créer les dossiers nécessaires
+          mkdir -p monitoring/prometheus
+          mkdir -p monitoring/grafana/provisioning/datasources
+          mkdir -p monitoring/grafana/provisioning/dashboards
+          mkdir -p monitoring/grafana/dashboards
+          mkdir -p monitoring/alertmanager
+          
+          # Démarrer le stack
+          docker-compose -f docker-compose-monitoring.yml up -d
+          
+          # Attendre que les services soient prêts
+          echo "⏳ Attente du démarrage des services..."
+          sleep 15
+          
+          # Vérifier l'état des services
+          docker-compose -f docker-compose-monitoring.yml ps
+
+      - name: 🔍 Health Check - Prometheus
+        run: |
+          echo "🔍 Vérification de Prometheus..."
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if curl -f -s --max-time 5 http://localhost:9091/-/healthy > /dev/null 2>&1; then
+              echo "✅ Prometheus est accessible"
+              exit 0
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "⏳ Tentative $RETRY_COUNT/$MAX_RETRIES..."
+              sleep 5
+            fi
+          done
+          
+          echo "❌ Prometheus n'est pas accessible après $MAX_RETRIES tentatives"
+          docker-compose -f docker-compose-monitoring.yml logs prometheus
+          exit 1
+
+      - name: 🔍 Health Check - Grafana
+        run: |
+          echo "🔍 Vérification de Grafana..."
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if curl -f -s --max-time 5 http://localhost:3001/api/health > /dev/null 2>&1; then
+              echo "✅ Grafana est accessible"
+              exit 0
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "⏳ Tentative $RETRY_COUNT/$MAX_RETRIES..."
+              sleep 5
+            fi
+          done
+          
+          echo "❌ Grafana n'est pas accessible après $MAX_RETRIES tentatives"
+          docker-compose -f docker-compose-monitoring.yml logs grafana
+          exit 1
+
+      - name: 🔍 Health Check - Alertmanager
+        run: |
+          echo "🔍 Vérification de Alertmanager..."
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if curl -f -s --max-time 5 http://localhost:9093/-/healthy > /dev/null 2>&1; then
+              echo "✅ Alertmanager est accessible"
+              exit 0
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "⏳ Tentative $RETRY_COUNT/$MAX_RETRIES..."
+              sleep 5
+            fi
+          done
+          
+          echo "❌ Alertmanager n'est pas accessible après $MAX_RETRIES tentatives"
+          docker-compose -f docker-compose-monitoring.yml logs alertmanager
+          exit 1
+
+      - name: 📊 Verify Prometheus Targets
+        run: |
+          echo "📊 Vérification des targets Prometheus..."
+          
+          # Attendre un peu pour que Prometheus scrape les targets
+          sleep 10
+          
+          # Récupérer les targets
+          TARGETS=$(curl -s http://localhost:9091/api/v1/targets | jq -r '.data.activeTargets[] | "\(.labels.job): \(.health)"')
+          
+          echo "Targets détectés:"
+          echo "$TARGETS"
+          
+          # Vérifier que le target user-service est UP
+          if echo "$TARGETS" | grep -q "user-service: up"; then
+            echo "✅ Target user-service est UP"
+          else
+            echo "⚠️ Target user-service n'est pas UP (normal si le service n'est pas déployé)"
+          fi
+
+      - name: 📊 Configure Grafana Datasource
+        run: |
+          echo "📊 Configuration de la datasource Grafana..."
+          
+          # Attendre que Grafana soit complètement prêt
+          sleep 5
+          
+          # Vérifier que la datasource Prometheus est configurée
+          DATASOURCES=$(curl -s -u admin:admin123 http://localhost:3001/api/datasources)
+          
+          if echo "$DATASOURCES" | jq -e '.[] | select(.name=="Prometheus")' > /dev/null; then
+            echo "✅ Datasource Prometheus est configurée"
+          else
+            echo "⚠️ Datasource Prometheus n'est pas configurée automatiquement"
+            echo "Elle sera configurée au premier accès à Grafana"
+          fi
+
+      - name: 📊 Import Grafana Dashboard
+        run: |
+          echo "📊 Vérification du dashboard Grafana..."
+          
+          # Lister les dashboards
+          DASHBOARDS=$(curl -s -u admin:admin123 http://localhost:3001/api/search?type=dash-db)
+          
+          echo "Dashboards disponibles:"
+          echo "$DASHBOARDS" | jq -r '.[] | .title'
+          
+          if echo "$DASHBOARDS" | jq -e '.[] | select(.title=="User Service - Overview")' > /dev/null; then
+            echo "✅ Dashboard 'User Service - Overview' est disponible"
+          else
+            echo "⚠️ Dashboard 'User Service - Overview' n'est pas encore chargé"
+            echo "Il sera chargé automatiquement au prochain redémarrage"
+          fi
+
+      - name: 📝 Generate Deployment Report
+        run: |
+          echo "# 📊 Monitoring Stack Deployment Report" > deployment-report.md
+          echo "" >> deployment-report.md
+          echo "**Date**: $(date)" >> deployment-report.md
+          echo "**Branch**: ${{ github.ref_name }}" >> deployment-report.md
+          echo "**Commit**: ${{ github.sha }}" >> deployment-report.md
+          echo "" >> deployment-report.md
+          echo "## 🚀 Services Deployed" >> deployment-report.md
+          echo "" >> deployment-report.md
+          echo "| Service | Status | URL |" >> deployment-report.md
+          echo "|---------|--------|-----|" >> deployment-report.md
+          
+          # Prometheus
+          if curl -f -s --max-time 5 http://localhost:9091/-/healthy > /dev/null 2>&1; then
+            echo "| Prometheus | ✅ UP | http://localhost:9091 |" >> deployment-report.md
+          else
+            echo "| Prometheus | ❌ DOWN | http://localhost:9091 |" >> deployment-report.md
+          fi
+          
+          # Grafana
+          if curl -f -s --max-time 5 http://localhost:3001/api/health > /dev/null 2>&1; then
+            echo "| Grafana | ✅ UP | http://localhost:3001 |" >> deployment-report.md
+          else
+            echo "| Grafana | ❌ DOWN | http://localhost:3001 |" >> deployment-report.md
+          fi
+          
+          # Alertmanager
+          if curl -f -s --max-time 5 http://localhost:9093/-/healthy > /dev/null 2>&1; then
+            echo "| Alertmanager | ✅ UP | http://localhost:9093 |" >> deployment-report.md
+          else
+            echo "| Alertmanager | ❌ DOWN | http://localhost:9093 |" >> deployment-report.md
+          fi
+          
+          # Node Exporter
+          if curl -f -s --max-time 5 http://localhost:9100/metrics > /dev/null 2>&1; then
+            echo "| Node Exporter | ✅ UP | http://localhost:9100 |" >> deployment-report.md
+          else
+            echo "| Node Exporter | ❌ DOWN | http://localhost:9100 |" >> deployment-report.md
+          fi
+          
+          # MySQL Exporter
+          if curl -f -s --max-time 5 http://localhost:9104/metrics > /dev/null 2>&1; then
+            echo "| MySQL Exporter | ✅ UP | http://localhost:9104 |" >> deployment-report.md
+          else
+            echo "| MySQL Exporter | ⚠️ DOWN | http://localhost:9104 |" >> deployment-report.md
+          fi
+          
+          echo "" >> deployment-report.md
+          echo "## 📊 Prometheus Targets" >> deployment-report.md
+          echo "" >> deployment-report.md
+          echo "\`\`\`" >> deployment-report.md
+          curl -s http://localhost:9091/api/v1/targets | jq -r '.data.activeTargets[] | "\(.labels.job): \(.health)"' >> deployment-report.md
+          echo "\`\`\`" >> deployment-report.md
+          
+          echo "" >> deployment-report.md
+          echo "## 🔗 Access URLs" >> deployment-report.md
+          echo "" >> deployment-report.md
+          echo "- **Grafana**: http://localhost:3001 (admin/admin123)" >> deployment-report.md
+          echo "- **Prometheus**: http://localhost:9091" >> deployment-report.md
+          echo "- **Alertmanager**: http://localhost:9093" >> deployment-report.md
+          echo "" >> deployment-report.md
+          echo "## 📚 Documentation" >> deployment-report.md
+          echo "" >> deployment-report.md
+          echo "- [Monitoring Guide](MONITORING-GUIDE.md)" >> deployment-report.md
+          echo "- [Prometheus Configuration](monitoring/prometheus/prometheus.yml)" >> deployment-report.md
+          echo "- [Alert Rules](monitoring/prometheus/alerts.yml)" >> deployment-report.md
+          
+          cat deployment-report.md
+
+      - name: 📤 Upload Deployment Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-deployment-report
+          path: deployment-report.md
+          retention-days: 30
+
+      - name: 📊 Show Service Logs
+        if: always()
+        run: |
+          echo "📊 Logs des services de monitoring:"
+          echo ""
+          echo "=== Prometheus ==="
+          docker-compose -f docker-compose-monitoring.yml logs --tail=50 prometheus
+          echo ""
+          echo "=== Grafana ==="
+          docker-compose -f docker-compose-monitoring.yml logs --tail=50 grafana
+          echo ""
+          echo "=== Alertmanager ==="
+          docker-compose -f docker-compose-monitoring.yml logs --tail=50 alertmanager
+
+  # ==========================================
+  # Job 3: Notification
+  # ==========================================
+  notify:
+    name: 📢 Send Notification
+    runs-on: ubuntu-latest
+    needs: [build-image, deploy-monitoring]
+    if: always()
+    
+    steps:
+      - name: 📢 Deployment Success Notification
+        if: needs.deploy-monitoring.result == 'success'
+        run: |
+          echo "✅ Monitoring stack deployed successfully!"
+          echo ""
+          echo "📊 Access URLs:"
+          echo "  - Grafana: http://localhost:3001 (admin/admin123)"
+          echo "  - Prometheus: http://localhost:9091"
+          echo "  - Alertmanager: http://localhost:9093"
+
+      - name: 🚨 Deployment Failure Notification
+        if: needs.deploy-monitoring.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Monitoring Deployment Failed - ${context.ref}`;
+            const body = `
+            ## 🚨 Monitoring Stack Deployment Failed
+            
+            **Branch**: ${context.ref}
+            **Commit**: ${context.sha}
+            **Workflow**: [${context.workflow}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            **Time**: ${new Date().toISOString()}
+            
+            ### 🔍 Investigation Steps
+            1. Check workflow logs
+            2. Verify Docker Compose configuration
+            3. Check Prometheus/Grafana configurations
+            4. Verify network connectivity
+            
+            ### 📚 Resources
+            - [Monitoring Guide](MONITORING-GUIDE.md)
+            - [Troubleshooting](MONITORING-GUIDE.md#-troubleshooting)
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['monitoring', 'deployment', 'alert']
+            });

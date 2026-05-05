@@ -1,0 +1,77 @@
+# Configuration Prometheus pour User Microservice
+
+global:
+  scrape_interval: 15s # Collecte des métriques toutes les 15 secondes
+  evaluation_interval: 15s # Évaluation des règles d'alerte toutes les 15 secondes
+  external_labels:
+    cluster: 'user-service-cluster'
+    environment: 'development'
+
+# Configuration Alertmanager
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Règles d'alerte
+rule_files:
+  - 'alerts.yml'
+
+# Configuration des cibles à scraper
+scrape_configs:
+  # ==========================================
+  # Prometheus lui-même
+  # ==========================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # ==========================================
+  # User Microservice (Spring Boot Actuator)
+  # ==========================================
+  - job_name: 'user-service'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['host.docker.internal:9090']
+        labels:
+          application: 'user-service'
+          service: 'user-microservice'
+          environment: 'development'
+    # Relabeling pour ajouter des métadonnées
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'user-service-instance-1'
+
+  # ==========================================
+  # Node Exporter (Métriques système)
+  # ==========================================
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: 'node-exporter'
+          type: 'system-metrics'
+
+  # ==========================================
+  # MySQL Exporter (Métriques base de données)
+  # ==========================================
+  - job_name: 'mysql-exporter'
+    static_configs:
+      - targets: ['mysql-exporter:9104']
+        labels:
+          service: 'mysql'
+          database: 'UserDB'
+
+  # ==========================================
+  # Alertmanager
+  # ==========================================
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+        labels:
+          service: 'alertmanager'

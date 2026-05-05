@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # Prometheus - Collecte des métriques
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: user-service-prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring-network
+    restart: unless-stopped
+
+  # ==========================================
+  # Grafana - Visualisation des métriques
+  # ==========================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: user-service-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-network
+    restart: unless-stopped
+
+  # ==========================================
+  # Alertmanager - Gestion des alertes
+  # ==========================================
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: user-service-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager-data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - monitoring-network
+    restart: unless-stopped
+
+  # ==========================================
+  # Node Exporter - Métriques système
+  # ==========================================
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: user-service-node-exporter
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - monitoring-network
+    restart: unless-stopped
+
+  # ==========================================
+  # MySQL Exporter - Métriques base de données
+  # ==========================================
+  mysql-exporter:
+    image: prom/mysqld-exporter:latest
+    container_name: user-service-mysql-exporter
+    ports:
+      - "9104:9104"
+    environment:
+      - DATA_SOURCE_NAME=root:@tcp(host.docker.internal:3306)/UserDB
+    networks:
+      - monitoring-network
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  monitoring-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:

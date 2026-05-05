@@ -1,0 +1,231 @@
+# Règles d'alerte Prometheus pour User Microservice
+
+groups:
+  # ==========================================
+  # Alertes Application
+  # ==========================================
+  - name: user_service_alerts
+    interval: 30s
+    rules:
+      # Service Down
+      - alert: UserServiceDown
+        expr: up{job="user-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: user-service
+        annotations:
+          summary: "User Service est DOWN"
+          description: "Le service User n'est pas accessible depuis {{ $value }} minutes."
+
+      # Taux d'erreur HTTP élevé
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5..",job="user-service"}[5m]))
+            /
+            sum(rate(http_server_requests_seconds_count{job="user-service"}[5m]))
+          ) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: user-service
+        annotations:
+          summary: "Taux d'erreur HTTP élevé"
+          description: "Le taux d'erreur HTTP 5xx est de {{ $value }}% (seuil: 5%)"
+
+      # Temps de réponse élevé
+      - alert: HighResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_server_requests_seconds_bucket{job="user-service"}[5m])) by (le)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: user-service
+        annotations:
+          summary: "Temps de réponse élevé"
+          description: "Le temps de réponse P95 est de {{ $value }}s (seuil: 1s)"
+
+      # Utilisation CPU élevée
+      - alert: HighCPUUsage
+        expr: process_cpu_usage{job="user-service"} > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: user-service
+        annotations:
+          summary: "Utilisation CPU élevée"
+          description: "L'utilisation CPU est de {{ $value | humanizePercentage }} (seuil: 80%)"
+
+      # Utilisation mémoire élevée
+      - alert: HighMemoryUsage
+        expr: |
+          (jvm_memory_used_bytes{job="user-service",area="heap"} 
+          / 
+          jvm_memory_max_bytes{job="user-service",area="heap"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: user-service
+        annotations:
+          summary: "Utilisation mémoire élevée"
+          description: "L'utilisation de la mémoire heap est de {{ $value | humanizePercentage }} (seuil: 85%)"
+
+      # Threads JVM élevés
+      - alert: HighThreadCount
+        expr: jvm_threads_live{job="user-service"} > 200
+        for: 5m
+        labels:
+          severity: warning
+          service: user-service
+        annotations:
+          summary: "Nombre de threads élevé"
+          description: "Le nombre de threads actifs est de {{ $value }} (seuil: 200)"
+
+      # Garbage Collection fréquent
+      - alert: FrequentGarbageCollection
+        expr: rate(jvm_gc_pause_seconds_count{job="user-service"}[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: user-service
+        annotations:
+          summary: "Garbage Collection fréquent"
+          description: "Le GC s'exécute {{ $value }} fois par seconde (seuil: 10)"
+
+  # ==========================================
+  # Alertes Base de Données
+  # ==========================================
+  - name: database_alerts
+    interval: 30s
+    rules:
+      # Connexions DB élevées
+      - alert: HighDatabaseConnections
+        expr: hikaricp_connections_active{job="user-service"} > 8
+        for: 5m
+        labels:
+          severity: warning
+          service: user-service
+          component: database
+        annotations:
+          summary: "Nombre de connexions DB élevé"
+          description: "Le nombre de connexions actives est de {{ $value }} (seuil: 8/10)"
+
+      # Timeout de connexion DB
+      - alert: DatabaseConnectionTimeout
+        expr: hikaricp_connections_timeout_total{job="user-service"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: user-service
+          component: database
+        annotations:
+          summary: "Timeout de connexion à la base de données"
+          description: "{{ $value }} timeouts de connexion détectés"
+
+      # MySQL Down
+      - alert: MySQLDown
+        expr: up{job="mysql-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: mysql
+        annotations:
+          summary: "MySQL est DOWN"
+          description: "La base de données MySQL n'est pas accessible"
+
+      # Requêtes lentes MySQL
+      - alert: SlowMySQLQueries
+        expr: mysql_global_status_slow_queries > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: mysql
+        annotations:
+          summary: "Requêtes MySQL lentes détectées"
+          description: "{{ $value }} requêtes lentes détectées"
+
+  # ==========================================
+  # Alertes Système
+  # ==========================================
+  - name: system_alerts
+    interval: 30s
+    rules:
+      # Disque plein
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/",fstype!="tmpfs"} 
+          / 
+          node_filesystem_size_bytes{mountpoint="/",fstype!="tmpfs"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "Espace disque faible"
+          description: "Seulement {{ $value }}% d'espace disque disponible (seuil: 10%)"
+
+      # CPU système élevé
+      - alert: HighSystemCPU
+        expr: |
+          100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "Utilisation CPU système élevée"
+          description: "L'utilisation CPU système est de {{ $value }}% (seuil: 80%)"
+
+      # Mémoire système faible
+      - alert: LowSystemMemory
+        expr: |
+          (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 < 10
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "Mémoire système faible"
+          description: "Seulement {{ $value }}% de mémoire disponible (seuil: 10%)"
+
+  # ==========================================
+  # Alertes Sécurité
+  # ==========================================
+  - name: security_alerts
+    interval: 30s
+    rules:
+      # Tentatives de connexion échouées
+      - alert: HighFailedLoginAttempts
+        expr: |
+          increase(http_server_requests_seconds_count{
+            uri="/api/auth/login",
+            status="401",
+            job="user-service"
+          }[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: user-service
+          component: security
+        annotations:
+          summary: "Tentatives de connexion échouées élevées"
+          description: "{{ $value }} tentatives de connexion échouées dans les 5 dernières minutes"
+
+      # Requêtes non autorisées
+      - alert: HighUnauthorizedRequests
+        expr: |
+          rate(http_server_requests_seconds_count{
+            status="403",
+            job="user-service"
+          }[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: user-service
+          component: security
+        annotations:
+          summary: "Requêtes non autorisées élevées"
+          description: "{{ $value }} requêtes 403 par seconde détectées"
