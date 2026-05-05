@@ -3,6 +3,11 @@ name: 🚀 CI/CD Pipeline - User Microservice (DISABLED)
 # Temporarily disabled - use test-simple.yml instead
 on:
   workflow_dispatch:  # Manual trigger only
+  # Uncomment below to enable automatic triggers
+  # push:
+  #   branches: [ main, develop, User ]
+  # pull_request:
+  #   branches: [ main, develop ]
 
 env:
   JAVA_VERSION: '17'
