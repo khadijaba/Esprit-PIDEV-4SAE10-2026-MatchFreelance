@@ -65,8 +65,8 @@ node {
                             set -eux
                             SSH='ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30'
                             SCP='scp -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30'
-                            \${SCP} ../../infra/k8s/mysql/mysql.yaml ${k8sSshRemote}:/tmp/mysql.yaml
-                            \${SCP} ../../infra/k8s/namespaces-labels.yaml ${k8sSshRemote}:/tmp/namespaces-labels.yaml
+                            \${SCP} "\${WORKSPACE}/BackEnd/infra/k8s/mysql/mysql.yaml" ${k8sSshRemote}:/tmp/mysql.yaml
+                            \${SCP} "\${WORKSPACE}/BackEnd/infra/k8s/namespaces-labels.yaml" ${k8sSshRemote}:/tmp/namespaces-labels.yaml
                             \${SSH} ${k8sSshRemote} 'mkdir -p /tmp/jenkins-skill-k8s'
                             mkdir -p /tmp/jenkins-skill-k8s-local
                             sed "s|__NAMESPACE__|${nsApp}|g" k8s/skill/secret.yaml > /tmp/jenkins-skill-k8s-local/secret.yaml
