@@ -2,11 +2,6 @@ pipeline {
     agent any
 
     parameters {
-        choice(
-            name: 'ENVIRONMENT',
-            choices: ['dev', 'staging', 'production'],
-            description: 'Select deployment environment'
-        )
         string(
             name: 'IMAGE_TAG',
             defaultValue: 'latest',
@@ -17,9 +12,7 @@ pipeline {
     environment {
         IMAGE_NAME = 'khadijabenayed/productivity'
         SERVICE_NAME = 'productivity-service'
-        DEV_PORT = '8087'
-        STAGING_PORT = '8187'
-        PROD_PORT = '8287'
+        SERVICE_PORT = '8087'
     }
 
     stages {
@@ -27,9 +20,9 @@ pipeline {
             steps {
                 echo '========== Validating deployment parameters =========='
                 script {
-                    echo "Environment: ${params.ENVIRONMENT}"
                     echo "Image Tag: ${params.IMAGE_TAG}"
                     echo "Image: ${IMAGE_NAME}:${params.IMAGE_TAG}"
+                    echo "Service Port: ${SERVICE_PORT}"
                 }
             }
         }
@@ -50,105 +43,42 @@ pipeline {
         stage('Stop Old Container') {
             steps {
                 echo '========== Stopping old container =========='
-                script {
-                    sh """
-                        docker stop ${SERVICE_NAME}-${params.ENVIRONMENT} || true
-                        docker rm ${SERVICE_NAME}-${params.ENVIRONMENT} || true
-                    """
-                }
-            }
-        }
-
-        stage('Deploy to Development') {
-            when {
-                expression { params.ENVIRONMENT == 'dev' }
-            }
-            steps {
-                echo '========== Deploying to Development =========='
                 sh """
-                    docker run -d \
-                        --name ${SERVICE_NAME}-dev \
-                        --network host \
-                        -p ${DEV_PORT}:8087 \
-                        -e SPRING_PROFILES_ACTIVE=dev,mysql \
-                        -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka/ \
-                        --restart unless-stopped \
-                        ${IMAGE_NAME}:${params.IMAGE_TAG}
+                    docker stop ${SERVICE_NAME} || true
+                    docker rm ${SERVICE_NAME} || true
                 """
             }
         }
 
-        stage('Deploy to Staging') {
-            when {
-                expression { params.ENVIRONMENT == 'staging' }
-            }
+        stage('Deploy Service') {
             steps {
-                echo '========== Deploying to Staging =========='
+                echo '========== Deploying Productivity Service =========='
                 sh """
                     docker run -d \
-                        --name ${SERVICE_NAME}-staging \
+                        --name ${SERVICE_NAME} \
                         --network host \
-                        -p ${STAGING_PORT}:8087 \
-                        -e SPRING_PROFILES_ACTIVE=staging,mysql \
+                        -p ${SERVICE_PORT}:8087 \
+                        -e SPRING_PROFILES_ACTIVE=mysql \
                         -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka/ \
                         --restart unless-stopped \
                         ${IMAGE_NAME}:${params.IMAGE_TAG}
                 """
-            }
-        }
-
-        stage('Deploy to Production') {
-            when {
-                expression { params.ENVIRONMENT == 'production' }
-            }
-            steps {
-                echo '========== Deploying to Production =========='
-                input message: 'Deploy to Production?', ok: 'Deploy'
-                sh """
-                    docker run -d \
-                        --name ${SERVICE_NAME}-production \
-                        --network host \
-                        -p ${PROD_PORT}:8087 \
-                        -e SPRING_PROFILES_ACTIVE=prod,mysql \
-                        -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka/ \
-                        --restart unless-stopped \
-                        ${IMAGE_NAME}:${params.IMAGE_TAG}
-                """
-            }
-        }
-
-        stage('Health Check') {
-            steps {
-                echo '========== Performing health check =========='
-                script {
-                    def port = params.ENVIRONMENT == 'dev' ? DEV_PORT : (params.ENVIRONMENT == 'staging' ? STAGING_PORT : PROD_PORT)
-                    sh """
-                        echo "Waiting for service to start..."
-                        sleep 30
-                        
-                        echo "Checking if container is running..."
-                        docker ps | grep ${SERVICE_NAME}-${params.ENVIRONMENT}
-                        
-                        echo "Checking service health..."
-                        curl -f http://localhost:${port}/actuator/health || echo "Health check endpoint not available"
-                    """
-                }
             }
         }
 
         stage('Verify Deployment') {
             steps {
                 echo '========== Verifying deployment =========='
-                script {
-                    def port = params.ENVIRONMENT == 'dev' ? DEV_PORT : (params.ENVIRONMENT == 'staging' ? STAGING_PORT : PROD_PORT)
-                    sh """
-                        echo "Container Status:"
-                        docker ps --filter name=${SERVICE_NAME}-${params.ENVIRONMENT} --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}"
-                        
-                        echo "Container Logs (last 20 lines):"
-                        docker logs --tail 20 ${SERVICE_NAME}-${params.ENVIRONMENT}
-                    """
-                }
+                sh """
+                    echo "Waiting for container to start..."
+                    sleep 10
+                    
+                    echo "Container Status:"
+                    docker ps --filter name=${SERVICE_NAME} --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}"
+                    
+                    echo "Container Logs (last 20 lines):"
+                    docker logs --tail 20 ${SERVICE_NAME}
+                """
             }
         }
     }
@@ -157,12 +87,10 @@ pipeline {
         success {
             echo '=========================================='
             echo "CD Pipeline completed successfully! ✅"
-            echo "Service deployed to: ${params.ENVIRONMENT}"
+            echo "Service: Productivity"
             echo "Image: ${IMAGE_NAME}:${params.IMAGE_TAG}"
-            script {
-                def port = params.ENVIRONMENT == 'dev' ? DEV_PORT : (params.ENVIRONMENT == 'staging' ? STAGING_PORT : PROD_PORT)
-                echo "Service URL: http://localhost:${port}"
-            }
+            echo "Port: ${SERVICE_PORT}"
+            echo "Service URL: http://localhost:${SERVICE_PORT}"
             echo '=========================================='
         }
         failure {
@@ -170,12 +98,10 @@ pipeline {
             echo 'CD Pipeline failed! ❌'
             echo 'Rolling back deployment...'
             echo '=========================================='
-            script {
-                sh """
-                    docker stop ${SERVICE_NAME}-${params.ENVIRONMENT} || true
-                    docker rm ${SERVICE_NAME}-${params.ENVIRONMENT} || true
-                """
-            }
+            sh """
+                docker stop ${SERVICE_NAME} || true
+                docker rm ${SERVICE_NAME} || true
+            """
         }
         always {
             echo '========== Cleaning up unused images =========='

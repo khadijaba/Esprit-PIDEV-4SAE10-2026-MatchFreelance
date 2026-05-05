@@ -9,8 +9,8 @@ pipeline {
     environment {
         IMAGE_NAME = 'khadijabenayed/productivity'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-        SONAR_HOST = 'http://localhost:9000'
-        SONAR_CREDENTIALS_ID = 'sonar-token'
+        SONAR_HOST = 'http://sonarqube:9000'
+        SONAR_CREDENTIALS_ID = 'sonarqube-token'
         MODULE_DIR = 'backend/microservices/Productivity'
     }
 
@@ -97,7 +97,7 @@ pipeline {
         stage('Docker Push') {
             steps {
                 echo '========== Pushing Docker image to registry =========='
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
@@ -116,6 +116,17 @@ pipeline {
                 }
             }
         }
+
+        stage('Trigger CD Pipeline') {
+            steps {
+                echo '========== Triggering CD Pipeline =========='
+                build job: 'productivity-service-cd', 
+                      parameters: [
+                          string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
+                      ],
+                      wait: false
+            }
+        }
     }
 
     post {
@@ -123,6 +134,7 @@ pipeline {
             echo '=========================================='
             echo 'CI Pipeline completed successfully! ✅'
             echo "Docker Image: ${IMAGE_NAME}:${IMAGE_TAG}"
+            echo 'CD Pipeline triggered automatically'
             echo '=========================================='
         }
         failure {

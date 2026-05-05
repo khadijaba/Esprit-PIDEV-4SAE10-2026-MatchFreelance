@@ -116,6 +116,17 @@ pipeline {
                 }
             }
         }
+
+        stage('Trigger CD Pipeline') {
+            steps {
+                echo '========== Triggering CD Pipeline =========='
+                build job: 'interview-service-cd', 
+                      parameters: [
+                          string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
+                      ],
+                      wait: false
+            }
+        }
     }
 
     post {
@@ -123,6 +134,7 @@ pipeline {
             echo '=========================================='
             echo 'CI Pipeline completed successfully! ✅'
             echo "Docker Image: ${IMAGE_NAME}:${IMAGE_TAG}"
+            echo 'CD Pipeline triggered automatically'
             echo '=========================================='
         }
         failure {
