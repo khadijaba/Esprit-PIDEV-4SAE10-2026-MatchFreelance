@@ -11,6 +11,11 @@ alertmanager:
 grafana:
   enabled: true
   adminPassword: changeme
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
   service:
     type: NodePort
     nodePort: 30080
