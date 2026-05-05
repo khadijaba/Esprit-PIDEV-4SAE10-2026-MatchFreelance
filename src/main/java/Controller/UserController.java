@@ -51,16 +51,15 @@ public class UserController {
         }
 
         // Utiliser un DTO pour ne pas exposer l'entité directement (sécurité)
-        UserProfileDTO userDTO = UserProfileDTO.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .address(user.getAddress())
-                .email(user.getEmail())
-                .birthDate(user.getBirthDate())
-                .role(user.getRole())
-                .profilePicture(user.getProfilePicture())
-                .build();
+        UserProfileDTO userDTO = new UserProfileDTO();
+        userDTO.setId(user.getId());
+        userDTO.setFirstName(user.getFirstName());
+        userDTO.setLastName(user.getLastName());
+        userDTO.setAddress(user.getAddress());
+        userDTO.setEmail(user.getEmail());
+        userDTO.setBirthDate(user.getBirthDate());
+        userDTO.setRole(user.getRole());
+        userDTO.setProfilePicture(user.getProfilePictureUrl());
         
         return ResponseEntity.ok(userDTO);
     }

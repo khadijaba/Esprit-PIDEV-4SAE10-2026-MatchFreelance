@@ -7,11 +7,6 @@ on:
       - main
       - master
       - develop
-    paths:
-      - 'monitoring/**'
-      - 'docker-compose-monitoring.yml'
-      - '.github/workflows/deploy-monitoring.yml'
-      - 'src/**'
   workflow_dispatch:
     inputs:
       environment:
