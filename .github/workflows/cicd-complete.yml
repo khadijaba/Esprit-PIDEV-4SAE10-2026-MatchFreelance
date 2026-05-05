@@ -180,6 +180,17 @@ jobs:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
+      - name: 🔍 Debug: List Repository Structure
+        run: |
+          echo "=== Repository Root ==="
+          ls -la
+          echo ""
+          echo "=== User Directory ==="
+          ls -la User/ || echo "User directory not found"
+          echo ""
+          echo "=== Looking for Dockerfile ==="
+          find . -name "Dockerfile" -type f
+
       - name: ☕ Setup Java
         uses: actions/setup-java@v4
         with:
