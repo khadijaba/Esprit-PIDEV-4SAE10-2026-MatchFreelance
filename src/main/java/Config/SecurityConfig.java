@@ -43,7 +43,9 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        // Using BCrypt with strength 12 for enhanced security
+        // BCrypt is a strong, adaptive hashing function designed for password storage
+        return new BCryptPasswordEncoder(12);
     }
 
     @Bean
@@ -63,6 +65,9 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // CSRF protection is disabled because this is a stateless REST API using JWT tokens
+                // CSRF attacks target session-based authentication, which is not used here
+                // Reference: https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html#csrf-when
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
