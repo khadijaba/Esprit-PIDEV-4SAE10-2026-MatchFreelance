@@ -2,13 +2,7 @@ name: 🧪 Simple Tests - User Microservice
 
 on:
   push:
-    branches: [ main, develop, User ]
-    paths:
-      - 'User/**'
   pull_request:
-    branches: [ main, develop, User ]
-    paths:
-      - 'User/**'
 
 env:
   JAVA_VERSION: '17'
