@@ -29,6 +29,9 @@ spec:
     - repoURL: https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git
       targetRevision: projectskills
       path: BackEnd/infra/monitoring/dashboards
+    - repoURL: https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git
+      targetRevision: projectskills
+      path: BackEnd/infra/monitoring/servicemonitors
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

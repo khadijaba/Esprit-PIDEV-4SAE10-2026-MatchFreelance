@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: skill-ms
+  namespace: monitoring
+  labels:
+    release: prometheus
+    app.kubernetes.io/name: skill-ms
+    app.kubernetes.io/part-of: matchfreelance
+    team: backend
+    env: dev
+spec:
+  namespaceSelector:
+    matchNames:
+      - skill
+  selector:
+    matchLabels:
+      app: skill-ms
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 30s
