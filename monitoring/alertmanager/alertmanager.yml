@@ -75,7 +75,8 @@ receivers:
   - name: 'critical-alerts'
     email_configs:
       - to: 'admin@yourdomain.com'
-        subject: '🚨 CRITICAL ALERT: {{ .GroupLabels.alertname }}'
+        headers:
+          Subject: '🚨 CRITICAL ALERT: {{ .GroupLabels.alertname }}'
         html: |
           <h2>🚨 Alerte Critique</h2>
           <p><strong>Service:</strong> {{ .GroupLabels.service }}</p>
@@ -97,7 +98,8 @@ receivers:
   - name: 'warning-alerts'
     email_configs:
       - to: 'team@yourdomain.com'
-        subject: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
+        headers:
+          Subject: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
         html: |
           <h2>⚠️ Alerte Warning</h2>
           <p><strong>Service:</strong> {{ .GroupLabels.service }}</p>
@@ -114,7 +116,8 @@ receivers:
   - name: 'security-alerts'
     email_configs:
       - to: 'security@yourdomain.com'
-        subject: '🔒 SECURITY ALERT: {{ .GroupLabels.alertname }}'
+        headers:
+          Subject: '🔒 SECURITY ALERT: {{ .GroupLabels.alertname }}'
         html: |
           <h2>🔒 Alerte de Sécurité</h2>
           <p><strong>Service:</strong> {{ .GroupLabels.service }}</p>
