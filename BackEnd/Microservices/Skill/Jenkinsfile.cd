@@ -2,13 +2,14 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME = "skill-service"
-        REGISTRY = credentials('docker-registry-url')
+        DOCKER_REGISTRY_HOST = 'docker.io'
         IMAGE_TAG = "${params.IMAGE_TAG}"
         K8S_NAMESPACE = "default"
         KUBECONFIG = credentials('kubeconfig-file')
         K8S_DEPLOYMENT = "skill"
         K8S_SERVICE = "skill"
+        DOCKERHUB_NAMESPACE = 'emna450'
+        IMAGE_REPOSITORY = 'backend-skill'
     }
 
     parameters {
@@ -31,7 +32,7 @@ pipeline {
             steps {
                 sh '''
                   kubectl -n ${K8S_NAMESPACE} set image deployment/skill \
-                    skill=${REGISTRY}/${APP_NAME}:${IMAGE_TAG} --record
+                    skill=${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} --record
                 '''
             }
         }

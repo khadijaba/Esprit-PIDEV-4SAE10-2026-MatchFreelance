@@ -2,13 +2,14 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME = "project-service"
-        REGISTRY = credentials('docker-registry-url')
+        DOCKER_REGISTRY_HOST = 'docker.io'
         IMAGE_TAG = "${params.IMAGE_TAG}"
         K8S_NAMESPACE = "default"
         KUBECONFIG = credentials('kubeconfig-file')
         K8S_DEPLOYMENT = "project"
         K8S_SERVICE = "project"
+        DOCKERHUB_NAMESPACE = 'emna450'
+        IMAGE_REPOSITORY = 'backend-project'
     }
 
     parameters {
@@ -31,7 +32,7 @@ pipeline {
             steps {
                 sh '''
                   kubectl -n ${K8S_NAMESPACE} set image deployment/project \
-                    project=${REGISTRY}/${APP_NAME}:${IMAGE_TAG} --record
+                    project=${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} --record
                 '''
             }
         }

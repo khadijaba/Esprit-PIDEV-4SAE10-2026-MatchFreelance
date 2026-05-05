@@ -2,10 +2,12 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME = "skill-service"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-        REGISTRY = credentials('docker-registry-url')
+        DOCKER_REGISTRY_HOST = 'docker.io'
+        DOCKERHUB_REGISTRY_URL = 'https://index.docker.io/v1/'
         REGISTRY_CREDENTIALS = 'docker-registry-creds'
+        DOCKERHUB_NAMESPACE = 'emna450'
+        IMAGE_REPOSITORY = 'backend-skill'
     }
 
     options {
@@ -66,16 +68,16 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t ${REGISTRY}/${APP_NAME}:${IMAGE_TAG} .'
+                sh 'docker build -t ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} .'
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withDockerRegistry(credentialsId: "${REGISTRY_CREDENTIALS}", url: "https://${REGISTRY}") {
-                    sh 'docker push ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}'
-                    sh 'docker tag ${REGISTRY}/${APP_NAME}:${IMAGE_TAG} ${REGISTRY}/${APP_NAME}:latest'
-                    sh 'docker push ${REGISTRY}/${APP_NAME}:latest'
+                withDockerRegistry(credentialsId: "${REGISTRY_CREDENTIALS}", url: "${DOCKERHUB_REGISTRY_URL}") {
+                    sh 'docker push ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG}'
+                    sh 'docker tag ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:latest'
+                    sh 'docker push ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:latest'
                 }
             }
         }
