@@ -83,10 +83,15 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // ✅ Use allowedOrigins with exact origin instead of a broken pattern
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        // Configuration CORS sécurisée - Restreindre les origines en production
+        String allowedOrigins = System.getenv("ALLOWED_ORIGINS");
+        if (allowedOrigins == null || allowedOrigins.isEmpty()) {
+            allowedOrigins = "http://localhost:4200,http://localhost:3000"; // Valeurs par défaut pour le développement
+        }
+        
+        configuration.setAllowedOrigins(List.of(allowedOrigins.split(",")));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
