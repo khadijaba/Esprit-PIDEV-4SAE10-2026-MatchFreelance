@@ -9,12 +9,14 @@ pipeline {
 
     options {
         skipDefaultCheckout(true)
+        timestamps()
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
     }
 
     environment {
         MODULE_DIR = 'BackEnd/Microservices/Skill'
         SONAR_PROJECT_KEY = 'skill'
-        // Sonar sur la machine hôte (Docker Desktop). Si l’upload du rapport CE time out, augmenter SONAR_WS_TIMEOUT (secondes).
         SONAR_HOST = 'http://host.docker.internal:9000'
         SONAR_WS_TIMEOUT = '600'
         IMAGE_NAME = 'emna450/backend-skill'
@@ -59,19 +61,13 @@ pipeline {
             }
         }
 
-        stage('Build & Sonar') {
+        stage('Build & Package') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    dir("${env.MODULE_DIR}") {
-                        sh """
-                            mvn -B clean verify sonar:sonar \\
-                              -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
-                              -Dsonar.host.url=${env.SONAR_HOST} \\
-                              -Dsonar.token=\${SONAR_TOKEN} \\
-                              -Dsonar.ws.timeout=${env.SONAR_WS_TIMEOUT} \\
-                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                        """
-                    }
+                dir("${env.MODULE_DIR}") {
+                    sh '''
+                        set -e
+                        mvn -B clean package
+                    '''
                 }
             }
             post {
@@ -81,24 +77,50 @@ pipeline {
             }
         }
 
+        stage('Sonar Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    dir("${env.MODULE_DIR}") {
+                        sh """
+                            mvn -B sonar:sonar \\
+                              -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
+                              -Dsonar.host.url=${env.SONAR_HOST} \\
+                              -Dsonar.token=\${SONAR_TOKEN} \\
+                              -Dsonar.ws.timeout=${env.SONAR_WS_TIMEOUT} \\
+                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                        """
+                    }
+                }
+            }
+        }
+
         stage('Docker Build') {
             steps {
                 dir("${env.MODULE_DIR}") {
                     sh """
                         set -e
-                        DOCKER_CMD='docker'
-                        if ! docker info > /dev/null 2>&1; then
-                            if sudo -n docker info > /dev/null 2>&1; then
-                                DOCKER_CMD='sudo -n docker'
-                                echo "Docker socket inaccessible for jenkins user, using sudo -n docker."
-                            else
-                                echo "Docker daemon inaccessible (permission denied on /var/run/docker.sock)."
-                                echo "Fix Jenkins agent rights: add jenkins user to docker group or allow passwordless sudo docker."
-                                exit 1
+                        resolve_docker_cmd() {
+                            if docker info > /dev/null 2>&1; then
+                                echo "docker"
+                                return 0
                             fi
-                        fi
+                            if sudo -n docker info > /dev/null 2>&1; then
+                                echo "sudo -n docker"
+                                return 0
+                            fi
+                            return 1
+                        }
+
+                        DOCKER_CMD=\$(resolve_docker_cmd) || {
+                            echo "Docker daemon inaccessible (/var/run/docker.sock permission denied)."
+                            echo "Fix Jenkins agent rights: docker group for jenkins or passwordless sudo docker."
+                            exit 1
+                        }
+                        echo "Using Docker command: \${DOCKER_CMD}"
+
                         \${DOCKER_CMD} image prune -f || true
-                        # BuildKit peut échouer en CI avec "forwarding Ping: no such job" (moby/buildkit) : builder classique + retries.
+
+                        # BuildKit peut provoquer des erreurs sporadiques en CI : fallback legacy builder.
                         export DOCKER_BUILDKIT=0
                         build_with_retry() {
                             n=0
@@ -112,6 +134,7 @@ pipeline {
                                 sleep 20
                             done
                         }
+
                         build_with_retry
                         \${DOCKER_CMD} tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest
                     """
@@ -124,21 +147,28 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
                         set -e
-                        DOCKER_CMD='docker'
-                        if ! docker info > /dev/null 2>&1; then
-                            if sudo -n docker info > /dev/null 2>&1; then
-                                DOCKER_CMD='sudo -n docker'
-                                echo "Docker socket inaccessible for jenkins user, using sudo -n docker."
-                            else
-                                echo "Docker daemon inaccessible (permission denied on /var/run/docker.sock)."
-                                echo "Fix Jenkins agent rights: add jenkins user to docker group or allow passwordless sudo docker."
-                                exit 1
+                        resolve_docker_cmd() {
+                            if docker info > /dev/null 2>&1; then
+                                echo "docker"
+                                return 0
                             fi
-                        fi
+                            if sudo -n docker info > /dev/null 2>&1; then
+                                echo "sudo -n docker"
+                                return 0
+                            fi
+                            return 1
+                        }
+
+                        DOCKER_CMD=\$(resolve_docker_cmd) || {
+                            echo "Docker daemon inaccessible (/var/run/docker.sock permission denied)."
+                            echo "Fix Jenkins agent rights: docker group for jenkins or passwordless sudo docker."
+                            exit 1
+                        }
+                        echo "Using Docker command: \${DOCKER_CMD}"
+
                         \${DOCKER_CMD} image inspect ${env.IMAGE_NAME}:${env.IMAGE_TAG} > /dev/null
                         echo "\${DOCKER_PASS}" | \${DOCKER_CMD} login -u "\${DOCKER_USER}" --password-stdin
 
-                        # Docker Hub peut répondre 400 sur un blob (réseau, couche volumineuse) : jusqu'à 4 tentatives par tag.
                         push_with_retry() {
                             img="\$1"
                             n=0
@@ -154,6 +184,7 @@ pipeline {
                         }
 
                         push_with_retry ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+
                         CURRENT_BRANCH="\${BRANCH_NAME:-\$(git rev-parse --abbrev-ref HEAD)}"
                         if [ "\${CURRENT_BRANCH}" = "main" ]; then
                             \${DOCKER_CMD} image inspect ${env.IMAGE_NAME}:latest > /dev/null
@@ -161,6 +192,7 @@ pipeline {
                         else
                             echo "Skip latest push on branch \${CURRENT_BRANCH}"
                         fi
+
                         \${DOCKER_CMD} logout
                     """
                 }
