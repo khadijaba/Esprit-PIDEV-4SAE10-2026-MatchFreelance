@@ -1,0 +1,91 @@
+name: 🧪 Tests Only - User Microservice
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: 🧪 Run Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./User
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: userdb_test
+          MYSQL_USER: testuser
+          MYSQL_PASSWORD: testpass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: ⏳ Wait for MySQL
+        run: |
+          until mysqladmin ping -h"127.0.0.1" -P3306 -u root -prootpassword --silent; do
+            echo 'Waiting for MySQL...'
+            sleep 2
+          done
+          echo 'MySQL is ready!'
+
+      - name: 🧪 Run Tests
+        run: |
+          mvn test -B \
+            -Dspring.profiles.active=test \
+            -Dspring.datasource.url=jdbc:mysql://localhost:3306/userdb_test \
+            -Dspring.datasource.username=testuser \
+            -Dspring.datasource.password=testpass
+        env:
+          SPRING_PROFILES_ACTIVE: test
+
+      - name: 📊 Test Results Summary
+        if: always()
+        run: |
+          echo "## 🧪 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "target/surefire-reports/TEST-*.xml" ]; then
+            TOTAL_TESTS=$(find target/surefire-reports -name "TEST-*.xml" -exec grep -h "tests=" {} \; | sed 's/.*tests="\([0-9]*\)".*/\1/' | awk '{sum += $1} END {print sum}')
+            FAILED_TESTS=$(find target/surefire-reports -name "TEST-*.xml" -exec grep -h "failures=" {} \; | sed 's/.*failures="\([0-9]*\)".*/\1/' | awk '{sum += $1} END {print sum}')
+            ERRORS=$(find target/surefire-reports -name "TEST-*.xml" -exec grep -h "errors=" {} \; | sed 's/.*errors="\([0-9]*\)".*/\1/' | awk '{sum += $1} END {print sum}')
+            
+            echo "📊 **Total Tests**: $TOTAL_TESTS" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Passed**: $((TOTAL_TESTS - FAILED_TESTS - ERRORS))" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Failed**: $FAILED_TESTS" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Errors**: $ERRORS" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "$FAILED_TESTS" -eq 0 ] && [ "$ERRORS" -eq 0 ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "🎉 **All tests passed successfully!**" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ No test results found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 📁 Upload Test Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: |
+            User/target/surefire-reports/
+          retention-days: 7
