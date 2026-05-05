@@ -6,8 +6,6 @@ node {
     def repoUrl = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
     def branch = 'projectskills'
     def moduleDir = 'BackEnd/Microservices/Skill'
-    // IP de la VM où tournent kubeadm + kubectl (adapter si DHCP change).
-    def k8sSshRemote = 'ubuntu@192.168.17.130'
     def k8sSshCredentials = 'vm-k8s-ssh'
     def nsMysql = 'mysql'
     def IMAGE_NAME = 'emna450/backend-skill'
@@ -27,15 +25,18 @@ node {
         properties([
             parameters([
                 string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag to deploy'),
-                string(name: 'K8S_NAMESPACE', defaultValue: 'skill', description: 'Kubernetes namespace (microservice Skill)')
+                string(name: 'K8S_NAMESPACE', defaultValue: 'skill', description: 'Kubernetes namespace (microservice Skill)'),
+                string(name: 'K8S_VM_HOST', defaultValue: '192.168.17.131', description: 'IP ou hostname de la VM (sshd + kubectl ; ex. ip a sur ens33)')
             ]),
             disableConcurrentBuilds(),
             buildDiscarder(logRotator(numToKeepStr: '20'))
         ])
 
-        // Après le 1er lancement, IMAGE_TAG / K8S_NAMESPACE viennent des paramètres du job.
+        // Après le 1er lancement, paramètres du job.
         def deployTag = (params?.IMAGE_TAG?.toString()?.trim()) ?: 'latest'
         def nsApp = (params?.K8S_NAMESPACE?.toString()?.trim()) ?: 'skill'
+        def k8sVmHost = (params?.K8S_VM_HOST?.toString()?.trim()) ?: '192.168.17.131'
+        def k8sSshRemote = "ubuntu@${k8sVmHost}"
         def skillImage = "${IMAGE_NAME}:${deployTag}"
 
         timeout(time: 90, unit: 'MINUTES') {
