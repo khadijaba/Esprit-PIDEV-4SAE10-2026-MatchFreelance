@@ -288,7 +288,7 @@ public class UserService {
         emailVerificationCodes.remove(request.getEmail());
         emailCodeExpirations.remove(request.getEmail());
 
-        logger.info("✓ Password changed successfully for user: {}", request.getEmail());
+        logger.info("✓ Password changed successfully for user with ID: {}", user.getId());
 
         return "Mot de passe changé avec succès";
     }

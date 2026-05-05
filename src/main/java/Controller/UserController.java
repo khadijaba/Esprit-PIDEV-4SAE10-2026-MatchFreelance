@@ -1,5 +1,6 @@
 package Controller;
 
+import DTO.UserProfileDTO;
 import Entity.User;
 import Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,13 +50,19 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
 
-        // Return user (password should ideally be stripped in a DTO, but for simplicity
-        // here we return it directly,
-        // Jackson will serialize the entity. Make sure you don't expose password if
-        // User.java doesn't have @JsonIgnore on it.
-        // Wait, User.java doesn't have @JsonIgnore on password. We must clear it!)
-        user.setPassword(null);
-        return ResponseEntity.ok(user);
+        // Utiliser un DTO pour ne pas exposer l'entité directement (sécurité)
+        UserProfileDTO userDTO = UserProfileDTO.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .address(user.getAddress())
+                .email(user.getEmail())
+                .birthDate(user.getBirthDate())
+                .role(user.getRole())
+                .profilePicture(user.getProfilePicture())
+                .build();
+        
+        return ResponseEntity.ok(userDTO);
     }
 
     @PutMapping("/me")
