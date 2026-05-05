@@ -4,12 +4,9 @@ pipeline {
     environment {
         GIT_REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
         SERVICE_DIR = 'BackEnd/Microservices/Skill'
+        MODULE_DIR = 'BackEnd/Microservices/Skill'
+        IMAGE_NAME = 'emna450/backend-skill'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-        DOCKER_REGISTRY_HOST = 'docker.io'
-        DOCKERHUB_REGISTRY_URL = 'https://index.docker.io/v1/'
-        REGISTRY_CREDENTIALS = 'docker-registry-creds'
-        DOCKERHUB_NAMESPACE = 'emna450'
-        IMAGE_REPOSITORY = 'backend-skill'
     }
 
     options {
@@ -83,20 +80,25 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Docker Build') {
             steps {
-                dir("${SERVICE_DIR}") {
-                    sh 'docker build -t ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} .'
+                dir("${env.MODULE_DIR}") {
+                    sh """
+                        docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} .
+                        docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest
+                    """
                 }
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Docker Push') {
             steps {
-                withDockerRegistry(credentialsId: "${REGISTRY_CREDENTIALS}", url: "${DOCKERHUB_REGISTRY_URL}") {
-                    sh 'docker push ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG}'
-                    sh 'docker tag ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:latest'
-                    sh 'docker push ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:latest'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
+                        docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+                        docker push ${env.IMAGE_NAME}:latest
+                    """
                 }
             }
         }

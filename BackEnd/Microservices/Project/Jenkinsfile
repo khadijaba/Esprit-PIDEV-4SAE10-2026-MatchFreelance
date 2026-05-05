@@ -10,17 +10,11 @@ pipeline {
 
         SERVICE_DIR = 'BackEnd/Microservices/Project'
 
+        MODULE_DIR = 'BackEnd/Microservices/Project'
+
+        IMAGE_NAME = 'emna450/backend-project'
+
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-
-        DOCKER_REGISTRY_HOST = 'docker.io'
-
-        DOCKERHUB_REGISTRY_URL = 'https://index.docker.io/v1/'
-
-        REGISTRY_CREDENTIALS = 'docker-registry-creds'
-
-        DOCKERHUB_NAMESPACE = 'emna450'
-
-        IMAGE_REPOSITORY = 'backend-project'
 
     }
 
@@ -168,13 +162,19 @@ pipeline {
 
 
 
-        stage('Build Docker Image') {
+        stage('Docker Build') {
 
             steps {
 
-                dir("${SERVICE_DIR}") {
+                dir("${env.MODULE_DIR}") {
 
-                    sh 'docker build -t ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} .'
+                    sh """
+
+                        docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} .
+
+                        docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest
+
+                    """
 
                 }
 
@@ -184,17 +184,21 @@ pipeline {
 
 
 
-        stage('Push Docker Image') {
+        stage('Docker Push') {
 
             steps {
 
-                withDockerRegistry(credentialsId: "${REGISTRY_CREDENTIALS}", url: "${DOCKERHUB_REGISTRY_URL}") {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
 
-                    sh 'docker push ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG}'
+                    sh """
 
-                    sh 'docker tag ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:latest'
+                        echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
 
-                    sh 'docker push ${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:latest'
+                        docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+
+                        docker push ${env.IMAGE_NAME}:latest
+
+                    """
 
                 }
 
