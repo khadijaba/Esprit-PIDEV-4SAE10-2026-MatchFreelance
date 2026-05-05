@@ -26,6 +26,14 @@ pipeline {
 
 
 
+    parameters {
+
+        booleanParam(name: 'SKIP_SONAR', defaultValue: false, description: 'Ignorer SonarQube et le Quality Gate si le serveur n est pas joignable depuis l agent')
+
+    }
+
+
+
     options {
 
         skipDefaultCheckout(true)
@@ -142,6 +150,12 @@ pipeline {
 
         stage('SonarQube Analysis') {
 
+            when {
+
+                expression { return params.SKIP_SONAR != true }
+
+            }
+
             steps {
 
                 dir("${SERVICE_DIR}") {
@@ -150,11 +164,27 @@ pipeline {
 
                         sh '''
 
+                          set -eu
+
+                          if [ -z "${SONAR_HOST_URL:-}" ]; then
+
+                            echo "SONAR_HOST_URL est vide. Dans Jenkins: Administrer Jenkins > System > SonarQube servers, mets une URL joignable depuis le conteneur (pas localhost si Sonar est sur le host: ex. http://host.docker.internal:9000)."
+
+                            exit 1
+
+                          fi
+
+                          echo "Sonar host: ${SONAR_HOST_URL}"
+
                           ./mvnw -B -ntp sonar:sonar \
 
                             -Dsonar.projectKey=project \
 
-                            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+
+                            -Dsonar.host.url="${SONAR_HOST_URL}" \
+
+                            -Dsonar.token="${SONAR_AUTH_TOKEN}"
 
                         '''
 
@@ -169,6 +199,12 @@ pipeline {
 
 
         stage('Quality Gate') {
+
+            when {
+
+                expression { return params.SKIP_SONAR != true }
+
+            }
 
             steps {
 
