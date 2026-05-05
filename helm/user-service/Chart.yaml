@@ -1,0 +1,19 @@
+apiVersion: v2
+name: user-service
+description: A Helm chart for User Microservice
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - microservice
+  - spring-boot
+  - user-management
+  - authentication
+home: https://github.com/your-org/your-repo
+sources:
+  - https://github.com/your-org/your-repo
+maintainers:
+  - name: DevOps Team
+    email: devops@company.com
+annotations:
+  category: Microservice

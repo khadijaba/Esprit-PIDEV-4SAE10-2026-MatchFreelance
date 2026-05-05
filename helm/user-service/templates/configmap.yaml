@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "user-service.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "user-service.labels" . | nindent 4 }}
+data:
+  application.properties: |
+    # Server Configuration
+    server.port=9090
+    management.server.port=8080
+    
+    # Spring Configuration
+    spring.application.name=user-service
+    spring.profiles.active={{ .Values.config.springProfiles }}
+    
+    # Database Configuration
+    spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+    spring.jpa.hibernate.ddl-auto={{ if eq .Values.config.springProfiles "production" }}validate{{ else }}update{{ end }}
+    spring.jpa.show-sql={{ if eq .Values.config.springProfiles "production" }}false{{ else }}true{{ end }}
+    spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+    
+    # JWT Configuration
+    jwt.expiration=86400000
+    
+    # Email Configuration
+    spring.mail.host=smtp.gmail.com
+    spring.mail.port=587
+    spring.mail.properties.mail.smtp.auth=true
+    spring.mail.properties.mail.smtp.starttls.enable=true
+    
+    # Actuator Configuration
+    management.endpoints.web.exposure.include=health,info,metrics,prometheus{{ if ne .Values.config.springProfiles "production" }},env,configprops{{ end }}
+    management.endpoint.health.show-details={{ if eq .Values.config.springProfiles "production" }}when-authorized{{ else }}always{{ end }}
+    management.health.probes.enabled=true
+    
+    # Logging Configuration
+    logging.level.esprit.tn.user={{ .Values.config.logLevel }}
+    logging.level.org.springframework.security={{ if eq .Values.config.springProfiles "production" }}WARN{{ else }}DEBUG{{ end }}
+    logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} {{ if ne .Values.config.springProfiles "production" }}[%thread] %-5level %logger{36} {{ end }}- %msg%n
+    
+    {{- if .Values.eureka.enabled }}
+    # Eureka Configuration
+    eureka.client.service-url.defaultZone={{ .Values.eureka.serviceUrl }}
+    eureka.instance.prefer-ip-address=true
+    eureka.instance.lease-renewal-interval-in-seconds=30
+    eureka.instance.lease-expiration-duration-in-seconds=90
+    {{- end }}

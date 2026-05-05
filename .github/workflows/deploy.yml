@@ -1,0 +1,470 @@
+name: 🚀 Deploy - User Microservice
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+      image_digest:
+        required: false
+        type: string
+    secrets:
+      KUBE_CONFIG:
+        required: true
+      REGISTRY_USERNAME:
+        required: true
+      REGISTRY_PASSWORD:
+        required: true
+
+env:
+  SERVICE_NAME: 'user-service'
+  NAMESPACE: 'microservices'
+
+jobs:
+  # ==========================================
+  # Job 1: Pre-deployment Validation
+  # ==========================================
+  pre-deployment:
+    name: 🔍 Pre-deployment Validation
+    runs-on: ubuntu-latest
+    
+    outputs:
+      deployment-ready: ${{ steps.validation.outputs.ready }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Validate Deployment Prerequisites
+        id: validation
+        run: |
+          echo "🔍 Validating deployment prerequisites..."
+          
+          # Check if image exists and is accessible
+          echo "Checking image: ${{ inputs.image_tag }}"
+          
+          # Validate environment
+          case "${{ inputs.environment }}" in
+            "staging"|"production")
+              echo "✅ Valid environment: ${{ inputs.environment }}"
+              ;;
+            *)
+              echo "❌ Invalid environment: ${{ inputs.environment }}"
+              exit 1
+              ;;
+          esac
+          
+          # Check if Kubernetes config is available
+          if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+            echo "❌ Kubernetes config not available"
+            exit 1
+          fi
+          
+          echo "✅ All prerequisites validated"
+          echo "ready=true" >> $GITHUB_OUTPUT
+
+      - name: 📊 Generate Deployment Plan
+        run: |
+          echo "# 🚀 Deployment Plan" > deployment-plan.md
+          echo "" >> deployment-plan.md
+          echo "**Environment**: ${{ inputs.environment }}" >> deployment-plan.md
+          echo "**Service**: ${{ env.SERVICE_NAME }}" >> deployment-plan.md
+          echo "**Image**: ${{ inputs.image_tag }}" >> deployment-plan.md
+          echo "**Namespace**: ${{ env.NAMESPACE }}" >> deployment-plan.md
+          echo "**Deployment Time**: $(date)" >> deployment-plan.md
+          echo "" >> deployment-plan.md
+          echo "## 📋 Deployment Steps" >> deployment-plan.md
+          echo "1. 🔍 Pre-deployment validation" >> deployment-plan.md
+          echo "2. 🏗️ Apply Kubernetes manifests" >> deployment-plan.md
+          echo "3. ⏳ Wait for rollout completion" >> deployment-plan.md
+          echo "4. 🧪 Run smoke tests" >> deployment-plan.md
+          echo "5. 📊 Verify deployment health" >> deployment-plan.md
+
+      - name: 📊 Upload Deployment Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-plan-${{ inputs.environment }}
+          path: deployment-plan.md
+          retention-days: 30
+
+  # ==========================================
+  # Job 2: Deploy to Kubernetes
+  # ==========================================
+  deploy:
+    name: 🚀 Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    needs: [pre-deployment]
+    if: needs.pre-deployment.outputs.deployment-ready == 'true'
+    
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ steps.deploy.outputs.service-url }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Kubernetes CLI
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: 🔐 Configure Kubernetes Access
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+          kubectl config current-context
+
+      - name: 🏗️ Prepare Kubernetes Manifests
+        run: |
+          # Create namespace if it doesn't exist
+          kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Generate deployment manifest
+          cat > k8s-deployment.yaml << EOF
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: ${{ env.SERVICE_NAME }}
+            namespace: ${{ env.NAMESPACE }}
+            labels:
+              app: ${{ env.SERVICE_NAME }}
+              version: ${{ github.sha }}
+              environment: ${{ inputs.environment }}
+          spec:
+            replicas: ${{ inputs.environment == 'production' && 3 || 2 }}
+            selector:
+              matchLabels:
+                app: ${{ env.SERVICE_NAME }}
+            template:
+              metadata:
+                labels:
+                  app: ${{ env.SERVICE_NAME }}
+                  version: ${{ github.sha }}
+                annotations:
+                  prometheus.io/scrape: "true"
+                  prometheus.io/port: "9090"
+                  prometheus.io/path: "/actuator/prometheus"
+              spec:
+                containers:
+                - name: ${{ env.SERVICE_NAME }}
+                  image: ${{ inputs.image_tag }}
+                  ports:
+                  - containerPort: 9090
+                    name: http
+                  - containerPort: 8080
+                    name: management
+                  env:
+                  - name: SPRING_PROFILES_ACTIVE
+                    value: "${{ inputs.environment }}"
+                  - name: JAVA_OPTS
+                    value: "-Xmx512m -Xms256m"
+                  resources:
+                    requests:
+                      memory: "256Mi"
+                      cpu: "250m"
+                    limits:
+                      memory: "512Mi"
+                      cpu: "500m"
+                  livenessProbe:
+                    httpGet:
+                      path: /actuator/health/liveness
+                      port: 8080
+                    initialDelaySeconds: 60
+                    periodSeconds: 30
+                    timeoutSeconds: 10
+                    failureThreshold: 3
+                  readinessProbe:
+                    httpGet:
+                      path: /actuator/health/readiness
+                      port: 8080
+                    initialDelaySeconds: 30
+                    periodSeconds: 10
+                    timeoutSeconds: 5
+                    failureThreshold: 3
+                  startupProbe:
+                    httpGet:
+                      path: /actuator/health
+                      port: 8080
+                    initialDelaySeconds: 30
+                    periodSeconds: 10
+                    timeoutSeconds: 5
+                    failureThreshold: 10
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: ${{ env.SERVICE_NAME }}
+            namespace: ${{ env.NAMESPACE }}
+            labels:
+              app: ${{ env.SERVICE_NAME }}
+          spec:
+            selector:
+              app: ${{ env.SERVICE_NAME }}
+            ports:
+            - name: http
+              port: 80
+              targetPort: 9090
+            - name: management
+              port: 8080
+              targetPort: 8080
+            type: ClusterIP
+          ---
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: ${{ env.SERVICE_NAME }}
+            namespace: ${{ env.NAMESPACE }}
+            annotations:
+              kubernetes.io/ingress.class: nginx
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+              nginx.ingress.kubernetes.io/rewrite-target: /
+          spec:
+            tls:
+            - hosts:
+              - ${{ env.SERVICE_NAME }}-${{ inputs.environment }}.yourdomain.com
+              secretName: ${{ env.SERVICE_NAME }}-tls
+            rules:
+            - host: ${{ env.SERVICE_NAME }}-${{ inputs.environment }}.yourdomain.com
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: ${{ env.SERVICE_NAME }}
+                      port:
+                        number: 80
+          EOF
+
+      - name: 🚀 Deploy to Kubernetes
+        id: deploy
+        run: |
+          export KUBECONFIG=kubeconfig
+          
+          echo "🚀 Applying Kubernetes manifests..."
+          kubectl apply -f k8s-deployment.yaml
+          
+          echo "⏳ Waiting for rollout to complete..."
+          kubectl rollout status deployment/${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} --timeout=600s
+          
+          echo "📊 Getting deployment status..."
+          kubectl get deployment ${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }}
+          kubectl get pods -l app=${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }}
+          
+          # Set service URL output
+          SERVICE_URL="https://${{ env.SERVICE_NAME }}-${{ inputs.environment }}.yourdomain.com"
+          echo "service-url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "✅ Deployment completed successfully!"
+
+      - name: 📊 Verify Deployment
+        run: |
+          export KUBECONFIG=kubeconfig
+          
+          echo "🔍 Verifying deployment health..."
+          
+          # Check if all pods are ready
+          READY_PODS=$(kubectl get pods -l app=${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].status}' | grep -o True | wc -l)
+          TOTAL_PODS=$(kubectl get pods -l app=${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} --no-headers | wc -l)
+          
+          echo "Ready pods: $READY_PODS/$TOTAL_PODS"
+          
+          if [ "$READY_PODS" -eq "$TOTAL_PODS" ] && [ "$TOTAL_PODS" -gt 0 ]; then
+            echo "✅ All pods are ready"
+          else
+            echo "❌ Not all pods are ready"
+            kubectl describe pods -l app=${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }}
+            exit 1
+          fi
+
+  # ==========================================
+  # Job 3: Smoke Tests
+  # ==========================================
+  smoke-tests:
+    name: 🧪 Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ⏳ Wait for Service Availability
+        run: |
+          SERVICE_URL="${{ needs.deploy.outputs.service-url }}"
+          echo "Waiting for service to be available at: $SERVICE_URL"
+          
+          MAX_ATTEMPTS=30
+          ATTEMPT=1
+          
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS..."
+            
+            if curl -f -s --max-time 10 "$SERVICE_URL/actuator/health" > /dev/null; then
+              echo "✅ Service is available!"
+              break
+            fi
+            
+            if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+              echo "❌ Service not available after $MAX_ATTEMPTS attempts"
+              exit 1
+            fi
+            
+            sleep 10
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+      - name: 🧪 Run Smoke Tests
+        run: |
+          SERVICE_URL="${{ needs.deploy.outputs.service-url }}"
+          echo "Running smoke tests against: $SERVICE_URL"
+          
+          # Test 1: Health Check
+          echo "🏥 Testing health endpoint..."
+          HEALTH_RESPONSE=$(curl -f -s "$SERVICE_URL/actuator/health")
+          HEALTH_STATUS=$(echo "$HEALTH_RESPONSE" | jq -r '.status')
+          
+          if [ "$HEALTH_STATUS" = "UP" ]; then
+            echo "✅ Health check passed"
+          else
+            echo "❌ Health check failed: $HEALTH_STATUS"
+            exit 1
+          fi
+          
+          # Test 2: Info Endpoint
+          echo "ℹ️ Testing info endpoint..."
+          if curl -f -s "$SERVICE_URL/actuator/info" > /dev/null; then
+            echo "✅ Info endpoint accessible"
+          else
+            echo "❌ Info endpoint failed"
+            exit 1
+          fi
+          
+          # Test 3: Metrics Endpoint
+          echo "📊 Testing metrics endpoint..."
+          if curl -f -s "$SERVICE_URL/actuator/metrics" > /dev/null; then
+            echo "✅ Metrics endpoint accessible"
+          else
+            echo "❌ Metrics endpoint failed"
+            exit 1
+          fi
+          
+          echo "✅ All smoke tests passed!"
+
+  # ==========================================
+  # Job 4: Post-deployment Verification
+  # ==========================================
+  post-deployment:
+    name: 📊 Post-deployment Verification
+    runs-on: ubuntu-latest
+    needs: [deploy, smoke-tests]
+    if: always()
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Kubernetes CLI
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: 🔐 Configure Kubernetes Access
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: 📊 Generate Deployment Report
+        run: |
+          export KUBECONFIG=kubeconfig
+          
+          echo "# 📊 Deployment Report" > deployment-report.md
+          echo "" >> deployment-report.md
+          echo "**Environment**: ${{ inputs.environment }}" >> deployment-report.md
+          echo "**Service**: ${{ env.SERVICE_NAME }}" >> deployment-report.md
+          echo "**Image**: ${{ inputs.image_tag }}" >> deployment-report.md
+          echo "**Deployment Time**: $(date)" >> deployment-report.md
+          echo "**Service URL**: ${{ needs.deploy.outputs.service-url }}" >> deployment-report.md
+          echo "" >> deployment-report.md
+          
+          # Deployment Status
+          if [ "${{ needs.deploy.result }}" = "success" ]; then
+            echo "## ✅ Deployment Status: SUCCESS" >> deployment-report.md
+          else
+            echo "## ❌ Deployment Status: FAILED" >> deployment-report.md
+          fi
+          echo "" >> deployment-report.md
+          
+          # Smoke Tests Status
+          if [ "${{ needs.smoke-tests.result }}" = "success" ]; then
+            echo "## ✅ Smoke Tests: PASSED" >> deployment-report.md
+          else
+            echo "## ❌ Smoke Tests: FAILED" >> deployment-report.md
+          fi
+          echo "" >> deployment-report.md
+          
+          # Pod Status
+          echo "## 🏗️ Pod Status" >> deployment-report.md
+          echo "\`\`\`" >> deployment-report.md
+          kubectl get pods -l app=${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} >> deployment-report.md
+          echo "\`\`\`" >> deployment-report.md
+          echo "" >> deployment-report.md
+          
+          # Service Status
+          echo "## 🌐 Service Status" >> deployment-report.md
+          echo "\`\`\`" >> deployment-report.md
+          kubectl get service ${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} >> deployment-report.md
+          echo "\`\`\`" >> deployment-report.md
+
+      - name: 📊 Upload Deployment Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-report-${{ inputs.environment }}
+          path: deployment-report.md
+          retention-days: 30
+
+      - name: 📢 Notify Deployment Status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deploySuccess = '${{ needs.deploy.result }}' === 'success';
+            const smokeTestsSuccess = '${{ needs.smoke-tests.result }}' === 'success';
+            
+            const status = deploySuccess && smokeTestsSuccess ? '✅ SUCCESS' : '❌ FAILED';
+            const title = `🚀 Deployment ${status} - ${{ inputs.environment }}`;
+            
+            const body = `
+            ## 🚀 Deployment Summary
+            
+            **Environment**: ${{ inputs.environment }}
+            **Service**: ${{ env.SERVICE_NAME }}
+            **Image**: ${{ inputs.image_tag }}
+            **Service URL**: ${{ needs.deploy.outputs.service-url }}
+            **Deployment Time**: ${new Date().toISOString()}
+            
+            ### 📊 Results
+            - **Deployment**: ${deploySuccess ? '✅ Success' : '❌ Failed'}
+            - **Smoke Tests**: ${smokeTestsSuccess ? '✅ Passed' : '❌ Failed'}
+            
+            ### 🔗 Links
+            - [Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            - [Service URL](${{ needs.deploy.outputs.service-url }})
+            `;
+            
+            // Create a comment or issue based on the result
+            if (!deploySuccess || !smokeTestsSuccess) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['deployment', 'failed', '${{ inputs.environment }}']
+              });
+            }
+            
+            console.log(title);
+            console.log(body);

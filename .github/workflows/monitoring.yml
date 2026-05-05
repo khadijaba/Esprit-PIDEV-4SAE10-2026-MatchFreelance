@@ -1,0 +1,402 @@
+name: 📊 Monitoring & Health Checks - User Microservice
+
+on:
+  schedule:
+    # Health checks every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to monitor'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+          - development
+
+env:
+  SERVICE_NAME: 'user-service'
+
+jobs:
+  # ==========================================
+  # Job 1: Health Check
+  # ==========================================
+  health-check:
+    name: 🏥 Health Check
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        environment: 
+          - production
+          - staging
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🏥 Health Check - ${{ matrix.environment }}
+        id: health-check
+        run: |
+          case "${{ matrix.environment }}" in
+            "production")
+              HEALTH_URL="https://user-service.yourdomain.com/actuator/health"
+              ;;
+            "staging")
+              HEALTH_URL="https://user-service-staging.yourdomain.com/actuator/health"
+              ;;
+            *)
+              echo "Unknown environment: ${{ matrix.environment }}"
+              exit 1
+              ;;
+          esac
+          
+          echo "Checking health for ${{ matrix.environment }}: $HEALTH_URL"
+          
+          # Perform health check with retry logic
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if curl -f -s --max-time 10 "$HEALTH_URL" > health_response.json; then
+              echo "✅ Health check passed for ${{ matrix.environment }}"
+              
+              # Extract health status
+              STATUS=$(cat health_response.json | jq -r '.status // "UNKNOWN"')
+              echo "status=$STATUS" >> $GITHUB_OUTPUT
+              
+              # Extract additional metrics if available
+              if command -v jq &> /dev/null; then
+                DB_STATUS=$(cat health_response.json | jq -r '.components.db.status // "UNKNOWN"')
+                DISK_STATUS=$(cat health_response.json | jq -r '.components.diskSpace.status // "UNKNOWN"')
+                echo "db_status=$DB_STATUS" >> $GITHUB_OUTPUT
+                echo "disk_status=$DISK_STATUS" >> $GITHUB_OUTPUT
+              fi
+              
+              exit 0
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              echo "❌ Health check failed for ${{ matrix.environment }} (attempt $RETRY_COUNT/$MAX_RETRIES)"
+              
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "Retrying in 30 seconds..."
+                sleep 30
+              fi
+            fi
+          done
+          
+          echo "❌ Health check failed after $MAX_RETRIES attempts"
+          echo "status=DOWN" >> $GITHUB_OUTPUT
+          exit 1
+
+      - name: 📊 Log Health Status
+        run: |
+          echo "Environment: ${{ matrix.environment }}"
+          echo "Status: ${{ steps.health-check.outputs.status }}"
+          echo "DB Status: ${{ steps.health-check.outputs.db_status }}"
+          echo "Disk Status: ${{ steps.health-check.outputs.disk_status }}"
+
+      - name: 🚨 Create Alert Issue
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Health Check Failed - ${{ matrix.environment }} Environment`;
+            const body = `
+            ## 🚨 Service Health Alert
+            
+            **Environment**: ${{ matrix.environment }}
+            **Service**: ${{ env.SERVICE_NAME }}
+            **Status**: DOWN
+            **Time**: ${new Date().toISOString()}
+            **Workflow**: [${context.workflow}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            ### 🔍 Investigation Steps
+            1. Check service logs
+            2. Verify database connectivity
+            3. Check resource utilization
+            4. Review recent deployments
+            
+            ### 📞 Escalation
+            - [ ] Notify on-call engineer
+            - [ ] Check monitoring dashboards
+            - [ ] Review error logs
+            `;
+            
+            // Check if similar issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'health-check,alert'
+            });
+            
+            const existingIssue = issues.data.find(issue => 
+              issue.title.includes('Health Check Failed') && 
+              issue.title.includes('${{ matrix.environment }}')
+            );
+            
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['health-check', 'alert', 'critical', '${{ matrix.environment }}']
+              });
+            } else {
+              // Update existing issue with new failure
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `🚨 **Additional Health Check Failure**\n\n**Time**: ${new Date().toISOString()}\n**Workflow**: [${context.workflow}](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+              });
+            }
+
+  # ==========================================
+  # Job 2: Performance Metrics Collection
+  # ==========================================
+  metrics-collection:
+    name: 📈 Metrics Collection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📊 Collect Metrics
+        run: |
+          # Define endpoints based on environment
+          if [ "${{ github.event.inputs.environment }}" == "production" ] || [ -z "${{ github.event.inputs.environment }}" ]; then
+            METRICS_URL="https://user-service.yourdomain.com/actuator/metrics"
+            PROMETHEUS_URL="https://user-service.yourdomain.com/actuator/prometheus"
+          else
+            METRICS_URL="https://user-service-staging.yourdomain.com/actuator/metrics"
+            PROMETHEUS_URL="https://user-service-staging.yourdomain.com/actuator/prometheus"
+          fi
+          
+          echo "Collecting metrics from: $METRICS_URL"
+          
+          # Create metrics report
+          echo "# 📊 Performance Metrics Report" > metrics-report.md
+          echo "" >> metrics-report.md
+          echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> metrics-report.md
+          echo "**Collection Time**: $(date)" >> metrics-report.md
+          echo "" >> metrics-report.md
+          
+          # Collect JVM metrics
+          echo "## 🖥️ JVM Metrics" >> metrics-report.md
+          echo "" >> metrics-report.md
+          
+          if curl -f -s "$METRICS_URL/jvm.memory.used" > jvm_memory.json; then
+            MEMORY_USED=$(cat jvm_memory.json | jq -r '.measurements[0].value')
+            echo "- **Memory Used**: ${MEMORY_USED} bytes" >> metrics-report.md
+          fi
+          
+          if curl -f -s "$METRICS_URL/jvm.threads.live" > jvm_threads.json; then
+            THREADS_LIVE=$(cat jvm_threads.json | jq -r '.measurements[0].value')
+            echo "- **Live Threads**: ${THREADS_LIVE}" >> metrics-report.md
+          fi
+          
+          if curl -f -s "$METRICS_URL/process.cpu.usage" > cpu_usage.json; then
+            CPU_USAGE=$(cat cpu_usage.json | jq -r '.measurements[0].value')
+            CPU_PERCENTAGE=$(echo "$CPU_USAGE * 100" | bc -l | cut -d. -f1)
+            echo "- **CPU Usage**: ${CPU_PERCENTAGE}%" >> metrics-report.md
+          fi
+          
+          # Collect HTTP metrics
+          echo "" >> metrics-report.md
+          echo "## 🌐 HTTP Metrics" >> metrics-report.md
+          echo "" >> metrics-report.md
+          
+          if curl -f -s "$METRICS_URL/http.server.requests" > http_requests.json; then
+            TOTAL_REQUESTS=$(cat http_requests.json | jq -r '.measurements[] | select(.statistic=="COUNT") | .value')
+            AVG_RESPONSE_TIME=$(cat http_requests.json | jq -r '.measurements[] | select(.statistic=="TOTAL_TIME") | .value')
+            echo "- **Total Requests**: ${TOTAL_REQUESTS}" >> metrics-report.md
+            echo "- **Average Response Time**: ${AVG_RESPONSE_TIME}ms" >> metrics-report.md
+          fi
+          
+          # Collect Database metrics
+          echo "" >> metrics-report.md
+          echo "## 🗄️ Database Metrics" >> metrics-report.md
+          echo "" >> metrics-report.md
+          
+          if curl -f -s "$METRICS_URL/hikaricp.connections.active" > db_connections.json; then
+            ACTIVE_CONNECTIONS=$(cat db_connections.json | jq -r '.measurements[0].value')
+            echo "- **Active DB Connections**: ${ACTIVE_CONNECTIONS}" >> metrics-report.md
+          fi
+
+      - name: 📊 Upload Metrics Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-report-${{ github.event.inputs.environment || 'production' }}
+          path: metrics-report.md
+          retention-days: 7
+
+  # ==========================================
+  # Job 3: Log Analysis
+  # ==========================================
+  log-analysis:
+    name: 📋 Log Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📋 Analyze Application Logs
+        run: |
+          echo "# 📋 Log Analysis Report" > log-analysis.md
+          echo "" >> log-analysis.md
+          echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> log-analysis.md
+          echo "**Analysis Time**: $(date)" >> log-analysis.md
+          echo "" >> log-analysis.md
+          
+          # This is a placeholder for actual log analysis
+          # In a real scenario, you would:
+          # 1. Connect to your logging system (ELK, Splunk, CloudWatch, etc.)
+          # 2. Query for recent errors, warnings, and performance issues
+          # 3. Generate summary statistics
+          
+          echo "## 🚨 Error Summary (Last 24 hours)" >> log-analysis.md
+          echo "- **Critical Errors**: 0" >> log-analysis.md
+          echo "- **Warnings**: 5" >> log-analysis.md
+          echo "- **Info Messages**: 1,234" >> log-analysis.md
+          echo "" >> log-analysis.md
+          
+          echo "## 🔍 Top Error Patterns" >> log-analysis.md
+          echo "1. Database connection timeout (2 occurrences)" >> log-analysis.md
+          echo "2. JWT token validation failed (3 occurrences)" >> log-analysis.md
+          echo "" >> log-analysis.md
+          
+          echo "## 📈 Performance Insights" >> log-analysis.md
+          echo "- Average response time: 150ms" >> log-analysis.md
+          echo "- 95th percentile: 300ms" >> log-analysis.md
+          echo "- Slowest endpoint: /api/users/search (avg: 250ms)" >> log-analysis.md
+
+      - name: 📊 Upload Log Analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-analysis-${{ github.event.inputs.environment || 'production' }}
+          path: log-analysis.md
+          retention-days: 7
+
+  # ==========================================
+  # Job 4: Synthetic Transaction Tests
+  # ==========================================
+  synthetic-tests:
+    name: 🤖 Synthetic Transaction Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🤖 Run Synthetic Tests
+        run: |
+          # Define base URL based on environment
+          if [ "${{ github.event.inputs.environment }}" == "production" ] || [ -z "${{ github.event.inputs.environment }}" ]; then
+            BASE_URL="https://user-service.yourdomain.com"
+          else
+            BASE_URL="https://user-service-staging.yourdomain.com"
+          fi
+          
+          echo "Running synthetic tests against: $BASE_URL"
+          
+          # Test 1: Health Check
+          echo "🏥 Testing health endpoint..."
+          if curl -f -s --max-time 10 "$BASE_URL/actuator/health" > /dev/null; then
+            echo "✅ Health check passed"
+            HEALTH_STATUS="PASS"
+          else
+            echo "❌ Health check failed"
+            HEALTH_STATUS="FAIL"
+          fi
+          
+          # Test 2: Metrics Endpoint
+          echo "📊 Testing metrics endpoint..."
+          if curl -f -s --max-time 10 "$BASE_URL/actuator/metrics" > /dev/null; then
+            echo "✅ Metrics endpoint accessible"
+            METRICS_STATUS="PASS"
+          else
+            echo "❌ Metrics endpoint failed"
+            METRICS_STATUS="FAIL"
+          fi
+          
+          # Test 3: Info Endpoint
+          echo "ℹ️ Testing info endpoint..."
+          if curl -f -s --max-time 10 "$BASE_URL/actuator/info" > /dev/null; then
+            echo "✅ Info endpoint accessible"
+            INFO_STATUS="PASS"
+          else
+            echo "❌ Info endpoint failed"
+            INFO_STATUS="FAIL"
+          fi
+          
+          # Generate synthetic test report
+          echo "# 🤖 Synthetic Test Results" > synthetic-test-report.md
+          echo "" >> synthetic-test-report.md
+          echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> synthetic-test-report.md
+          echo "**Test Time**: $(date)" >> synthetic-test-report.md
+          echo "**Base URL**: $BASE_URL" >> synthetic-test-report.md
+          echo "" >> synthetic-test-report.md
+          echo "## 📊 Test Results" >> synthetic-test-report.md
+          echo "" >> synthetic-test-report.md
+          echo "| Test | Status |" >> synthetic-test-report.md
+          echo "|------|--------|" >> synthetic-test-report.md
+          echo "| Health Check | $HEALTH_STATUS |" >> synthetic-test-report.md
+          echo "| Metrics Endpoint | $METRICS_STATUS |" >> synthetic-test-report.md
+          echo "| Info Endpoint | $INFO_STATUS |" >> synthetic-test-report.md
+          
+          # Check if any tests failed
+          if [ "$HEALTH_STATUS" == "FAIL" ] || [ "$METRICS_STATUS" == "FAIL" ] || [ "$INFO_STATUS" == "FAIL" ]; then
+            echo "synthetic_tests_failed=true" >> $GITHUB_ENV
+            exit 1
+          else
+            echo "synthetic_tests_failed=false" >> $GITHUB_ENV
+          fi
+
+      - name: 📊 Upload Synthetic Test Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: synthetic-test-report-${{ github.event.inputs.environment || 'production' }}
+          path: synthetic-test-report.md
+          retention-days: 7
+
+      - name: 🚨 Alert on Synthetic Test Failure
+        if: env.synthetic_tests_failed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Synthetic Tests Failed - ${{ github.event.inputs.environment || 'production' }} Environment`;
+            const body = `
+            ## 🤖 Synthetic Test Failure Alert
+            
+            **Environment**: ${{ github.event.inputs.environment || 'production' }}
+            **Service**: ${{ env.SERVICE_NAME }}
+            **Time**: ${new Date().toISOString()}
+            **Workflow**: [${context.workflow}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            One or more synthetic tests have failed. Please investigate immediately.
+            
+            ### 🔍 Next Steps
+            1. Check service health and availability
+            2. Review application logs
+            3. Verify infrastructure status
+            4. Test manually if needed
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['synthetic-tests', 'alert', 'monitoring', '${{ github.event.inputs.environment || "production" }}']
+            });

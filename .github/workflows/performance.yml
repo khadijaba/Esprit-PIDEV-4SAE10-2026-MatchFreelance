@@ -1,0 +1,296 @@
+name: 🚀 Performance Testing - User Microservice
+
+on:
+  schedule:
+    # Run performance tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_duration:
+        description: 'Test duration in minutes'
+        required: false
+        default: '5'
+        type: string
+      concurrent_users:
+        description: 'Number of concurrent users'
+        required: false
+        default: '50'
+        type: string
+
+env:
+  JAVA_VERSION: '17'
+  SERVICE_NAME: 'user-service'
+
+jobs:
+  # ==========================================
+  # Job 1: Load Testing with JMeter
+  # ==========================================
+  load-testing:
+    name: 🏋️ Load Testing
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: userdb_perf
+          MYSQL_USER: perfuser
+          MYSQL_PASSWORD: perfpass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 🏗️ Build Application
+        working-directory: ./User
+        run: |
+          mvn clean package -B -DskipTests=true
+
+      - name: 🚀 Start Application
+        working-directory: ./User
+        run: |
+          java -jar target/*.jar \
+            --spring.profiles.active=performance \
+            --spring.datasource.url=jdbc:mysql://localhost:3306/userdb_perf \
+            --spring.datasource.username=perfuser \
+            --spring.datasource.password=perfpass \
+            --server.port=8080 &
+          
+          # Wait for application to start
+          timeout 60 bash -c 'until curl -f http://localhost:8080/actuator/health; do sleep 2; done'
+
+      - name: 📊 Setup JMeter
+        run: |
+          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.2.tgz
+          tar -xzf apache-jmeter-5.6.2.tgz
+          sudo mv apache-jmeter-5.6.2 /opt/jmeter
+          sudo ln -s /opt/jmeter/bin/jmeter /usr/local/bin/jmeter
+
+      - name: 📝 Create JMeter Test Plan
+        run: |
+          cat > user-service-load-test.jmx << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.2">
+            <hashTree>
+              <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="User Service Load Test">
+                <elementProp name="TestPlan.arguments" elementType="Arguments" guiclass="ArgumentsPanel">
+                  <collectionProp name="Arguments.arguments"/>
+                </elementProp>
+                <stringProp name="TestPlan.user_define_classpath"></stringProp>
+                <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+                <boolProp name="TestPlan.functional_mode">false</boolProp>
+              </TestPlan>
+              <hashTree>
+                <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="User Load Test">
+                  <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+                  <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+                    <boolProp name="LoopController.continue_forever">false</boolProp>
+                    <intProp name="LoopController.loops">10</intProp>
+                  </elementProp>
+                  <stringProp name="ThreadGroup.num_threads">${{ github.event.inputs.concurrent_users || '50' }}</stringProp>
+                  <stringProp name="ThreadGroup.ramp_time">60</stringProp>
+                  <longProp name="ThreadGroup.start_time">1</longProp>
+                  <longProp name="ThreadGroup.end_time">1</longProp>
+                  <boolProp name="ThreadGroup.scheduler">true</boolProp>
+                  <stringProp name="ThreadGroup.duration">${{ github.event.inputs.test_duration || '300' }}</stringProp>
+                </ThreadGroup>
+                <hashTree>
+                  <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Health Check">
+                    <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+                      <collectionProp name="Arguments.arguments"/>
+                    </elementProp>
+                    <stringProp name="HTTPSampler.domain">localhost</stringProp>
+                    <stringProp name="HTTPSampler.port">8080</stringProp>
+                    <stringProp name="HTTPSampler.path">/actuator/health</stringProp>
+                    <stringProp name="HTTPSampler.method">GET</stringProp>
+                  </HTTPSamplerProxy>
+                  <hashTree/>
+                  
+                  <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
+                    <boolProp name="ResultCollector.error_logging">false</boolProp>
+                    <objProp>
+                      <name>saveConfig</name>
+                      <value class="SampleSaveConfiguration">
+                        <time>true</time>
+                        <latency>true</latency>
+                        <timestamp>true</timestamp>
+                        <success>true</success>
+                        <label>true</label>
+                        <code>true</code>
+                        <message>true</message>
+                        <threadName>true</threadName>
+                        <dataType>true</dataType>
+                        <encoding>false</encoding>
+                        <assertions>true</assertions>
+                        <subresults>true</subresults>
+                        <responseData>false</responseData>
+                        <samplerData>false</samplerData>
+                        <xml>false</xml>
+                        <fieldNames>true</fieldNames>
+                        <responseHeaders>false</responseHeaders>
+                        <requestHeaders>false</requestHeaders>
+                        <responseDataOnError>false</responseDataOnError>
+                        <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+                        <assertionsResultsToSave>0</assertionsResultsToSave>
+                        <bytes>true</bytes>
+                        <sentBytes>true</sentBytes>
+                        <url>true</url>
+                        <threadCounts>true</threadCounts>
+                        <idleTime>true</idleTime>
+                        <connectTime>true</connectTime>
+                      </value>
+                    </objProp>
+                    <stringProp name="filename">performance-results.jtl</stringProp>
+                  </ResultCollector>
+                  <hashTree/>
+                </hashTree>
+              </hashTree>
+            </hashTree>
+          </jmeterTestPlan>
+          EOF
+
+      - name: 🏋️ Run Load Test
+        run: |
+          jmeter -n -t user-service-load-test.jmx -l performance-results.jtl -e -o performance-report/
+          
+          # Generate summary
+          echo "## 🏋️ Performance Test Results" > performance-summary.md
+          echo "- **Test Duration**: ${{ github.event.inputs.test_duration || '5' }} minutes" >> performance-summary.md
+          echo "- **Concurrent Users**: ${{ github.event.inputs.concurrent_users || '50' }}" >> performance-summary.md
+          echo "- **Test Date**: $(date)" >> performance-summary.md
+          echo "" >> performance-summary.md
+          
+          # Extract key metrics
+          if [ -f performance-results.jtl ]; then
+            echo "### 📊 Key Metrics" >> performance-summary.md
+            echo "\`\`\`" >> performance-summary.md
+            tail -n +2 performance-results.jtl | awk -F',' '
+            BEGIN { 
+              sum_elapsed=0; count=0; errors=0; 
+              min_elapsed=999999; max_elapsed=0 
+            }
+            {
+              elapsed = $2
+              success = $8
+              sum_elapsed += elapsed
+              count++
+              if (success == "false") errors++
+              if (elapsed < min_elapsed) min_elapsed = elapsed
+              if (elapsed > max_elapsed) max_elapsed = elapsed
+            }
+            END {
+              avg_response_time = (count > 0) ? sum_elapsed/count : 0
+              error_rate = (count > 0) ? (errors/count)*100 : 0
+              printf "Total Requests: %d\n", count
+              printf "Average Response Time: %.2f ms\n", avg_response_time
+              printf "Min Response Time: %d ms\n", min_elapsed
+              printf "Max Response Time: %d ms\n", max_elapsed
+              printf "Error Rate: %.2f%%\n", error_rate
+              printf "Successful Requests: %d\n", count - errors
+            }' >> performance-summary.md
+            echo "\`\`\`" >> performance-summary.md
+          fi
+
+      - name: 📊 Upload Performance Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: |
+            performance-results.jtl
+            performance-report/
+            performance-summary.md
+          retention-days: 30
+
+      - name: 📈 Comment Performance Results
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('performance-summary.md')) {
+              const summary = fs.readFileSync('performance-summary.md', 'utf8');
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: summary
+              });
+            }
+
+  # ==========================================
+  # Job 2: Memory & CPU Profiling
+  # ==========================================
+  profiling:
+    name: 🔍 Memory & CPU Profiling
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java with Profiling
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 🏗️ Build Application
+        working-directory: ./User
+        run: |
+          mvn clean package -B -DskipTests=true
+
+      - name: 🔍 Run with Profiling
+        working-directory: ./User
+        run: |
+          # Start application with JVM profiling flags
+          java -jar target/*.jar \
+            -XX:+UnlockExperimentalVMOptions \
+            -XX:+UseG1GC \
+            -XX:+PrintGC \
+            -XX:+PrintGCDetails \
+            -XX:+PrintGCTimeStamps \
+            -Xloggc:gc.log \
+            -XX:+HeapDumpOnOutOfMemoryError \
+            -XX:HeapDumpPath=heap-dump.hprof \
+            --spring.profiles.active=performance \
+            --server.port=8080 &
+          
+          APP_PID=$!
+          
+          # Wait for startup
+          timeout 60 bash -c 'until curl -f http://localhost:8080/actuator/health; do sleep 2; done'
+          
+          # Monitor for 2 minutes
+          sleep 120
+          
+          # Generate thread dump
+          jstack $APP_PID > thread-dump.txt
+          
+          # Stop application
+          kill $APP_PID
+
+      - name: 📊 Upload Profiling Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: profiling-results
+          path: |
+            User/gc.log
+            User/thread-dump.txt
+            User/heap-dump.hprof
+          retention-days: 7

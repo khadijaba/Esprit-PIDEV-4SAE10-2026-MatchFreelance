@@ -7,7 +7,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(classes = esprit.tn.user.UserApplication.class)
+@SpringBootTest
 public class SendGridEmailServiceTest {
 
     private SendGridEmailService emailService;

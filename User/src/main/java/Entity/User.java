@@ -79,11 +79,6 @@ public class User {
         private String profilePictureUrl;
         private boolean enabled = true;
 
-        public UserBuilder id(Long id) {
-            this.id = id;
-            return this;
-        }
-
         public UserBuilder firstName(String firstName) {
             this.firstName = firstName;
             return this;

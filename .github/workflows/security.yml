@@ -1,0 +1,341 @@
+name: 🛡️ Security & Compliance - User Microservice
+
+on:
+  schedule:
+    # Run security scans daily at 3 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'User/**'
+      - '.github/workflows/security.yml'
+
+env:
+  JAVA_VERSION: '17'
+  SERVICE_NAME: 'user-service'
+
+jobs:
+  # ==========================================
+  # Job 1: SAST (Static Application Security Testing)
+  # ==========================================
+  sast-analysis:
+    name: 🔍 SAST Analysis
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./User
+    
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 🏗️ Build Application
+        run: mvn clean compile -B
+
+      - name: 🔍 Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java
+          queries: security-extended,security-and-quality
+
+      - name: 🏗️ Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: 🔍 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:java"
+
+      - name: 🛡️ Run Semgrep SAST
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+            p/java
+          generateSarif: "1"
+
+      - name: 📊 Upload Semgrep Results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+
+  # ==========================================
+  # Job 2: Dependency Vulnerability Scan
+  # ==========================================
+  dependency-scan:
+    name: 📦 Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./User
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 🔍 OWASP Dependency Check
+        run: |
+          mvn org.owasp:dependency-check-maven:9.0.7:check \
+            -DfailBuildOnCVSS=7 \
+            -Dformat=ALL \
+            -DprettyPrint=true \
+            -DsuppressionsLocation=owasp-suppressions.xml
+
+      - name: 📊 Upload OWASP Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owasp-dependency-check
+          path: |
+            User/target/dependency-check-report.html
+            User/target/dependency-check-report.json
+            User/target/dependency-check-report.xml
+          retention-days: 30
+
+      - name: 🔍 Snyk Vulnerability Scan
+        uses: snyk/actions/maven@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=User/pom.xml
+
+      - name: 📊 Upload Snyk Results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: snyk.sarif
+
+  # ==========================================
+  # Job 3: Container Security Scan
+  # ==========================================
+  container-scan:
+    name: 🐳 Container Security Scan
+    runs-on: ubuntu-latest
+    needs: []
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./User
+          file: ./User/Dockerfile
+          push: false
+          tags: user-service:security-scan
+          load: true
+
+      - name: 🔍 Run Trivy Container Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'user-service:security-scan'
+          format: 'sarif'
+          output: 'trivy-container.sarif'
+
+      - name: 📊 Upload Trivy Container Results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-container.sarif'
+
+      - name: 🔍 Run Hadolint Dockerfile Scan
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: User/Dockerfile
+          format: sarif
+          output-file: hadolint.sarif
+          no-fail: true
+
+      - name: 📊 Upload Hadolint Results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: hadolint.sarif
+
+  # ==========================================
+  # Job 4: Secrets Detection
+  # ==========================================
+  secrets-scan:
+    name: 🔐 Secrets Detection
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 TruffleHog Secrets Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./User
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+      - name: 🔍 GitLeaks Secrets Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # ==========================================
+  # Job 5: License Compliance
+  # ==========================================
+  license-check:
+    name: 📄 License Compliance
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./User
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 📄 License Check
+        run: |
+          mvn org.codehaus.mojo:license-maven-plugin:2.2.0:check-file-header \
+            -Dlicense.header=license-header.txt \
+            -Dlicense.failOnMissingHeader=false \
+            -Dlicense.failOnNotUptodateHeader=false
+
+      - name: 📊 Generate License Report
+        run: |
+          mvn org.codehaus.mojo:license-maven-plugin:2.2.0:aggregate-third-party-report
+          mvn org.codehaus.mojo:license-maven-plugin:2.2.0:aggregate-download-licenses
+
+      - name: 📊 Upload License Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-reports
+          path: |
+            User/target/generated-sources/license/
+            User/target/site/
+          retention-days: 30
+
+  # ==========================================
+  # Job 6: Security Report Summary
+  # ==========================================
+  security-summary:
+    name: 📋 Security Summary
+    runs-on: ubuntu-latest
+    needs: [sast-analysis, dependency-scan, container-scan, secrets-scan, license-check]
+    if: always()
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📋 Generate Security Summary
+        run: |
+          echo "# 🛡️ Security Scan Summary" > security-summary.md
+          echo "" >> security-summary.md
+          echo "## 📊 Scan Results" >> security-summary.md
+          echo "" >> security-summary.md
+          
+          # SAST Analysis
+          if [ "${{ needs.sast-analysis.result }}" == "success" ]; then
+            echo "- ✅ **SAST Analysis**: Passed" >> security-summary.md
+          else
+            echo "- ❌ **SAST Analysis**: Failed" >> security-summary.md
+          fi
+          
+          # Dependency Scan
+          if [ "${{ needs.dependency-scan.result }}" == "success" ]; then
+            echo "- ✅ **Dependency Scan**: Passed" >> security-summary.md
+          else
+            echo "- ❌ **Dependency Scan**: Failed" >> security-summary.md
+          fi
+          
+          # Container Scan
+          if [ "${{ needs.container-scan.result }}" == "success" ]; then
+            echo "- ✅ **Container Scan**: Passed" >> security-summary.md
+          else
+            echo "- ❌ **Container Scan**: Failed" >> security-summary.md
+          fi
+          
+          # Secrets Scan
+          if [ "${{ needs.secrets-scan.result }}" == "success" ]; then
+            echo "- ✅ **Secrets Detection**: Passed" >> security-summary.md
+          else
+            echo "- ❌ **Secrets Detection**: Failed" >> security-summary.md
+          fi
+          
+          # License Check
+          if [ "${{ needs.license-check.result }}" == "success" ]; then
+            echo "- ✅ **License Compliance**: Passed" >> security-summary.md
+          else
+            echo "- ❌ **License Compliance**: Failed" >> security-summary.md
+          fi
+          
+          echo "" >> security-summary.md
+          echo "## 🔗 Links" >> security-summary.md
+          echo "- [Security Tab](https://github.com/${{ github.repository }}/security)" >> security-summary.md
+          echo "- [Actions](https://github.com/${{ github.repository }}/actions)" >> security-summary.md
+          echo "" >> security-summary.md
+          echo "**Scan Date**: $(date)" >> security-summary.md
+
+      - name: 📊 Upload Security Summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-summary
+          path: security-summary.md
+          retention-days: 30
+
+      - name: 📢 Create Security Issue
+        if: |
+          needs.sast-analysis.result == 'failure' ||
+          needs.dependency-scan.result == 'failure' ||
+          needs.container-scan.result == 'failure' ||
+          needs.secrets-scan.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('security-summary.md', 'utf8');
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Security Scan Failures Detected',
+              body: summary,
+              labels: ['security', 'bug', 'high-priority']
+            });

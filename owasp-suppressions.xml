@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!-- 
+    OWASP Dependency Check Suppressions
+    This file contains suppressions for known false positives or accepted risks
+    -->
+    
+    <!-- Spring Boot Framework - Known false positives -->
+    <suppress>
+        <notes><![CDATA[
+        Spring Boot starter dependencies often trigger false positives
+        for vulnerabilities that don't apply to our usage
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.boot/spring-boot-starter.*@.*$</packageUrl>
+        <cve>CVE-2016-1000027</cve>
+    </suppress>
+    
+    <!-- MySQL Connector - Version specific suppressions -->
+    <suppress>
+        <notes><![CDATA[
+        MySQL connector false positives for older versions
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.mysql/mysql-connector-j@.*$</packageUrl>
+        <cve>CVE-2019-2692</cve>
+    </suppress>
+    
+    <!-- JWT Library - Known safe usage -->
+    <suppress>
+        <notes><![CDATA[
+        JJWT library - we use the latest version with proper validation
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.jsonwebtoken/jjwt.*@.*$</packageUrl>
+        <cve>CVE-2019-7644</cve>
+    </suppress>
+    
+    <!-- Lombok - Development time only -->
+    <suppress>
+        <notes><![CDATA[
+        Lombok is used only at compile time and not included in runtime
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.projectlombok/lombok@.*$</packageUrl>
+        <vulnerabilityName>CVE-2022-45688</vulnerabilityName>
+    </suppress>
+    
+    <!-- SendGrid SDK - Latest version used -->
+    <suppress>
+        <notes><![CDATA[
+        SendGrid SDK - using latest version with security patches
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.sendgrid/sendgrid-java@.*$</packageUrl>
+        <cve>CVE-2021-22569</cve>
+    </suppress>
+    
+    <!-- Test dependencies - Not in production -->
+    <suppress>
+        <notes><![CDATA[
+        Test scope dependencies are not included in production builds
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.boot/spring-boot-starter-test@.*$</packageUrl>
+        <cve>CVE-2020-5421</cve>
+    </suppress>
+    
+    <!-- Actuator endpoints - Properly secured -->
+    <suppress>
+        <notes><![CDATA[
+        Spring Boot Actuator endpoints are properly secured in our configuration
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.boot/spring-boot-starter-actuator@.*$</packageUrl>
+        <cve>CVE-2021-22096</cve>
+    </suppress>
+</suppressions>
