@@ -2,12 +2,12 @@ name: 🚀 CI/CD Pipeline - User Microservice
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, User ]
     paths:
       - 'User/**'
       - '.github/workflows/ci.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, User ]
     paths:
       - 'User/**'
       - '.github/workflows/ci.yml'
