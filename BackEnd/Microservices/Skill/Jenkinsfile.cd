@@ -1,114 +1,63 @@
 pipeline {
     agent any
 
-    options {
-        skipDefaultCheckout(true)
+    environment {
+        APP_NAME = "skill-service"
+        REGISTRY = credentials('docker-registry-url')
+        IMAGE_TAG = "${params.IMAGE_TAG}"
+        K8S_NAMESPACE = "default"
+        KUBECONFIG = credentials('kubeconfig-file')
+        K8S_DEPLOYMENT = "skill"
+        K8S_SERVICE = "skill"
     }
 
     parameters {
         string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag to deploy')
-        string(name: 'K8S_NAMESPACE', defaultValue: 'skill', description: 'Namespace applicatif du microservice Skill')
     }
 
-    environment {
-        IMAGE_NAME = 'emna450/backend-skill'
-        MANIFESTS_DIR = 'BackEnd/Microservices/Skill/k8s/skill'
-        INFRA_DIR = 'BackEnd/infra/k8s'
-        MYSQL_NAMESPACE = 'mysql'
+    options {
+        timestamps()
+        disableConcurrentBuilds()
     }
 
     stages {
         stage('Checkout') {
             steps {
-                script {
-                    def branch = env.BRANCH_NAME ?: 'projectskills'
-                    def exts = []
-                    if (scm.extensions != null && !scm.extensions.isEmpty()) {
-                        exts.addAll(scm.extensions)
-                    }
-                    exts.add([
-                        $class       : 'CloneOption',
-                        shallow      : true,
-                        depth        : 1,
-                        timeout      : 120,
-                        honorRefspec : true,
-                        noTags       : true,
-                        reference    : ''
-                    ])
-                    def remotes = scm.userRemoteConfigs.collect { cfg ->
-                        def m = [url: cfg.url]
-                        if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
-                            m.credentialsId = cfg.credentialsId
-                        }
-                        m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
-                        m
-                    }
-                    checkout([
-                        $class            : 'GitSCM',
-                        branches          : [[name: "*/${branch}"]],
-                        extensions        : exts,
-                        userRemoteConfigs : remotes
-                    ])
-                }
+                checkout scm
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy to Kubernetes') {
             steps {
-                withCredentials([file(credentialsId: 'kubeconfig-project', variable: 'KUBECONFIG_FILE')]) {
-                    sh '''
-                        set -e
-                        EFFECTIVE_TAG="${IMAGE_TAG:-latest}"
-                        APP_NS="${K8S_NAMESPACE:-skill}"
-                        DEPLOY_IMAGE="${IMAGE_NAME}:${EFFECTIVE_TAG}"
-
-                        if command -v kubectl >/dev/null 2>&1; then
-                          KUBECTL_CMD="$(command -v kubectl)"
-                        else
-                          KUBECTL_CMD="/tmp/kubectl"
-                        fi
-
-                        if [ -x "${KUBECTL_CMD}" ]; then
-                          "${KUBECTL_CMD}" version --client >/dev/null 2>&1 || rm -f "${KUBECTL_CMD}"
-                        fi
-
-                        if [ ! -x "${KUBECTL_CMD}" ]; then
-                          curl -fsSL -o /tmp/kubectl "https://dl.k8s.io/release/v1.31.3/bin/linux/amd64/kubectl"
-                          chmod +x /tmp/kubectl
-                          KUBECTL_CMD="/tmp/kubectl"
-                        fi
-
-                        TMP_DEPLOY="$(mktemp)"
-                        TMP_SVC="$(mktemp)"
-                        TMP_SECRET="$(mktemp)"
-
-                        cp "${MANIFESTS_DIR}/deployment.yaml" "${TMP_DEPLOY}"
-                        cp "${MANIFESTS_DIR}/service.yaml" "${TMP_SVC}"
-                        cp "${MANIFESTS_DIR}/secret.yaml" "${TMP_SECRET}"
-
-                        sed -i "s|__IMAGE__|${DEPLOY_IMAGE}|g" "${TMP_DEPLOY}"
-                        sed -i "s|__NAMESPACE__|${APP_NS}|g" "${TMP_DEPLOY}"
-                        sed -i "s|__NAMESPACE__|${APP_NS}|g" "${TMP_SVC}"
-                        sed -i "s|__NAMESPACE__|${APP_NS}|g" "${TMP_SECRET}"
-
-                        export KUBECONFIG="${KUBECONFIG_FILE}"
-                        "${KUBECTL_CMD}" apply -f "${INFRA_DIR}/namespaces-labels.yaml"
-                        "${KUBECTL_CMD}" apply -f "${INFRA_DIR}/mysql/mysql.yaml"
-                        "${KUBECTL_CMD}" -n "${MYSQL_NAMESPACE}" rollout status deployment/mysql --timeout=900s
-
-                        "${KUBECTL_CMD}" apply -f "${TMP_SECRET}"
-                        "${KUBECTL_CMD}" apply -f "${TMP_DEPLOY}" -f "${TMP_SVC}"
-                        "${KUBECTL_CMD}" -n "${APP_NS}" rollout status deployment/skill-ms --timeout=300s
-                        "${KUBECTL_CMD}" -n "${APP_NS}" get pods,svc -l app.kubernetes.io/name=skill-ms
-                    '''
-                }
+                sh '''
+                  kubectl -n ${K8S_NAMESPACE} set image deployment/skill \
+                    skill=${REGISTRY}/${APP_NAME}:${IMAGE_TAG} --record
+                '''
             }
         }
-    }
 
-    post {
-        success {
-            echo "CD OK: ${IMAGE_NAME}:${params.IMAGE_TAG} deploye dans ${params.K8S_NAMESPACE}."
+        stage('Verify Rollout') {
+            steps {
+                sh 'kubectl -n ${K8S_NAMESPACE} rollout status deployment/skill --timeout=180s'
+            }
+        }
+
+        stage('Monitoring Check') {
+            steps {
+                sh '''
+                  kubectl -n ${K8S_NAMESPACE} get deployment/${K8S_DEPLOYMENT}
+                  kubectl -n ${K8S_NAMESPACE} get pods -l app=${K8S_DEPLOYMENT} -o wide
+                  kubectl -n ${K8S_NAMESPACE} get svc ${K8S_SERVICE} -o wide
+
+                  ENDPOINTS=$(kubectl -n ${K8S_NAMESPACE} get endpoints ${K8S_SERVICE} -o jsonpath='{.subsets[*].addresses[*].ip}')
+                  if [ -z "${ENDPOINTS}" ]; then
+                    echo "Monitoring check failed: no endpoints found for service ${K8S_SERVICE}"
+                    exit 1
+                  fi
+
+                  echo "Monitoring check passed: service ${K8S_SERVICE} has active endpoints: ${ENDPOINTS}"
+                '''
+            }
         }
     }
 }

@@ -1,124 +1,94 @@
 pipeline {
     agent any
 
-    tools {
-        jdk 'JDK17'
-        maven 'Maven3'
-        git 'Default'
+    environment {
+        APP_NAME = "skill-service"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        REGISTRY = credentials('docker-registry-url')
+        REGISTRY_CREDENTIALS = 'docker-registry-creds'
     }
 
     options {
-        skipDefaultCheckout(true)
         timestamps()
         disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '20'))
-    }
-
-    environment {
-        MODULE_DIR = 'BackEnd/Microservices/Skill'
-        SONAR_PROJECT_KEY = 'skill'
-        SONAR_HOST = 'http://host.docker.internal:9000'
-        SONAR_WS_TIMEOUT = '600'
-        IMAGE_NAME = 'emna450/backend-skill'
-        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
-        CD_JOB_NAME = 'pipeline-CD-skill-ms'
-        K8S_NAMESPACE = 'skill'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                script {
-                    def branch = env.BRANCH_NAME ?: 'projectskills'
-                    def exts = []
-                    if (scm.extensions != null && !scm.extensions.isEmpty()) {
-                        exts.addAll(scm.extensions)
-                    }
-                    exts.add([
-                        $class       : 'CloneOption',
-                        shallow      : true,
-                        depth        : 1,
-                        timeout      : 120,
-                        honorRefspec : true,
-                        noTags       : true,
-                        reference    : ''
-                    ])
-                    def remotes = scm.userRemoteConfigs.collect { cfg ->
-                        def m = [url: cfg.url]
-                        if (cfg.credentialsId != null && cfg.credentialsId.toString().trim()) {
-                            m.credentialsId = cfg.credentialsId
-                        }
-                        m.refspec = "+refs/heads/${branch}:refs/remotes/origin/${branch}"
-                        m
-                    }
-                    checkout([
-                        $class            : 'GitSCM',
-                        branches          : [[name: "*/${branch}"]],
-                        extensions        : exts,
-                        userRemoteConfigs : remotes
-                    ])
-                }
+                checkout scm
             }
         }
 
-        stage('Build & Package') {
+        stage('Setup Java 17') {
             steps {
-                dir("${env.MODULE_DIR}") {
-                    sh '''
-                        set -e
-                        mvn -B clean package
-                    '''
-                }
+                sh 'java -version'
+                sh 'mvn -version'
+            }
+        }
+
+        stage('Clean package') {
+            steps {
+                sh 'mvn -B -ntp clean package -DskipTests'
+            }
+        }
+
+        stage('Tests + JaCoCo') {
+            steps {
+                sh 'mvn -B -ntp verify'
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: "${env.MODULE_DIR}/target/surefire-reports/*.xml"
+                    junit testResults: 'target/surefire-reports/*.xml', allowEmptyResults: true
                 }
             }
         }
 
-        stage('Sonar Analysis') {
+        stage('SonarQube Analysis') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    dir("${env.MODULE_DIR}") {
-                        sh """
-                            mvn -B sonar:sonar \\
-                              -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
-                              -Dsonar.host.url=${env.SONAR_HOST} \\
-                              -Dsonar.token=\${SONAR_TOKEN} \\
-                              -Dsonar.ws.timeout=${env.SONAR_WS_TIMEOUT} \\
-                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                        """
-                    }
+                withSonarQubeEnv('sonarqube-server') {
+                    sh '''
+                      mvn -B -ntp sonar:sonar \
+                        -Dsonar.projectKey=skill \
+                        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                    '''
                 }
             }
         }
 
-        stage('Image Build & Push (Jib)') {
+        stage('Quality Gate') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    dir("${env.MODULE_DIR}") {
-                        sh """
-                            set -e
-                            # Build/push image sans daemon Docker local (évite /var/run/docker.sock permission denied).
-                            mvn -B com.google.cloud.tools:jib-maven-plugin:3.4.3:build \\
-                              -Dimage=${env.IMAGE_NAME}:${env.IMAGE_TAG} \\
-                              -Djib.from.image=eclipse-temurin:17-jre \\
-                              -Djib.to.auth.username=\${DOCKER_USER} \\
-                              -Djib.to.auth.password=\${DOCKER_PASS}
-                        """
-                    }
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
 
-        stage('Trigger CD') {
+        stage('Build Docker Image') {
             steps {
-                build job: "${env.CD_JOB_NAME}",
+                sh 'docker build -t ${REGISTRY}/${APP_NAME}:${IMAGE_TAG} .'
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withDockerRegistry(credentialsId: "${REGISTRY_CREDENTIALS}", url: "https://${REGISTRY}") {
+                    sh 'docker push ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}'
+                    sh 'docker tag ${REGISTRY}/${APP_NAME}:${IMAGE_TAG} ${REGISTRY}/${APP_NAME}:latest'
+                    sh 'docker push ${REGISTRY}/${APP_NAME}:latest'
+                }
+            }
+        }
+
+        stage('Trigger CD Pipeline') {
+            when {
+                branch 'projectskills'
+            }
+            steps {
+                build job: 'Skill-CD',
                       wait: false,
                       parameters: [
-                          string(name: 'IMAGE_TAG', value: "${env.IMAGE_TAG}"),
-                          string(name: 'K8S_NAMESPACE', value: "${env.K8S_NAMESPACE}")
+                          string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
                       ]
             }
         }

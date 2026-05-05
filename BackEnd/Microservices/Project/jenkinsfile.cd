@@ -1,46 +1,62 @@
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Tag image a deployer (ex: 1.0.30)')
-        string(name: 'K8S_NAMESPACE', defaultValue: 'project', description: 'Namespace applicatif du microservice Project')
+    environment {
+        APP_NAME = "project-service"
+        REGISTRY = credentials('docker-registry-url')
+        IMAGE_TAG = "${params.IMAGE_TAG}"
+        K8S_NAMESPACE = "default"
+        KUBECONFIG = credentials('kubeconfig-file')
+        K8S_DEPLOYMENT = "project"
+        K8S_SERVICE = "project"
     }
 
-    environment {
-        IMAGE_NAME = 'emna450/project'
-        MANIFESTS_DIR = 'BackEnd/Microservices/Project/k8s/project'
-        INFRA_DIR = 'BackEnd/infra/k8s'
-        MYSQL_NAMESPACE = 'mysql'
+    parameters {
+        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag to deploy')
+    }
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
     }
 
     stages {
-        stage('Deploy') {
+        stage('Checkout') {
             steps {
-                withCredentials([file(credentialsId: 'kubeconfig-project', variable: 'KUBECONFIG_FILE')]) {
-                    sh '''
-                        set -e
-                        EFFECTIVE_TAG="${IMAGE_TAG:-latest}"
-                        APP_NS="${K8S_NAMESPACE:-project}"
-                        DEPLOY_IMAGE="${IMAGE_NAME}:${EFFECTIVE_TAG}"
+                checkout scm
+            }
+        }
 
-                        export KUBECONFIG="${KUBECONFIG_FILE}"
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''
+                  kubectl -n ${K8S_NAMESPACE} set image deployment/project \
+                    project=${REGISTRY}/${APP_NAME}:${IMAGE_TAG} --record
+                '''
+            }
+        }
 
-                        kubectl apply -f "${INFRA_DIR}/namespaces-labels.yaml"
-                        kubectl apply -f "${INFRA_DIR}/mysql/mysql.yaml"
-                        kubectl -n "${MYSQL_NAMESPACE}" rollout status deployment/mysql --timeout=900s
+        stage('Verify Rollout') {
+            steps {
+                sh 'kubectl -n ${K8S_NAMESPACE} rollout status deployment/project --timeout=180s'
+            }
+        }
 
-                        if [ -d "${MANIFESTS_DIR}" ] && [ -f "${MANIFESTS_DIR}/deployment.yaml" ]; then
-                          kubectl apply -f "${MANIFESTS_DIR}/secret.yaml"
-                          kubectl apply -f "${MANIFESTS_DIR}/deployment.yaml" -f "${MANIFESTS_DIR}/service.yaml"
-                          kubectl -n "${APP_NS}" set image deployment/project-ms project-ms="${DEPLOY_IMAGE}"
-                        else
-                          kubectl -n "${APP_NS}" set image deployment/project-ms project-ms="${DEPLOY_IMAGE}"
-                        fi
+        stage('Monitoring Check') {
+            steps {
+                sh '''
+                  kubectl -n ${K8S_NAMESPACE} get deployment/${K8S_DEPLOYMENT}
+                  kubectl -n ${K8S_NAMESPACE} get pods -l app=${K8S_DEPLOYMENT} -o wide
+                  kubectl -n ${K8S_NAMESPACE} get svc ${K8S_SERVICE} -o wide
 
-                        kubectl -n "${APP_NS}" rollout status deployment/project-ms --timeout=300s
-                        kubectl -n "${APP_NS}" get pods,svc -l app.kubernetes.io/name=project-ms
-                    '''
-                }
+                  ENDPOINTS=$(kubectl -n ${K8S_NAMESPACE} get endpoints ${K8S_SERVICE} -o jsonpath='{.subsets[*].addresses[*].ip}')
+                  if [ -z "${ENDPOINTS}" ]; then
+                    echo "Monitoring check failed: no endpoints found for service ${K8S_SERVICE}"
+                    exit 1
+                  fi
+
+                  echo "Monitoring check passed: service ${K8S_SERVICE} has active endpoints: ${ENDPOINTS}"
+                '''
             }
         }
     }

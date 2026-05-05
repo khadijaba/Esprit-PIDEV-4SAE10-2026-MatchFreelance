@@ -1,97 +1,96 @@
 pipeline {
     agent any
-    tools {
-        jdk 'JDK17'
-        maven 'Maven3'
-    }
-    environment {
-        MODULE_DIR    = 'BackEnd/Microservices/Project'
-        SONAR_KEY     = 'project'
-        SONAR_HOST    = 'http://host.docker.internal:9000'
-        IMAGE_NAME    = 'emna450/project'
-        IMAGE_TAG     = "1.0.${BUILD_NUMBER}"
-        CD_JOB_NAME   = 'pipeline-CD-project-ms'
-        K8S_NAMESPACE = 'project'
-    }
-    options {
-        skipDefaultCheckout(true)
-    }
-    stages {
 
+    environment {
+        APP_NAME = "project-service"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        REGISTRY = credentials('docker-registry-url')
+        REGISTRY_CREDENTIALS = 'docker-registry-creds'
+    }
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    stages {
         stage('Checkout') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/projectskills']],
-                    extensions: [[
-                        $class: 'CloneOption',
-                        shallow: true, depth: 1, timeout: 120
-                    ]],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git',
-                        credentialsId: 'github-creds'
-                    ]]
-                ])
+                checkout scm
             }
         }
 
-        stage('Build & Test') {
+        stage('Setup Java 17') {
             steps {
-                dir("${MODULE_DIR}") {
-                    sh 'mvn clean package verify'
+                sh 'java -version'
+                sh 'mvn -version'
+            }
+        }
+
+        stage('Clean package') {
+            steps {
+                sh 'mvn -B -ntp clean package -DskipTests'
+            }
+        }
+
+        stage('Tests + JaCoCo') {
+            steps {
+                sh 'mvn -B -ntp verify'
+            }
+            post {
+                always {
+                    junit testResults: 'target/surefire-reports/*.xml', allowEmptyResults: true
                 }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                dir("${MODULE_DIR}") {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                        sh """
-                            mvn sonar:sonar \
-                              -Dsonar.projectKey=${SONAR_KEY} \
-                              -Dsonar.host.url=${SONAR_HOST} \
-                              -Dsonar.login=${SONAR_TOKEN} \
-                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                        """
-                    }
+                withSonarQubeEnv('sonarqube-server') {
+                    sh '''
+                      mvn -B -ntp sonar:sonar \
+                        -Dsonar.projectKey=project \
+                        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                    '''
                 }
             }
         }
 
-        stage('Docker Build & Push') {
+        stage('Quality Gate') {
             steps {
-                dir("${MODULE_DIR}") {
-                    withCredentials([usernamePassword(
-                        credentialsId: 'docker-hub-credentials',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )]) {
-                        sh '''
-                            docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                            docker tag  ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                            docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                            docker logout
-                        '''
-                    }
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
 
-        stage('Trigger CD') {
+        stage('Build Docker Image') {
             steps {
-                build job: "${CD_JOB_NAME}",
+                sh 'docker build -t ${REGISTRY}/${APP_NAME}:${IMAGE_TAG} .'
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withDockerRegistry(credentialsId: "${REGISTRY_CREDENTIALS}", url: "https://${REGISTRY}") {
+                    sh 'docker push ${REGISTRY}/${APP_NAME}:${IMAGE_TAG}'
+                    sh 'docker tag ${REGISTRY}/${APP_NAME}:${IMAGE_TAG} ${REGISTRY}/${APP_NAME}:latest'
+                    sh 'docker push ${REGISTRY}/${APP_NAME}:latest'
+                }
+            }
+        }
+
+        stage('Trigger CD Pipeline') {
+            when {
+                branch 'projectskills'
+            }
+            steps {
+                build job: 'Project-CD',
                       wait: false,
                       parameters: [
-                          string(name: 'IMAGE_TAG',     value: "${IMAGE_TAG}"),
-                          string(name: 'K8S_NAMESPACE', value: "${K8S_NAMESPACE}")
+                          string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
                       ]
             }
         }
-    }
-
-    post {
-        always { cleanWs() }
     }
 }
