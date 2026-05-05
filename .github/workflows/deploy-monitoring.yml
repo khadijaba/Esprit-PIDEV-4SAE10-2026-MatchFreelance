@@ -132,15 +132,15 @@ jobs:
           mkdir -p monitoring/grafana/dashboards
           mkdir -p monitoring/alertmanager
           
-          # Démarrer le stack
-          docker-compose -f docker-compose-monitoring.yml up -d
+          # Démarrer le stack (Docker Compose V2)
+          docker compose -f docker-compose-monitoring.yml up -d
           
           # Attendre que les services soient prêts
           echo "⏳ Attente du démarrage des services..."
           sleep 15
           
           # Vérifier l'état des services
-          docker-compose -f docker-compose-monitoring.yml ps
+          docker compose -f docker-compose-monitoring.yml ps
 
       - name: 🔍 Health Check - Prometheus
         run: |
@@ -160,7 +160,7 @@ jobs:
           done
           
           echo "❌ Prometheus n'est pas accessible après $MAX_RETRIES tentatives"
-          docker-compose -f docker-compose-monitoring.yml logs prometheus
+          docker compose -f docker-compose-monitoring.yml logs prometheus
           exit 1
 
       - name: 🔍 Health Check - Grafana
@@ -181,7 +181,7 @@ jobs:
           done
           
           echo "❌ Grafana n'est pas accessible après $MAX_RETRIES tentatives"
-          docker-compose -f docker-compose-monitoring.yml logs grafana
+          docker compose -f docker-compose-monitoring.yml logs grafana
           exit 1
 
       - name: 🔍 Health Check - Alertmanager
@@ -202,7 +202,7 @@ jobs:
           done
           
           echo "❌ Alertmanager n'est pas accessible après $MAX_RETRIES tentatives"
-          docker-compose -f docker-compose-monitoring.yml logs alertmanager
+          docker compose -f docker-compose-monitoring.yml logs alertmanager
           exit 1
 
       - name: 📊 Verify Prometheus Targets
@@ -342,13 +342,13 @@ jobs:
           echo "📊 Logs des services de monitoring:"
           echo ""
           echo "=== Prometheus ==="
-          docker-compose -f docker-compose-monitoring.yml logs --tail=50 prometheus
+          docker compose -f docker-compose-monitoring.yml logs --tail=50 prometheus || echo "Prometheus logs not available"
           echo ""
           echo "=== Grafana ==="
-          docker-compose -f docker-compose-monitoring.yml logs --tail=50 grafana
+          docker compose -f docker-compose-monitoring.yml logs --tail=50 grafana || echo "Grafana logs not available"
           echo ""
           echo "=== Alertmanager ==="
-          docker-compose -f docker-compose-monitoring.yml logs --tail=50 alertmanager
+          docker compose -f docker-compose-monitoring.yml logs --tail=50 alertmanager || echo "Alertmanager logs not available"
 
   # ==========================================
   # Job 3: Notification
