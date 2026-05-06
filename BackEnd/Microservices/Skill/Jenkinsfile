@@ -98,6 +98,10 @@ pipeline {
                         sh """
                             set -e
                             echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
+                            if ! docker image inspect ${env.IMAGE_NAME}:${env.IMAGE_TAG} >/dev/null 2>&1; then
+                                docker image inspect ${env.IMAGE_NAME}:latest >/dev/null 2>&1
+                                docker tag ${env.IMAGE_NAME}:latest ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+                            fi
                             docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}
                             docker push ${env.IMAGE_NAME}:latest
                         """
