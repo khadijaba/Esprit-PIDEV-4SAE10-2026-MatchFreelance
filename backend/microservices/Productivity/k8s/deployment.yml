@@ -13,9 +13,11 @@ spec:
       labels:
         app: productivity-service
     spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
       containers:
       - name: productivity-service
-        image: khadijabenayed/productivity:latest
+        image: benhajdahmenahmed/productivity:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8087
