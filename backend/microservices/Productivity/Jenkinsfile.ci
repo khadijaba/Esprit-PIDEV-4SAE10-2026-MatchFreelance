@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = 'khadijabenayed/productivity'
+        IMAGE_NAME = 'ahmed.benhajdahmen/productivity'
         IMAGE_TAG = "1.0.${BUILD_NUMBER}"
         SONAR_HOST = 'http://sonarqube:9000'
         SONAR_CREDENTIALS_ID = 'sonarqube-token'
