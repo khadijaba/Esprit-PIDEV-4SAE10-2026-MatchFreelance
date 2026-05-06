@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devops
+  labels:
+    name: devops
+    environment: development
+    managed-by: jenkins
+  annotations:
+    description: "Namespace for DevOps CI/CD deployments"
+    contact: "devops-team@esprit.tn"

@@ -1,0 +1,101 @@
+pipeline {
+    agent any
+    
+    parameters {
+        string(
+            name: 'IMAGE_TAG',
+            defaultValue: 'latest',
+            description: 'Docker image tag to deploy (e.g., latest, 123, v1.0.0)'
+        )
+    }
+    
+    environment {
+        DOCKER_IMAGE = 'amine002002/user-service'
+        NAMESPACE = 'devops'
+        DEPLOYMENT_NAME = 'user-service'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '========== Checking out Kubernetes manifests =========='
+                git branch: 'User',
+                    credentialsId: 'github-credentials',
+                    url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+                
+                echo "Deploying image: ${DOCKER_IMAGE}:${params.IMAGE_TAG}"
+            }
+        }
+        
+        stage('Deploy to Kubernetes') {
+            steps {
+                echo '========== Deploying to Kubernetes Cluster =========='
+                script {
+                    sh """
+                        # Update the deployment with new image
+                        kubectl set image deployment/${DEPLOYMENT_NAME} \
+                            ${DEPLOYMENT_NAME}=${DOCKER_IMAGE}:${params.IMAGE_TAG} \
+                            -n ${NAMESPACE}
+                        
+                        # Verify the deployment exists
+                        kubectl get deployment ${DEPLOYMENT_NAME} -n ${NAMESPACE}
+                    """
+                }
+            }
+        }
+        
+        stage('Verify Rollout') {
+            steps {
+                echo '========== Verifying Deployment Rollout =========='
+                script {
+                    sh """
+                        # Wait for rollout to complete (timeout: 5 minutes)
+                        kubectl rollout status deployment/${DEPLOYMENT_NAME} \
+                            -n ${NAMESPACE} \
+                            --timeout=5m
+                        
+                        # Display deployment details
+                        echo "========== Deployment Status =========="
+                        kubectl get deployment ${DEPLOYMENT_NAME} -n ${NAMESPACE}
+                        
+                        echo "========== Pod Status =========="
+                        kubectl get pods -l app=${DEPLOYMENT_NAME} -n ${NAMESPACE}
+                        
+                        echo "========== Service Status =========="
+                        kubectl get service ${DEPLOYMENT_NAME} -n ${NAMESPACE}
+                    """
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '========== Deployment Completed Successfully =========='
+            echo "Deployed: ${DOCKER_IMAGE}:${params.IMAGE_TAG}"
+            echo "Namespace: ${NAMESPACE}"
+            echo "Deployment: ${DEPLOYMENT_NAME}"
+        }
+        
+        failure {
+            echo '========== Deployment Failed =========='
+            echo 'Rolling back to previous version...'
+            script {
+                sh """
+                    kubectl rollout undo deployment/${DEPLOYMENT_NAME} -n ${NAMESPACE} || true
+                    kubectl rollout status deployment/${DEPLOYMENT_NAME} -n ${NAMESPACE} || true
+                """
+            }
+        }
+        
+        always {
+            echo '========== Deployment Logs =========='
+            script {
+                sh """
+                    kubectl describe deployment ${DEPLOYMENT_NAME} -n ${NAMESPACE} || true
+                    kubectl logs -l app=${DEPLOYMENT_NAME} -n ${NAMESPACE} --tail=50 || true
+                """
+            }
+        }
+    }
+}
