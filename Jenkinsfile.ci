@@ -10,30 +10,27 @@ pipeline {
         DOCKER_IMAGE = 'amine002002/user-service'
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
         SONARQUBE_ENV = 'SonarQube'
+        GIT_REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        SERVICE_DIR = 'User'
     }
     
     stages {
-        stage('Checkout') {
+      stage('Checkout') {
             steps {
                 echo '========== Checking out code from GitHub =========='
-                
-                // Configure Git for large repositories
-                sh '''
-                    git config --global http.postBuffer 524288000
-                    git config --global http.lowSpeedLimit 0
-                    git config --global http.lowSpeedTime 999999
-                '''
-                
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: '*/user_devops']],
                     extensions: [
-                        [$class: 'CloneOption', depth: 1, noTags: false, shallow: true, timeout: 60],
-                        [$class: 'CheckoutOption', timeout: 60]
+                        [$class: 'CloneOption', depth: 1, honorRefspec: true, noTags: true, shallow: true, timeout: 60],
+                        [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [
+                            [$class: 'SparseCheckoutPath', path: "${SERVICE_DIR}"]
+                        ]]
                     ],
                     userRemoteConfigs: [[
                         credentialsId: 'github-credentials',
-                        url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+                        url: "${GIT_REPO_URL}",
+                        refspec: '+refs/heads/user_devops:refs/remotes/origin/user_devops'
                     ]]
                 ])
                 
