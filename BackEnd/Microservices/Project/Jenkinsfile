@@ -1,238 +1,120 @@
 pipeline {
-
     agent any
 
-
-
     environment {
-
         GIT_REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
-
         SERVICE_DIR = 'BackEnd/Microservices/Project'
-
         MODULE_DIR = 'BackEnd/Microservices/Project'
-
         IMAGE_NAME = 'emna450/backend-project'
-
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-
     }
-
-
 
     options {
-
         skipDefaultCheckout(true)
-
         timestamps()
-
         disableConcurrentBuilds()
-
     }
-
-
 
     stages {
-
         stage('Checkout') {
-
             steps {
-
                 checkout([
-
                     $class: 'GitSCM',
-
                     branches: [[name: '*/projectskills']],
-
                     extensions: [
-
                         [$class: 'CloneOption', depth: 1, honorRefspec: true, noTags: true, shallow: true, timeout: 60],
-
                         [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [
-
                             [$class: 'SparseCheckoutPath', path: "${SERVICE_DIR}"]
-
                         ]]
-
                     ],
-
                     userRemoteConfigs: [[
-
                         url: "${GIT_REPO_URL}",
-
                         refspec: '+refs/heads/projectskills:refs/remotes/origin/projectskills'
-
                     ]]
-
                 ])
-
             }
-
         }
-
-
 
         stage('Setup Java / Maven (wrapper)') {
-
             steps {
-
                 dir("${SERVICE_DIR}") {
-
                     sh 'java -version'
-
                     sh 'chmod +x ./mvnw'
-
                     sh './mvnw -version'
-
                 }
-
             }
-
         }
-
-
 
         stage('Clean package') {
-
             steps {
-
                 dir("${SERVICE_DIR}") {
-
                     sh './mvnw -B -ntp clean package -DskipTests'
-
                 }
-
             }
-
         }
-
-
 
         stage('Tests + JaCoCo') {
-
             steps {
-
                 dir("${SERVICE_DIR}") {
-
                     sh './mvnw -B -ntp verify'
-
                 }
-
             }
-
             post {
-
                 always {
-
                     junit testResults: "${SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyResults: true
-
                 }
-
             }
-
         }
-
-
 
         stage('SonarQube Analysis') {
-
             steps {
-
                 dir("${SERVICE_DIR}") {
-
                     withSonarQubeEnv('sonarqube-server') {
-
                         sh '''
-
                           ./mvnw -B -ntp sonar:sonar \
-
                             -Dsonar.projectKey=project \
-
                             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-
                         '''
-
                     }
-
                 }
-
             }
-
         }
-
-
 
         stage('Docker Build') {
-
             steps {
-
                 dir("${env.MODULE_DIR}") {
-
                     sh """
-
                         docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} .
-
                         docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest
-
                     """
-
                 }
-
             }
-
         }
-
-
 
         stage('Docker Push') {
-
             steps {
-
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-
                     sh """
-
                         echo "\${DOCKER_PASS}" | docker login -u "\${DOCKER_USER}" --password-stdin
-
                         docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}
-
                         docker push ${env.IMAGE_NAME}:latest
-
                     """
-
                 }
-
             }
-
         }
-
-
 
         stage('Trigger CD Pipeline') {
-
             when {
-
                 branch 'projectskills'
-
             }
-
             steps {
-
                 build job: 'Project-CD',
-
                       wait: false,
-
                       parameters: [
-
                           string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
-
                       ]
-
             }
-
         }
-
     }
-
 }
 
