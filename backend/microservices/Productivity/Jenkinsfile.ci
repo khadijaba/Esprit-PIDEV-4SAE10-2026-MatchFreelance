@@ -60,14 +60,16 @@ pipeline {
             steps {
                 echo '========== Running SonarQube analysis =========='
                 dir("${MODULE_DIR}") {
-                    withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            mvn sonar:sonar \
-                              -Dsonar.projectKey=productivity \
-                              -Dsonar.projectName="Productivity Service" \
-                              -Dsonar.host.url=${SONAR_HOST} \
-                              -Dsonar.login=${SONAR_TOKEN}
-                        '''
+                    withSonarQubeEnv('SonarQube') {
+                        withCredentials([string(credentialsId: "${SONAR_CREDENTIALS_ID}", variable: 'SONAR_TOKEN')]) {
+                            sh '''
+                                mvn sonar:sonar \
+                                -Dsonar.projectKey=productivity \
+                                -Dsonar.projectName="Productivity Service" \
+                                -Dsonar.host.url=${SONAR_HOST} \
+                                -Dsonar.login=${SONAR_TOKEN}
+                            '''
+                        }
                     }
                 }
             }
