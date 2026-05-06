@@ -10,74 +10,61 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = 'khadijabenayed/productivity'
+        IMAGE_NAME   = 'khadijabenayed/productivity'
         SERVICE_NAME = 'productivity-service'
-        SERVICE_PORT = '8087'
+        K8S_MANIFEST = 'backend/microservices/Productivity/k8s/deployment.yml'
+        NAMESPACE    = 'default'
     }
 
     stages {
         stage('Validate Parameters') {
             steps {
-                echo '========== Validating deployment parameters =========='
-                script {
-                    echo "Image Tag: ${params.IMAGE_TAG}"
-                    echo "Image: ${IMAGE_NAME}:${params.IMAGE_TAG}"
-                    echo "Service Port: ${SERVICE_PORT}"
-                }
+                echo "========== Deploying ${IMAGE_NAME}:${params.IMAGE_TAG} =========="
             }
         }
 
-        stage('Pull Docker Image') {
+        stage('Checkout') {
             steps {
-                echo '========== Pulling Docker image from registry =========='
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker pull ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker logout
-                    '''
-                }
+                git branch: 'douja-with-productivity',
+                    credentialsId: 'github-credentials',
+                    url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance'
             }
         }
 
-        stage('Stop Old Container') {
+        stage('Update Image Tag') {
             steps {
-                echo '========== Stopping old container =========='
+                echo '========== Patching image tag in manifest =========='
                 sh """
-                    docker stop ${SERVICE_NAME} || true
-                    docker rm ${SERVICE_NAME} || true
+                    sed -i 's|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${params.IMAGE_TAG}|g' ${K8S_MANIFEST}
+                    echo "Updated manifest:"
+                    grep 'image:' ${K8S_MANIFEST}
                 """
             }
         }
 
-        stage('Deploy Service') {
+        stage('Deploy to Kubernetes') {
             steps {
-                echo '========== Deploying Productivity Service =========='
+                echo '========== Applying Kubernetes manifests =========='
                 sh """
-                    docker run -d \
-                        --name ${SERVICE_NAME} \
-                        --network host \
-                        -p ${SERVICE_PORT}:8087 \
-                        -e SPRING_PROFILES_ACTIVE=mysql \
-                        -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka/ \
-                        --restart unless-stopped \
-                        ${IMAGE_NAME}:${params.IMAGE_TAG}
+                    kubectl apply -f ${K8S_MANIFEST} --namespace=${NAMESPACE}
+                    kubectl rollout restart deployment/${SERVICE_NAME} --namespace=${NAMESPACE}
                 """
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                echo '========== Verifying deployment =========='
+                echo '========== Waiting for rollout =========='
                 sh """
-                    echo "Waiting for container to start..."
-                    sleep 10
+                    kubectl rollout status deployment/${SERVICE_NAME} \
+                        --namespace=${NAMESPACE} \
+                        --timeout=120s
                     
-                    echo "Container Status:"
-                    docker ps --filter name=${SERVICE_NAME} --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}"
+                    echo "\\n--- Pods ---"
+                    kubectl get pods -l app=${SERVICE_NAME} --namespace=${NAMESPACE}
                     
-                    echo "Container Logs (last 20 lines):"
-                    docker logs --tail 20 ${SERVICE_NAME}
+                    echo "\\n--- Service ---"
+                    kubectl get svc ${SERVICE_NAME} --namespace=${NAMESPACE}
                 """
             }
         }
@@ -85,27 +72,23 @@ pipeline {
 
     post {
         success {
-            echo '=========================================='
+            echo "=========================================="
             echo "CD Pipeline completed successfully! ✅"
-            echo "Service: Productivity"
             echo "Image: ${IMAGE_NAME}:${params.IMAGE_TAG}"
-            echo "Port: ${SERVICE_PORT}"
-            echo "Service URL: http://localhost:${SERVICE_PORT}"
-            echo '=========================================='
+            echo "Service URL: http://192.168.70.128:30087"
+            echo "=========================================="
         }
         failure {
-            echo '=========================================='
-            echo 'CD Pipeline failed! ❌'
-            echo 'Rolling back deployment...'
-            echo '=========================================='
+            echo "=========================================="
+            echo "CD Pipeline failed! ❌"
+            echo "=========================================="
             sh """
-                docker stop ${SERVICE_NAME} || true
-                docker rm ${SERVICE_NAME} || true
+                kubectl describe pods -l app=${SERVICE_NAME} --namespace=${NAMESPACE} || true
+                kubectl logs -l app=${SERVICE_NAME} --namespace=${NAMESPACE} --tail=50 || true
             """
         }
         always {
-            echo '========== Cleaning up unused images =========='
-            sh 'docker image prune -f || true'
+            sh 'kubectl get all -l app=${SERVICE_NAME} --namespace=${NAMESPACE} || true'
         }
     }
 }
