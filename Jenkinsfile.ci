@@ -15,27 +15,22 @@ pipeline {
     }
     
     stages {
-      stage('Checkout') {
+        stage('Checkout') {
             steps {
                 echo '========== Checking out code from GitHub =========='
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/user_devops']],
-                    extensions: [
-                        [$class: 'CloneOption', depth: 1, honorRefspec: true, noTags: true, shallow: true, timeout: 60],
-                        [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [
-                            [$class: 'SparseCheckoutPath', path: "${SERVICE_DIR}"]
-                        ]]
-                    ],
-                    userRemoteConfigs: [[
-                        credentialsId: 'github-credentials',
-                        url: "${GIT_REPO_URL}",
-                        refspec: '+refs/heads/user_devops:refs/remotes/origin/user_devops'
-                    ]]
-                ])
-                
+                echo "Branch: user_devops"
                 echo "Workspace: ${WORKSPACE}"
-                sh 'ls -la'
+                
+                // Jenkins already checked out the code to read this Jenkinsfile
+                // Just verify the checkout
+                sh '''
+                    echo "Current directory:"
+                    pwd
+                    echo "Directory contents:"
+                    ls -la
+                    echo "User directory exists:"
+                    ls -la User/ || echo "User directory not found"
+                '''
             }
         }
         
