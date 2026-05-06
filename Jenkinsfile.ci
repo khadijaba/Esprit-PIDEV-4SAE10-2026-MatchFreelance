@@ -122,12 +122,15 @@ agent any
                         ls -la | grep -i dockerfile || echo 'No Dockerfile in current directory'
                         pwd
                         
-                        # Check if Dockerfile exists
-                        if [ -f Dockerfile ]; then
-                            echo 'Dockerfile found in current directory'
+                        # Use fast Dockerfile (skips Maven build, uses pre-built JAR)
+                        if [ -f Dockerfile.fast ]; then
+                            echo 'Using fast Dockerfile (pre-built JAR)'
+                            docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} -f Dockerfile.fast .
+                        elif [ -f Dockerfile ]; then
+                            echo 'Using standard Dockerfile'
                             docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
                         elif [ -f ../Dockerfile ]; then
-                            echo 'Dockerfile found in parent directory, using it'
+                            echo 'Dockerfile found in parent directory'
                             docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} -f ../Dockerfile .
                         else
                             echo 'ERROR: Dockerfile not found!'
