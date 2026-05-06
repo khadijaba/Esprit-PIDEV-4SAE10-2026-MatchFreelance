@@ -1,116 +1,119 @@
 pipeline {
     agent any
-    
+
     tools {
         jdk 'JDK21'
         maven 'Maven3'
     }
-    
-    environment {
-        DOCKER_IMAGE = 'amine002002/user-service'
-        DOCKER_CREDENTIALS = 'dockerhub-credentials'
-        SONARQUBE_ENV = 'SonarQube'
-        GIT_REPO_URL = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
-        SERVICE_DIR = 'User'
+
+    options {
+        skipDefaultCheckout(true)
+        timestamps()
+        disableConcurrentBuilds()
     }
-    
+
+    environment {
+        DOCKER_IMAGE       = 'amine002002/user-service'
+        DOCKER_CREDENTIALS = 'dockerhub-credentials'
+        SONARQUBE_ENV      = 'SonarQube'
+        GIT_REPO_URL       = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        GIT_BRANCH         = 'user_devops'
+        SERVICE_DIR        = 'User'
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                echo '========== Checking out user_devops branch only =========='
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/user_devops']],
-                    extensions: [
-                        [$class: 'CloneOption', depth: 1, honorRefspec: true, noTags: true, shallow: true, timeout: 60],
-                        [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [
-                            [$class: 'SparseCheckoutPath', path: "${SERVICE_DIR}"]
-                        ]]
-                    ],
-                    userRemoteConfigs: [[
-                        credentialsId: 'github-credentials',
-                        url: "${GIT_REPO_URL}",
-                        refspec: '+refs/heads/user_devops:refs/remotes/origin/user_devops'
-                    ]]
-                ])
-                
-                echo "Workspace: ${WORKSPACE}"
-                sh 'ls -la'
+                echo "========== Checkout branch ${GIT_BRANCH} =========="
+                deleteDir()
+
+                // Clone simple et fiable de la branche
+                git branch: "${GIT_BRANCH}",
+                    credentialsId: 'github-credentials',
+                    url: "${GIT_REPO_URL}"
+
+                // Sparse checkout natif Git (plus stable que l'extension Jenkins)
+                sh """
+                    git sparse-checkout init --cone
+                    git sparse-checkout set ${SERVICE_DIR}
+                    echo '===== Git branch ====='
+                    git branch --show-current
+                    echo '===== Workspace root ====='
+                    ls -la
+                    echo '===== Service dir ====='
+                    ls -la ${SERVICE_DIR}
+                """
             }
         }
-        
+
         stage('Build & Unit Tests') {
             steps {
-                echo '========== Building and Running Unit Tests =========='
-                dir('User') {
-                    sh 'mvn clean verify'
+                echo '========== Build + Unit Tests =========='
+                dir("${SERVICE_DIR}") {
+                    sh 'mvn -B clean verify'
                 }
             }
         }
-        
+
         stage('JaCoCo Code Coverage Report') {
             steps {
-                echo '========== Publishing JaCoCo Code Coverage Report =========='
-                dir('User') {
+                echo '========== Publish JaCoCo Report =========='
+                dir("${SERVICE_DIR}") {
                     jacoco(
                         execPattern: '**/target/jacoco.exec',
                         classPattern: '**/target/classes',
                         sourcePattern: '**/src/main/java',
-                        exclusionPattern: '**/config/**,**/dto/**,**/entity/**,**/exception/**,**/*Application.class'
+                        exclusionPattern: '*/config/*,**/dto/**,**/entity/**,**/exception/**,**/*Application.class'
                     )
                 }
             }
         }
-        
+
         stage('SonarQube Analysis') {
             steps {
-                echo '========== Running SonarQube Analysis =========='
-                dir('User') {
-                    script {
-                        withSonarQubeEnv('SonarQube') {
-                            sh '''
-                                mvn sonar:sonar \
-                                    -Dsonar.projectKey=user-service \
-                                    -Dsonar.projectName=user-service \
-                                    -Dsonar.sources=src/main/java \
-                                    -Dsonar.tests=src/test/java \
-                                    -Dsonar.java.binaries=target/classes \
-                                    -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                            '''
-                        }
+                echo '========== SonarQube Analysis =========='
+                dir("${SERVICE_DIR}") {
+                    withSonarQubeEnv("${SONARQUBE_ENV}") {
+                        sh '''
+                            mvn -B sonar:sonar \
+                                -Dsonar.projectKey=user-service \
+                                -Dsonar.projectName=user-service \
+                                -Dsonar.sources=src/main/java \
+                                -Dsonar.tests=src/test/java \
+                                -Dsonar.java.binaries=target/classes \
+                                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                        '''
                     }
                 }
             }
         }
-        
+
         stage('Quality Gate') {
             steps {
                 echo '========== Waiting for SonarQube Quality Gate =========='
-                timeout(time: 5, unit: 'MINUTES') {
+                timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
-        
+
         stage('Docker Build') {
             steps {
-                echo '========== Building Docker Image =========='
-                dir('User') {
-                    script {
-                        sh """
-                            docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
-                            docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
-                        """
-                    }
+                echo '========== Docker Build =========='
+                dir("${SERVICE_DIR}") {
+                    sh """
+                        docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
+                        docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
+                    """
                 }
             }
         }
-        
+
         stage('Docker Push') {
             steps {
-                echo '========== Pushing Docker Image to DockerHub =========='
+                echo '========== Docker Push =========='
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS) {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS}") {
                         sh """
                             docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
                             docker push ${DOCKER_IMAGE}:latest
@@ -120,31 +123,28 @@ pipeline {
             }
         }
     }
-    
+
     post {
         always {
-            echo '========== Archiving Test Results and Reports =========='
-            dir('User') {
-                // Archive JaCoCo reports
-                archiveArtifacts artifacts: '**/target/site/jacoco/**', allowEmptyArchive: true
-                
-                // Publish JUnit test results
-                junit testResults: '**/target/surefire-reports/*.xml', allowEmptyResults: true
+            echo '========== Archive test results and reports =========='
+            dir("${SERVICE_DIR}") {
+                archiveArtifacts artifacts: '*/target/site/jacoco/*', allowEmptyArchive: true
+                junit testResults: '*/target/surefire-reports/.xml', allowEmptyResults: true
             }
-            
-            echo '========== Cleaning up Docker images =========='
+
+            echo '========== Docker cleanup =========='
             sh """
                 docker rmi ${DOCKER_IMAGE}:${BUILD_NUMBER} || true
                 docker rmi ${DOCKER_IMAGE}:latest || true
             """
         }
-        
+
         success {
             echo '========== CI Pipeline Completed Successfully =========='
             echo "Docker Image: ${DOCKER_IMAGE}:${BUILD_NUMBER}"
             echo "Docker Image: ${DOCKER_IMAGE}:latest"
         }
-        
+
         failure {
             echo '========== CI Pipeline Failed =========='
             echo 'Please check the logs for errors'
