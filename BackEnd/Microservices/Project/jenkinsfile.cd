@@ -1,59 +1,114 @@
-pipeline {
-    agent any
-
-    environment {
-        DOCKER_REGISTRY_HOST = 'docker.io'
-        IMAGE_TAG = "${params.IMAGE_TAG}"
-        K8S_NAMESPACE = "default"
-        KUBECONFIG = credentials('kubeconfig-file')
-        K8S_DEPLOYMENT = "project"
-        K8S_SERVICE = "project"
-        DOCKERHUB_NAMESPACE = 'emna450'
-        IMAGE_REPOSITORY = 'backend-project'
-    }
-
-    parameters {
-        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag to deploy')
-    }
-
-    options {
-        skipDefaultCheckout(true)
-        timestamps()
-        disableConcurrentBuilds()
-    }
-
-    stages {
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh '''
-                  kubectl -n ${K8S_NAMESPACE} set image deployment/project \
-                    project=${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG} --record
-                '''
-            }
-        }
-
-        stage('Verify Rollout') {
-            steps {
-                sh 'kubectl -n ${K8S_NAMESPACE} rollout status deployment/project --timeout=180s'
-            }
-        }
-
-        stage('Monitoring Check') {
-            steps {
-                sh '''
-                  kubectl -n ${K8S_NAMESPACE} get deployment/${K8S_DEPLOYMENT}
-                  kubectl -n ${K8S_NAMESPACE} get pods -l app=${K8S_DEPLOYMENT} -o wide
-                  kubectl -n ${K8S_NAMESPACE} get svc ${K8S_SERVICE} -o wide
-
-                  ENDPOINTS=$(kubectl -n ${K8S_NAMESPACE} get endpoints ${K8S_SERVICE} -o jsonpath='{.subsets[*].addresses[*].ip}')
-                  if [ -z "${ENDPOINTS}" ]; then
-                    echo "Monitoring check failed: no endpoints found for service ${K8S_SERVICE}"
-                    exit 1
-                  fi
-
-                  echo "Monitoring check passed: service ${K8S_SERVICE} has active endpoints: ${ENDPOINTS}"
-                '''
-            }
-        }
-    }
-}
+pipeline {
+
+    agent any
+
+
+
+    environment {
+
+        DOCKER_REGISTRY_HOST = 'docker.io'
+
+        IMAGE_TAG = "${params.IMAGE_TAG}"
+
+        K8S_NAMESPACE = "default"
+
+        KUBECONFIG = credentials('kubeconfig-file')
+
+        K8S_DEPLOYMENT = "project"
+
+        K8S_SERVICE = "project"
+
+        DOCKERHUB_NAMESPACE = 'emna450'
+
+        IMAGE_REPOSITORY = 'backend-project'
+
+    }
+
+
+
+    parameters {
+
+        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag to deploy')
+
+    }
+
+
+
+    options {
+
+        skipDefaultCheckout(true)
+
+        timestamps()
+
+        disableConcurrentBuilds()
+
+    }
+
+
+
+    stages {
+
+        stage('Deploy to Kubernetes') {
+
+            steps {
+
+                sh '''
+                  kubectl -n ${K8S_NAMESPACE} set image deployment/project project=${DOCKER_REGISTRY_HOST}/${DOCKERHUB_NAMESPACE}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+                '''
+
+            }
+
+        }
+
+
+
+        stage('Verify Rollout') {
+
+            steps {
+
+                sh 'kubectl -n ${K8S_NAMESPACE} rollout status deployment/project --timeout=180s'
+
+            }
+
+        }
+
+
+
+        stage('Monitoring Check') {
+
+            steps {
+
+                sh '''
+
+                  kubectl -n ${K8S_NAMESPACE} get deployment/${K8S_DEPLOYMENT}
+
+                  kubectl -n ${K8S_NAMESPACE} get pods -l app=${K8S_DEPLOYMENT} -o wide
+
+                  kubectl -n ${K8S_NAMESPACE} get svc ${K8S_SERVICE} -o wide
+
+
+
+                  ENDPOINTS=$(kubectl -n ${K8S_NAMESPACE} get endpoints ${K8S_SERVICE} -o jsonpath='{.subsets[*].addresses[*].ip}')
+
+                  if [ -z "${ENDPOINTS}" ]; then
+
+                    echo "Monitoring check failed: no endpoints found for service ${K8S_SERVICE}"
+
+                    exit 1
+
+                  fi
+
+
+
+                  echo "Monitoring check passed: service ${K8S_SERVICE} has active endpoints: ${ENDPOINTS}"
+
+                '''
+
+            }
+
+        }
+
+    }
+
+}
+
