@@ -16,9 +16,26 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '========== Checking out code from GitHub =========='
-                git branch: 'User',
-                    credentialsId: 'github-credentials',
-                    url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+                
+                // Configure Git for large repositories
+                sh '''
+                    git config --global http.postBuffer 524288000
+                    git config --global http.lowSpeedLimit 0
+                    git config --global http.lowSpeedTime 999999
+                '''
+                
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/user_devops']],
+                    extensions: [
+                        [$class: 'CloneOption', depth: 1, noTags: false, shallow: true, timeout: 60],
+                        [$class: 'CheckoutOption', timeout: 60]
+                    ],
+                    userRemoteConfigs: [[
+                        credentialsId: 'github-credentials',
+                        url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+                    ]]
+                ])
                 
                 echo "Workspace: ${WORKSPACE}"
                 sh 'ls -la'
