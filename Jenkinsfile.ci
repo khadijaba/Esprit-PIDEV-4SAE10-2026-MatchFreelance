@@ -16,7 +16,7 @@ pipeline {
         DOCKER_IMAGE       = 'amine002002/user-service'
         DOCKER_CREDENTIALS = 'dockerhub-credentials'
         SONARQUBE_ENV      = 'SonarQube'
-        GIT_REPO_URL       = 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
+        GIT_REPO_URL       = 'github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance.git'
         GIT_BRANCH         = 'user_devops'
         SERVICE_DIR        = 'User'
     }
@@ -24,31 +24,44 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo "========== Checkout branch ${GIT_BRANCH} =========="
+                echo "========== Checkout ONLY ${GIT_BRANCH} =========="
                 deleteDir()
 
-                // Clone simple et fiable de la branche
-                git branch: "${GIT_BRANCH}",
+                withCredentials([usernamePassword(
                     credentialsId: 'github-credentials',
-                    url: "${GIT_REPO_URL}"
+                    usernameVariable: 'GIT_USER',
+                    passwordVariable: 'GIT_TOKEN'
+                )]) {
+                    sh '''
+                        set -e
 
-                // Sparse checkout natif Git (plus stable que l'extension Jenkins)
-                sh """
-                    git sparse-checkout init --cone
-                    git sparse-checkout set ${SERVICE_DIR}
-                    echo '===== Git branch ====='
-                    git branch --show-current
-                    echo '===== Workspace root ====='
-                    ls -la
-                    echo '===== Service dir ====='
-                    ls -la ${SERVICE_DIR}
-                """
+                        git init
+                        git remote add origin https://${GIT_USER}:${GIT_TOKEN}@${GIT_REPO_URL}
+
+                        # Fetch strictement une seule branche
+                        git fetch --depth 1 origin ${GIT_BRANCH}
+
+                        # Checkout uniquement cette branche
+                        git checkout -b ${GIT_BRANCH} FETCH_HEAD
+
+                        # Garde seulement le dossier du service
+                        git sparse-checkout init --cone
+                        git sparse-checkout set ${SERVICE_DIR}
+
+                        echo "Branch courante:"
+                        git branch --show-current
+                        echo "Contenu workspace:"
+                        ls -la
+                        echo "Contenu ${SERVICE_DIR}:"
+                        ls -la ${SERVICE_DIR}
+                    '''
+                }
             }
         }
 
         stage('Build & Unit Tests') {
             steps {
-                echo '========== Build + Unit Tests =========='
+                echo '========== Building and Running Unit Tests =========='
                 dir("${SERVICE_DIR}") {
                     sh 'mvn -B clean verify'
                 }
@@ -57,7 +70,7 @@ pipeline {
 
         stage('JaCoCo Code Coverage Report') {
             steps {
-                echo '========== Publish JaCoCo Report =========='
+                echo '========== Publishing JaCoCo Code Coverage Report =========='
                 dir("${SERVICE_DIR}") {
                     jacoco(
                         execPattern: '**/target/jacoco.exec',
@@ -71,7 +84,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                echo '========== SonarQube Analysis =========='
+                echo '========== Running SonarQube Analysis =========='
                 dir("${SERVICE_DIR}") {
                     withSonarQubeEnv("${SONARQUBE_ENV}") {
                         sh '''
@@ -99,7 +112,7 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                echo '========== Docker Build =========='
+                echo '========== Building Docker Image =========='
                 dir("${SERVICE_DIR}") {
                     sh """
                         docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
@@ -111,7 +124,7 @@ pipeline {
 
         stage('Docker Push') {
             steps {
-                echo '========== Docker Push =========='
+                echo '========== Pushing Docker Image to DockerHub =========='
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS}") {
                         sh """
@@ -126,13 +139,13 @@ pipeline {
 
     post {
         always {
-            echo '========== Archive test results and reports =========='
+            echo '========== Archiving Test Results and Reports =========='
             dir("${SERVICE_DIR}") {
                 archiveArtifacts artifacts: '*/target/site/jacoco/*', allowEmptyArchive: true
                 junit testResults: '*/target/surefire-reports/.xml', allowEmptyResults: true
             }
 
-            echo '========== Docker cleanup =========='
+            echo '========== Cleaning up Docker images =========='
             sh """
                 docker rmi ${DOCKER_IMAGE}:${BUILD_NUMBER} || true
                 docker rmi ${DOCKER_IMAGE}:latest || true
