@@ -1,0 +1,109 @@
+pipeline {
+    agent any
+
+    tools {
+        nodejs 'NodeJS18'
+    }
+
+    environment {
+        IMAGE_NAME = 'benhajdahmenahmed/frontend'
+        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
+        MODULE_DIR = 'frontend'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '========== Checking out source code =========='
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo '========== Installing npm dependencies =========='
+                dir("${MODULE_DIR}") {
+                    sh 'npm ci'
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo '========== Building Angular application =========='
+                dir("${MODULE_DIR}") {
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                echo '========== Building Docker image =========='
+                dir("${MODULE_DIR}") {
+                    sh '''
+                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                    '''
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                echo '========== Pushing Docker image to registry =========='
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                        docker push ${IMAGE_NAME}:latest
+                        docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Archive Artifacts') {
+            steps {
+                echo '========== Archiving build artifacts =========='
+                dir("${MODULE_DIR}") {
+                    archiveArtifacts artifacts: 'dist/**/*', fingerprint: true
+                }
+            }
+        }
+
+        stage('Trigger CD Pipeline') {
+            steps {
+                echo '========== Triggering CD Pipeline =========='
+                build job: 'frontend-cd', 
+                      parameters: [
+                          string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}")
+                      ],
+                      wait: false
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '=========================================='
+            echo 'CI Pipeline completed successfully! ✅'
+            echo "Docker Image: ${IMAGE_NAME}:${IMAGE_TAG}"
+            echo 'CD Pipeline triggered automatically'
+            echo '=========================================='
+        }
+        failure {
+            echo '=========================================='
+            echo 'CI Pipeline failed! ❌'
+            echo 'Check the console output for details'
+            echo '=========================================='
+        }
+        always {
+            echo '========== Cleaning up Docker resources =========='
+            sh '''
+                docker system prune -f || true
+                docker image prune -f || true
+            '''
+        }
+    }
+}

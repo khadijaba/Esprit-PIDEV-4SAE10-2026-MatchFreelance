@@ -1,37 +1,39 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: productivity-service
+  name: user-service
   namespace: default
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: productivity-service
+      app: user-service
   template:
     metadata:
       labels:
-        app: productivity-service
+        app: user-service
     spec:
       imagePullSecrets:
       - name: dockerhub-secret
       containers:
-      - name: productivity-service
-        image: benhajdahmenahmed/productivity:latest
+      - name: user-service
+        image: benhajdahmenahmed/user-service:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 8087
+        - containerPort: 8086
         env:
         - name: SPRING_PROFILES_ACTIVE
           value: "mysql"
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:mysql://mysql-service:3306/productivity?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+          value: "jdbc:mysql://mysql-service:3306/freelancing_users?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
         - name: SPRING_DATASOURCE_USERNAME
           value: "root"
         - name: SPRING_DATASOURCE_PASSWORD
           value: "pidev"
         - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
           value: "http://eureka-service:8761/eureka/"
+        - name: CONFIG_SERVER_HOST
+          value: "config-server"
         resources:
           requests:
             memory: "256Mi"
@@ -43,12 +45,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: productivity-service
+  name: user-service
   namespace: default
 spec:
   type: ClusterIP
   selector:
-    app: productivity-service
+    app: user-service
   ports:
-  - port: 8087
-    targetPort: 8087
+  - port: 8086
+    targetPort: 8086

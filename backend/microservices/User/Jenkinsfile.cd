@@ -10,12 +10,12 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME    = 'benhajdahmenahmed/interview'
-        SERVICE_NAME  = 'interview-service'
+        IMAGE_NAME    = 'benhajdahmenahmed/user-service'
+        SERVICE_NAME  = 'user-service'
         NAMESPACE     = 'default'
         ARGOCD_SERVER = '192.168.70.128:32345'
         GIT_BRANCH    = 'douja-with-productivity'
-        MANIFEST_PATH = 'backend/microservices/Interview/k8s/deployment.yml'
+        MANIFEST_PATH = 'backend/microservices/User/k8s/deployment.yml'
     }
 
     stages {
@@ -56,7 +56,7 @@ pipeline {
                         if git diff --staged --quiet; then
                             echo "No changes to commit, image tag already up to date"
                         else
-                            git commit -m "CD: Update interview image to ${params.IMAGE_TAG}"
+                            git commit -m "CD: Update user-service image to ${params.IMAGE_TAG}"
                             git push https://\$GIT_USER:\$GIT_PASS@github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance ${GIT_BRANCH}
                         fi
                     """
@@ -87,7 +87,7 @@ pipeline {
             echo "=========================================="
             echo "CD Pipeline completed successfully! ✅"
             echo "Image: ${IMAGE_NAME}:${params.IMAGE_TAG}"
-            echo "Service URL: http://192.168.70.128:30089"
+            echo "Service URL: http://192.168.70.128:30086"
             echo "ArgoCD: http://192.168.70.128:32345"
             echo "=========================================="
         }
