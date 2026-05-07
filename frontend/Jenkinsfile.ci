@@ -15,7 +15,15 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '========== Checking out source code =========='
-                checkout scm
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/douja-with-productivity']],
+                    extensions: [[$class: 'CloneOption',
+                        shallow: true,
+                        depth: 1,
+                        noTags: true]],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance',
+                        credentialsId: 'github-credentials']]])
             }
         }
 
