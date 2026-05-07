@@ -12,39 +12,33 @@ pipeline {
     environment {
         IMAGE_NAME   = 'benhajdahmenahmed/productivity'
         SERVICE_NAME = 'productivity-service'
-        K8S_MANIFEST = 'backend/microservices/Productivity/k8s/deployment.yml'
         NAMESPACE    = 'default'
     }
 
     stages {
+
         stage('Validate Parameters') {
             steps {
                 echo "========== Deploying ${IMAGE_NAME}:${params.IMAGE_TAG} =========="
             }
         }
 
-        stage('Checkout') {
+        stage('Pull Docker Image') {
             steps {
-                git branch: 'douja-with-productivity',
-                    credentialsId: 'github-credentials',
-                    url: 'https://github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance'
-            }
-        }
-
-        stage('Update Image Tag') {
-            steps {
-                echo '========== Patching image tag in manifest =========='
-                sh """
-                    sed -i 's|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${params.IMAGE_TAG}|g' ${K8S_MANIFEST}
-                    echo "Updated manifest:"
-                    grep 'image:' ${K8S_MANIFEST}
-                """
+                echo '========== Pulling Docker image from DockerHub =========='
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
+                        docker pull ${IMAGE_NAME}:${params.IMAGE_TAG}
+                        docker logout
+                    """
+                }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                echo '========== Applying Kubernetes manifests =========='
+                echo '========== Deploying to Kubernetes =========='
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
                         kubectl create secret docker-registry dockerhub-secret \
@@ -53,8 +47,19 @@ pipeline {
                             --docker-server=https://index.docker.io/v1/ \
                             --namespace=${NAMESPACE} \
                             --dry-run=client -o yaml | kubectl apply -f -
-                        
-                        kubectl apply -f ${K8S_MANIFEST} --namespace=${NAMESPACE}
+
+                        kubectl set image deployment/${SERVICE_NAME} \
+                            ${SERVICE_NAME}=${IMAGE_NAME}:${params.IMAGE_TAG} \
+                            --namespace=${NAMESPACE}
+
+                        kubectl set env deployment/${SERVICE_NAME} \
+                            SPRING_DATASOURCE_URL=jdbc:mysql://192.168.70.128:3306/productivity \
+                            SPRING_DATASOURCE_USERNAME=pidev \
+                            SPRING_DATASOURCE_PASSWORD=pidev \
+                            SPRING_PROFILES_ACTIVE=mysql \
+                            EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka/ \
+                            --namespace=${NAMESPACE}
+
                         kubectl rollout restart deployment/${SERVICE_NAME} --namespace=${NAMESPACE}
                     """
                 }
@@ -68,10 +73,10 @@ pipeline {
                     kubectl rollout status deployment/${SERVICE_NAME} \
                         --namespace=${NAMESPACE} \
                         --timeout=120s
-                    
+
                     echo "\\n--- Pods ---"
                     kubectl get pods -l app=${SERVICE_NAME} --namespace=${NAMESPACE}
-                    
+
                     echo "\\n--- Service ---"
                     kubectl get svc ${SERVICE_NAME} --namespace=${NAMESPACE}
                 """
@@ -97,6 +102,7 @@ pipeline {
             """
         }
         always {
+            echo '========== Deployment Summary =========='
             sh 'kubectl get all -l app=${SERVICE_NAME} --namespace=${NAMESPACE} || true'
         }
     }
