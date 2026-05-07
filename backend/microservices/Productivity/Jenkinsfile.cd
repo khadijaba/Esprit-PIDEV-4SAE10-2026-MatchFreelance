@@ -36,50 +36,39 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Update Manifest & Push to Git') {
             steps {
-                echo '========== Deploying to Kubernetes =========='
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                echo '========== Updating image tag in manifest =========='
+                withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                     sh """
-                        kubectl create secret docker-registry dockerhub-secret \
-                            --docker-username=\$DOCKER_USER \
-                            --docker-password=\$DOCKER_PASS \
-                            --docker-server=https://index.docker.io/v1/ \
-                            --namespace=${NAMESPACE} \
-                            --dry-run=client -o yaml | kubectl apply -f -
+                        git config user.email "jenkins@devops.com"
+                        git config user.name "Jenkins"
 
-                        kubectl set image deployment/${SERVICE_NAME} \
-                            ${SERVICE_NAME}=${IMAGE_NAME}:${params.IMAGE_TAG} \
-                            --namespace=${NAMESPACE}
+                        sed -i 's|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${params.IMAGE_TAG}|g' \
+                            backend/microservices/Productivity/k8s/deployment.yml
 
-                        kubectl set env deployment/${SERVICE_NAME} \
-                            SPRING_DATASOURCE_URL=jdbc:mysql://192.168.70.128:3306/productivity \
-                            SPRING_DATASOURCE_USERNAME=pidev \
-                            SPRING_DATASOURCE_PASSWORD=pidev \
-                            SPRING_PROFILES_ACTIVE=mysql \
-                            EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka/ \
-                            --namespace=${NAMESPACE}
-
-                        kubectl rollout restart deployment/${SERVICE_NAME} --namespace=${NAMESPACE}
+                        git add backend/microservices/Productivity/k8s/deployment.yml
+                        git commit -m "CD: Update productivity image to ${params.IMAGE_TAG}"
+                        git push https://\$GIT_USER:\$GIT_PASS@github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance douja-with-productivity
                     """
                 }
             }
         }
 
-        stage('Verify Deployment') {
+        stage('Sync ArgoCD') {
             steps {
-                echo '========== Waiting for rollout =========='
-                sh """
-                    kubectl rollout status deployment/${SERVICE_NAME} \
-                        --namespace=${NAMESPACE} \
-                        --timeout=120s
+                echo '========== Syncing ArgoCD application =========='
+                withCredentials([usernamePassword(credentialsId: 'argocd-credentials', usernameVariable: 'ARGOCD_USER', passwordVariable: 'ARGOCD_PASS')]) {
+                    sh """
+                        argocd login 192.168.70.128:<argocd-nodeport> \
+                            --username \$ARGOCD_USER \
+                            --password \$ARGOCD_PASS \
+                            --insecure
 
-                    echo "\\n--- Pods ---"
-                    kubectl get pods -l app=${SERVICE_NAME} --namespace=${NAMESPACE}
-
-                    echo "\\n--- Service ---"
-                    kubectl get svc ${SERVICE_NAME} --namespace=${NAMESPACE}
-                """
+                        argocd app sync productivity-service
+                        argocd app wait productivity-service --health --timeout 120
+                    """
+                }
             }
         }
     }
@@ -89,6 +78,7 @@ pipeline {
             echo "=========================================="
             echo "CD Pipeline completed successfully! ✅"
             echo "Image: ${IMAGE_NAME}:${params.IMAGE_TAG}"
+            echo "ArgoCD synced and application healthy"
             echo "Service URL: http://192.168.70.128:30087"
             echo "=========================================="
         }
@@ -97,13 +87,12 @@ pipeline {
             echo "CD Pipeline failed! ❌"
             echo "=========================================="
             sh """
-                kubectl describe pods -l app=${SERVICE_NAME} --namespace=${NAMESPACE} || true
-                kubectl logs -l app=${SERVICE_NAME} --namespace=${NAMESPACE} --tail=50 || true
+                argocd app get productivity-service || true
             """
         }
         always {
             echo '========== Deployment Summary =========='
-            sh 'kubectl get all -l app=${SERVICE_NAME} --namespace=${NAMESPACE} || true'
+            sh 'argocd app get productivity-service || true'
         }
     }
 }
