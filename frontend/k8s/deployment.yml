@@ -4,7 +4,7 @@ metadata:
   name: frontend
   namespace: default
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: frontend
@@ -23,11 +23,11 @@ spec:
         - containerPort: 80
         resources:
           requests:
-            memory: "128Mi"
-            cpu: "100m"
+            cpu: "50m"
+            memory: "256Mi"
           limits:
-            memory: "512Mi"
             cpu: "500m"
+            memory: "512Mi"
 ---
 apiVersion: v1
 kind: Service

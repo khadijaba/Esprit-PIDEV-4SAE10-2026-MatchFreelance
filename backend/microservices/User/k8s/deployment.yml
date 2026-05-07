@@ -4,7 +4,7 @@ metadata:
   name: user-service
   namespace: default
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: user-service
@@ -36,11 +36,11 @@ spec:
           value: "config-server"
         resources:
           requests:
+            cpu: "50m"
             memory: "256Mi"
-            cpu: "250m"
           limits:
-            memory: "512Mi"
             cpu: "500m"
+            memory: "512Mi"
 ---
 apiVersion: v1
 kind: Service
