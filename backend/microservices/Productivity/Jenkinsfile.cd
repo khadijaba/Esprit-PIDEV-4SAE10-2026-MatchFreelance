@@ -10,9 +10,12 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME   = 'benhajdahmenahmed/productivity'
-        SERVICE_NAME = 'productivity-service'
-        NAMESPACE    = 'default'
+        IMAGE_NAME    = 'benhajdahmenahmed/productivity'
+        SERVICE_NAME  = 'productivity-service'
+        NAMESPACE     = 'default'
+        ARGOCD_SERVER = '192.168.70.128:32345'
+        GIT_BRANCH    = 'douja-with-productivity'
+        MANIFEST_PATH = 'backend/microservices/Productivity/k8s/deployment.yml'
     }
 
     stages {
@@ -44,12 +47,18 @@ pipeline {
                         git config user.email "jenkins@devops.com"
                         git config user.name "Jenkins"
 
-                        sed -i 's|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${params.IMAGE_TAG}|g' \
-                            backend/microservices/Productivity/k8s/deployment.yml
+                        git checkout ${GIT_BRANCH}
 
-                        git add backend/microservices/Productivity/k8s/deployment.yml
-                        git commit -m "CD: Update productivity image to ${params.IMAGE_TAG}"
-                        git push https://\$GIT_USER:\$GIT_PASS@github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance douja-with-productivity
+                        sed -i 's|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${params.IMAGE_TAG}|g' ${MANIFEST_PATH}
+
+                        git add ${MANIFEST_PATH}
+
+                        if git diff --staged --quiet; then
+                            echo "No changes to commit, image tag already up to date"
+                        else
+                            git commit -m "CD: Update productivity image to ${params.IMAGE_TAG}"
+                            git push https://\$GIT_USER:\$GIT_PASS@github.com/khadijaba/Esprit-PIDEV-4SAE10-2026-MatchFreelance ${GIT_BRANCH}
+                        fi
                     """
                 }
             }
@@ -60,13 +69,13 @@ pipeline {
                 echo '========== Syncing ArgoCD application =========='
                 withCredentials([usernamePassword(credentialsId: 'argocd-credentials', usernameVariable: 'ARGOCD_USER', passwordVariable: 'ARGOCD_PASS')]) {
                     sh """
-                        argocd login 192.168.70.128:<argocd-nodeport> \
+                        argocd login ${ARGOCD_SERVER} \
                             --username \$ARGOCD_USER \
                             --password \$ARGOCD_PASS \
                             --insecure
 
-                        argocd app sync productivity-service
-                        argocd app wait productivity-service --health --timeout 120
+                        argocd app sync ${SERVICE_NAME}
+                        argocd app wait ${SERVICE_NAME} --health --timeout 120
                     """
                 }
             }
@@ -78,8 +87,8 @@ pipeline {
             echo "=========================================="
             echo "CD Pipeline completed successfully! ✅"
             echo "Image: ${IMAGE_NAME}:${params.IMAGE_TAG}"
-            echo "ArgoCD synced and application healthy"
             echo "Service URL: http://192.168.70.128:30087"
+            echo "ArgoCD: http://192.168.70.128:32345"
             echo "=========================================="
         }
         failure {
@@ -87,12 +96,21 @@ pipeline {
             echo "CD Pipeline failed! ❌"
             echo "=========================================="
             sh """
-                argocd app get productivity-service || true
+                argocd app get ${SERVICE_NAME} \
+                    --server ${ARGOCD_SERVER} \
+                    --insecure || true
+                kubectl describe pods -l app=${SERVICE_NAME} --namespace=${NAMESPACE} || true
+                kubectl logs -l app=${SERVICE_NAME} --namespace=${NAMESPACE} --tail=50 || true
             """
         }
         always {
             echo '========== Deployment Summary =========='
-            sh 'argocd app get productivity-service || true'
+            sh """
+                argocd app get ${SERVICE_NAME} \
+                    --server ${ARGOCD_SERVER} \
+                    --insecure || true
+                kubectl get all -l app=${SERVICE_NAME} --namespace=${NAMESPACE} || true
+            """
         }
     }
 }
