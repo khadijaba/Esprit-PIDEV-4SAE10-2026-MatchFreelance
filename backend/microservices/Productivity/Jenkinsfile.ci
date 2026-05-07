@@ -47,6 +47,27 @@ pipeline {
             }
         }
 
+        stage('Code Coverage') {
+            steps {
+                echo '========== Generating code coverage report =========='
+                dir("${MODULE_DIR}") {
+                    sh 'mvn jacoco:report'
+                }
+            }
+            post {
+                always {
+                    dir("${MODULE_DIR}") {
+                        jacoco(
+                            execPattern: '**/target/jacoco.exec',
+                            classPattern: '**/target/classes',
+                            sourcePattern: '**/src/main/java',
+                            exclusionPattern: '**/test/**'
+                        )
+                    }
+                }
+            }
+        }
+
         stage('Package') {
             steps {
                 echo '========== Packaging application =========='
@@ -67,7 +88,8 @@ pipeline {
                                 -Dsonar.projectKey=productivity \
                                 -Dsonar.projectName="Productivity Service" \
                                 -Dsonar.host.url=${SONAR_HOST} \
-                                -Dsonar.login=${SONAR_TOKEN}
+                                -Dsonar.login=${SONAR_TOKEN} \
+                                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                             '''
                         }
                     }
