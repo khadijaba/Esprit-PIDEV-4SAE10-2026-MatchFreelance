@@ -78,7 +78,7 @@ public class GoalService {
         dto.setTargetDate(goal.getTargetDate());
         dto.setTotalTasks(total);
         dto.setDoneTasks(done);
-        dto.setCompletionRate(total == 0 ? 0.0 : done / (double) total);
+        dto.setCompletionRate(total == 0 ? 0.0 : (double) done / (double) total);
         dto.setWeeklyVelocity(done / weeks);
         return dto;
     }

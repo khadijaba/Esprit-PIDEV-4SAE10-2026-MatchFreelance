@@ -27,7 +27,6 @@ import java.util.Locale;
 public class TaskService {
 
     private static final Logger logger = LoggerFactory.getLogger(TaskService.class);
-    private static final String FIELD_DUE_AT = "dueAt";
 
     private final ProductivityTaskRepository taskRepository;
 
@@ -53,7 +52,7 @@ public class TaskService {
         PageRequest pageRequest = PageRequest.of(
                 safePage,
                 safeSize,
-                Sort.by(Sort.Order.asc(FIELD_DUE_AT), Sort.Order.desc("createdAt"))
+                Sort.by(Sort.Order.asc("dueAt"), Sort.Order.desc("createdAt"))
         );
 
         Specification<ProductivityTask> spec = (root, q, cb) -> cb.equal(root.get("ownerId"), ownerId);
@@ -75,11 +74,11 @@ public class TaskService {
         }
 
         if (dueFrom != null) {
-            spec = spec.and((root, q, cb) -> cb.greaterThanOrEqualTo(root.get(FIELD_DUE_AT), dueFrom));
+            spec = spec.and((root, q, cb) -> cb.greaterThanOrEqualTo(root.get("dueAt"), dueFrom));
         }
 
         if (dueTo != null) {
-            spec = spec.and((root, q, cb) -> cb.lessThanOrEqualTo(root.get(FIELD_DUE_AT), dueTo));
+            spec = spec.and((root, q, cb) -> cb.lessThanOrEqualTo(root.get("dueAt"), dueTo));
         }
 
         Page<TaskResponseDTO> mapped = taskRepository.findAll(spec, pageRequest).map(this::toDto);

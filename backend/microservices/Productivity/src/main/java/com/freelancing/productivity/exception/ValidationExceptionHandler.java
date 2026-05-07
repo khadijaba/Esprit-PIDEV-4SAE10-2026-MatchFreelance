@@ -15,10 +15,6 @@ import java.util.Map;
 @RestControllerAdvice
 public class ValidationExceptionHandler {
 
-    private static final String FIELD_TIMESTAMP = "timestamp";
-    private static final String FIELD_STATUS = "status";
-    private static final String FIELD_MESSAGE = "message";
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = new HashMap<>();
@@ -27,9 +23,9 @@ public class ValidationExceptionHandler {
         }
 
         Map<String, Object> body = new HashMap<>();
-        body.put(FIELD_TIMESTAMP, Instant.now());
-        body.put(FIELD_STATUS, 400);
-        body.put(FIELD_MESSAGE, "Validation failed");
+        body.put("timestamp", Instant.now());
+        body.put("status", 400);
+        body.put("message", "Validation failed");
         body.put("errors", fieldErrors);
         return ResponseEntity.badRequest().body(body);
     }
@@ -37,9 +33,9 @@ public class ValidationExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
         Map<String, Object> body = new HashMap<>();
-        body.put(FIELD_TIMESTAMP, Instant.now());
-        body.put(FIELD_STATUS, 400);
-        body.put(FIELD_MESSAGE, ex.getMessage());
+        body.put("timestamp", Instant.now());
+        body.put("status", 400);
+        body.put("message", ex.getMessage());
         return ResponseEntity.badRequest().body(body);
     }
 
@@ -60,9 +56,9 @@ public class ValidationExceptionHandler {
 
     private ResponseEntity<Map<String, Object>> build(HttpStatus status, String message) {
         Map<String, Object> body = new HashMap<>();
-        body.put(FIELD_TIMESTAMP, Instant.now());
-        body.put(FIELD_STATUS, status.value());
-        body.put(FIELD_MESSAGE, message);
+        body.put("timestamp", Instant.now());
+        body.put("status", status.value());
+        body.put("message", message);
         return ResponseEntity.status(status).body(body);
     }
 }
