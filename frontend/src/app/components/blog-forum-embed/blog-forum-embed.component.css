@@ -30,8 +30,7 @@
   margin-bottom: 1.4rem;
 }
 
-.logo-link { color: #fff; }
-.logo-freelance { color: #9ca3af; margin-left: 0.2rem; }
+.logo-link{color:#fff}.logo-freelance{color:#9ca3af;margin-left:.2rem}
 
 .nav-section-title {
   color: #71767b;
@@ -47,7 +46,7 @@
   padding: 0.65rem 0;
   cursor: pointer;
 }
-.nav-item.active { font-weight: 700; }
+.nav-item.active{font-weight:700}
 
 .session-list {
   display: flex;

@@ -6,14 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="df9b8e03-a71d-4aee-9af4-4629579c5d47" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/../../../Esprit-PIDEV-4SAE10-2026-MatchFreelance" beforeDir="false" afterPath="$PROJECT_DIR$/../../../Esprit-PIDEV-4SAE10-2026-MatchFreelance" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Formation/k8s/deployment.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/k8s/deployment.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/config/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/config/GlobalExceptionHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/controller/FormationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/controller/FormationController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/service/FormationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/service/FormationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Formation/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Formation/src/test/java/tn/esprit/formation/service/FormationServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/test/java/tn/esprit/formation/service/FormationServiceTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../python/IDEES_METIER_AVANCEES.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../../python/IDEES_METIER_AVANCEES.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,32 +35,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Maven.Project [clean].executor": "Run",
-    "Maven.Project [compile].executor": "Run",
-    "Maven.Project [test].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "Spring Boot.ProjectApplication.executor": "Run",
-    "git-widget-placeholder": "douja",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/benay/Downloads/validation/backend/microservices/Project",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Maven.Project [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Project [compile].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Project [test].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;Spring Boot.ProjectApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;douja&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/benay/Downloads/validation/backend/microservices/Project&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="ProjectApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="Project" />
@@ -98,6 +91,7 @@
       <workItem from="1777119573110" duration="5574000" />
       <workItem from="1777832992600" duration="8000" />
       <workItem from="1777833242402" duration="124000" />
+      <workItem from="1778262268732" duration="1371000" />
     </task>
     <servers />
   </component>
