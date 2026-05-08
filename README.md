@@ -1,193 +1,204 @@
-# MatchFreelance
-
-**Plateforme de mise en relation Freelancers / Clients et gestion de projets** — Projet académique Esprit School of Engineering – Tunisia.
-
----
+# MatchFreelance - Plateforme Freelance Full-Stack Microservices
 
 ## Overview
+Ce projet a ete developpe dans le cadre du programme PI a **Esprit School of Engineering - Tunisia** (annee universitaire 2025-2026).
 
-MatchFreelance est une application full-stack en **architecture microservices** permettant de gérer des freelancers, des clients, des projets, des formations, des compétences (skills), des examens et certificats. Le frontend Angular communique avec les microservices via une **API Gateway** et une **découverte de services (Eureka)**.
-
----
+MatchFreelance est une plateforme full-stack qui connecte freelancers et clients, gere les projets et la collaboration, et integre des modules metier complets: candidatures, contrats, entretiens, formations, evaluation/certification, competences (skills), et espace communautaire (blog/forum).
 
 ## Features
-
-- **CRUD complet** : Projets, Formations, Compétences (Skills), Examens, Inscriptions, Modules.
-- **Pagination** : Liste des projets avec pagination fonctionnelle (taille de page configurable, navigation Début / Précédent / Suivant / Fin).
-- **Contrôle de saisie** : Tous les formulaires (projet, formation, compétence, examen, etc.) ont des validations (required, minLength, min, max, pattern) et affichent des messages d’erreur clairs.
-- **Interfaces personnalisées et ergonomiques** : Dashboard admin, espaces Freelancer / Client, listes avec filtres et recherche, toasts, mise en page responsive (Tailwind CSS).
-- **Fonctionnalités avancées** (exemples) :
-  - **Parcours intelligent** (microservice Skill) : analyse des compétences du freelancer, détection des gaps, proposition de formations ciblées.
-  - **Examens et certificats** : passer un examen, génération de certificat.
-  - **Config Server** : centralisation de la configuration des microservices (Spring Cloud Config).
-
----
+- Gestion des comptes utilisateurs, authentification et administration.
+- Gestion du cycle de vie projet (creation, suivi, supervision, insights).
+- Gestion des candidatures, contrats et jalons de paiement.
+- Planification et suivi des entretiens.
+- Gestion des formations, modules et inscriptions.
+- Evaluation adaptive, certificats et recommandations.
+- Gestion des competences, portfolio, CV et parcours intelligent.
+- Fonctionnalites communautaires (posts, groupes, messages, moderation).
 
 ## Tech Stack
+### Frontend
+- Angular 21
+- TypeScript
+- Tailwind CSS
 
-| Couche | Technologies |
-|--------|--------------|
-| **Frontend** | Angular 21, TypeScript, Tailwind CSS, standalone components |
-| **Backend** | Java 17, Spring Boot 3.x / 4.x, Spring Cloud (Eureka, Gateway, Config Server) |
-| **Microservices** | Formation, Evaluation (examens, certificats), Skill (compétences, parcours intelligent), Project |
-| **Infrastructure** | Netflix Eureka (découverte), Spring Cloud Gateway (routage), MySQL (bases par service) |
-| **Outils** | Maven, Node.js / npm |
-
----
+### Backend
+- Java 17
+- Spring Boot
+- Spring Cloud Gateway
+- Netflix Eureka (service discovery)
+- Spring Cloud Config Server (optionnel)
+- MySQL
 
 ## Architecture
+Le frontend Angular envoie les requetes HTTP vers une API Gateway unique.  
+La Gateway route ensuite vers les microservices via Eureka (`lb://SERVICE_NAME`).
 
+Les services sont decouples, chacun avec son domaine metier et sa base de donnees, ce qui facilite la scalabilite, la maintenance et les deploiements independants.
+
+### Vue simplifiee
+```text
+Frontend Angular (4200)
+        |
+        v
+API Gateway (8050)
+        |
+        +--> USER
+        +--> BLOG
+        +--> PROJECT
+        +--> FORMATION
+        +--> EVALUATION
+        +--> SKILL
+        +--> CANDIDATURE
+        +--> CONTRACT
+        +--> INTERVIEW
+
+Eureka Server (8761) : discovery
+Config Server (8888) : config centralisee (optionnel)
 ```
-                    ┌─────────────────┐
-                    │   Angular SPA   │  (port 4200)
-                    │   (Frontend)    │
-                    └────────┬────────┘
-                             │ /api/*
-                    ┌────────▼────────┐
-                    │  API Gateway    │  (port 8050)
-                    │  (Spring Cloud) │
-                    └────────┬────────┘
-                             │ lb://SERVICE_ID
-              ┌──────────────┼──────────────┬──────────────┬──────────────┐
-              ▼              ▼              ▼              ▼              ▼
-        ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
-        │  Eureka  │  │  Config  │  │ Formation│  │Evaluation│  │   ...    │
-        │  8761    │  │  8888    │  │  8081    │  │  8083    │  │          │
-        └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘
-                             ▲
-                    Tous les microservices s’enregistrent dans Eureka
-                    et peuvent optionnellement charger la config depuis Config Server.
+
+## Microservices
+### Services d'infrastructure
+- **EurekaServer** (`8761`): registre de decouverte des services.
+- **Gateway** (`8050`): point d'entree API, routage et fallback JSON.
+- **ConfigServer** (`8888`, optionnel): centralisation des configurations.
+
+### Services metier
+- **User** (port variable, fallback code `8098`): authentification, profils, endpoints admin et gestion utilisateur.
+- **Blog** (`8078`): forum, groupes, discussions, messages prives, moderation/toxicite, notifications.
+- **Project** (`8084`): gestion des projets, supervision, estimation/insights, matching freelancer-projet.
+- **Formation** (`8096`): formations, modules, inscriptions.
+- **Evaluation** (`8083`): examens, passages, certificats, recommandations/ranking.
+- **Skill** (`8079`): competences, CV, portfolio, bio freelancer, parcours intelligent.
+- **Candidature** (`8091`): candidatures sur projets et suivi associe.
+- **Contract** (`8088`): contrats, jalons, echanges lies au contrat.
+- **Interview** (`8089`): orchestration des entretiens.
+
+## Principales routes via la Gateway
+- `/api/users/**`, `/api/auth/**`, `/api/admin/**` -> `USER`
+- `/api/forums/**`, `/api/groups/**`, `/api/messages/private/**`, `/api/threads/**`, `/api/toxicity/**`, `/api/ai/**`, `/api/friends/**` -> `BLOG`
+- `/api/projects/**` -> `PROJECT`
+- `/api/formations/**`, `/api/modules/**`, `/api/inscriptions/**` -> `FORMATION`
+- `/api/examens/**`, `/api/certificats/**` -> `EVALUATION`
+- `/api/skills/**`, `/api/cv/**`, `/api/portfolio/**`, `/api/bio/**` -> `SKILL`
+- `/api/candidatures/**` -> `CANDIDATURE`
+- `/api/contracts/**` -> `CONTRACT`
+- `/api/interviews/**` -> `INTERVIEW`
+- `/api/evaluation-reports/**` -> service Python de reporting
+- `/api/team-ai/**` -> service Team AI (rewrite vers `/api/**` cote service)
+
+## Structure du projet
+```text
+.
+├── frontend/                    # Application Angular
+├── backend/
+│   ├── EurekaServer/            # Service discovery
+│   ├── Gateway/                 # API Gateway
+│   ├── ConfigServer/            # Configuration centralisee (optionnel)
+│   └── microservices/
+│       ├── User/
+│       ├── Blog/
+│       ├── Project/
+│       ├── Formation/
+│       ├── Evaluation/
+│       ├── Skill/
+│       ├── Candidature/
+│       ├── Contract/
+│       ├── Interview/
+│       └── evaluation-reports-py/
+├── python/                      # Scripts/services Python complementaires
+├── infra/                       # Kubernetes/Helm et infra
+├── docs/                        # Documentation
+└── scripts/                     # Scripts utilitaires
 ```
 
-- **Eureka** : annuaire des services (obligatoire pour le routage Gateway).
-- **Config Server** : configuration centralisée (optionnel ; si absent, chaque service utilise son `application.properties` local).
-- **Gateway** : route `/api/formations/**` → Formation, `/api/projects/**` → Project, `/api/examens/**` → Evaluation, etc.
+## Prerequis
+- Java 17 (JDK 17) + `JAVA_HOME` correctement configure.
+- Maven (ou `mvnw.cmd` dans les services).
+- Node.js + npm.
+- MySQL actif en local (`localhost:3306`, user `root` par defaut selon les configs).
 
----
-
-## Contributors
-
-- Équipe projet MatchFreelance — Esprit School of Engineering.
-
-*(Renseigner les noms et rôles des membres de l’équipe.)*
-
----
-
-## Academic Context
-
-- **Établissement** : Esprit School of Engineering – Tunisia  
-- **Année universitaire** : *(à compléter, ex. 2024–2025)*  
-- **Projet** : Projet d’intégration (PI) — Architecture microservices, full-stack Angular / Spring Boot.
-
----
-
-## Getting Started
-
-Chaque membre de l’équipe peut exécuter le projet sur sa machine en suivant les étapes ci-dessous.
-
-### Prérequis
-
-- **Java 17** (JDK 17 requis pour compiler et lancer le backend ; définir `JAVA_HOME` sur ce JDK) et **Maven**
-- **Node.js** (LTS recommandé) et **npm**
-- **MySQL** (port 3306, utilisateur `root`, mot de passe vide par défaut dans les configs de dev)
-
-### 1. Cloner le dépôt
-
+## Getting Started (Local)
+### 1) Cloner le projet
 ```bash
 git clone <url-du-repo>
-cd <nom-du-repo>
+cd validation
 ```
 
-### 2. Démarrer MySQL
+### 2) Demarrer les services backend (ordre recommande)
+1. EurekaServer (`backend/EurekaServer/EurekaServer`)
+2. ConfigServer (`backend/ConfigServer`) - optionnel
+3. Gateway (`backend/Gateway`)
+4. Microservices metier (`backend/microservices/...`)
 
-Assurez-vous que MySQL est lancé et accessible sur `localhost:3306`. Les microservices créent les bases automatiquement (`createDatabaseIfNotExist=true`) si besoin.
+Exemple (PowerShell, un terminal par service):
+```powershell
+# Eureka
+cd backend\EurekaServer\EurekaServer
+.\mvnw.cmd spring-boot:run
 
-### 3. Démarrer le backend (ordre important)
+# Config Server (optionnel)
+cd backend\ConfigServer
+.\mvnw.cmd spring-boot:run
 
-Ouvrir **plusieurs terminaux** (ou utiliser un script de démarrage) et lancer dans l’ordre :
-
-| Ordre | Service        | Dossier                          | Port |
-|-------|-----------------|----------------------------------|------|
-| 1     | Eureka          | `backend/EurekaServer/`          | 8761 |
-| 2     | Config Server   | `backend/ConfigServer/`          | 8888 (optionnel) |
-| 3     | Gateway         | `backend/Gateway/`               | 8050 |
-| 4     | Formation       | `backend/microservices/Formation/` | 8081 |
-| 5     | Evaluation      | `backend/microservices/Evaluation/` | 8083 |
-| 6     | Skill           | `backend/microservices/Skill/`   | 8086 |
-| 7     | Project         | `backend/microservices/Project/` | 8084 |
-
-Exemple (un terminal par service) :
-
-```bash
-cd backend/EurekaServer && mvn spring-boot:run
-# Attendre le démarrage, puis :
-cd backend/ConfigServer && mvn spring-boot:run
-cd backend/Gateway && mvn spring-boot:run
-# ... idem pour Formation, Evaluation, Skill, Project
+# Gateway
+cd backend\Gateway
+.\mvnw.cmd spring-boot:run
 ```
 
-Vérifications utiles :
+Puis lancer chaque microservice selon besoin:
+```powershell
+cd backend\microservices\Project     ; .\mvnw.cmd spring-boot:run
+cd backend\microservices\Formation   ; .\mvnw.cmd spring-boot:run
+cd backend\microservices\Evaluation  ; .\mvnw.cmd spring-boot:run
+cd backend\microservices\Skill       ; .\mvnw.cmd spring-boot:run
+cd backend\microservices\Candidature ; .\mvnw.cmd spring-boot:run
+cd backend\microservices\Contract    ; .\mvnw.cmd spring-boot:run
+cd backend\microservices\Interview   ; .\mvnw.cmd spring-boot:run
+cd backend\microservices\Blog        ; .\mvnw.cmd spring-boot:run
+cd backend\microservices\User        ; .\mvnw.cmd spring-boot:run
+```
 
-- Eureka : http://localhost:8761 (tableau de bord des services enregistrés)
-- Gateway : http://localhost:8050/api (réponse JSON de bienvenue)
-
-### 4. Démarrer le frontend
-
+### 3) Demarrer le frontend
 ```bash
 cd frontend
 npm install
 npm start
 ```
 
-Puis ouvrir **http://localhost:4200**.
+Application web: `http://localhost:4200`
 
-En mode dev, le proxy Angular envoie `/api/*` vers la Gateway (8050), sauf `/api/projects` et `/api/modules` qui peuvent être redirigés vers les microservices directs selon `proxy.conf.cjs`. Pour une expérience complète, lancer **tous** les microservices listés ci-dessus.
+## Scripts utiles
+Dans `backend/`, des scripts PowerShell sont disponibles:
+- `demarrer-gateway-formation.ps1`: Eureka + Gateway + Formation.
+- `demarrer-parcours-intelligent.ps1`: Eureka + Gateway + Skill.
 
-### 5. Comptes de test
+## Verification rapide
+- Eureka: `http://localhost:8761`
+- Gateway: `http://localhost:8050/api`
+- Frontend: `http://localhost:4200`
 
-*(À compléter selon les données seed ou fixtures : ex. admin@esprit.tn / password, freelancer@test.com, etc.)*
+## Deploiement (recommande)
+Le projet peut etre deploye via:
+- Frontend: Vercel / Render / Railway / GitHub Pages (selon build et routing).
+- Backend: Docker/Kubernetes (dossiers `infra/` et manifests disponibles).
+- Ressources education: GitHub Education / cloud credits.
 
----
+## Qualite et bonnes pratiques
+- Architecture microservices avec separation par domaine metier.
+- Centralisation optionnelle de config via Config Server.
+- Discovery dynamique via Eureka.
+- Gateway unique pour simplifier securite, routage et exposition API.
 
-## Structure du projet
+## Academic Context
+- Institution: **Esprit School of Engineering - Tunisia**
+- Program: PI (Projet d'Integration)
+- Class: 3A
+- Academic Year: 2025-2026
+- Mention recommandee: "Developed at Esprit School of Engineering - Tunisia"
 
-```
-├── frontend/                 # Application Angular
-│   ├── src/app/
-│   │   ├── components/       # Composants (login, project-list, formation-form, etc.)
-│   │   ├── services/         # Services API (auth, project, formation, skill, etc.)
-│   │   ├── guards/           # Gardes de route (auth)
-│   │   └── interceptors/     # Intercepteur HTTP (token)
-│   └── proxy.conf.cjs        # Proxy dev vers backend
-├── backend/
-│   ├── EurekaServer/         # Serveur de découverte
-│   ├── ConfigServer/         # Serveur de configuration centralisée
-│   ├── Gateway/              # API Gateway
-│   └── microservices/
-│       ├── Formation/        # Formations, modules, inscriptions
-│       ├── Evaluation/       # Examens, certificats
-│       ├── Skill/            # Compétences, parcours intelligent
-│       └── Project/          # Projets
-├── python/                   # Scripts (rappels, recommandations, badges, ML)
-├── DEMARRAGE_PLATEFORME.md   # Détails démarrage et dépannage
-└── README.md                 # Ce fichier
-```
+## Contributors
+- MatchFreelance Team - Esprit School of Engineering
+- Ajouter ici les noms, roles et contributions de chaque membre.
 
----
-
-## Dépannage
-
-| Problème | Vérification |
-|----------|----------------|
-| 404 sur /api/... | Gateway et Eureka sont-ils démarrés ? Les microservices sont-ils visibles dans Eureka (8761) ? |
-| Liste projets vide | Le microservice Project (8084) est-il lancé ? MySQL démarré ? |
-| Erreur 401 / session | Se reconnecter (login). Vérifier que le token est bien envoyé (interceptor). |
-| Config Server absent | Optionnel : les services démarrent sans lui en utilisant leur config locale. |
-
-Plus de détails : voir **DEMARRAGE_PLATEFORME.md**.
-
----
-
-## Licence
-
-Projet académique — Esprit School of Engineering – Tunisia.
+## Acknowledgments
+Developed at **Esprit School of Engineering** as part of an academic project.

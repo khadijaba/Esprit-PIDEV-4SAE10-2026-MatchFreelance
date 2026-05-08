@@ -250,4 +250,4 @@ Voir aussi **`GUIDE_TEST_ETAPES.md`** pour le détail étape par étape.
 - **Client → Freelancer** : note et commentaire après un projet (étoiles + texte).
 - **Freelancer → Formation** : satisfaction et « recommanderiez-vous ? » (NPS).
 - **Agrégation** : note moyenne et nombre d’avis sur le profil freelancer ; taux de recommandation par formation.
-- **Modération** : signalement, masquage ou suppression d’avis abusifs.
+- **Modération** : signalement, masquage ou suppression d’avis abusifs. A+wqw

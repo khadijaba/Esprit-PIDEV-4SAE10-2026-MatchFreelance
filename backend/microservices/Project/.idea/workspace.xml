@@ -5,113 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="df9b8e03-a71d-4aee-9af4-4629579c5d47" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../../Gateway/src/main/java/tn/esprit/gateway/GatewayApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../Gateway/src/main/java/tn/esprit/gateway/GatewayApplication.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Gateway/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../../Gateway/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/src/main/java/com/freelancing/candidature/service/CandidatureService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/src/main/java/com/freelancing/candidature/service/CandidatureService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/ContractClient$CommunicationScoreResponse.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/ContractClient$CommunicationScoreResponse.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/ContractClient$ContractCreateRequest.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/ContractClient$ContractCreateRequest.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/ContractClient$ContractResponse.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/ContractClient$ContractResponse.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/ContractClient.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/ContractClient.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/ProjectClient$ProjectResponse.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/ProjectClient$ProjectResponse.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/ProjectClient$ProjectUpdateRequest.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/ProjectClient$ProjectUpdateRequest.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/UserClient$UserResponse.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/UserClient$UserResponse.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/UserClient.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/UserClient.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/dto/CommunicationScorePayload.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/dto/CommunicationScorePayload.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/dto/ContractApiResponse.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/dto/ContractApiResponse.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/dto/ContractCreatePayload.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/dto/ContractCreatePayload.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/dto/ProjectRemotePayload.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/dto/ProjectRemotePayload.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/dto/UserRemoteDto.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/client/dto/UserRemoteDto.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/ApplicationCountDTO.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/ApplicationCountDTO.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/BudgetStatsDTO.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/BudgetStatsDTO.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/CandidatureRequestDTO.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/CandidatureRequestDTO.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/CandidatureResponseDTO.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/CandidatureResponseDTO.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/InterviewMetricsDto.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/InterviewMetricsDto.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/RankedCandidatureDTO.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/RankedCandidatureDTO.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/ScoreBreakdownDTO.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/dto/ScoreBreakdownDTO.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/entity/Candidature.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/entity/Candidature.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/exception/GlobalExceptionHandler$ErrorResponse.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/exception/GlobalExceptionHandler$ErrorResponse.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/exception/GlobalExceptionHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/exception/GlobalExceptionHandler.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/service/AiMatchmakingService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/service/AiMatchmakingService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/service/CandidatureRankingService$CompositeScoreResult.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/service/CandidatureRankingService$CompositeScoreResult.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/service/CandidatureRankingService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/service/CandidatureRankingService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/service/CandidatureService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/service/PitchAnalyzerService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/classes/com/freelancing/candidature/service/PitchAnalyzerService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Candidature/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/../Candidature/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Contract/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/../Contract/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/src/main/java/com/freelancing/contract/service/ContractService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Contract/src/main/java/com/freelancing/contract/service/ContractService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/ContractServiceApplication.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/client/UserClient$UserResponse.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/client/UserClient.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/client/UserRemoteFeign.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/client/dto/UserRemoteDto.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/config/ContractExceptionHandler.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/config/ContractsLegacyUniqueIndexCleanup.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/config/DataLoader.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/config/OpenApiConfig.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/controller/ContractController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/controller/MessageController.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/dto/CommunicationScoreDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/dto/ContractHealthDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/dto/ContractRequestDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/dto/ContractResponseDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/dto/FinancialSummaryDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/dto/MessageRequestDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/dto/MessageResponseDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/dto/PaymentMilestoneDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/dto/ProposeExtraBudgetRequestDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/dto/RateContractRequestDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/dto/RespondExtraBudgetRequestDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/dto/UpdateProgressRequestDTO.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/entity/Contract.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/entity/Message.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/enums/ContractStatus.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/repository/ContractRepository.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/repository/MessageRepository.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/service/ChatCommunicationScoreService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/service/ChatProgressExtractorService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/service/ContractFinancialService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/service/ContractHealthService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/service/ContractService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/classes/com/freelancing/contract/service/MessageService.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/../Contract/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Contract/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/client/FormationClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/client/FormationClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/ExamenGenerationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/src/main/java/tn/esprit/evaluation/service/ExamenGenerationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ExamenGenerationService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../Evaluation/target/classes/tn/esprit/evaluation/service/ExamenGenerationService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Formation/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Formation/Jenkinsfile" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/Jenkinsfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../Esprit-PIDEV-4SAE10-2026-MatchFreelance" beforeDir="false" afterPath="$PROJECT_DIR$/../../../Esprit-PIDEV-4SAE10-2026-MatchFreelance" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Formation/k8s/deployment.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/k8s/deployment.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/config/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/config/GlobalExceptionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/controller/FormationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/controller/FormationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/service/FormationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/main/java/tn/esprit/formation/service/FormationService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Formation/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Formation/src/test/java/tn/esprit/formation/FormationApplicationTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/test/java/tn/esprit/formation/FormationApplicationTests.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Interview/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/../Interview/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Formation/src/test/java/tn/esprit/formation/service/FormationServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Formation/src/test/java/tn/esprit/formation/service/FormationServiceTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Jenkinsfile" beforeDir="false" afterPath="$PROJECT_DIR$/Jenkinsfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/esprit/project/Controllers/ProjectController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/esprit/project/Controllers/ProjectController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/esprit/project/Repositories/ProjectRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/esprit/project/Repositories/ProjectRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/esprit/project/client/UserClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/esprit/project/client/UserClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/esprit/project/entities/Project.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/esprit/project/entities/Project.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/esprit/project/entities/ProjectStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/esprit/project/entities/ProjectStatus.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Skill/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Skill/Jenkinsfile" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/Jenkinsfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/SkillApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/java/esprit/skill/SkillApplication.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Skill/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../Skill/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../User/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/../User/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../User/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../User/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Config/DataInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Config/DataInitializer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../User/src/main/java/Entity/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/../User/src/main/java/Entity/User.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../frontend/angular.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/angular.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/app.routes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/app.routes.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-freelancer/dashboard-freelancer.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/dashboard-freelancer/dashboard-freelancer.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../frontend/src/app/components/front-layout/front-layout.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/src/app/components/front-layout/front-layout.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../../frontend/tsconfig.spec.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../../frontend/tsconfig.spec.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../python/IDEES_METIER_AVANCEES.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../../python/IDEES_METIER_AVANCEES.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -140,32 +42,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Maven.Project [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.Project [compile].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.Project [test].executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Spring Boot.ProjectApplication.executor&quot;: &quot;Run&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;validation&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/benay/Downloads/validation/backend/microservices/Project&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Maven.Project [clean].executor": "Run",
+    "Maven.Project [compile].executor": "Run",
+    "Maven.Project [test].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Spring Boot.ProjectApplication.executor": "Run",
+    "git-widget-placeholder": "douja",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/benay/Downloads/validation/backend/microservices/Project",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration name="ProjectApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="Project" />
@@ -194,6 +96,8 @@
       <workItem from="1776848354505" duration="594000" />
       <workItem from="1776861700614" duration="581000" />
       <workItem from="1777119573110" duration="5574000" />
+      <workItem from="1777832992600" duration="8000" />
+      <workItem from="1777833242402" duration="124000" />
     </task>
     <servers />
   </component>
