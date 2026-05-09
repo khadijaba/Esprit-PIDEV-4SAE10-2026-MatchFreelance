@@ -1,12 +1,16 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "https://matchfreelance-gateway.onrender.com/api/$1"
-    },
-    {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
-    }
-  ]
+  "rewrites": {
+    "beforeFiles": [
+      {
+        "source": "/api/(.*)",
+        "destination": "https://matchfreelance-gateway.onrender.com/api/$1"
+      }
+    ],
+    "fallback": [
+      {
+        "source": "/((?!api/).*)",
+        "destination": "/index.html"
+      }
+    ]
+  }
 }
