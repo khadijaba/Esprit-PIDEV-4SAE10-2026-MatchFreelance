@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthResponse, LoginRequest, RegisterRequest, User, UserProfile, UserRole } from '../models/auth.model';
+import { publicApiUrl } from '../../environments/environment';
 
 const API = '/api/users';
 
@@ -41,7 +42,7 @@ export class AuthService {
   ) {}
 
   login(body: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${API}/auth/login`, body).pipe(
+    return this.http.post<AuthResponse>(publicApiUrl(`${API}/auth/login`), body).pipe(
       tap((res) => {
         sessionStorage.setItem(TOKEN_KEY, res.token);
         sessionStorage.setItem(USER_KEY, JSON.stringify({
@@ -57,7 +58,7 @@ export class AuthService {
 
   /** Connexion PIDEV (même backend que le projet Esprit User) : POST /api/auth/signin puis hydratation du profil MatchFreelance. */
   loginPidev(body: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<JwtResponseDto>('/api/auth/signin', body).pipe(
+    return this.http.post<JwtResponseDto>(publicApiUrl('/api/auth/signin'), body).pipe(
       switchMap((jwt) => this.hydrateSessionAfterPidevJwt(jwt))
     );
   }
@@ -65,7 +66,7 @@ export class AuthService {
   /** Connexion faciale PIDEV : descripteur 128 valeurs séparées par des virgules. */
   loginPidevFace(email: string, faceDescriptor: string): Observable<AuthResponse> {
     return this.http
-      .post<JwtResponseDto>('/api/auth/signin-face', { email, faceDescriptor })
+      .post<JwtResponseDto>(publicApiUrl('/api/auth/signin-face'), { email, faceDescriptor })
       .pipe(switchMap((jwt) => this.hydrateSessionAfterPidevJwt(jwt)));
   }
 
@@ -131,19 +132,23 @@ export class AuthService {
 
    /** Inscription PIDEV : multipart POST /api/auth/signup (réponse JSON ; verificationCode si activé côté serveur). */
   registerPidevMultipart(formData: FormData): Observable<PidevSignupResponse> {
-    return this.http.post<PidevSignupResponse>('/api/auth/signup', formData);
+    return this.http.post<PidevSignupResponse>(publicApiUrl('/api/auth/signup'), formData);
   }
 
   verifyEmail(email: string, verificationCode: string): Observable<string> {
-    return this.http.post('/api/auth/verify-email', { email, verificationCode }, { responseType: 'text' });
+    return this.http.post(
+      publicApiUrl('/api/auth/verify-email'),
+      { email, verificationCode },
+      { responseType: 'text' }
+    );
   }
 
   resendVerificationEmail(email: string): Observable<string> {
-    return this.http.post('/api/auth/resend-verification', { email }, { responseType: 'text' });
+    return this.http.post(publicApiUrl('/api/auth/resend-verification'), { email }, { responseType: 'text' });
   }
 
   register(body: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${API}/auth/register`, body).pipe(
+    return this.http.post<AuthResponse>(publicApiUrl(`${API}/auth/register`), body).pipe(
       tap((res) => {
         sessionStorage.setItem(TOKEN_KEY, res.token);
         sessionStorage.setItem(USER_KEY, JSON.stringify({
@@ -196,9 +201,9 @@ export class AuthService {
   /** Liste des utilisateurs (optionnel : filtrer par rôle). */
   getUsers(role?: 'ADMIN' | 'FREELANCER' | 'CLIENT'): Observable<User[]> {
     if (role) {
-      return this.http.get<User[]>(API, { params: { role } });
+      return this.http.get<User[]>(publicApiUrl(API), { params: { role } });
     }
-    return this.http.get<User[]>(API);
+    return this.http.get<User[]>(publicApiUrl(API));
   }
 
   /**
@@ -208,10 +213,12 @@ export class AuthService {
    */
   getFreelancersForProjectMatching(): Observable<User[]> {
     const params = { role: 'FREELANCER' };
-    return this.http.get<unknown[]>(`${API}/all`, { params }).pipe(
+    return this.http.get<unknown[]>(publicApiUrl(`${API}/all`), { params }).pipe(
       map((rows) => this.mapRawUsersToList(rows)),
       catchError(() =>
-        this.http.get<unknown[]>(API, { params }).pipe(map((rows) => this.mapRawUsersToList(rows)))
+        this.http
+          .get<unknown[]>(publicApiUrl(API), { params })
+          .pipe(map((rows) => this.mapRawUsersToList(rows)))
       )
     );
   }
@@ -250,17 +257,21 @@ export class AuthService {
 
   /** Profil complet de l'utilisateur connecté (nécessite token). */
   getProfile(): Observable<UserProfile> {
-    return this.http.get<UserProfile>(`${API}/me/profile`);
+    return this.http.get<UserProfile>(publicApiUrl(`${API}/me/profile`));
   }
 
   /** Supprime le compte connecté (nécessite token). */
   deleteMyAccount(): Observable<void> {
-    return this.http.delete<void>(`${API}/me`);
+    return this.http.delete<void>(publicApiUrl(`${API}/me`));
   }
 
   /** Demande de réinitialisation PIDEV (POST /api/auth/reset-password/request). */
   requestPasswordReset(email: string): Observable<string> {
-    return this.http.post('/api/auth/reset-password/request', { email }, { responseType: 'text' });
+    return this.http.post(
+      publicApiUrl('/api/auth/reset-password/request'),
+      { email },
+      { responseType: 'text' }
+    );
   }
 
   /** Nouveau mot de passe après code 6 chiffres (e-mail « mot de passe oublié »). */
@@ -270,6 +281,6 @@ export class AuthService {
     newPassword: string;
     confirmPassword: string;
   }): Observable<string> {
-    return this.http.post('/api/auth/reset-password/complete', body, { responseType: 'text' });
+    return this.http.post(publicApiUrl('/api/auth/reset-password/complete'), body, { responseType: 'text' });
   }
 }

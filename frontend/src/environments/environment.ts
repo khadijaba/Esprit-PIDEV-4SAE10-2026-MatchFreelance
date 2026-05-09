@@ -14,11 +14,24 @@ export function apiBaseUrl(): string {
   if (typeof window === 'undefined') {
     return '';
   }
-  const h = window.location.hostname;
+  const w = window as Window & { __MF_API_ORIGIN__?: string };
+  if (typeof w.__MF_API_ORIGIN__ === 'string' && w.__MF_API_ORIGIN__.trim().length > 0) {
+    return w.__MF_API_ORIGIN__.trim().replace(/\/$/, '');
+  }
+  const h = w.location.hostname;
   if (h === 'localhost' || h === '127.0.0.1') {
     return '';
   }
   return PROD_API_ORIGIN;
+}
+
+/** Préfixe `/api/...` avec la Gateway en prod (Vercel évite ainsi le 405 du statique). */
+export function publicApiUrl(path: string): string {
+  if (!path.startsWith('/')) {
+    return path;
+  }
+  const b = apiBaseUrl();
+  return b ? b + path : path;
 }
 
 export const environment = {

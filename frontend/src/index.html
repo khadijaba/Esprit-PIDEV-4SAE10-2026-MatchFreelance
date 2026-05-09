@@ -10,6 +10,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }</style>
+  <!-- Défini avant le bundle Angular : évite les POST /api sur le domaine Vercel (405 statique). -->
+  <script>
+    (function () {
+      try {
+        var h = location.hostname;
+        if (h !== 'localhost' && h !== '127.0.0.1') {
+          window.__MF_API_ORIGIN__ = 'https://matchfreelance-gateway.onrender.com';
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body class="antialiased">
   <app-root></app-root>
