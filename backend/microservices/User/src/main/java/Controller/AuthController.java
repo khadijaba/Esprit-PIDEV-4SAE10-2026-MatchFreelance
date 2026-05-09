@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -82,6 +83,18 @@ public class AuthController {
     }
 
     // ─── SIGN IN ────────────────────────────────────────────────
+    /** Évite le 405 si l’URL est ouverte en GET (navigateur / lien) : la connexion réelle est un POST JSON. */
+    @GetMapping("/signin")
+    public ResponseEntity<Map<String, Object>> signInHelp() {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("message", "Cette URL attend une requête POST (JSON), pas un GET dans le navigateur.");
+        body.put("method", "POST");
+        body.put("contentType", "application/json");
+        body.put("exemple", Map.of("email", "vous@example.com", "password", "votre_mot_de_passe"));
+        body.put("frontend", "Utilisez la page /login de l’app Angular (le formulaire envoie le POST automatiquement).");
+        return ResponseEntity.ok(body);
+    }
+
     @PostMapping("/signin")
     public ResponseEntity<?> signIn(@Valid @RequestBody SignInRequest request) {
         try {
