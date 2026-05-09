@@ -34,6 +34,17 @@ public class AuthController {
     }
 
     // ─── SIGN UP ────────────────────────────────────────────────
+    /** GET dans le navigateur : rappel que l’inscription est un POST multipart (formulaire Angular). */
+    @GetMapping("/signup")
+    public ResponseEntity<Map<String, Object>> signUpHelp() {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("message", "Cette URL attend une requête POST en multipart/form-data (champs du formulaire d’inscription), pas un GET.");
+        body.put("method", "POST");
+        body.put("contentType", "multipart/form-data");
+        body.put("frontend", "Utilisez la page /register de l’app Angular.");
+        return ResponseEntity.ok(body);
+    }
+
     @PostMapping(value = "/signup", consumes = { org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<?> signUp(
             @RequestParam("firstName") String firstName,
