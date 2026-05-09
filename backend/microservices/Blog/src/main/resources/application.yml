@@ -1,7 +1,6 @@
-# Aligne le port avec angular/src/app/environments/environment.ts (apiUrl ...:8082)
-# et augmente la taille max du corps des requêtes (logos groupes en base64).
+# Port : Render injecte PORT ; local 8078 (voir environment Angular si besoin)
 server:
-  port: 8078
+  port: ${PORT:8078}
   tomcat:
     max-http-form-post-size: 25MB
     max-swallow-size: 25MB
@@ -9,21 +8,25 @@ server:
 spring:
   application:
     name: BLOG
+  # Render : SPRING_DATASOURCE_URL (+ USER / PASSWORD) ou DB_URL / DB_USER / DB_PASSWORD
+  # Aiven : ajouter sslMode=REQUIRED dans l’URL JDBC (souvent déjà dans l’URL fournie)
   datasource:
-    url: jdbc:mysql://localhost:3306/blog?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
-    username: root
-    password:
+    url: "${SPRING_DATASOURCE_URL:${DB_URL:jdbc:mysql://localhost:3306/blog?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}}"
+    username: "${SPRING_DATASOURCE_USERNAME:${DB_USER:root}}"
+    password: "${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:}}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+    database-platform: org.hibernate.dialect.MySQLDialect
 
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+      defaultZone: "${EUREKA_URL:http://${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/}"
     register-with-eureka: true
     fetch-registry: true
   instance:
-    instance-id: ${spring.application.name}:${server.port}
+    instance-id: "${spring.application.name}:${server.port}"
     prefer-ip-address: true
